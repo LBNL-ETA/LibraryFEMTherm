@@ -1,0 +1,168 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:simpleType name="Direction">
+		<xs:annotation>
+			<xs:documentation> Direction is used for two different cases: - Heat flow - Glazing
+                Cavity </xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Unknown"/>
+			<xs:enumeration value="Right"/>
+			<xs:enumeration value="Left"/>
+			<xs:enumeration value="Up"/>
+			<xs:enumeration value="Down"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="SurfaceType">
+		<xs:annotation>
+			<xs:documentation>
+                Surface type is used to mark the type for boundary condition line.
+            </xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Not A Surface"/>
+			<xs:enumeration value="Boundary Condition"/>
+			<xs:enumeration value="Glazing Cavity"/>
+			<xs:enumeration value="Frame Cavity"/>
+			<xs:enumeration value="Enclosure"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="ShadeModifier">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="None"/>
+			<xs:enumeration value="Exterior"/>
+			<xs:enumeration value="Interior"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="PolygonType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="None"/>
+			<xs:enumeration value="Material"/>
+			<xs:enumeration value="Glass"/>
+			<xs:enumeration value="Gap"/>
+			<xs:enumeration value="Boundary Condition"/>
+			<xs:enumeration value="Spacer"/>
+			<xs:enumeration value="Glass In"/>
+			<xs:enumeration value="Glass Out"/>
+			<xs:enumeration value="Shade Gap"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="Point">
+		<xs:all>
+			<xs:element name="x" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="y" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="Points">
+		<xs:sequence>
+			<xs:element name="Point" type="Point" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Cavity">
+		<xs:all>
+			<xs:element name="UUID" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Direction" type="Direction" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="HeatFlowDirection" type="Direction" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Emissivity1" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Emissivity2" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Temperature1" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Temperature2" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="MaxXDimension" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="MaxYDimension" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="ActualHeight" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Area" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="LocalEmissivities" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Pressure" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="WarmLocator" type="Point" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="ColdLocator" type="Point" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="GlazingSystemData">
+		<xs:all>
+			<xs:element name="ID" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Index" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="PolygonGeometry">
+		<xs:sequence>
+			<xs:element name="UUID" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="ID" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="MaterialUUID" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="MaterialName" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="GlazingSystem" type="GlazingSystemData" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Origin" type="Point" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Points" type="Points" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="CavityUUID" type="xs:string" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Attributes" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="Type" type="PolygonType" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="LinkID" type="xs:integer" minOccurs="0" maxOccurs="1"/> 
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="GeometrySpecification">
+		<xs:all>
+			<xs:element name="Tilt" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="length" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="BuildingWidth" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="BuildingHeight" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="ThermalEmissionProperties">
+		<xs:all>
+			<xs:element name="Emissivity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Temperature" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="UseGlobalEmissivity" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="ShadeData">
+		<xs:all>
+			<xs:element name="ShadeModifier" type="ShadeModifier" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="ShadeModifierGlazingID" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="TransientData">
+		<xs:all>
+			<xs:element name="UUID" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="TimestepFileName" type="xs:string" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="TransientBCData">
+		<xs:sequence>
+			<xs:element name="BCTypeName" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="TransientFileName" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SurfaceAndBuildData" minOccurs="0" maxOccurs="1">
+				<xs:complexType>
+					<xs:all>
+						<xs:element name="SurfaceTilt" type="xs:double" minOccurs="1" maxOccurs="1"/>
+						<xs:element name="SurfaceLength" type="xs:double" minOccurs="1" maxOccurs="1"/>
+						<xs:element name="BuildingWidth" type="xs:double" minOccurs="1" maxOccurs="1"/>
+						<xs:element name="BuildingHeight" type="xs:double" minOccurs="1" maxOccurs="1"/>
+					</xs:all>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="BoundaryConditionGeometry">
+		<xs:sequence>
+			<xs:element name="ID" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="UUID" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="FluxTag" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="IsBlocking" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="NeighborPolygonUUID" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Origin" type="Point" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Points" type="Points" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Side" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="ThermalEmissionProperties" type="ThermalEmissionProperties" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="ShadeData" type="ShadeData" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="IsIlluminated" type="xs:boolean" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="TransientData" type="TransientData" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="GeometrySpecification" type="GeometrySpecification" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="EdgeID" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="EnclosureNumber" type="xs:integer" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Transient" type="TransientBCData" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Type" type="SurfaceType" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Color" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Status" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>

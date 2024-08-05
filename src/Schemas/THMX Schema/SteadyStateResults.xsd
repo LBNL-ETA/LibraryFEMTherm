@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:include schemaLocation="Common.xsd"/>
+	<xs:simpleType name="LengthType">
+		<xs:annotation>
+			<xs:documentation> Length type is enumeration for different projection on the surfaces that is
+        needed for the results. </xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Total Length"/>
+			<xs:enumeration value="Projected X"/>
+			<xs:enumeration value="Projected Y"/>
+			<xs:enumeration value="Custom Length"/>
+			<xs:enumeration value="Projected in glass plane"/>
+			<xs:enumeration value="Custom Rotation"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="Projection">
+		<xs:all>
+			<xs:element name="Length-type" type="LengthType" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Length" type="xs:double" minOccurs="0" maxOccurs="1"/>
+			<!-- units [mm] -->
+			<xs:element name="U-factor" type="xs:double" minOccurs="0" maxOccurs="1"/>
+			<!-- units: [W/m²·K] -->
+			<xs:element name="ProjectionAngle" type="xs:double" minOccurs="0" maxOccurs="1"/>
+			<!-- units: [Degrees] -->
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="U-factors">
+		<xs:sequence>
+			<xs:element name="Tag" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="DeltaT" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<!-- units: [Celsius] -->
+			<xs:element name="HeatFlux" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<!-- units: [W/m] -->
+			<xs:element name="DefaultDisplayType" type="LengthType" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Projection" type="Projection" minOccurs="1" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Case">
+		<xs:sequence>
+			<xs:element name="ModelType" type="ModelType" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="SimulationError" type="xs:double" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="GlazingCase" type="CMACase" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="SpacerCase" type="CMACase" minOccurs="0" maxOccurs="1"/>
+			<!-- units: [Percent] -->
+			<xs:element name="U-factors" type="U-factors" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="Results">
+		<xs:complexType>
+			<xs:sequence>
+			  <xs:element name="Version" type="xs:string" minOccurs="1" maxOccurs="1"/>
+				<xs:element name="Case" type="Case" minOccurs="1" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

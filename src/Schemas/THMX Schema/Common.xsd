@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:simpleType name="ModelType">
+		<xs:annotation>
+			<xs:documentation> Results for steady state are divided into two sections (as THERM outputs
+        it). </xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="U-factor"/>
+			<xs:enumeration value="Condensation Resistance"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="EdgeType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Flux"/>
+			<xs:enumeration value="Temperature"/>
+			<xs:enumeration value="Convection"/>
+			<xs:enumeration value="Radiation"/>
+			<xs:enumeration value="Radiation Enclosure"/>
+		</xs:restriction>
+	</xs:simpleType>	
+	<xs:simpleType name="BCPosition">
+		<xs:annotation>
+			<xs:documentation>
+				In FEM there is not really designation of the boundary condition position, however, this position will be used in some special cases to designate and pull out the default values for certain boundary conditions. CMA approach is one example of such use.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Exterior"/>
+			<xs:enumeration value="Interior"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="CMACase">
+		<xs:annotation>
+			<xs:documentation>
+				Describes spacer and glazing case.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Low"/>
+			<xs:enumeration value="High"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

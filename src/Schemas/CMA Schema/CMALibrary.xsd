@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<!-- Definition for Option type (Low or High) -->
+	<xs:simpleType name="OptionType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Low"/>
+			<xs:enumeration value="High"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Generic entry for both SingleLayer and DoubleLayer -->
+	<xs:element name="Options">
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="Glazing" type="OptionType" minOccurs="1" maxOccurs="1"/>
+				<xs:element name="Spacer" type="OptionType" minOccurs="1" maxOccurs="1"/>
+				<xs:element name="hcin" type="xs:double" minOccurs="1" maxOccurs="1"/>
+				<xs:element name="hcout" type="xs:double" minOccurs="1" maxOccurs="1"/>
+				<xs:element name="EmissivityIn" type="xs:double" minOccurs="1" maxOccurs="1"/>
+				<xs:element name="EmissivityOut" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="SingleLayer">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Thickness" type="xs:double"/>
+				<xs:element name="Conductivity" type="xs:double"/>
+				<xs:element ref="Options" minOccurs="4" maxOccurs="4"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="DoubleLayer">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Thickness1" type="xs:double"/>
+				<xs:element name="Thickness2" type="xs:double"/>
+				<xs:element name="Conductivity1" type="xs:double"/>
+				<xs:element name="Conductivity2" type="xs:double"/>
+				<xs:element ref="Options" minOccurs="4" maxOccurs="4"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="GlazingConductance">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Low" type="xs:double"/>
+				<xs:element name="High" type="xs:double"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="SpacerConductivity">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Low" type="xs:double"/>
+				<xs:element name="High" type="xs:double"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!-- Define the main complex type for the table -->
+	<xs:element name="Environment">
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="Tin" type="xs:double"/>
+				<xs:element name="Tout" type="xs:double"/>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="CMAData">
+		<xs:complexType>
+			<xs:all>
+			  <xs:element name="Version" type="xs:string" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="Environment" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="GlazingConductance" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="SpacerConductivity" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="SingleLayer" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="DoubleLayer" minOccurs="1" maxOccurs="1"/>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<InputBoundaryConditionsData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="BoundaryConditionsTimestep.xsd">
+  <Version>1</Version>
+  <Name>Comprehensive Natural Model Exterior</Name>
+  <BoundaryConditionTransient>
+		<HeatFluxTimestep>
+			<HeatFlux>20</HeatFlux>
+		</HeatFluxTimestep>
+		<HeatFluxTimestep>
+			<HeatFlux>20</HeatFlux>
+		</HeatFluxTimestep>
+		<HeatFluxTimestep>
+			<HeatFlux>20</HeatFlux>
+		</HeatFluxTimestep>
+		<HeatFluxTimestep>
+			<HeatFlux>20</HeatFlux>
+		</HeatFluxTimestep>
+		<HeatFluxTimestep>
+			<HeatFlux>20</HeatFlux>
+		</HeatFluxTimestep>
+  </BoundaryConditionTransient>
+</InputBoundaryConditionsData>

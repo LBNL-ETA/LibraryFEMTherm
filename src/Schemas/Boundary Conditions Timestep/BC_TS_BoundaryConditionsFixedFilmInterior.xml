@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<InputBoundaryConditionsData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="BoundaryConditionsTimestep.xsd">
+  <Version>1</Version>
+  <Name>Fixed Film Coefficient Interior</Name>
+  <BoundaryConditionTransient>		
+    <ConvectionTimesteps>
+      <FixedConvectionFilmTimestep>
+        <Temperature>21</Temperature>
+        <Humidity>0.0</Humidity>
+        <FilmCoefficient>1.5</FilmCoefficient>
+      </FixedConvectionFilmTimestep>
+      <FixedConvectionFilmTimestep>
+        <Temperature>20.5</Temperature>
+        <Humidity>0.0</Humidity>
+        <FilmCoefficient>1.4</FilmCoefficient>
+      </FixedConvectionFilmTimestep>
+      <FixedConvectionFilmTimestep>
+        <Temperature>20</Temperature>
+        <Humidity>0.0</Humidity>
+        <FilmCoefficient>1.4</FilmCoefficient>
+      </FixedConvectionFilmTimestep>
+      <FixedConvectionFilmTimestep>
+        <Temperature>19</Temperature>
+        <Humidity>0.0</Humidity>
+        <FilmCoefficient>1.8</FilmCoefficient>
+      </FixedConvectionFilmTimestep>
+      <FixedConvectionFilmTimestep>
+        <Temperature>18.5</Temperature>
+        <Humidity>0.0</Humidity>
+        <FilmCoefficient>2.4</FilmCoefficient>
+      </FixedConvectionFilmTimestep>
+    </ConvectionTimesteps>
+  </BoundaryConditionTransient>
+</InputBoundaryConditionsData>

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<InputBoundaryConditionsData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="BoundaryConditionsTimestep.xsd">
+  <Version>1</Version>
+  <Name>ASHRAE Interior</Name>
+  <BoundaryConditionTransient>		
+		<ConvectionTimesteps>
+			<ASHRAETimestepOutside>
+				<Temperature>21</Temperature>
+				<Humidity>0.1</Humidity>
+				<WindSpeed>0.15</WindSpeed>
+			</ASHRAETimestepOutside>
+			<ASHRAETimestepOutside>
+				<Temperature>20.5</Temperature>
+				<Humidity>0.1</Humidity>
+				<WindSpeed>0.15</WindSpeed>
+			</ASHRAETimestepOutside>
+			<ASHRAETimestepOutside>
+				<Temperature>20</Temperature>
+				<Humidity>0.1</Humidity>
+				<WindSpeed>0.15</WindSpeed>
+			</ASHRAETimestepOutside>
+		</ConvectionTimesteps>
+  </BoundaryConditionTransient>
+</InputBoundaryConditionsData>

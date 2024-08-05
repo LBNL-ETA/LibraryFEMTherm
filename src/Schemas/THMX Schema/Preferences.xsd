@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:include schemaLocation="Geometry.xsd" />
+	<!-- Enumeration definitions-->
+	<xs:simpleType name="UnitSystem">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="SI" />
+			<xs:enumeration value="IP" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="ConductivityUnits">
+		<xs:annotation>
+			<xs:documentation> This element defines the units used for thermal conductivity used
+				only in IP settings. Allowed values are: - "Btu/hr-ft-F" for British Thermal Units
+				per hour per foot per Fahrenheit, - "Btu-in/hr-ft2-F" for British Thermal Units per
+				inch per hour per square foot per Fahrenheit. </xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Btu/hr-ft-F" />
+			<xs:enumeration value="Btu-in/hr-ft2-F" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="UValueBasisType">
+		<xs:annotation>
+			<xs:documentation> This is selection of how U-value will be displayed on the results
+				screen by default. </xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Total length" />
+			<xs:enumeration value="X-projected" />
+			<xs:enumeration value="Y-projected" />
+			<xs:enumeration value="Custom" />
+			<xs:enumeration value="Glass rotation projected" />
+			<xs:enumeration value="Custom rotation projected" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="UnderlayType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Unknown" />
+			<xs:enumeration value="None" />
+			<xs:enumeration value="Bitmap" />
+			<xs:enumeration value="DXF" />
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Basic structures -->
+	<xs:complexType name="Underlay">
+		<xs:all>
+			<xs:element name="Name" type="xs:string" minOccurs="1" maxOccurs="1" />
+			<xs:element name="IsUnderlayOn" type="xs:boolean" minOccurs="1" maxOccurs="1" />
+			<xs:element name="UnitSystem" type="UnitSystem" minOccurs="0"
+				maxOccurs="1" default="SI" />
+			<xs:element name="Origin" type="Point" minOccurs="1" maxOccurs="1" />
+			<xs:element name="UnderlayType" type="UnderlayType" minOccurs="0" maxOccurs="1"
+				default="Bitmap" />
+			<xs:element name="HorizontalScale" type="xs:double" minOccurs="0"
+				maxOccurs="1" default="1" />
+			<xs:element name="VerticalScale" type="xs:double" minOccurs="0"
+				maxOccurs="1" default="1" />
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="Settings">
+		<xs:all>
+			<xs:element name="Origin" type="Point" minOccurs="1" maxOccurs="1" />
+			<xs:element name="Scale" type="xs:double" minOccurs="1" maxOccurs="1" default="1" />
+			<xs:element name="ConductivityUnits" type="ConductivityUnits" minOccurs="1"
+				maxOccurs="1" default="Btu/hr-ft-F" />
+			<xs:element name="UValueBasis" type="UValueBasisType" minOccurs="1" maxOccurs="1"
+				default="Y-projected" />
+			<xs:element name="CondensationResistanceModel" type="xs:boolean"
+				minOccurs="0" maxOccurs="1" default="false" />
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="Snap">
+		<xs:all>
+			<xs:element name="SnapToGrid" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SmartSnap" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SnapToUnderlay" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SnapToVertical" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SnapToHorizontal" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SnapToAngle" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="VerticalAndHorizontalLock" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="DrawGrid" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SnapAngle" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="GridWidth" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="GridHeight" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Origin" type="Point" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="Preferences">
+		<xs:sequence>
+			<xs:element name="Settings" type="Settings" minOccurs="1" maxOccurs="1" />
+			<xs:element name="Underlay" type="Underlay" minOccurs="1" maxOccurs="1" />
+			<xs:element name="Snap" type="Snap" minOccurs="1" maxOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>

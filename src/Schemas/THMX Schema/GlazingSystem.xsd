@@ -1,0 +1,163 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:simpleType name="EnvironmentalCondition">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Winter"/>
+			<xs:enumeration value="Summer"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="Position">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Interior"/>
+			<xs:enumeration value="Exterior"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="IGUBCStyle">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Combined"/>
+			<xs:enumeration value="Split"/>
+			<xs:enumeration value="BlackBody"/>
+			<xs:enumeration value="Enclosure"/>
+			<xs:enumeration value="Existing"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="EnvironmentCoefficients">
+		<xs:all>
+			<xs:element name="H" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Hc" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Hr" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Temperature" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="Coefficients">
+		<xs:all>
+			<xs:element name="Exterior" type="EnvironmentCoefficients" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Interior" type="EnvironmentCoefficients" minOccurs="0" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="GlazingSystemProperty">
+		<xs:sequence>
+			<xs:element name="EnvironmentalCondition" type="EnvironmentalCondition" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="BoundaryConditionStyle" type="IGUBCStyle" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="U-value" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Coefficients" type="Coefficients" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Solar" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="GlazingSystemProperties">
+		<xs:sequence>
+			<xs:element name="Property" type="GlazingSystemProperty" minOccurs="1" maxOccurs="2"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="IGUSurface">
+		<xs:all>
+			<xs:element name="Temperature" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Emissivity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="IGULayer">
+		<xs:all>
+			<xs:element name="ID" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Thickness" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Conductivity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Surface1" type="IGUSurface" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Surface2" type="IGUSurface" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="IGULayers">
+		<xs:sequence>
+			<xs:element name="Layer" type="IGULayer" minOccurs="1" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="IGUGasCoefficients">
+		<xs:all>
+			<xs:element name="A" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="B" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="C" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="IGUGasProperties">
+		<xs:all>
+			<xs:element name="Name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="MolecularWeight" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Conductivity" type="IGUGasCoefficients" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Viscosity" type="IGUGasCoefficients" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SpecificHeat" type="IGUGasCoefficients" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="IGUPureGas">
+		<xs:all>
+			<xs:element name="Fraction" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Properties" type="IGUGasProperties" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="IGUPureGases">
+		<xs:sequence>
+			<xs:element name="Component" type="IGUPureGas" minOccurs="1" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="IGUGas">
+		<xs:sequence>
+			<xs:element name="ID" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Thickness" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Conductivity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Components" type="IGUPureGases" minOccurs="0" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="IGUGases">
+		<xs:sequence>
+			<xs:element name="Gas" type="IGUGas" minOccurs="1" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ShadeProperties">
+		<xs:all>
+			<xs:element name="DBottom" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="DTop" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="DLeft" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="DRight" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="GapKeff" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="IGUShadeLayer">
+		<xs:all>
+			<xs:element name="Position" type="Position" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="EmissvityRatio" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="HcRatio" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Thickness" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="GapThickness" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="ModeledHeight" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Properties" type="ShadeProperties" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="GlazingOptions">
+		<xs:sequence>
+			<xs:element name="ID" type="xs:integer" minOccurs="1" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="GlazingSystem">
+		<xs:sequence>
+			<xs:element name="ID" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Index" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="GlazingSystemProperties" type="GlazingSystemProperties" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Layers" type="IGULayers" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Gases" type="IGUGases" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="ShadeLayers" type="IGUShadeLayer" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="ActualHeight" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Orientation" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="IsNominalThickness" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="InteriorBC" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="ExteriorBC" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="OptionFlag" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Source" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SiteLineHeight" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="EOGHeight" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SightLineToShadeEdge" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="IsDeflected" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="EdgeGlassTag" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="GlazingOptions" type="GlazingOptions" minOccurs="0" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>

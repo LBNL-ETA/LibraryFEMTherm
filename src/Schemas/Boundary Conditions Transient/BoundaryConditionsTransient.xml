@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BoundaryConditionsType xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="BoundaryConditionsTransient.xsd">
+	<Version>1</Version>
+	<BoundaryConditionType>
+		<UUID>8a0494b0-d5ba-11ea-87d0-0242ac130003</UUID>
+		<Name>Fixed film coefficient - Indoor</Name>
+		<Protected>true</Protected>
+		<BCType>Transient</BCType>
+		<BCModel>Neumann</BCModel>
+		<Convection>
+			<Model>Fixed Convection Coefficient</Model>
+		</Convection>
+		<UseHeatFlux>false</UseHeatFlux>
+		<UseTemperature>false</UseTemperature>
+		<UseHumidity>false</UseHumidity>
+		<Color>0xFF0000</Color>
+	</BoundaryConditionType>
+	<BoundaryConditionType>
+		<UUID>62618ab2-b946-11e9-a2a3-2a2ae2dbcce4</UUID>
+		<Name>Fixed film coefficient with fixed radiation coefficient</Name>
+		<Protected>true</Protected>
+		<BCType>Transient</BCType>
+		<BCModel>Neumann</BCModel>
+		<Convection>
+			<Model>Fixed Convection Coefficient</Model>
+		</Convection>
+		<Radiation>
+			<Model>Fixed Radiation Coefficient</Model>
+		</Radiation>
+		<UseHeatFlux>false</UseHeatFlux>
+		<UseTemperature>false</UseTemperature>
+		<UseHumidity>false</UseHumidity>
+		<Color>0xFF0000</Color>
+	</BoundaryConditionType>
+	<BoundaryConditionType>
+		<UUID>d5bea3f2-b241-11e9-a2a3-2a2ae2dbcce4</UUID>
+		<Name>ASHRAE Outside</Name>
+		<Protected>true</Protected>
+		<BCType>Transient</BCType>
+		<BCModel>Neumann</BCModel>
+		<Convection>
+			<Model>ASHRAE/NFRC Outside</Model>
+		</Convection>
+		<UseHeatFlux>false</UseHeatFlux>
+		<UseTemperature>false</UseTemperature>
+		<UseHumidity>false</UseHumidity>
+		<Color>0x0000FF</Color>
+	</BoundaryConditionType>
+	<BoundaryConditionType>
+		<UUID>d5bea8e8-b241-11e9-a2a3-2a2ae2dbcce4</UUID>
+		<Name>SteadyState Interior</Name>
+		<Protected>true</Protected>
+		<BCType>SteadyState</BCType>
+		<BCModel>Neumann</BCModel>
+		<Convection>
+			<Model>Fixed Convection Coefficient</Model>
+			<Temperature>22</Temperature>
+			<FilmCoefficient>2.5</FilmCoefficient>
+		</Convection>
+		<Radiation>
+			<Model>Automatic Enclosure</Model>
+			<Temperature>10</Temperature>
+			<SurfaceEmissivity>0.9</SurfaceEmissivity>
+			<ViewFactor>1</ViewFactor>
+		</Radiation>
+		<UseHeatFlux>false</UseHeatFlux>
+		<UseTemperature>false</UseTemperature>
+		<UseHumidity>false</UseHumidity>
+		<Color>0x00FF00</Color>
+	</BoundaryConditionType>
+	<BoundaryConditionType>
+		<UUID>47868197-d763-3152-c16f9b3f2374</UUID>
+		<Name>Fixed temperature and humidity</Name>
+		<Protected>false</Protected>
+		<BCType>Transient</BCType>
+		<BCModel>Dirichlet</BCModel>
+		<Convection>
+			<Model>ASHRAE/NFRC Outside</Model>
+		</Convection>
+		<UseHeatFlux>false</UseHeatFlux>
+		<UseTemperature>true</UseTemperature>
+		<UseHumidity>true</UseHumidity>
+		<Color>0xA6CAF0</Color>
+	</BoundaryConditionType>
+	<BoundaryConditionType>
+		<UUID>ce967c3c-9af6-660f-c2d546559065</UUID>
+		<Name>ASHRAE Inside Convection Only</Name>
+		<Protected>false</Protected>
+		<BCType>Transient</BCType>
+		<BCModel>Neumann</BCModel>
+		<Convection>
+			<Model>ASHRAE/NFRC Inside</Model>
+		</Convection>
+		<UseHeatFlux>false</UseHeatFlux>
+		<UseTemperature>false</UseTemperature>
+		<UseHumidity>false</UseHumidity>
+		<Color>0xFF0000</Color>
+	</BoundaryConditionType>
+	<BoundaryConditionType>
+		<UUID>c4f6b9dc-4d83-81af-50b7904f8323</UUID>
+		<Name>Constant Heat Flux Outside</Name>
+		<Protected>false</Protected>
+		<BCType>Transient</BCType>
+		<BCModel>Neumann</BCModel>
+		<Convection>
+			<Model>ASHRAE/NFRC Outside</Model>
+		</Convection>
+		<UseHeatFlux>true</UseHeatFlux>
+		<UseTemperature>false</UseTemperature>
+		<UseHumidity>false</UseHumidity>
+		<Color>0x0000FF</Color>
+	</BoundaryConditionType>
+	<BoundaryConditionType>
+		<UUID>e61711c8-da8a-2c2e-df7c3ba5cdcd</UUID>
+		<Name>Constant Heat Flux Inside</Name>
+		<Protected>false</Protected>
+		<BCType>Transient</BCType>
+		<BCModel>Neumann</BCModel>
+		<Convection>
+			<Model>ASHRAE/NFRC Outside</Model>
+		</Convection>
+		<UseHeatFlux>true</UseHeatFlux>
+		<UseTemperature>false</UseTemperature>
+		<UseHumidity>false</UseHumidity>
+		<Color>0xFF0000</Color>
+	</BoundaryConditionType>
+	<BoundaryConditionType>
+		<UUID>9ed9a69e-97d9-0ad5-fa0f26c411a0</UUID>
+		<Name>Fixed temperature</Name>
+		<Protected>false</Protected>
+		<BCType>Transient</BCType>
+		<BCModel>Dirichlet</BCModel>
+		<Convection>
+			<Model>ASHRAE/NFRC Outside</Model>
+		</Convection>
+		<UseHeatFlux>false</UseHeatFlux>
+		<UseTemperature>true</UseTemperature>
+		<UseHumidity>false</UseHumidity>
+		<Color>0xFFFF00</Color>
+	</BoundaryConditionType>
+	<BoundaryConditionType>
+		<UUID>ef02822f-b878-4d6c-0fe0feaf90a9</UUID>
+		<Name>Kimura Only</Name>
+		<Protected>false</Protected>
+		<BCType>Transient</BCType>
+		<BCModel>Neumann</BCModel>
+		<Convection>
+			<Model>Kimura</Model>
+		</Convection>
+		<UseHeatFlux>false</UseHeatFlux>
+		<UseTemperature>false</UseTemperature>
+		<UseHumidity>false</UseHumidity>
+		<Color>0xFF00FF</Color>
+	</BoundaryConditionType>
+	<BoundaryConditionType>
+		<UUID>46499ed8-4daa-957b-35e9040fd347</UUID>
+		<Name>Fixed film coefficient - Outdoor</Name>
+		<Protected>false</Protected>
+		<BCType>Transient</BCType>
+		<BCModel>Neumann</BCModel>
+		<Convection>
+			<Model>Fixed Convection Coefficient</Model>
+		</Convection>
+		<UseHeatFlux>false</UseHeatFlux>
+		<UseTemperature>false</UseTemperature>
+		<UseHumidity>false</UseHumidity>
+		<Color>0x0000FF</Color>
+	</BoundaryConditionType>
+</BoundaryConditionsType>

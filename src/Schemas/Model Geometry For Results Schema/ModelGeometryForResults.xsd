@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<!-- edited with XMLSpy v2018 sp1 (http://www.altova.com) by Simon Vidanovic (LBNL) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:complexType name="Material">
+		<xs:sequence>
+			<xs:element name="ID" type="xs:integer"/>
+			<xs:element name="Name" type="xs:string"/>
+			<xs:element name="Color" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="Material" type="Material"/>
+	<xs:complexType name="Materials">
+		<xs:sequence>
+			<xs:element ref="Material" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="Materials" type="Materials"/>
+	<xs:complexType name="Node">
+		<xs:sequence>
+			<xs:element name="ID" type="xs:integer"/>
+			<xs:element name="x" type="xs:double"/>
+			<xs:element name="y" type="xs:double"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="Node" type="Node"/>
+	<xs:complexType name="Nodes">
+		<xs:sequence>
+			<xs:element ref="Node" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="Nodes" type="Nodes"/>
+	<xs:complexType name="Element">
+		<xs:sequence>
+			<xs:element name="ID" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="NodeID" type="xs:integer" minOccurs="4" maxOccurs="4"/>
+			<xs:element name="MaterialID" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="Element" type="Element"/>
+	<xs:complexType name="Elements">
+		<xs:sequence>
+			<xs:element ref="Element" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="Elements" type="Elements"/>
+	<xs:complexType name="MaterialPolygon">
+		<xs:sequence>
+			<xs:element name="ID" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="MaterialID" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="NodeID" type="xs:integer" minOccurs="3" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="MaterialPolygon" type="MaterialPolygon"/>
+	<xs:complexType name="MaterialPolygons">
+		<xs:sequence>
+			<xs:element ref="MaterialPolygon" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="MaterialPolygons" type="MaterialPolygons"/>
+	<xs:element name="ModelEnclosure">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="NodeID" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="InputGeometryData">
+		<xs:sequence>
+		  <xs:element name="Version" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element ref="Materials"/>
+			<xs:element ref="Nodes"/>
+			<xs:element ref="Elements"/>
+			<xs:element ref="MaterialPolygons"/>
+			<xs:element ref="ModelEnclosure"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="InputGeometryData" type="InputGeometryData"/>
+</xs:schema>

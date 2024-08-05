@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<InputBoundaryConditionsData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="BoundaryConditionsTimestep.xsd">
+  <Version>1</Version>
+  <Name>Comprehensive Natural Model Exterior</Name>
+  <BoundaryConditionTransient>
+		<ConvectionTimesteps>
+			<ASHRAETimestepInside>
+				<Index>1</Index>
+				<Temperature>18</Temperature>
+				<Humidity>0.2</Humidity>
+			</ASHRAETimestepInside>
+			<ASHRAETimestepInside>
+				<Index>2</Index>
+				<Temperature>19.8</Temperature>
+				<Humidity>0.2</Humidity>
+			</ASHRAETimestepInside>
+			<ASHRAETimestepInside>
+				<Index>3</Index>
+				<Temperature>20</Temperature>
+				<Humidity>0.3</Humidity>
+			</ASHRAETimestepInside>
+			<ASHRAETimestepInside>
+				<Index>4</Index>
+				<Temperature>20</Temperature>
+				<Humidity>0.3</Humidity>
+			</ASHRAETimestepInside>
+			<ASHRAETimestepInside>
+				<Index>5</Index>
+				<Temperature>18.5</Temperature>
+				<Humidity>0.3</Humidity>
+			</ASHRAETimestepInside>
+		</ConvectionTimesteps>
+  </BoundaryConditionTransient>
+</InputBoundaryConditionsData>

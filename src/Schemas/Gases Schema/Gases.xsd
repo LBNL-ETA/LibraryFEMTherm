@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:complexType name="Coefficients">
+		<xs:all>
+			<xs:element name="A" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="B" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="C" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:element name="Coefficients" type="Coefficients"/>
+	<xs:complexType name="Record" abstract="true">
+		<xs:sequence>
+			<xs:element name="UUID" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Protected" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Properties">
+		<xs:all>
+			<xs:element name="MolecularWeight" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SpecificHeatRatio" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Conductivity" type="Coefficients" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Viscosity" type="Coefficients" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SpecificHeat" type="Coefficients" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="PureGas">
+		<xs:complexContent>
+			<xs:extension base="Record">
+				<xs:sequence>
+					<xs:element name="Properties" type="Properties" minOccurs="1" maxOccurs="1"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:element name="PureGas" type="PureGas"/>
+	<xs:complexType name="Component">
+		<xs:all>
+			<xs:element name="Fraction" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="PureGas" type="xs:string" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:element name="Component" type="Component"/>
+	<xs:complexType name="Components">
+		<xs:all>
+			<xs:element name="Component" type="Components" minOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:element name="Components" type="Components"/>
+	<xs:complexType name="Gas">
+		<xs:complexContent>
+			<xs:extension base="Record">
+				<xs:sequence>
+					<xs:element name="Components" minOccurs="1" maxOccurs="1"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:element name="Gas" type="Gas"/>
+	<xs:complexType name="Gases">
+        <xs:sequence>
+            <xs:element name="Version" type="xs:string" minOccurs="1" maxOccurs="1"/>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element ref="PureGas"/>
+                <xs:element ref="Gas"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+	<xs:element name="Gases" type="Gases"/>
+</xs:schema>

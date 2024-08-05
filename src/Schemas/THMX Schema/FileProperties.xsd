@@ -1,0 +1,285 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<!-- Enumeration types used for file properties only-->
+	<!-- Every enumerator here is hard coded and strings must match. Adding new types in it
+		will require changes in the code and also in the code logic since new functionality has been
+	added.-->
+	<xs:simpleType name="SimulationEngineOptions">
+		<xs:annotation>
+			<xs:documentation> Defines two calculation engines that are currently available in
+				THERM. - Conrad is older and can be used only for steady-state thermal simulations -
+				HygroThermFEM is newer and can be used for thermal and moisture steady-state and
+				transient simulations </xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Conrad" />
+			<xs:enumeration value="HygroThermFEM" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="CalculationModeType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Steady-State" />
+			<xs:enumeration value="Transient" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="MesherOptions">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="QuadTree Mesher" />
+			<xs:enumeration value="Simmetrix Version 2022" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="TransientCalculationMethodologyType">
+		<xs:annotation>
+			<xs:documentation> Defines how initial values at each node are specified. -
+				ValuesFromInputFile needs input file from which starting conditions will be defined.
+				- UseFirstTimestep will use first timestep values from the simulation. -
+				ConstantEverywhere is used to set up constant values in every node. </xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Values from input file" />
+			<xs:enumeration value="Use first timestep" />
+			<xs:enumeration value="Constant everywhere" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="SteadyStateCalculationMethodologyType">
+		<xs:annotation>
+			<xs:documentation> Defines the way steady-state calculation is performed. -
+				ssNoTimeVariable is classical way to perform steady-state simulation. -
+				ssFalseTransient will use transient simulation that will last long enough in order
+				to achieve steady state solution. </xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="No time variable" />
+			<xs:enumeration value="False transient" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="OrientationType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="North" />
+			<xs:enumeration value="East" />
+			<xs:enumeration value="South" />
+			<xs:enumeration value="West" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- Next few enumerators (ModelPurposeType, OpaqueAssemblyType, WindowCrossSectionType,
+	OpaqueCrossSectionType, OtherCrossSectionType)-->
+	<xs:simpleType name="ModelPurposeType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Window/Transparent Facade" />
+			<xs:enumeration value="Opaque Facade" />
+			<xs:enumeration value="Other" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- AssemblyType Enumeration for OpaqueAssemblyType -->
+	<xs:simpleType name="OpaqueAssemblyType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Wall" />
+			<xs:enumeration value="Roof" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- Enumeration for WindowCrossSectionType -->
+	<xs:simpleType name="WindowCrossSectionType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Sill" />
+			<xs:enumeration value="Jamb" />
+			<xs:enumeration value="Head" />
+			<xs:enumeration value="Horizontal Divider" />
+			<xs:enumeration value="Vertical Divider" />
+			<xs:enumeration value="Horizontal Meeting Rail" />
+			<xs:enumeration value="Vertical Meeting Rail" />
+			<xs:enumeration value="Common Frame" />
+			<xs:enumeration value="Spacer" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- Enumeration for OpaqueCrossSectionType -->
+	<xs:simpleType name="OpaqueCrossSectionType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Sill Plate" />
+			<xs:enumeration value="Header" />
+			<xs:enumeration value="End Section" />
+			<xs:enumeration value="Middle Section" />
+			<xs:enumeration value="Thermal Bridge" />
+			<xs:enumeration value="Window Framing - Sill" />
+			<xs:enumeration value="Rough Opening - Header" />
+			<xs:enumeration value="Rough Opening - Jamb" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- Enumeration for OtherCrossSectionType -->
+	<xs:simpleType name="OtherCrossSectionType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Common Thermal Bridge" />
+			<xs:enumeration value="General Cross Section" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- Gravity orientation relative to the screen-->
+	<xs:simpleType name="GravityOrientationType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Down" />
+			<xs:enumeration value="Up" />
+			<xs:enumeration value="Left" />
+			<xs:enumeration value="Right" />
+			<xs:enumeration value="Into Screen" />
+			<xs:enumeration value="Out Of Screen" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- Basic structures-->
+	<xs:complexType name="ConstantInitialConditionsType">
+		<xs:all>
+			<xs:element name="Temperature" type="xs:double" />
+			<xs:element name="Humidity" type="xs:double" />
+		</xs:all>
+	</xs:complexType>
+
+	<!-- Properties for on screen display in THERM-->
+	<xs:complexType name="ModelingOptionsType">
+		<xs:all>
+			<xs:element name="ExcludeWaterLiquidTransportation" type="xs:boolean" minOccurs="0"
+				default="false" />
+			<xs:element name="ExcludeHeatOfEvaporation" type="xs:boolean" minOccurs="0"
+				default="false" />
+			<xs:element name="ExcludeCapillaryConduction" type="xs:boolean" minOccurs="0"
+				default="false" />
+			<xs:element name="ExcludeVaporDiffusionConduction" type="xs:boolean" minOccurs="0"
+				default="false" />
+			<xs:element name="ExcludeLatentHeatOfFusion" type="xs:boolean" minOccurs="0"
+				default="true" />
+			<xs:element name="ExcludeThermalConductivityMoistureDependent" minOccurs="0"
+				type="xs:boolean" default="true" />
+			<xs:element name="ExcludeThermalConductivityTemperatureDependent" minOccurs="0"
+				type="xs:boolean" default="true" />
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="EngineParametersType">
+		<xs:all>
+			<xs:element name="ConvergenceTolerance" type="xs:double" minOccurs="0" default="1e-5" />
+			<xs:element name="RelaxationParameter" type="xs:double" minOccurs="0" default="1" />
+			<xs:element name="TimeStep" type="xs:double" minOccurs="0" default="3600" />
+			<xs:element name="NumberOfTimesteps" type="xs:integer" minOccurs="0" default="8670" />
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MeshControlType">
+		<xs:all>
+			<xs:element name="MeshType" type="MesherOptions" minOccurs="0"
+				default="Simmetrix Version 2022" />
+			<xs:element name="MeshParameter" type="xs:integer" />
+			<xs:element name="RunErrorEstimator" type="xs:boolean" minOccurs="0" default="true" />
+			<xs:element name="ErrorEnergyNorm" type="xs:double" minOccurs="0" default="10" />
+			<xs:element name="MaximumIterations" type="xs:integer" minOccurs="0" default="5" />
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="MiscellaneousPropertiesType">
+		<xs:all>
+			<xs:element name="RadianceMode" type="xs:boolean" minOccurs="0" default="false" />
+			<xs:element name="UseCRForGlazingSystem" type="xs:boolean" minOccurs="0" default="false" />
+			<xs:element name="CheckForCorrectBCOnGlazingSystem" type="xs:boolean" minOccurs="0"
+				default="false" />
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="HeatTransferModelingOptionsType">
+		<xs:all>
+			<xs:element name="AutomaticallyAdjustRelaxationParameter" type="xs:boolean"
+				minOccurs="0" default="true" />
+			<xs:element name="AdjustmentStep" type="xs:double" minOccurs="0" default="-0.01" />
+			<xs:element name="MaximumIterations" type="xs:integer" minOccurs="0" default="25" />
+			<xs:element name="ViewFactorSmoothing" type="xs:boolean" minOccurs="0" default="true" />
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="ModelOrientation">
+		<xs:all>
+			<xs:element name="Orientation" type="OrientationType" />
+			<xs:element name="CardinalOrientation" type="xs:double" />
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="GeneralType">
+		<xs:all>
+			<xs:element name="CalculationVersion" type="xs:string" minOccurs="0" default="" />
+			<xs:element name="FileName" type="xs:string" minOccurs="0" default="" />
+			<xs:element name="Directory" type="xs:string" minOccurs="0" default="" />
+			<xs:element name="CreationDate" type="xs:string" minOccurs="0" default="" />
+			<xs:element name="LastModified" type="xs:string" minOccurs="0" default="" />
+			<xs:element name="CreationVersion" type="xs:string" minOccurs="0" default="" />
+			<xs:element name="LastModifiedVersion" type="xs:string" minOccurs="0" default="" />
+			<xs:element name="Title" type="xs:string" minOccurs="0" default="" />
+			<xs:element name="CreatedBy" type="xs:string" minOccurs="0" default="" />
+			<xs:element name="Company" type="xs:string" minOccurs="0" default="" />
+			<xs:element name="Client" type="xs:string" minOccurs="0" default="" />
+			<xs:element name="Notes" type="xs:string" minOccurs="0" default="" />
+		</xs:all>
+	</xs:complexType>
+
+	<xs:complexType name="CalculationOptionsType">
+		<xs:all>
+			<xs:element name="SimulationEngine" type="SimulationEngineOptions" minOccurs="0"
+				default="HygroThermFEM" />
+			<xs:element name="CalculationMode" type="CalculationModeType" minOccurs="0"
+				default="Transient" />
+			<xs:element name="SimulateMoisture" type="xs:boolean" minOccurs="0" default="true" />
+			<xs:element name="SimulateThermal" type="xs:boolean" minOccurs="0" default="true" />
+			<xs:element name="ModelingOptions" type="ModelingOptionsType" minOccurs="1"
+				maxOccurs="1" />
+			<xs:element name="TransientCalculationMethodology"
+				type="TransientCalculationMethodologyType" minOccurs="0"
+				default="Constant everywhere" />
+			<xs:element name="SteadyStateCalculationMethodology"
+				type="SteadyStateCalculationMethodologyType" minOccurs="0"
+				default="No time variable" />
+			<xs:element name="ConstantInitialConditionsTransient"
+				type="ConstantInitialConditionsType" />
+			<xs:element name="ConstantInitialConditionsSteadyState"
+				type="ConstantInitialConditionsType" />
+			<!-- EngineParameters is defined as optional, which means that all of the default values
+			are inherited through EngineParametersType class-->
+			<xs:element name="EngineParameters" type="EngineParametersType" minOccurs="0" />
+			<!-- The MeshControl element is required because not all fields in MeshControlType have
+			default values. -->
+			<xs:element name="MeshControl" type="MeshControlType" />
+			<xs:element name="HeatTransferModelingOptions" type="HeatTransferModelingOptionsType"
+				minOccurs="0" />
+			<xs:element name="MiscellaneousProperties" type="MiscellaneousPropertiesType"
+				minOccurs="0" />
+		</xs:all>
+	</xs:complexType>
+
+	<xs:complexType name="ExposureType">
+		<xs:sequence>
+			<xs:element name="ModelPurpose" type="ModelPurposeType" />
+			<xs:choice>
+				<xs:element name="WindowCrossSection" type="WindowCrossSectionType" />
+				<xs:element name="OpaqueCrossSection" type="OpaqueCrossSectionType" />
+				<xs:element name="OtherCrossSection" type="OtherCrossSectionType" />
+			</xs:choice>
+			<xs:element name="AssemblyType" type="OpaqueAssemblyType" minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="ModelExposureType">
+		<xs:all>
+			<xs:element name="ModelOrientation" type="xs:double" minOccurs="0" default="0" />
+			<xs:element name="GravityOrientation" type="GravityOrientationType" />
+			<xs:element name="Exposure" type="ExposureType" />
+		</xs:all>
+	</xs:complexType>
+
+	<xs:complexType name="MiscellaneousType">
+		<xs:all>
+			<xs:element name="FloatTolerance" type="xs:double" default="0.02" />
+			<xs:element name="CheckingTolerance" type="xs:double" default="0.1" />
+		</xs:all>
+	</xs:complexType>
+
+	<xs:complexType name="Properties">
+		<xs:all>
+			<xs:element name="General" type="GeneralType" />
+			<xs:element name="CalculationOptions" type="CalculationOptionsType" />
+			<xs:element name="ModelExposure" type="ModelExposureType" />
+			<xs:element name="Miscellaneous" type="MiscellaneousType" />
+		</xs:all>
+	</xs:complexType>
+</xs:schema>

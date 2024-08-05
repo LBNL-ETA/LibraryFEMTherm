@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:include schemaLocation="Common.xsd"/>
+	<xs:complexType name="Node">
+		<xs:all>
+			<xs:element name="index" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="x" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="y" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="Nodes">
+		<xs:sequence>
+			<xs:element name="Node" type="Node" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Element">
+		<xs:all>
+			<xs:element name="index" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="node1" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="node2" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="node3" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="node4" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="materialID" type="xs:integer" minOccurs="0" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="Elements">
+		<xs:sequence>
+			<xs:element name="Element" type="Element" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Flux">
+		<xs:all>
+			<xs:element name="index" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="node1" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="node2" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="flux1" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="flux2" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="label" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="Fluxes">
+		<xs:sequence>
+			<xs:element name="Flux" type="Flux" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Temperature">
+		<xs:all>
+			<xs:element name="node" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="temperature" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="label" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="Temperatures">
+		<xs:sequence>
+			<xs:element name="Temperature" type="Temperature" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Convection">
+		<xs:all>
+			<xs:element name="index" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="node1" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="node2" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="filmCoefficient" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="temperature1" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="temperature2" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="label" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="Convections">
+		<xs:sequence>
+			<xs:element name="Convection" type="Convection" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Radiation">
+		<xs:all>
+			<xs:element name="index" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="node1" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="node2" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="filmCoefficient" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="temperature1" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="temperature2" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="Radiations">
+		<xs:sequence>
+			<xs:element name="Radiation" type="Radiation" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="RadiationEnclosure">
+		<xs:all>
+			<xs:element name="index" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="node1" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="node2" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="condCode" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="emissivity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="temperature" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="RadiationEnclosures">
+		<xs:sequence>
+			<xs:element name="RadiationEnclosure" type="RadiationEnclosure" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="BCSegment">
+		<xs:all>
+			<xs:element name="Fluxes" type="Fluxes" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Temperatures" type="Temperatures" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Convections" type="Convections" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Radiations" type="Radiations" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="RadiationEnclosures" type="RadiationEnclosures" minOccurs="0" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:complexType name="Case">
+		<xs:sequence>
+			<xs:element name="ModelType" type="ModelType" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="GlazingCase" type="CMACase" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="SpacerCase" type="CMACase" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Nodes" type="Nodes" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Elements" type="Elements" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="BCSegments" type="BCSegment" minOccurs="1" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="Mesh">
+		<xs:complexType>
+			<xs:sequence>
+			  <xs:element name="Version" type="xs:string" minOccurs="1" maxOccurs="1" />
+				<xs:element name="Case" type="Case" minOccurs="1" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
