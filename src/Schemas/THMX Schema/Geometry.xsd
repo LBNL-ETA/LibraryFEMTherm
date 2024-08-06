@@ -152,7 +152,6 @@
 			<xs:element name="Origin" type="Point" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="StartPoint" type="Point" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="EndPoint" type="Point" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="Points" type="Points" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="Side" type="xs:integer" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="ThermalEmissionProperties" type="ThermalEmissionProperties" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="ShadeData" type="ShadeData" minOccurs="0" maxOccurs="1"/>
