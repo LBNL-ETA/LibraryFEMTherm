@@ -230,7 +230,8 @@ namespace ThermFile
         node >> FileParse::Child{"IsBlocking", boundaryCondition.isBlocking};
         node >> FileParse::Child{"NeighborPolygonUUID", boundaryCondition.neighborPolygonUUID};
         node >> FileParse::Child{"Origin", boundaryCondition.origin};
-        node >> FileParse::Child{{"Points", "Point"}, boundaryCondition.points};
+        node >> FileParse::Child{"StartPoint", boundaryCondition.startPoint};
+        node >> FileParse::Child{"EndPoint", boundaryCondition.endPoint};
         node >> FileParse::Child{"Side", boundaryCondition.Side};
         node >> FileParse::Child{"ThermalEmissionProperties", boundaryCondition.thermalEmissionProperties};
         node >> FileParse::Child{"ShadeData", boundaryCondition.shadeData};
@@ -256,7 +257,8 @@ namespace ThermFile
         node << FileParse::Child{"IsBlocking", boundaryCondition.isBlocking};
         node << FileParse::Child{"NeighborPolygonUUID", boundaryCondition.neighborPolygonUUID};
         node << FileParse::Child{"Origin", boundaryCondition.origin};
-        node << FileParse::Child{{"Points", "Point"}, boundaryCondition.points};
+        node << FileParse::Child{"StartPoint", boundaryCondition.startPoint};
+        node << FileParse::Child{"EndPoint", boundaryCondition.endPoint};
         node << FileParse::Child{"Side", boundaryCondition.Side};
         node << FileParse::Child{"ThermalEmissionProperties", boundaryCondition.thermalEmissionProperties};
         node << FileParse::Child{"ShadeData", boundaryCondition.shadeData};

@@ -156,7 +156,8 @@ namespace ThermFile
         bool isBlocking{false};
         std::string neighborPolygonUUID;
         Point origin;
-        std::vector<Point> points;
+        Point startPoint;
+        Point endPoint;
         size_t Side{0u};
         ThermalEmissionProperties thermalEmissionProperties;
         std::optional<ShadeData> shadeData;

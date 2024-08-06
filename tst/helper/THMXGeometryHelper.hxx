@@ -215,7 +215,8 @@ namespace Helper
         std::string isBlocking;
         std::string neighborPolygonUUID;
         MockPointNode origin;
-        MockPoints points;
+        MockPointNode startPoint;
+        MockPointNode endPoint;
         std::string side;
         MockThermalEmissionProperties thermalEmissionProperties;
         MockShadeData shadeData;
@@ -235,7 +236,8 @@ namespace Helper
                                                std::string isBlocking,
                                                std::string neighborPolygonUUID,
                                                MockPointNode && origin,
-                                               MockPoints && points,
+                                               MockPointNode && startPoint,
+                                               MockPointNode && endPoint,
                                                std::string side,
                                                MockThermalEmissionProperties && thermalEmissionProperties,
                                                MockShadeData && shadeData,
