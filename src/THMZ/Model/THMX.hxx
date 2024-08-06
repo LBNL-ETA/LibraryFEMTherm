@@ -16,7 +16,7 @@ namespace ThermFile
         Point glazingOrigin;
         std::vector<Cavity> cavities;
         std::vector<Polygon> polygons;
-        std::vector<BoundaryCondition> boundaryConditions;
+        std::vector<Boundary> boundaryConditions;
         std::vector<GlazingSystem> glazingSystems;
         std::optional<CMAData> cmaData;
     };

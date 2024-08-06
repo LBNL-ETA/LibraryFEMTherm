@@ -147,7 +147,7 @@ namespace ThermFile
     //! @typeRecordUUID - type record UUID of the boundary condition.
     //! @geometrySpecification - geometry specification of the boundary condition.
     //! @EdgeID - unique identifier of the edge.
-    struct BoundaryCondition
+    struct Boundary
     {
         size_t ID{0u};
         std::string uuid;

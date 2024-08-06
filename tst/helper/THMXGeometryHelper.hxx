@@ -33,8 +33,8 @@ namespace Helper
     void
       expect_near(const ThermFile::TransientData & expected, const ThermFile::TransientData & actual, double tolerance);
 
-    void expect_near(const ThermFile::BoundaryCondition & expected,
-                     const ThermFile::BoundaryCondition & actual,
+    void expect_near(const ThermFile::Boundary & expected,
+                     const ThermFile::Boundary & actual,
                      double tolerance);
 
     struct MockPointNode
@@ -249,6 +249,6 @@ namespace Helper
                                                std::string status);
     };
 
-    Helper::MockNode generateBoundaryConditionNode(MockBoundaryCondition && boundaryCondition);
+    Helper::MockNode generateBoundaryNode(MockBoundaryCondition && boundaryCondition);
 
 }   // namespace Helper

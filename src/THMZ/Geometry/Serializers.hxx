@@ -221,7 +221,7 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, BoundaryCondition & boundaryCondition)
+    const NodeAdapter & operator>>(const NodeAdapter & node, Boundary & boundaryCondition)
     {
         node >> FileParse::Child{"ID", boundaryCondition.ID};
         node >> FileParse::Child{"UUID", boundaryCondition.uuid};
@@ -247,7 +247,7 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const BoundaryCondition & boundaryCondition)
+    NodeAdapter & operator<<(NodeAdapter & node, const Boundary & boundaryCondition)
     {
         node << FileParse::Child{"ID", boundaryCondition.ID};
         node << FileParse::Child{"UUID", boundaryCondition.uuid};

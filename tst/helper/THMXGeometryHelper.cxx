@@ -113,8 +113,8 @@ namespace Helper
         }
     }
 
-    void expect_near(const ThermFile::BoundaryCondition & expected,
-                     const ThermFile::BoundaryCondition & actual,
+    void expect_near(const ThermFile::Boundary & expected,
+                     const ThermFile::Boundary & actual,
                      const double tolerance)
     {
         EXPECT_EQ(expected.ID, actual.ID);
@@ -445,9 +445,9 @@ namespace Helper
         status(std::move(status))
     {}
 
-    Helper::MockNode generateBoundaryConditionNode(MockBoundaryCondition && boundaryCondition)
+    Helper::MockNode generateBoundaryNode(MockBoundaryCondition && boundaryCondition)
     {
-        Helper::MockNode node{"BoundaryCondition"};
+        Helper::MockNode node{"Boundary"};
         addChildNode(node, "ID", boundaryCondition.id);
         addChildNode(node, "UUID", boundaryCondition.uuid);
         addChildNode(node, "Name", boundaryCondition.name);

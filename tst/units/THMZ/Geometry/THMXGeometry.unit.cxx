@@ -409,7 +409,7 @@ TEST_F(TestTHMXGeometry, TransientDataSerialization)
 
 TEST_F(TestTHMXGeometry, BoundaryConditionDeserialization)
 {
-    auto node{Helper::generateBoundaryConditionNode(
+    auto node{Helper::generateBoundaryNode(
       {"14",
        "Some UUID",
        "Some Name",
@@ -431,67 +431,66 @@ TEST_F(TestTHMXGeometry, BoundaryConditionDeserialization)
        "4"})};
     const Helper::MockNodeAdapter adapter{&node};
 
-    ThermFile::BoundaryCondition boundaryCondition;
+    ThermFile::Boundary boundaryCondition;
     adapter >> boundaryCondition;
 
-    ThermFile::BoundaryCondition correctBoundaryCondition{
-      14u,
-      "Some UUID",
-      "Some Name",
-      "Some Flux Tag",
-      true,
-      "Some Neighbor Polygon UUID",
-      {20.0, 0.5},
-      {{20.0, 0.5}, {25.0, 0.6}, {30.0, 0.7}},
-      1u,
-      {0.9, 20.0, true},
-      ThermFile::ShadeData{ThermFile::ShadeModifier::Interior, 125},
-      true,
-      std::nullopt,
-      ThermFile::TransientData{"7a863ad6-c537-11ea-87d0-0242ac130003",
-                               "SomeFileName",
-                               ThermFile::SurfaceData{45.0, 2000.0},
-                               ThermFile::BuildingData{25.0, 10.0}},
-      2u,
-      std::nullopt,
-      ThermFile::SurfaceType::BoundaryCondition,
-      "OxFF0000",
-      4};
+    ThermFile::Boundary correctBoundaryCondition{14u,
+                                                 "Some UUID",
+                                                 "Some Name",
+                                                 "Some Flux Tag",
+                                                 true,
+                                                 "Some Neighbor Polygon UUID",
+                                                 {20.0, 0.5},
+                                                 {{20.0, 0.5}, {25.0, 0.6}, {30.0, 0.7}},
+                                                 1u,
+                                                 {0.9, 20.0, true},
+                                                 ThermFile::ShadeData{ThermFile::ShadeModifier::Interior, 125},
+                                                 true,
+                                                 std::nullopt,
+                                                 ThermFile::TransientData{"7a863ad6-c537-11ea-87d0-0242ac130003",
+                                                                          "SomeFileName",
+                                                                          ThermFile::SurfaceData{45.0, 2000.0},
+                                                                          ThermFile::BuildingData{25.0, 10.0}},
+                                                 2u,
+                                                 std::nullopt,
+                                                 ThermFile::SurfaceType::BoundaryCondition,
+                                                 "OxFF0000",
+                                                 4};
 
     Helper::expect_near(correctBoundaryCondition, boundaryCondition, 1e-6);
 }
 
 TEST_F(TestTHMXGeometry, BoundaryConditionSerialization)
 {
-    ThermFile::BoundaryCondition boundaryCondition{14u,
-                                                   "Some UUID",
-                                                   "Some Name",
-                                                   "Some Flux Tag",
-                                                   true,
-                                                   "Some Neighbor Polygon UUID",
-                                                   {20.0, 0.5},
-                                                   {{20.0, 0.5}, {25.0, 0.6}, {30.0, 0.7}},
-                                                   1u,
-                                                   {0.9, 20.0, true},
-                                                   ThermFile::ShadeData{ThermFile::ShadeModifier::Interior, 125},
-                                                   true,
-                                                   std::nullopt,
-                                                   ThermFile::TransientData{"7a863ad6-c537-11ea-87d0-0242ac130003",
-                                                                            "SomeFileName",
-                                                                            ThermFile::SurfaceData{45.0, 2000.0},
-                                                                            ThermFile::BuildingData{25.0, 10.0}},
-                                                   2u,
-                                                   std::nullopt,
-                                                   ThermFile::SurfaceType::BoundaryCondition,
-                                                   "OxFF0000",
-                                                   5};
+    ThermFile::Boundary boundaryCondition{14u,
+                                          "Some UUID",
+                                          "Some Name",
+                                          "Some Flux Tag",
+                                          true,
+                                          "Some Neighbor Polygon UUID",
+                                          {20.0, 0.5},
+                                          {{20.0, 0.5}, {25.0, 0.6}, {30.0, 0.7}},
+                                          1u,
+                                          {0.9, 20.0, true},
+                                          ThermFile::ShadeData{ThermFile::ShadeModifier::Interior, 125},
+                                          true,
+                                          std::nullopt,
+                                          ThermFile::TransientData{"7a863ad6-c537-11ea-87d0-0242ac130003",
+                                                                   "SomeFileName",
+                                                                   ThermFile::SurfaceData{45.0, 2000.0},
+                                                                   ThermFile::BuildingData{25.0, 10.0}},
+                                          2u,
+                                          std::nullopt,
+                                          ThermFile::SurfaceType::BoundaryCondition,
+                                          "OxFF0000",
+                                          5};
 
-    Helper::MockNode node{"BoundaryCondition"};
+    Helper::MockNode node{"Boundary"};
     Helper::MockNodeAdapter adapter{&node};
 
     adapter << boundaryCondition;
 
-    auto correctNode{Helper::generateBoundaryConditionNode(
+    auto correctNode{Helper::generateBoundaryNode(
       {"14",
        "Some UUID",
        "Some Name",

@@ -223,7 +223,7 @@ namespace Helper
                                                 "Glass"});
         }
 
-        ThermFile::BoundaryCondition bc1()
+        ThermFile::Boundary bc1()
         {
             return {14u,
                     "Some UUID",
@@ -251,32 +251,31 @@ namespace Helper
 
         Helper::MockNode mockBC1()
         {
-            return Helper::generateBoundaryConditionNode(
-              {"14",
-               "Some UUID",
-               "Some Name",
-               "Some Flux Tag",
-               "true",
-               "Some Neighbor Polygon UUID",
-               {"20", "0.5"},
-               {{"20", "0.5"}, {"25", "0.6"}, {"30", "0.7"}},
-               "1",
-               {"0.9", "20", "true"},
-               {"Interior", "125"},
-               "true",
-               "",
-               Helper::MockTransientData{"7a863ad6-c537-11ea-87d0-0242ac130003",
-                                         "SomeFileName",
-                                         Helper::MockSurfaceData{"45", "2000"},
-                                         Helper::MockBuildingData{"25", "10"}},
-               "2",
-               "",
-               "Boundary Condition",
-               "0xFF0000",
-               "7"});
+            return Helper::generateBoundaryNode({"14",
+                                                 "Some UUID",
+                                                 "Some Name",
+                                                 "Some Flux Tag",
+                                                 "true",
+                                                 "Some Neighbor Polygon UUID",
+                                                 {"20", "0.5"},
+                                                 {{"20", "0.5"}, {"25", "0.6"}, {"30", "0.7"}},
+                                                 "1",
+                                                 {"0.9", "20", "true"},
+                                                 {"Interior", "125"},
+                                                 "true",
+                                                 "",
+                                                 Helper::MockTransientData{"7a863ad6-c537-11ea-87d0-0242ac130003",
+                                                                           "SomeFileName",
+                                                                           Helper::MockSurfaceData{"45", "2000"},
+                                                                           Helper::MockBuildingData{"25", "10"}},
+                                                 "2",
+                                                 "",
+                                                 "Boundary Condition",
+                                                 "0xFF0000",
+                                                 "7"});
         }
 
-        ThermFile::BoundaryCondition bc2()
+        ThermFile::Boundary bc2()
         {
             return {15u,
                     "Some other UUID",
@@ -304,7 +303,7 @@ namespace Helper
 
         Helper::MockNode mockBC2()
         {
-            return Helper::generateBoundaryConditionNode(
+            return Helper::generateBoundaryNode(
               {"15",
                "Some other UUID",
                "Some other Name",
@@ -340,7 +339,7 @@ namespace Helper
             const auto glazingOrigin{ThermFile::Point{0.3, 1.8}};
             std::vector<ThermFile::Cavity> cavities{cavity1(), cavity2()};
             std::vector<ThermFile::Polygon> polygons{polygon1(), polygon2()};
-            std::vector<ThermFile::BoundaryCondition> bcs{bc1(), bc2()};
+            std::vector<ThermFile::Boundary> bcs{bc1(), bc2()};
 
             return {"1", false, preferences, properties, glazingOrigin, cavities, polygons, bcs};
         }
@@ -372,7 +371,7 @@ namespace Helper
             addChildNode(polygonsNode, mockPolygon1());
             addChildNode(polygonsNode, mockPolygon2());
 
-            auto & bcsNode{addChildNode(node, "BoundaryConditions")};
+            auto & bcsNode{addChildNode(node, "Boundaries")};
             addChildNode(bcsNode, mockBC1());
             addChildNode(bcsNode, mockBC2());
 
