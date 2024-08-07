@@ -61,6 +61,32 @@ TEST_F(TestMesh, EdgeResultsSerialization)
     EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), Helper::generateMockEdgeResultsNode(correctNode)));
 }
 
+TEST_F(TestMesh, TagNodesDeserialization)
+{
+    Helper::MockTagNodes node{"Frame", {"1", "2", "3"}};
+    auto caseTagNode(Helper::generateMockTagNodes(node));
+    const Helper::MockNodeAdapter adapter{&caseTagNode};
+
+    ThermFile::TagNodes caseTagResults;
+    adapter >> caseTagResults;
+
+    ThermFile::TagNodes correctCaseTagResults{"Frame", {1u, 2u, 3u}};
+    Helper::expect_eq(correctCaseTagResults, caseTagResults);
+}
+
+TEST_F(TestMesh, TagNodesSerialization)
+{
+    ThermFile::TagNodes caseTagResults{"Frame", {14u, 21u, 43u}};
+
+    Helper::MockNode node{"Case"};
+    Helper::MockNodeAdapter adapter{&node};
+
+    adapter << caseTagResults;
+
+    Helper::MockTagNodes correctNode{"Frame", {"14", "21", "43"}};
+    EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), Helper::generateMockTagNodes(correctNode)));
+}
+
 TEST_F(TestMesh, MeshCaseResultsDeserialization)
 {
     Helper::MockCaseMeshResults node{"U-factor", {{"1", "12.38", "1.29", "0.12"}, {"2", "13.38", "2.29", "1.12"}}};

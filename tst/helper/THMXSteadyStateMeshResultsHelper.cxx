@@ -23,6 +23,16 @@ namespace Helper
         EXPECT_NEAR(expected.heatRate, actual.heatRate, tolerance);
     }
 
+    void expect_eq(const ThermFile::TagNodes & expected, const ThermFile::TagNodes & actual)
+    {
+        EXPECT_EQ(expected.tag, actual.tag);
+        ASSERT_EQ(expected.nodes.size(), actual.nodes.size());
+        for(size_t i = 0; i < expected.nodes.size(); ++i)
+        {
+            EXPECT_EQ(expected.nodes[i], actual.nodes[i]);
+        }
+    }
+
     void expect_near(const ThermFile::CaseMeshResults & expected,
                      const ThermFile::CaseMeshResults & actual,
                      double tolerance)
@@ -57,6 +67,24 @@ namespace Helper
         addChildNode(node, "Temperature", resultsNode.temperature);
         addChildNode(node, "X-flux", resultsNode.xFlux);
         addChildNode(node, "Y-flux", resultsNode.yFlux);
+
+        return node;
+    }
+
+    MockTagNodes::MockTagNodes(std::string tag, std::vector<std::string> nodes) :
+        tag(std::move(tag)), nodes(std::move(nodes))
+    {}
+
+    Helper::MockNode generateMockTagNodes(const MockTagNodes & results)
+    {
+        Helper::MockNode node{"Case"};
+        addChildNode(node, "Tag", results.tag);
+        auto & nodesNode = addChildNode(node, "Nodes");
+
+        for(const auto & nodeCase : results.nodes)
+        {
+            addChildNode(nodesNode, "Node", nodeCase);
+        }
 
         return node;
     }

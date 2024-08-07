@@ -4,6 +4,7 @@ namespace ThermFile
 {
     struct NodeResults;
     struct EdgeResults;
+    struct TagNodes;
     struct CaseMeshResults;
     struct MeshResults;
 }   // namespace ThermFile
@@ -15,6 +16,8 @@ namespace Helper
     void expect_near(const ThermFile::NodeResults & expected, const ThermFile::NodeResults & actual, double tolerance);
 
     void expect_near(const ThermFile::EdgeResults & expected, const ThermFile::EdgeResults & actual, double tolerance);
+
+    void expect_eq(const ThermFile::TagNodes & expected, const ThermFile::TagNodes & actual);
 
     void expect_near(const ThermFile::CaseMeshResults & expected,
                      const ThermFile::CaseMeshResults & actual,
@@ -53,6 +56,16 @@ namespace Helper
     };
 
     Helper::MockNode generateMockEdgeResultsNode(const MockEdgeResultsNode & resultsNode);
+
+    struct MockTagNodes
+    {
+        std::string tag;
+        std::vector<std::string> nodes;
+
+        [[maybe_unused]] MockTagNodes(std::string tag, std::vector<std::string> nodes);
+    };
+
+    Helper::MockNode generateMockTagNodes(const MockTagNodes & results);
 
     struct MockCaseMeshResults
     {

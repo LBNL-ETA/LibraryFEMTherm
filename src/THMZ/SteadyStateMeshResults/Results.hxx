@@ -25,6 +25,14 @@ namespace ThermFile
         double heatRate{0.0};
     };
 
+    //! Structure to hold the edge results for a given surface tag.
+    //! It is used in calculations for the condensation resistance.
+    struct TagNodes
+    {
+        std::string tag;
+        std::vector<size_t> nodes;
+    };
+
     struct CaseMeshResults
     {
         std::optional<RunType> resultsType;
@@ -40,5 +48,6 @@ namespace ThermFile
     {
         std::string version{"1"};
         std::vector<CaseMeshResults> cases;
+        std::vector<TagNodes> tagNodes;
     };
-}
+}   // namespace ThermFile

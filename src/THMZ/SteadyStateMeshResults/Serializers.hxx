@@ -57,6 +57,24 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, TagNodes & caseTagResults)
+    {
+        node >> FileParse::Child{"Tag", caseTagResults.tag};
+        node >> FileParse::Child{{"Nodes", "Node"}, caseTagResults.nodes};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline NodeAdapter & operator<<(NodeAdapter & node, const TagNodes & caseTagResults)
+    {
+        node << FileParse::Child{"Tag", caseTagResults.tag};
+        node << FileParse::Child{{"Nodes", "Node"}, caseTagResults.nodes};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
     inline const NodeAdapter & operator>>(const NodeAdapter & node, CaseMeshResults & caseMeshResults)
     {
         node >> FileParse::Child{"ResultsType", caseMeshResults.resultsType};
@@ -89,6 +107,7 @@ namespace ThermFile
     {
         node >> FileParse::Child{"Version", meshResults.version};
         node >> FileParse::Child{"Case", meshResults.cases};
+        node >> FileParse::Child{{"NodeTags", "Case"}, meshResults.tagNodes};
 
         return node;
     }
@@ -98,6 +117,7 @@ namespace ThermFile
     {
         node << FileParse::Child{"Version", meshResults.version};
         node << FileParse::Child{"Case", meshResults.cases};
+        node << FileParse::Child{{"NodeTags", "Case"}, meshResults.tagNodes};
 
         return node;
     }
