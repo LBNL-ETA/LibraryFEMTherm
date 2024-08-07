@@ -29,8 +29,16 @@ namespace ThermFile
     //! It is used in calculations for the condensation resistance.
     struct TagNodes
     {
-        std::string tag;
+        std::string name;
         std::vector<size_t> nodes;
+    };
+
+    struct TagNodesCase
+    {
+        std::optional<RunType> resultsType;
+        std::optional<CMACase> glazingCase;
+        std::optional<CMACase> spacerCase;
+        std::vector<TagNodes> tagNodes;
     };
 
     struct CaseMeshResults
@@ -48,6 +56,6 @@ namespace ThermFile
     {
         std::string version{"1"};
         std::vector<CaseMeshResults> cases;
-        std::vector<TagNodes> tagNodes;
+        std::vector<TagNodesCase> tagNodes;
     };
 }   // namespace ThermFile

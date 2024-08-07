@@ -59,7 +59,7 @@ namespace ThermFile
     template<typename NodeAdapter>
     inline const NodeAdapter & operator>>(const NodeAdapter & node, TagNodes & caseTagResults)
     {
-        node >> FileParse::Child{"Tag", caseTagResults.tag};
+        node >> FileParse::Child{"Name", caseTagResults.name};
         node >> FileParse::Child{{"Nodes", "Node"}, caseTagResults.nodes};
 
         return node;
@@ -68,8 +68,30 @@ namespace ThermFile
     template<typename NodeAdapter>
     inline NodeAdapter & operator<<(NodeAdapter & node, const TagNodes & caseTagResults)
     {
-        node << FileParse::Child{"Tag", caseTagResults.tag};
+        node << FileParse::Child{"Name", caseTagResults.name};
         node << FileParse::Child{{"Nodes", "Node"}, caseTagResults.nodes};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, TagNodesCase & tagNodesCase)
+    {
+        node >> FileParse::Child{"ResultsType", tagNodesCase.resultsType};
+        node >> FileParse::Child{"GlazingCase", tagNodesCase.glazingCase};
+        node >> FileParse::Child{"SpacerCase", tagNodesCase.spacerCase};
+        node >> FileParse::Child{"Tag", tagNodesCase.tagNodes};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline NodeAdapter & operator<<(NodeAdapter & node, const TagNodesCase & tagNodesCase)
+    {
+        node << FileParse::Child{"ResultsType", tagNodesCase.resultsType};
+        node << FileParse::Child{"GlazingCase", tagNodesCase.glazingCase};
+        node << FileParse::Child{"SpacerCase", tagNodesCase.spacerCase};
+        node << FileParse::Child{"Tag", tagNodesCase.tagNodes};
 
         return node;
     }
@@ -107,7 +129,7 @@ namespace ThermFile
     {
         node >> FileParse::Child{"Version", meshResults.version};
         node >> FileParse::Child{"Case", meshResults.cases};
-        node >> FileParse::Child{"TagNodes", meshResults.tagNodes};
+        node >> FileParse::Child{"TagNodesCase", meshResults.tagNodes};
 
         return node;
     }
@@ -117,7 +139,7 @@ namespace ThermFile
     {
         node << FileParse::Child{"Version", meshResults.version};
         node << FileParse::Child{"Case", meshResults.cases};
-        node << FileParse::Child{"TagNodes", meshResults.tagNodes};
+        node << FileParse::Child{"TagNodesCase", meshResults.tagNodes};
 
         return node;
     }

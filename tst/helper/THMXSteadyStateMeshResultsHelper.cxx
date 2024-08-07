@@ -4,6 +4,7 @@
 
 #include "THMZ/SteadyStateMeshResults/Results.hxx"
 #include "MockNodeAdapter.hxx"
+#include "HelperUtility.hxx"
 
 namespace Helper
 {
@@ -25,11 +26,24 @@ namespace Helper
 
     void expect_eq(const ThermFile::TagNodes & expected, const ThermFile::TagNodes & actual)
     {
-        EXPECT_EQ(expected.tag, actual.tag);
+        EXPECT_EQ(expected.name, actual.name);
         ASSERT_EQ(expected.nodes.size(), actual.nodes.size());
         for(size_t i = 0; i < expected.nodes.size(); ++i)
         {
             EXPECT_EQ(expected.nodes[i], actual.nodes[i]);
+        }
+    }
+
+    void expect_eq(const ThermFile::TagNodesCase & expected, const ThermFile::TagNodesCase & actual)
+    {
+        Helper::assertOptionalEq(expected.resultsType, actual.resultsType);
+        Helper::assertOptionalEq(expected.glazingCase, actual.glazingCase);
+        Helper::assertOptionalEq(expected.spacerCase, actual.spacerCase);
+
+        ASSERT_EQ(expected.tagNodes.size(), actual.tagNodes.size());
+        for(size_t i = 0; i < expected.tagNodes.size(); ++i)
+        {
+            expect_eq(expected.tagNodes[i], actual.tagNodes[i]);
         }
     }
 
@@ -76,14 +90,14 @@ namespace Helper
         return node;
     }
 
-    MockTagNodes::MockTagNodes(std::string tag, std::vector<std::string> nodes) :
-        tag(std::move(tag)), nodes(std::move(nodes))
+    MockTagNodes::MockTagNodes(std::string name, std::vector<std::string> nodes) :
+        name(std::move(name)), nodes(std::move(nodes))
     {}
 
     Helper::MockNode generateMockTagNodes(const MockTagNodes & results)
     {
-        Helper::MockNode node{"TagNodes"};
-        addChildNode(node, "Tag", results.tag);
+        Helper::MockNode node{"Tag"};
+        addChildNode(node, "Name", results.name);
         auto & nodesNode = addChildNode(node, "Nodes");
 
         for(const auto & nodeCase : results.nodes)
@@ -133,9 +147,34 @@ namespace Helper
         return node;
     }
 
+    Helper::MockNode generateMockTagNodesCase(const MockTagNodesCase & results)
+    {
+        Helper::MockNode node{"TagNodesCase"};
+        addChildNodeIfNotEmpty(node, "ResultsType", results.resultsType);
+        addChildNodeIfNotEmpty(node, "GlazingCase", results.glazingCase);
+        addChildNodeIfNotEmpty(node, "SpacerCase", results.spacerCase);
+
+        for(const auto & tagNodes : results.tagNodes)
+        {
+            addChildNode(node, generateMockTagNodes(tagNodes));
+        }
+
+        return node;
+    }
+
+    MockTagNodesCase::MockTagNodesCase(std::string resultsType,
+                                       std::string glazingCase,
+                                       std::string spacerCase,
+                                       std::vector<MockTagNodes> tagNodes) :
+        resultsType{std::move(resultsType)},
+        glazingCase{std::move(glazingCase)},
+        spacerCase{std::move(spacerCase)},
+        tagNodes{std::move(tagNodes)}
+    {}
+
     MockMeshResults::MockMeshResults(std::string version,
                                      std::vector<MockCaseMeshResults> cases,
-                                     std::vector<MockTagNodes> tagNodes) :
+                                     std::vector<MockTagNodesCase> tagNodes) :
         version{std::move(version)}, cases{std::move(cases)}, tagNodes{std::move(tagNodes)}
     {}
 
@@ -152,7 +191,7 @@ namespace Helper
 
         for(const auto & tagNodes : results.tagNodes)
         {
-            addChildNode(node, generateMockTagNodes(tagNodes));
+            addChildNode(node, generateMockTagNodesCase(tagNodes));
         }
 
         return node;

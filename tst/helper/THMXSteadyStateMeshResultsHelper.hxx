@@ -5,6 +5,7 @@ namespace ThermFile
     struct NodeResults;
     struct EdgeResults;
     struct TagNodes;
+    struct TagNodesCase;
     struct CaseMeshResults;
     struct MeshResults;
 }   // namespace ThermFile
@@ -18,6 +19,8 @@ namespace Helper
     void expect_near(const ThermFile::EdgeResults & expected, const ThermFile::EdgeResults & actual, double tolerance);
 
     void expect_eq(const ThermFile::TagNodes & expected, const ThermFile::TagNodes & actual);
+
+    void expect_eq(const ThermFile::TagNodesCase & expected, const ThermFile::TagNodesCase & actual);
 
     void expect_near(const ThermFile::CaseMeshResults & expected,
                      const ThermFile::CaseMeshResults & actual,
@@ -56,13 +59,28 @@ namespace Helper
 
     struct MockTagNodes
     {
-        std::string tag;
+        std::string name;
         std::vector<std::string> nodes;
 
-        [[maybe_unused]] MockTagNodes(std::string tag, std::vector<std::string> nodes);
+        [[maybe_unused]] MockTagNodes(std::string name, std::vector<std::string> nodes);
     };
 
     Helper::MockNode generateMockTagNodes(const MockTagNodes & results);
+
+    struct MockTagNodesCase
+    {
+        std::string resultsType;
+        std::string glazingCase;
+        std::string spacerCase;
+        std::vector<MockTagNodes> tagNodes;
+
+        [[maybe_unused]] MockTagNodesCase(std::string resultsType,
+                                          std::string glazingCase,
+                                          std::string spacerCase,
+                                          std::vector<MockTagNodes> tagNodes);
+    };
+
+    Helper::MockNode generateMockTagNodesCase(const MockTagNodesCase & results);
 
     struct MockCaseMeshResults
     {
@@ -78,11 +96,11 @@ namespace Helper
     {
         std::string version;
         std::vector<MockCaseMeshResults> cases;
-        std::vector<MockTagNodes> tagNodes;
+        std::vector<MockTagNodesCase> tagNodes;
 
         [[maybe_unused]] explicit MockMeshResults(std::string version,
                                                   std::vector<MockCaseMeshResults> cases,
-                                                  std::vector<MockTagNodes> tagNodes);
+                                                  std::vector<MockTagNodesCase> tagNodes);
     };
 
     Helper::MockNode generateMockMeshResults(const MockMeshResults & results);
