@@ -78,7 +78,7 @@ TEST_F(TestMesh, TagNodesSerialization)
 {
     ThermFile::TagNodes caseTagResults{"Frame", {14u, 21u, 43u}};
 
-    Helper::MockNode node{"Case"};
+    Helper::MockNode node{"TagNodes"};
     Helper::MockNodeAdapter adapter{&node};
 
     adapter << caseTagResults;
@@ -126,8 +126,10 @@ TEST_F(TestMesh, MeshResultsDeserialization)
                                             {{"1", "12.38", "1.29", "0.12"}, {"2", "13.38", "2.29", "1.12"}}};
     Helper::MockCaseMeshResults crCase{"Condensation Resistance",
                                        {{"1", "14.40", "2.30", "0.25"}, {"2", "15.50", "3.45", "1.25"}}};
+    Helper::MockTagNodes frameTag{"Frame", {"1", "2", "3"}};
+    Helper::MockTagNodes edgeTag{"Edge", {"4", "5", "6"}};
 
-    Helper::MockMeshResults meshResults{"1", {uFactorCase, crCase}};
+    Helper::MockMeshResults meshResults{"1", {uFactorCase, crCase}, {frameTag, edgeTag}};
     auto meshResultsNode(Helper::generateMockMeshResults(meshResults));
     const Helper::MockNodeAdapter adapter{&meshResultsNode};
 
@@ -142,7 +144,11 @@ TEST_F(TestMesh, MeshResultsDeserialization)
                                            {ThermFile::RunType::CondensationResistance,
                                             std::nullopt,   // glazingCase
                                             std::nullopt,   // spacerCase
-                                            {{1u, 14.40, 2.30, 0.25}, {2u, 15.50, 3.45, 1.25}}}}};
+                                            {{1u, 14.40, 2.30, 0.25}, {2u, 15.50, 3.45, 1.25}}}},
+                                          {
+                                            {"Frame", {1u, 2u, 3u}},
+                                            {"Edge", {4u, 5u, 6u}}
+                                          }};
     Helper::expect_near(correctResults, results, 1e-6);
 }
 
@@ -167,7 +173,7 @@ TEST_F(TestMesh, MeshResultsSerialization)
                                             {{"1", "12.38", "1.29", "0.12"}, {"2", "13.38", "2.29", "1.12"}}};
     Helper::MockCaseMeshResults crCase{"Condensation Resistance",
                                        {{"1", "14.4", "2.3", "0.25"}, {"2", "15.5", "3.45", "1.25"}}};
-    Helper::MockMeshResults expectedMeshResults{"1", {uFactorCase, crCase}};
+    Helper::MockMeshResults expectedMeshResults{"1", {uFactorCase, crCase}, {}};
 
     // Generate the expected mock mesh results node for comparison
     auto expectedMeshResultsNode = Helper::generateMockMeshResults(expectedMeshResults);

@@ -107,7 +107,7 @@ namespace ThermFile
     {
         node >> FileParse::Child{"Version", meshResults.version};
         node >> FileParse::Child{"Case", meshResults.cases};
-        node >> FileParse::Child{{"NodeTags", "Case"}, meshResults.tagNodes};
+        node >> FileParse::Child{"TagNodes", meshResults.tagNodes};
 
         return node;
     }
@@ -117,7 +117,7 @@ namespace ThermFile
     {
         node << FileParse::Child{"Version", meshResults.version};
         node << FileParse::Child{"Case", meshResults.cases};
-        node << FileParse::Child{{"NodeTags", "Case"}, meshResults.tagNodes};
+        node << FileParse::Child{"TagNodes", meshResults.tagNodes};
 
         return node;
     }

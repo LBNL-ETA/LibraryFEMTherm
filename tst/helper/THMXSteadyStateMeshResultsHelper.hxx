@@ -48,11 +48,8 @@ namespace Helper
         std::string flux;
         std::string heatRate;
 
-        [[maybe_unused]] MockEdgeResultsNode(std::string segmentType,
-                                             std::string index,
-                                             std::string area,
-                                             std::string flux,
-                                             std::string heatRate);
+        [[maybe_unused]] MockEdgeResultsNode(
+          std::string segmentType, std::string index, std::string area, std::string flux, std::string heatRate);
     };
 
     Helper::MockNode generateMockEdgeResultsNode(const MockEdgeResultsNode & resultsNode);
@@ -81,8 +78,11 @@ namespace Helper
     {
         std::string version;
         std::vector<MockCaseMeshResults> cases;
+        std::vector<MockTagNodes> tagNodes;
 
-        [[maybe_unused]] explicit MockMeshResults(std::string version, std::vector<MockCaseMeshResults> cases);
+        [[maybe_unused]] explicit MockMeshResults(std::string version,
+                                                  std::vector<MockCaseMeshResults> cases,
+                                                  std::vector<MockTagNodes> tagNodes);
     };
 
     Helper::MockNode generateMockMeshResults(const MockMeshResults & results);

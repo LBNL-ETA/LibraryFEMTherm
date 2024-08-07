@@ -51,6 +51,11 @@ namespace Helper
         {
             expect_near(expected.cases[i], actual.cases[i], tolerance);
         }
+        ASSERT_EQ(expected.tagNodes.size(), actual.tagNodes.size());
+        for(size_t i = 0; i < expected.tagNodes.size(); ++i)
+        {
+            expect_eq(expected.tagNodes[i], actual.tagNodes[i]);
+        }
     }
 
     MockMeshResultsNode::MockMeshResultsNode(std::string index,
@@ -77,7 +82,7 @@ namespace Helper
 
     Helper::MockNode generateMockTagNodes(const MockTagNodes & results)
     {
-        Helper::MockNode node{"Case"};
+        Helper::MockNode node{"TagNodes"};
         addChildNode(node, "Tag", results.tag);
         auto & nodesNode = addChildNode(node, "Nodes");
 
@@ -128,8 +133,10 @@ namespace Helper
         return node;
     }
 
-    MockMeshResults::MockMeshResults(std::string version, std::vector<MockCaseMeshResults> cases) :
-        version{std::move(version)}, cases{std::move(cases)}
+    MockMeshResults::MockMeshResults(std::string version,
+                                     std::vector<MockCaseMeshResults> cases,
+                                     std::vector<MockTagNodes> tagNodes) :
+        version{std::move(version)}, cases{std::move(cases)}, tagNodes{std::move(tagNodes)}
     {}
 
     Helper::MockNode generateMockMeshResults(const MockMeshResults & results)
@@ -141,6 +148,11 @@ namespace Helper
         for(const auto & caseResults : results.cases)
         {
             addChildNode(node, generateMockCaseMeshResults(caseResults));
+        }
+
+        for(const auto & tagNodes : results.tagNodes)
+        {
+            addChildNode(node, generateMockTagNodes(tagNodes));
         }
 
         return node;
