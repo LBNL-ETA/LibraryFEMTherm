@@ -13,6 +13,11 @@ namespace ThermFile
         return Common::loadFromXMLFile<ThermModel>(fileName, "ThermModel");
     }
 
+    ThermModel loadThermModelFromZipFile(std::string const& fileName)
+    {
+        return Common::loadFromZipFile<ThermModel>(fileName, "Model.xml", "ThermModel");
+    }
+
     int saveToFile(const ThermModel & model, std::string_view fileName)
     {
         return Common::saveToXMLFile(model, fileName, "ThermModel");
