@@ -221,7 +221,7 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, BoundaryCondition & boundaryCondition)
+    const NodeAdapter & operator>>(const NodeAdapter & node, Boundary & boundaryCondition)
     {
         node >> FileParse::Child{"ID", boundaryCondition.ID};
         node >> FileParse::Child{"UUID", boundaryCondition.uuid};
@@ -230,7 +230,8 @@ namespace ThermFile
         node >> FileParse::Child{"IsBlocking", boundaryCondition.isBlocking};
         node >> FileParse::Child{"NeighborPolygonUUID", boundaryCondition.neighborPolygonUUID};
         node >> FileParse::Child{"Origin", boundaryCondition.origin};
-        node >> FileParse::Child{{"Points", "Point"}, boundaryCondition.points};
+        node >> FileParse::Child{"StartPoint", boundaryCondition.startPoint};
+        node >> FileParse::Child{"EndPoint", boundaryCondition.endPoint};
         node >> FileParse::Child{"Side", boundaryCondition.Side};
         node >> FileParse::Child{"ThermalEmissionProperties", boundaryCondition.thermalEmissionProperties};
         node >> FileParse::Child{"ShadeData", boundaryCondition.shadeData};
@@ -247,7 +248,7 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const BoundaryCondition & boundaryCondition)
+    NodeAdapter & operator<<(NodeAdapter & node, const Boundary & boundaryCondition)
     {
         node << FileParse::Child{"ID", boundaryCondition.ID};
         node << FileParse::Child{"UUID", boundaryCondition.uuid};
@@ -256,7 +257,8 @@ namespace ThermFile
         node << FileParse::Child{"IsBlocking", boundaryCondition.isBlocking};
         node << FileParse::Child{"NeighborPolygonUUID", boundaryCondition.neighborPolygonUUID};
         node << FileParse::Child{"Origin", boundaryCondition.origin};
-        node << FileParse::Child{{"Points", "Point"}, boundaryCondition.points};
+        node << FileParse::Child{"StartPoint", boundaryCondition.startPoint};
+        node << FileParse::Child{"EndPoint", boundaryCondition.endPoint};
         node << FileParse::Child{"Side", boundaryCondition.Side};
         node << FileParse::Child{"ThermalEmissionProperties", boundaryCondition.thermalEmissionProperties};
         node << FileParse::Child{"ShadeData", boundaryCondition.shadeData};

@@ -107,6 +107,16 @@ namespace Helper
         return parentNode.child.back();
     }
 
+    MockNode & addChildNodeIfNotEmpty(MockNode & parentNode, std::string_view tag, std::string_view text)
+    {
+        if(text.empty())
+        {
+            return parentNode;
+        }
+
+        return addChildNode(parentNode, tag, text);
+    }
+
     MockNode & addChildNode(MockNode & parentNode, std::string_view tag, MockNode childNode)
     {
         childNode.tag = tag;

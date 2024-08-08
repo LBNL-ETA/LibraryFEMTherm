@@ -15,9 +15,9 @@
 			<xs:element name="Polygon" type="PolygonGeometry" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
-	<xs:complexType name="BoundaryConditions">
+	<xs:complexType name="Boundaries">
 		<xs:sequence>
-			<xs:element name="BoundaryCondition" type="BoundaryConditionGeometry" minOccurs="1" maxOccurs="unbounded"/>
+			<xs:element name="Boundary" type="BoundaryConditionGeometry" minOccurs="1" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="GlazingSystems">
@@ -55,7 +55,7 @@
 				<xs:element name="GlazingOrigin" type="Point" minOccurs="1" maxOccurs="1"/>
 				<xs:element name="Cavities" type="Cavities" minOccurs="0" maxOccurs="1"/>
 				<xs:element name="Polygons" type="Polygons" minOccurs="0" maxOccurs="1"/>
-				<xs:element name="BoundaryConditions" type="BoundaryConditions" minOccurs="0" maxOccurs="1"/>
+				<xs:element name="Boundaries" type="Boundaries" minOccurs="0" maxOccurs="1"/>
 				<xs:element name="GlazingSystems" type="GlazingSystems" minOccurs="0" maxOccurs="1"/>
 				<xs:element name="CMAData" type="CMAData" minOccurs="0" maxOccurs="1"/>
 			</xs:sequence>

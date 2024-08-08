@@ -20,7 +20,7 @@ namespace ThermFile
         node >> FileParse::Child{"GlazingOrigin", model.glazingOrigin};
         node >> FileParse::Child{{"Cavities", "Cavity"}, model.cavities};
         node >> FileParse::Child{{"Polygons", "Polygon"}, model.polygons};
-        node >> FileParse::Child{{"BoundaryConditions", "BoundaryCondition"}, model.boundaryConditions};
+        node >> FileParse::Child{{"Boundaries", "Boundary"}, model.boundaryConditions};
         node >> FileParse::Child{{"GlazingSystems", "GlazingSystem"}, model.glazingSystems};
         node >> FileParse::Child{"CMAData", model.cmaData};
 
@@ -37,7 +37,7 @@ namespace ThermFile
         node << FileParse::Child{"GlazingOrigin", model.glazingOrigin};
         node << FileParse::Child{{"Cavities", "Cavity"}, model.cavities};
         node << FileParse::Child{{"Polygons", "Polygon"}, model.polygons};
-        node << FileParse::Child{{"BoundaryConditions", "BoundaryCondition"}, model.boundaryConditions};
+        node << FileParse::Child{{"Boundaries", "Boundary"}, model.boundaryConditions};
         node << FileParse::Child{{"GlazingSystems", "GlazingSystem"}, model.glazingSystems};
         node << FileParse::Child{"CMAData", model.cmaData};
 

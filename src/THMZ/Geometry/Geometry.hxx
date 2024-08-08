@@ -147,7 +147,7 @@ namespace ThermFile
     //! @typeRecordUUID - type record UUID of the boundary condition.
     //! @geometrySpecification - geometry specification of the boundary condition.
     //! @EdgeID - unique identifier of the edge.
-    struct BoundaryCondition
+    struct Boundary
     {
         size_t ID{0u};
         std::string uuid;
@@ -156,7 +156,8 @@ namespace ThermFile
         bool isBlocking{false};
         std::string neighborPolygonUUID;
         Point origin;
-        std::vector<Point> points;
+        Point startPoint;
+        Point endPoint;
         size_t Side{0u};
         ThermalEmissionProperties thermalEmissionProperties;
         std::optional<ShadeData> shadeData;
