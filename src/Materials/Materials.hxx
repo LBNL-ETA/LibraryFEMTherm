@@ -8,7 +8,6 @@
 #include <utility>
 
 #include "Definitions.hxx"
-#include "Common.hxx"
 
 namespace MaterialsLibrary
 {

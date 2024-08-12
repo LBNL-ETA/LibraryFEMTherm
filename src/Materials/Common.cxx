@@ -3,8 +3,6 @@
 
 #include "Common.hxx"
 
-#include "Materials.hxx"
-
 namespace MaterialsLibrary
 {
     void saveToCSV(const std::string & fileName, const std::optional<std::vector<point>> & vector)

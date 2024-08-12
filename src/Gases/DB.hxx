@@ -4,9 +4,9 @@
 #include <vector>
 #include <optional>
 
-#include "Gases.hxx"
+#include <fileParse/XMLNodeAdapter.hxx>
 
-class XMLNodeAdapter;
+#include "Gases.hxx"
 
 namespace GasesLibrary
 {

@@ -2,9 +2,10 @@
 
 #include <optional>
 
+#include "SteadyState.hxx"
+
 namespace BCSteadyStateLibrary
 {
-    struct BoundaryCondition;
     bool isGreyBodyRadiation(const BoundaryCondition& bc);
     bool isAutoGreyBodyRadiation(const BoundaryCondition& bc);
     bool isBlackBodyRadiation(const BoundaryCondition& bc);

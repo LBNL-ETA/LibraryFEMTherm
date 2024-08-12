@@ -4,10 +4,10 @@
 #include <optional>
 #include <vector>
 
+#include "Materials.hxx"
+
 namespace MaterialsLibrary
 {
-    struct point;
-
     void saveToCSV(const std::string & fileName,
                    const std::optional<std::vector<point>> & vector);
 

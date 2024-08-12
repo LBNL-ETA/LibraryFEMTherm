@@ -6,11 +6,6 @@
 
 #include "Definitions.hxx"
 
-namespace BCInputFileLibrary
-{
-    struct BoundaryConditionRecords;
-}
-
 namespace BCTypesLibrary
 {
     struct ConvectionRecord
