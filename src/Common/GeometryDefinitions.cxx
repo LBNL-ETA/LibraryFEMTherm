@@ -1,4 +1,4 @@
-#include "GeometryDefintions.hxx"
+#include "GeometryDefinitions.hxx"
 
 namespace Geometry
 {

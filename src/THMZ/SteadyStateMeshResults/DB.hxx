@@ -2,10 +2,10 @@
 
 #include <string>
 
+#include "THMZ/SteadyStateMeshResults/Results.hxx"
+
 namespace ThermFile
 {
-    struct MeshResults;
-
     MeshResults loadSteadyStateMeshResultsFromFile(const std::string & fileName);
     int saveToFile(const MeshResults & results, std::string_view fileName);
 }

@@ -2,10 +2,10 @@
 
 #include <string>
 
+#include "THMZ/SteadyStateResults/Results.hxx"
+
 namespace ThermFile
 {
-    struct SteadyStateResults;
-    
     SteadyStateResults loadSteadyStateResultsFromFile(const std::string & fileName);
     SteadyStateResults loadSteadyStateResultsFromZipFile(const std::string & fileName);
     SteadyStateResults loadSteadyStateResultsFromString(const std::string & data);
