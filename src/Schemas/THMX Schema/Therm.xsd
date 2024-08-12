@@ -29,6 +29,17 @@
 	<xs:complexType name="CMAData">
 		<xs:sequence>
 			<xs:element name="IGUType" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<!-- Need exactly four cases for the best worst options -->
+			<xs:element name="Case" minOccurs="4" maxOccurs="4">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="GlazingOption" type="CMACase" minOccurs="1" maxOccurs="1" />
+						<xs:element name="SpacerOption" type="CMACase" minOccurs="1" maxOccurs="1" />
+						<xs:element name="GapConductance" type="xs:double" minOccurs="1" maxOccurs="1" />
+						<xs:element name="SpacerConductivity" type="xs:double" minOccurs="1" maxOccurs="1" />
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
 			<xs:element name="CMABCPositions" minOccurs="1" maxOccurs="1">
 				<xs:complexType>
 					<xs:sequence>
@@ -48,7 +59,7 @@
 	<xs:element name="ThermModel">
 		<xs:complexType>
 			<xs:sequence>
-			  <xs:element name="Version" type="xs:string" minOccurs="1" maxOccurs="1"/>
+				<xs:element name="Version" type="xs:string" minOccurs="1" maxOccurs="1"/>
 				<xs:element name="CalculationReady" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
 				<xs:element name="Preferences" type="Preferences" minOccurs="1" maxOccurs="1"/>
 				<xs:element name="Properties" type="Properties" minOccurs="1" maxOccurs="1"/>
