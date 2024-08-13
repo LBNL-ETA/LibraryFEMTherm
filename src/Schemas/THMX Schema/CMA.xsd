@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:include schemaLocation="Common.xsd"/>
+	
+	<!-- GapSpacerCase -->
+	<xs:complexType name="GapSpacerCase">
+		<xs:sequence>
+			<xs:element name="GlazingOption" type="CMACase" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SpacerOption" type="CMACase" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="GapConductance" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="SpacerConductivity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<!-- CMABCPosition -->
+	<xs:complexType name="CMABCPosition">
+		<xs:sequence>
+			<xs:element name="Value" type="BCPosition" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="UUID" type="xs:string" minOccurs="1" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<!-- CMALayerOption -->
+	<xs:complexType name="CMALayerOption">
+		<xs:sequence>
+			<xs:element name="Glazing" type="BCPosition" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Spacer" type="BCPosition" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="hcin" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="hcout" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="EmissivityIn" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="EmissivityOut" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<!-- CMASingleLayer -->
+	<xs:complexType name="CMASingleLayer">
+		<xs:sequence>
+			<xs:element name="Thickness" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Conductivity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Option" type="CMALayerOption" minOccurs="4" maxOccurs="4" />
+		</xs:sequence>
+	</xs:complexType>
+	
+	<!-- CMADoubleLayer -->
+	<xs:complexType name="CMADoubleLayer">
+		<xs:sequence>
+			<xs:element name="ThicknessOut" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="ThicknessIn" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="ConductivityOut" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="ConductivityIn" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Option" type="CMALayerOption" minOccurs="4" maxOccurs="4" />
+		</xs:sequence>
+	</xs:complexType>
+	
+	<!-- CMABCPositions -->
+	<xs:complexType name="CMABCPositions">
+		<xs:sequence>
+			<xs:element name="Position" type="CMABCPosition" minOccurs="0" maxOccurs="unbounded">
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<!-- CMAData -->
+	<xs:complexType name="CMAData">
+		<xs:sequence>
+			<xs:element name="IGUType" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<!-- Need exactly four cases for the best worst options -->
+			<xs:element name="Case" type="GapSpacerCase" minOccurs="4" maxOccurs="4"/>
+			<xs:choice>
+				<xs:element name="SingleLayer" type="CMASingleLayer" minOccurs="0" maxOccurs="1"/>
+				<xs:element name="DoubleLayer" type="CMADoubleLayer" minOccurs="0" maxOccurs="1"/>
+			</xs:choice>			
+			<xs:element name="CMABCPositions" type="CMABCPositions" minOccurs="1" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>
