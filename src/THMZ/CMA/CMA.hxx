@@ -49,6 +49,8 @@ namespace ThermFile
     struct CMAData
     {
         CMABCContainer cmaBCPositions;
+        double interiorTemperature{0.0};
+        double exteriorTemperature{0.0};
         CMAIGUType iguType{CMAIGUType::Unknown};
         std::variant<CMASingleLayer, CMADoubleLayer> layerInput;
         std::vector<CMAGapSpacer> gapSpacerInput;

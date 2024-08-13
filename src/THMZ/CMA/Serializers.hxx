@@ -141,6 +141,8 @@ namespace ThermFile
     const NodeAdapter & operator>>(const NodeAdapter & node, ThermFile::CMAData & cmaData)
     {
         node >> FileParse::Child{"IGUType", cmaData.iguType};
+        node >> FileParse::Child{"InteriorTemperature", cmaData.interiorTemperature};
+        node >> FileParse::Child{"ExteriorTemperature", cmaData.exteriorTemperature};
         node >> FileParse::Child{"Case", cmaData.gapSpacerInput};
         FileParse::deserializeVariant(node, {"SingleLayer", "DoubleLayer"}, cmaData.layerInput);
         node >> FileParse::Child{"CMABCPositions", cmaData.cmaBCPositions};
@@ -152,6 +154,8 @@ namespace ThermFile
     NodeAdapter & operator<<(NodeAdapter & node, const ThermFile::CMAData & cmaData)
     {
         node << FileParse::Child{"IGUType", cmaData.iguType};
+        node << FileParse::Child{"InteriorTemperature", cmaData.interiorTemperature};
+        node << FileParse::Child{"ExteriorTemperature", cmaData.exteriorTemperature};
         node << FileParse::Child{"Case", cmaData.gapSpacerInput};
         FileParse::serializeVariant(node, {"SingleLayer", "DoubleLayer"}, cmaData.layerInput);
         node << FileParse::Child{"CMABCPositions", cmaData.cmaBCPositions};

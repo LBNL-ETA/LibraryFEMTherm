@@ -217,6 +217,8 @@ TEST_F(TestThermFileCMA, CMABCContainerDeserialization)
 TEST_F(TestThermFileCMA, CMABCContainerSerialization)
 {
     ThermFile::CMAData cmaData;
+    cmaData.interiorTemperature = 20.0;
+    cmaData.exteriorTemperature = -10.0;
     cmaData.cmaBCPositions = {{ThermFile::CMABCPosition::Exterior, "3f50e7c8-9b49-4f72-8427-b9b8fbbd163d"},
                               {ThermFile::CMABCPosition::Interior, "4e3a1f79-c5cb-478e-8127-9c0a1ec27a93"}};
     cmaData.gapSpacerInput = {{ThermFile::CMACase::Low, ThermFile::CMACase::Low, 0.13, 0.25},
@@ -242,6 +244,8 @@ TEST_F(TestThermFileCMA, CMABCContainerSerialization)
     auto correctNodes = []() {
         Helper::MockNode node{"CMAData"};
         Helper::addChildNode(node, "IGUType", "Unknown");
+        Helper::addChildNode(node, "InteriorTemperature", "20");
+        Helper::addChildNode(node, "ExteriorTemperature", "-10");
 
         node = insertCaseNode(node, "Low", "Low", "0.13", "0.25");
         node = insertCaseNode(node, "Low", "High", "0.15", "0.27");
