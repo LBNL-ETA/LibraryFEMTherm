@@ -216,7 +216,7 @@ namespace ThermZip
         return std::vector<char>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     }
 
-    std::map<std::string, std::string> unzipFiles(std::string_view source)
+    std::map<std::string, std::string> unzipFiles(std::string_view source, std::vector<std::string> const & fnames)
     {
         // Read the test.zip file into memory
         std::vector<char> zipBuffer = readFileToBuffer(std::string(source));
@@ -241,6 +241,11 @@ namespace ThermZip
                 msg << "Failed to get file stat for file index " << i;
                 mz_zip_reader_end(&zipArchive);
                 throw std::runtime_error(msg.str());
+            }
+
+            if (!fnames.empty() && std::find(fnames.begin(), fnames.end(), fileStat.m_filename) == fnames.end())
+            {
+                continue;
             }
 
             if(!mz_zip_reader_is_file_a_directory(&zipArchive, i))
@@ -273,7 +278,8 @@ namespace ThermZip
 
     std::string unzipFile(std::string_view zipFileName, std::string_view fileName)
     {
-        auto contents = unzipFiles(zipFileName);
+        std::vector<std::string> fnames{std::string(fileName)};
+        auto contents = unzipFiles(zipFileName, fnames);
         auto itr = contents.find(std::string(fileName));
         if (itr == contents.end())
         {
