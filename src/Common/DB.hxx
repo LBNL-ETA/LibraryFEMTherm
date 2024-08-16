@@ -85,6 +85,6 @@ namespace Common
 
         node << object;
         
-        return ThermZip::addToZipFile(zipFileName, fileName, node.getText());
+        return ThermZip::addToZipFile(zipFileName, fileName, node.getContent());
     }
 }   // namespace Common

@@ -57,6 +57,8 @@ namespace Helper
 
         [[nodiscard]] MockNode getNode() const;
 
+        std::string getContent() const override;
+
     private:
         MockNode * node_{nullptr};
     };
