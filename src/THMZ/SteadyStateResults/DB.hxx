@@ -10,4 +10,5 @@ namespace ThermFile
     SteadyStateResults loadSteadyStateResultsFromZipFile(const std::string & fileName);
     SteadyStateResults loadSteadyStateResultsFromString(const std::string & data);
     int saveToFile(const SteadyStateResults & results, std::string_view fileName);
+    int saveToZipFile(const SteadyStateResults & results, std::string_view zipFileName);
 }

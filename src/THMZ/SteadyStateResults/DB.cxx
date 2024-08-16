@@ -26,4 +26,9 @@ namespace ThermFile
     {
         return Common::saveToXMLFile(results, fileName, "Results");
     }
+
+    int saveToZipFile(const SteadyStateResults & results, std::string_view zipFileName)
+    {
+        return Common::saveToZIPFile(results, ThermZip::SteadyStateResultsName, zipFileName, "Results");
+    }
 }   // namespace ThermFile
