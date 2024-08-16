@@ -14,7 +14,7 @@ namespace ThermFile::Mesh
 
     Mesh loadMeshFromZipFile(std::string const& fileName)
     {
-        return Common::loadFromZipFile<Mesh>(fileName, "Mesh.xml", "Mesh");
+        return Common::loadFromZipFile<Mesh>(fileName, ThermZip::MeshName, "Mesh");
     }
 
     int saveToFile(const Mesh & model, std::string_view fileName)

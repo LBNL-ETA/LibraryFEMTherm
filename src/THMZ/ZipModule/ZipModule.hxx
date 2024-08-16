@@ -7,6 +7,30 @@
 
 namespace ThermZip
 {
+    const std::string ModelFileName = "Model.xml";
+    const std::string GasesFileName = "Gases.xml";
+    const std::string MaterialsFileName = "Materials.xml";
+    const std::string SteadyStateBCFileName = "SteadyStateBC.xml";
+    const std::string TransientTypeBCFileName = "TransientTypeBC.xml";
+
+    // Transient results directory
+    const std::string ResultsDir = "transient results";
+    const std::string GeometryFileName = "Geometry.xml";
+    const std::string HeatFluxFileName = "HeatFlux.csv";
+    const std::string HeatFluxEdgesFileName = "HeatFluxEdges.csv";
+    const std::string HumidityFileName = "Humidities.csv";
+    const std::string TemperatureFileName = "Temperatures.csv";
+    const std::string WaterContentFileName = "WaterContent.csv";
+    const std::string WaterFluxFileName = "WaterFlux.csv";
+    const std::string WaterFluxEdgesFileName = "WaterFluxEdges.csv";
+
+    // Timestep boundary conditions directory
+    const std::string TimestepFilesDir = "timestep input files";
+
+    const std::string SteadyStateResultsName = "SteadyStateResults.xml";
+    const std::string SteadyStateMeshResultsName = "SteadyStateMeshResults.xml";
+    const std::string MeshName = "Mesh.xml";
+
     enum class File
     {
         Unknown,

@@ -14,7 +14,7 @@ namespace ThermFile
 
     MeshResults loadSteadyStateMeshResultsFromZipFile(const std::string & fileName)
     {
-        return Common::loadFromZipFile<MeshResults>(fileName, "SteadyStateMeshResults.xml", "MeshResults");
+        return Common::loadFromZipFile<MeshResults>(fileName, ThermZip::SteadyStateMeshResultsName, "MeshResults");
     }
 
     int saveToFile(const MeshResults & results, std::string_view fileName)
