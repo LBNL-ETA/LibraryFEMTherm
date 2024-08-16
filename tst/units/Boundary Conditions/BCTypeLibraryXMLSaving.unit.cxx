@@ -39,10 +39,10 @@ TEST_F(TestBCLibraryXMLSaving, SaveBCLibraryXML1)
     const auto prot{testRecord->Protected};
     EXPECT_EQ(prot, false);
 
-    const auto bcType{testRecord->BCType};
+    const auto bcType{testRecord->bcType};
     EXPECT_EQ(bcType, BCTypesLibrary::BCType::Transient);
 
-    const auto bcModel{testRecord->BCModel};
+    const auto bcModel{testRecord->bcModel};
     EXPECT_EQ(bcModel, BCTypesLibrary::BCModel::Neumann);
 
     const auto convectionBC{testRecord->ConvectionBc};

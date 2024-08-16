@@ -3,6 +3,7 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include <algorithm>
 
 #include "Definitions.hxx"
 
@@ -52,8 +53,8 @@ namespace BCTypesLibrary
         std::string UUID;
         std::string Name{"Default Name"};
         bool Protected{false};
-        BCType BCType{BCType::Transient};
-        BCModel BCModel{BCModel::Neumann};
+        BCType bcType{BCType::Transient};
+        BCModel bcModel{BCModel::Neumann};
 
         std::optional<ConvectionRecord> ConvectionBc;
         std::optional<RadiationRecord> RadiationBc;

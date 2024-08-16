@@ -172,8 +172,8 @@ namespace BCTypesLibrary
         node >> FileParse::Child{"Name", record.Name};
         node >> FileParse::Child{"Protected", record.Protected};
 
-        node >> FileParse::Child{"BCType", record.BCType};
-        node >> FileParse::Child{"BCModel", record.BCModel};
+        node >> FileParse::Child{"bcType", record.bcType};
+        node >> FileParse::Child{"bcModel", record.bcModel};
 
         node >> FileParse::Child{"Color", record.Color};
 
@@ -200,8 +200,8 @@ namespace BCTypesLibrary
         node << FileParse::Child{"Name", record.Name};
         node << FileParse::Child{"Protected", record.Protected};
 
-        node << FileParse::Child{"BCType", record.BCType};
-        node << FileParse::Child{"BCModel", record.BCModel};
+        node << FileParse::Child{"bcType", record.bcType};
+        node << FileParse::Child{"bcModel", record.bcModel};
         node << FileParse::Child{"Convection", record.ConvectionBc};
         node << FileParse::Child{"Radiation", record.RadiationBc};
         node << FileParse::Child{"Solar", record.SolarBc};

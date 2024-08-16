@@ -33,9 +33,9 @@ TEST_F(TestBCLibraryXMLReading, ReadBCLibraryXML)
 
     EXPECT_EQ(true, bc.Protected);    
 
-    EXPECT_EQ(bc.BCType, BCTypesLibrary::BCType::SteadyState);
+    EXPECT_EQ(bc.bcType, BCTypesLibrary::BCType::SteadyState);
 
-    EXPECT_EQ(bc.BCModel, BCTypesLibrary::BCModel::Neumann);
+    EXPECT_EQ(bc.bcModel, BCTypesLibrary::BCModel::Neumann);
 
     // Convection
     EXPECT_EQ(bc.ConvectionBc.has_value(), true);
