@@ -76,4 +76,16 @@ namespace Common
 
         return node.writeToFile(fileName.data());
     }
+
+    template<typename T>
+    int saveToZIPFile(const T & object, std::string_view fileName, std::string_view zipFileName, const std::string & nodeName)
+
+    {
+        auto node = createTopNode(nodeName);
+
+        node << object;
+
+        auto text = node.getText();
+        return ThermZip::addToZipFile(zipFileName, fileName, text);
+    }
 }   // namespace Common

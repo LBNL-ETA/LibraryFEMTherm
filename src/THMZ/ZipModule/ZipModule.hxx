@@ -70,18 +70,17 @@ namespace ThermZip
     std::string meshName(const std::string & directory);
 
     bool zipFiles(const std::string & sourceDirectory, const std::string & destinationZipFile);
-    bool zipFiles(std::map<std::string, std::string> const & data, const std::string & destinationZipFile);
     void unzipFiles(std::string_view source, std::string_view destination);
     std::map<std::string, std::string> unzipFiles(std::string_view source,
                                                   std::vector<std::string> const & fnames = std::vector<std::string>());
     std::string unzipFile(std::string_view zipFileName, std::string_view fileName);
-    
-    std::optional<std::string> getFilePathIfExists(const std::string & directory,
-                                                                File enumValue);
 
-    std::optional<std::string> getFilePathIfExists(const std::string & directory,
-                                                                Results enumValue);
-    
+    int addToZipFile(std::string_view zipFileName, std::string_view fileName, std::string_view text);
+
+    std::optional<std::string> getFilePathIfExists(const std::string & directory, File enumValue);
+
+    std::optional<std::string> getFilePathIfExists(const std::string & directory, Results enumValue);
+
     std::string fullPath(const std::string & directory, File enumValue);
 
     std::string fullPath(const std::string & directory, Results enumValue);

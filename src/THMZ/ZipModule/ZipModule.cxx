@@ -140,11 +140,6 @@ namespace ThermZip
         }
     }   // namespace Helper
 
-    bool zipFiles(std::map<std::string, std::string> const& data, const std::string& destinationZipFile)
-    {
-        return true;
-    }
-
     bool zipFiles(const std::string & sourceDirectory, const std::string & destinationZipFile)
     {
         mz_zip_archive zip_archive;
@@ -180,7 +175,6 @@ namespace ThermZip
 
         return true;
     }
-
 
     // Helper function to read a file into a buffer
     std::vector<char> readFileToBuffer(const std::string & filename)
@@ -220,7 +214,7 @@ namespace ThermZip
                 throw std::runtime_error(msg.str());
             }
 
-            if (!fnames.empty() && std::find(fnames.begin(), fnames.end(), fileStat.m_filename) == fnames.end())
+            if(!fnames.empty() && std::find(fnames.begin(), fnames.end(), fileStat.m_filename) == fnames.end())
             {
                 continue;
             }
@@ -236,7 +230,7 @@ namespace ThermZip
                     mz_zip_reader_end(&zipArchive);
                     throw std::runtime_error(msg.str());
                 }
-				
+
                 auto fileStart = std::find(fileBuffer.begin(), fileBuffer.end(), '<') - fileBuffer.begin();
                 auto fileEnd = fileBuffer.rend() - std::find(fileBuffer.rbegin(), fileBuffer.rend(), '>');
                 fileContents[fileStat.m_filename] =
@@ -258,14 +252,53 @@ namespace ThermZip
         std::vector<std::string> fnames{std::string(fileName)};
         auto contents = unzipFiles(zipFileName, fnames);
         auto itr = contents.find(std::string(fileName));
-        if (itr == contents.end())
+        if(itr == contents.end())
         {
             std::stringstream msg;
-            msg << "THMZ file " << zipFileName << " does not contain " << fileName; 
+            msg << "THMZ file " << zipFileName << " does not contain " << fileName;
             throw std::runtime_error(msg.str());
         }
 
         return itr->second;
+    }
+
+    int addToZipFile(std::string_view zipFileName, std::string_view fileName, std::string_view text)
+    {
+        // Step 1: Extract existing files
+        std::vector<std::string> fileNames;   // Empty vector to extract all files
+
+        std::map<std::string, std::string> existingFiles = std::filesystem::exists(zipFileName)
+                                                             ? unzipFiles(zipFileName, fileNames)
+                                                             : std::map<std::string, std::string>();
+
+        // Step 2: Add or replace the target file in the map
+        existingFiles[std::string(fileName)] = std::string(text);
+
+        // Step 3: Recreate the zip archive
+        mz_zip_archive zipArchive;
+        memset(&zipArchive, 0, sizeof(zipArchive));
+
+        // Initialize the writer for a new zip file
+        if(!mz_zip_writer_init_file(&zipArchive, std::string(zipFileName).c_str(), 0))
+        {
+            throw std::runtime_error("Failed to initialize zip archive for writing");
+        }
+
+        // Add all files back to the archive
+        for(const auto & [name, content] : existingFiles)
+        {
+            if(!mz_zip_writer_add_mem(&zipArchive, name.c_str(), content.data(), content.size(), 0))
+            {
+                mz_zip_writer_end(&zipArchive);
+                throw std::runtime_error("Failed to add file to zip archive");
+            }
+        }
+
+        // Finalize and close the zip archive
+        mz_zip_writer_finalize_archive(&zipArchive);
+        mz_zip_writer_end(&zipArchive);
+
+        return 1;   // Return success
     }
 
     void unzipFiles(std::string_view sourceView, std::string_view destinationView)
