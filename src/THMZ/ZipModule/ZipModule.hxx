@@ -31,6 +31,7 @@ namespace ThermZip
     const std::string SteadyStateResultsName = "SteadyStateResults.xml";
     const std::string SteadyStateMeshResultsName = "SteadyStateMeshResults.xml";
     const std::string MeshName = "Mesh.xml";
+    const std::string CMALibrary = "CMALibrary.xml";
 
     enum class File
     {
