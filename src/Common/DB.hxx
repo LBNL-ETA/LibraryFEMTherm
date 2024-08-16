@@ -84,8 +84,7 @@ namespace Common
         auto node = createTopNode(nodeName);
 
         node << object;
-
-        auto text = node.getText();
-        return ThermZip::addToZipFile(zipFileName, fileName, text);
+        
+        return ThermZip::addToZipFile(zipFileName, fileName, node.getText());
     }
 }   // namespace Common
