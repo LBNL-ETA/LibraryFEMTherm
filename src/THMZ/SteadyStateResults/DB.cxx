@@ -14,7 +14,7 @@ namespace ThermFile
 
     SteadyStateResults loadSteadyStateResultsFromZipFile(const std::string & fileName)
     {
-        return Common::loadFromZipFile<SteadyStateResults>(fileName, "SteadyStateResults.xml", "Results");
+        return Common::loadFromZipFile<SteadyStateResults>(fileName, ThermZip::SteadyStateResultsName, "Results");
     }
 
     SteadyStateResults loadSteadyStateResultsFromString(const std::string & data)
@@ -26,4 +26,4 @@ namespace ThermFile
     {
         return Common::saveToXMLFile(results, fileName, "Results");
     }
-}
+}   // namespace ThermFile

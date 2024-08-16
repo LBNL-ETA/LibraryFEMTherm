@@ -6,35 +6,12 @@
 #include <sstream>
 #include <iterator>
 #include <fstream>
+#include <algorithm>
 
 #include "Common/Common.hxx"
 
 namespace ThermZip
 {
-    const std::string ModelFileName = "Model.xml";
-    const std::string GasesFileName = "Gases.xml";
-    const std::string MaterialsFileName = "Materials.xml";
-    const std::string SteadyStateBCFileName = "SteadyStateBC.xml";
-    const std::string TransientTypeBCFileName = "TransientTypeBC.xml";
-
-    // Transient results directory
-    const std::string ResultsDir = "transient results";
-    const std::string GeometryFileName = "Geometry.xml";
-    const std::string HeatFluxFileName = "HeatFlux.csv";
-    const std::string HeatFluxEdgesFileName = "HeatFluxEdges.csv";
-    const std::string HumidityFileName = "Humidities.csv";
-    const std::string TemperatureFileName = "Temperatures.csv";
-    const std::string WaterContentFileName = "WaterContent.csv";
-    const std::string WaterFluxFileName = "WaterFlux.csv";
-    const std::string WaterFluxEdgesFileName = "WaterFluxEdges.csv";
-
-    // Timestep boundary conditions directory
-    const std::string TimestepFilesDir = "timestep input files";
-
-    const std::string SteadyStateResultsName = "SteadyStateResults.xml";
-    const std::string SteadyStateMeshResultsName = "SteadyStateMeshResults.xml";
-    const std::string MeshName = "Mesh.xml";
-
     namespace
     {
         std::vector<std::string> buildTransientFiles(std::string_view directory, const std::vector<std::string> & files)
@@ -216,7 +193,7 @@ namespace ThermZip
         return std::vector<char>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     }
 
-    std::map<std::string, std::string> unzipFiles(std::string_view source)
+    std::map<std::string, std::string> unzipFiles(std::string_view source, std::vector<std::string> const & fnames)
     {
         // Read the test.zip file into memory
         std::vector<char> zipBuffer = readFileToBuffer(std::string(source));
@@ -241,6 +218,11 @@ namespace ThermZip
                 msg << "Failed to get file stat for file index " << i;
                 mz_zip_reader_end(&zipArchive);
                 throw std::runtime_error(msg.str());
+            }
+
+            if (!fnames.empty() && std::find(fnames.begin(), fnames.end(), fileStat.m_filename) == fnames.end())
+            {
+                continue;
             }
 
             if(!mz_zip_reader_is_file_a_directory(&zipArchive, i))
@@ -273,7 +255,8 @@ namespace ThermZip
 
     std::string unzipFile(std::string_view zipFileName, std::string_view fileName)
     {
-        auto contents = unzipFiles(zipFileName);
+        std::vector<std::string> fnames{std::string(fileName)};
+        auto contents = unzipFiles(zipFileName, fnames);
         auto itr = contents.find(std::string(fileName));
         if (itr == contents.end())
         {

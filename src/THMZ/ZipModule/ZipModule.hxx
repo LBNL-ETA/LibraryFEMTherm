@@ -4,9 +4,35 @@
 #include <optional>
 #include <string>
 #include <map>
+#include <vector>
 
 namespace ThermZip
 {
+    const std::string ModelFileName = "Model.xml";
+    const std::string GasesFileName = "Gases.xml";
+    const std::string MaterialsFileName = "Materials.xml";
+    const std::string SteadyStateBCFileName = "SteadyStateBC.xml";
+    const std::string TransientTypeBCFileName = "TransientTypeBC.xml";
+
+    // Transient results directory
+    const std::string ResultsDir = "transient results";
+    const std::string GeometryFileName = "Geometry.xml";
+    const std::string HeatFluxFileName = "HeatFlux.csv";
+    const std::string HeatFluxEdgesFileName = "HeatFluxEdges.csv";
+    const std::string HumidityFileName = "Humidities.csv";
+    const std::string TemperatureFileName = "Temperatures.csv";
+    const std::string WaterContentFileName = "WaterContent.csv";
+    const std::string WaterFluxFileName = "WaterFlux.csv";
+    const std::string WaterFluxEdgesFileName = "WaterFluxEdges.csv";
+
+    // Timestep boundary conditions directory
+    const std::string TimestepFilesDir = "timestep input files";
+
+    const std::string SteadyStateResultsName = "SteadyStateResults.xml";
+    const std::string SteadyStateMeshResultsName = "SteadyStateMeshResults.xml";
+    const std::string MeshName = "Mesh.xml";
+    const std::string CMALibrary = "CMALibrary.xml";
+
     enum class File
     {
         Unknown,
@@ -46,7 +72,8 @@ namespace ThermZip
     bool zipFiles(const std::string & sourceDirectory, const std::string & destinationZipFile);
     bool zipFiles(std::map<std::string, std::string> const & data, const std::string & destinationZipFile);
     void unzipFiles(std::string_view source, std::string_view destination);
-    std::map<std::string, std::string> unzipFiles(std::string_view source);
+    std::map<std::string, std::string> unzipFiles(std::string_view source,
+                                                  std::vector<std::string> const & fnames = std::vector<std::string>());
     std::string unzipFile(std::string_view zipFileName, std::string_view fileName);
     
     std::optional<std::string> getFilePathIfExists(const std::string & directory,

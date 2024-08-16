@@ -94,7 +94,8 @@ TEST_F(TestPreferences, PreferencesDeserializer)
                             3.0,
                             ThermFile::ConductivityUnits::BtuPerHr_Ft_Fahrenheit,
                             ThermFile::UValueBasisType::YProjected,
-                            false}},
+                            false},
+        ThermFile::Snap{}},
       preferences,
       1e-6);
 }
