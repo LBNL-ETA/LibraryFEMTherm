@@ -11,12 +11,17 @@
 namespace GasesLibrary
 {
     [[nodiscard]] std::string loadVersionFromXMLFile(std::string_view fileName);
+
     [[nodiscard]] std::vector<Gas> loadGasesFromXMLFile(std::string_view fileName);
+    [[nodiscard]] std::vector<Gas> loadGasesDataFromXMLString(std::string_view xmlString);
+
     [[nodiscard]] std::vector<PureGas> loadPureGasesFromXMLFile(std::string_view fileName);
+    [[nodiscard]] std::vector<PureGas> loadPureGasesFromXMLString(std::string_view xmlString);
 
     class DB
     {
     public:
+        DB() = default;
         explicit DB(const std::string & fileName);
 
         [[nodiscard]] std::optional<PureGas> getPureGasByUUID(std::string_view uuid) const;
