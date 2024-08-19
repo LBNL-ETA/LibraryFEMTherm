@@ -31,6 +31,6 @@ namespace ThermFile::Mesh
 
     int saveToZipFile(const Mesh & mesh, std::string_view zipFileName)
     {
-        return Common::saveToZIPFile(mesh, ThermZip::SteadyStateResultsName, zipFileName, topNodeName);
+        return Common::saveToZIPFile(mesh, ThermZip::MeshName, zipFileName, topNodeName);
     }
 }
