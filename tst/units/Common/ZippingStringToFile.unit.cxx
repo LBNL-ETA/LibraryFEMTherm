@@ -6,7 +6,7 @@ TEST(TestZippingStringToFile, AddAndVerifyFileContent)
 {
     const std::string testString{"< test test >"};
     const std::string fileName{"Test.xml"};
-    const std::string zipFileName{R"(D:\Programming\LibraryFEMTherm\cmake-build-debug\Test.zip)"};
+    const std::string zipFileName{"Test.zip"};
 
     // Add the file to the zip
     auto result = ThermZip::addToZipFile(zipFileName, fileName, testString);
@@ -33,7 +33,7 @@ TEST(TestZippingStringToFile, OverwriteExistingFile)
     const std::string initialString{"< initial content >"};
     const std::string updatedString{"< updated content >"};
     const std::string fileName{"Test.xml"};
-    const std::string zipFileName{R"(D:\Programming\LibraryFEMTherm\cmake-build-debug\Test.zip)"};
+    const std::string zipFileName{"Test.zip"};
 
     // Add the initial content
     auto result = ThermZip::addToZipFile(zipFileName, fileName, initialString);
@@ -59,9 +59,9 @@ TEST(TestZippingStringToFile, OverwriteExistingFile)
 
 TEST(TestZippingStringToFile, HandleEmptyString)
 {
-    const std::string emptyString{""};
+    const std::string emptyString;
     const std::string fileName{"Empty.xml"};
-    const std::string zipFileName{R"(D:\Programming\LibraryFEMTherm\cmake-build-debug\Test.zip)"};
+    const std::string zipFileName{"Test.zip"};
 
     // Add an empty string to the zip
     auto result = ThermZip::addToZipFile(zipFileName, fileName, emptyString);
