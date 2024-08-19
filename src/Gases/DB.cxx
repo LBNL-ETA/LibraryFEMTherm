@@ -137,6 +137,20 @@ namespace GasesLibrary
         return gasesNode.writeToFile(m_FileName);
     }
 
+    std::string DB::saveToXMLString()
+    {
+        removeTemporaryRecords();
+
+        Tags tag;
+        auto gasesNode{createTopNode(tag.gases())};
+
+        gasesNode << FileParse::Child{"Version", m_Version};
+        savePureGases(gasesNode);
+        saveGases(gasesNode);
+
+        return gasesNode.getContent();
+    }
+
     void DB::savePureGases(XMLNodeAdapter & gasesNode) const
     {
         for(const auto & gas : m_PureGases)

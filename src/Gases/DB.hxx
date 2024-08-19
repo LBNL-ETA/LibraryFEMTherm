@@ -56,6 +56,7 @@ namespace GasesLibrary
         void addGasesData(const GasesData & gasData);
 
         [[nodiscard]] int saveToFile();
+        [[nodiscard]] std::string saveToXMLString();
 
         //! \brief Deletes all materials that belong to given project
         void deleteGasesWithProjectName(const std::string & projectName);
