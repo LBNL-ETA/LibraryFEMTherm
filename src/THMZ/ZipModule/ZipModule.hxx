@@ -72,6 +72,12 @@ namespace ThermZip
     bool zipFiles(const std::string & sourceDirectory, const std::string & destinationZipFile);
     void unzipFiles(std::string_view source, std::string_view destination);
 
+    //! Zips files into a zip archive
+    //! \param fileContents The content of the files to zip where the key is the file name and the value is the content of
+    //! the file
+    //! \param zipFileName The name of the zip archive
+    void zipFiles(const std::map<std::string, std::string> & fileContents, const std::string & zipFileName);
+
     //! Unzips files from a zip archive and returns the content of the files in a map
     //! \param source The name of the zip archive
     //! \param fnames The names of the files to extract from the zip archive

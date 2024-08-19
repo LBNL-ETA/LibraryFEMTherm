@@ -176,6 +176,41 @@ namespace ThermZip
         return true;
     }
 
+    void zipFiles(const std::map<std::string, std::string> & fileContents, const std::string & zipFileName)
+    {
+        mz_zip_archive zipArchive;
+        memset(&zipArchive, 0, sizeof(zipArchive));
+
+        // Initialize the zip archive for writing
+        if(!mz_zip_writer_init_file(&zipArchive, zipFileName.c_str(), 0))
+        {
+            throw std::runtime_error("Failed to initialize zip archive for writing");
+        }
+
+        // Iterate over each file in the map
+        for(const auto & [filePath, content] : fileContents)
+        {
+            // Add the file content to the zip archive
+            if(!mz_zip_writer_add_mem(
+                 &zipArchive, filePath.c_str(), content.data(), content.size(), MZ_BEST_COMPRESSION))
+            {
+                mz_zip_writer_end(&zipArchive);
+                std::stringstream msg;
+                msg << "Failed to add file to zip: " << filePath;
+                throw std::runtime_error(msg.str());
+            }
+        }
+
+        // Finalize and close the zip archive
+        if(!mz_zip_writer_finalize_archive(&zipArchive))
+        {
+            mz_zip_writer_end(&zipArchive);
+            throw std::runtime_error("Failed to finalize zip archive");
+        }
+
+        mz_zip_writer_end(&zipArchive);
+    }
+
     // Helper function to read a file into a buffer
     std::vector<char> readFileToBuffer(const std::string & filename)
     {
