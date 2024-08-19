@@ -71,10 +71,27 @@ namespace ThermZip
 
     bool zipFiles(const std::string & sourceDirectory, const std::string & destinationZipFile);
     void unzipFiles(std::string_view source, std::string_view destination);
+
+    //! Unzips files from a zip archive and returns the content of the files in a map
+    //! \param source The name of the zip archive
+    //! \param fnames The names of the files to extract from the zip archive
+    //! \return The content of the files as a map where the key is the file name and the value is the content of the
+    //! file
     std::map<std::string, std::string> unzipFiles(std::string_view source,
                                                   std::vector<std::string> const & fnames = std::vector<std::string>());
+
+    //! Unzips a file from a zip archive and returns the content of the file in a string
+    //! \param zipFileName The name of the zip archive
+    //! \param fileName The name of the file to extract from the zip archive
+    //! \return The content of the file as a string
     std::string unzipFile(std::string_view zipFileName, std::string_view fileName);
 
+    //! Adds a file to a zip archive with the specified content as a string without changing the content of the zip
+    //! archive if the file already exists
+    //! \param zipFileName The name of the zip archive
+    //! \param fileName The name of the file to add to the zip archive
+    //! \param text The content of the file to add to the zip archive
+    //! \return 1 if the file was successfully added to the zip archive, 0 otherwise
     int addToZipFile(std::string_view zipFileName, std::string_view fileName, std::string_view text);
 
     std::optional<std::string> getFilePathIfExists(const std::string & directory, File enumValue);
