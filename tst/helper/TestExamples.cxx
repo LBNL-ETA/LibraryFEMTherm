@@ -178,7 +178,8 @@ namespace Helper
                     {{20.0, 0.5}, {25.0, 0.6}, {30.0, 0.7}},
                     "Some Cavity uuid",
                     {"Attribute1", "Attribute2"},
-                    ThermFile::PolygonType::Material};
+                    ThermFile::PolygonType::Material,
+                    std::nullopt};
         }
 
         Helper::MockNode mockPolygon1()
@@ -206,7 +207,8 @@ namespace Helper
                     {{25.0, 0.6}, {30.0, 0.7}, {35.0, 0.8}},
                     "Some other Cavity uuid",
                     {"Attribute3", "Attribute4"},
-                    ThermFile::PolygonType::Glass};
+                    ThermFile::PolygonType::Glass,
+                    std::nullopt};
         }
 
         Helper::MockNode mockPolygon2()
@@ -259,7 +261,8 @@ namespace Helper
                                                  "true",
                                                  "Some Neighbor Polygon UUID",
                                                  {"20", "0.5"},
-                                                 {"20", "0.5"}, {"25", "0.6"},
+                                                 {"20", "0.5"},
+                                                 {"25", "0.6"},
                                                  "1",
                                                  {"0.9", "20", "true"},
                                                  {"Interior", "125"},
@@ -313,7 +316,8 @@ namespace Helper
                "false",
                "Some other Neighbor Polygon UUID",
                {"25", "0.6"},
-               {"25", "0.6"}, {"30", "0.7"},
+               {"25", "0.6"},
+               {"30", "0.7"},
                "2",
                {"0.8", "25", "false"},
                {"Exterior", "150"},
@@ -336,14 +340,15 @@ namespace Helper
                                   3.0,
                                   ThermFile::ConductivityUnits::Btu_InchPerHour_FootSquared_Fahrenheit,
                                   ThermFile::UValueBasisType::YProjected,
-                                  false}};
+                                  false},
+              {}};
             const auto properties{FileProperties1::testObject()};
             const auto glazingOrigin{ThermFile::Point{0.3, 1.8}};
             std::vector<ThermFile::Cavity> cavities{cavity1(), cavity2()};
             std::vector<ThermFile::Polygon> polygons{polygon1(), polygon2()};
             std::vector<ThermFile::Boundary> bcs{bc1(), bc2()};
 
-            return {"1", false, preferences, properties, glazingOrigin, cavities, polygons, bcs};
+            return {"1", false, preferences, properties, glazingOrigin, cavities, polygons, bcs, {}, std::nullopt};
         }
 
         Helper::MockNode equivalentNodeStructure()

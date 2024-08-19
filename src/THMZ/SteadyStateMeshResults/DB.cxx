@@ -33,4 +33,9 @@ namespace ThermFile
     {
         return Common::saveToZIPFile(results, ThermZip::SteadyStateMeshResultsName, zipFileName, topNodeName);
     }
+
+    MeshResults loadSteadyStateMeshResultsFromString(const std::string & xmlString)
+    {
+        return Common::loadFromXMLString<MeshResults>(xmlString, topNodeName);
+    }
 }   // namespace ThermFile

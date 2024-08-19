@@ -13,6 +13,23 @@
 namespace Common
 {
     template<typename T>
+    T loadFromXMLString(const std::string & data, const std::string & nodeTypeName)
+    {
+        // Attempt to load the top node for the given type
+        const auto xmlNode = getTopNodeFromString(data, nodeTypeName);
+
+        // Create an instance of the type
+        T model;
+        if(xmlNode.has_value())
+        {
+            // Assume that `operator>>` is overloaded for T and xmlNode type
+            xmlNode.value() >> model;
+        }
+
+        return model;
+    }
+
+    template<typename T>
     T loadFromXMLFile(std::string_view fileName, const std::string & nodeTypeName)
     {
         // Convert std::string_view to std::string for file operations
@@ -27,23 +44,6 @@ namespace Common
 
         // Attempt to load the top node for the given type
         const auto xmlNode = getTopNodeFromFile(fileNameStr, nodeTypeName);
-
-        // Create an instance of the type
-        T model;
-        if(xmlNode.has_value())
-        {
-            // Assume that `operator>>` is overloaded for T and xmlNode type
-            xmlNode.value() >> model;
-        }
-
-        return model;
-    }
-
-    template<typename T>
-    T loadFromXMLString(const std::string & data, const std::string & nodeTypeName)
-    {
-        // Attempt to load the top node for the given type
-        const auto xmlNode = getTopNodeFromString(data, nodeTypeName);
 
         // Create an instance of the type
         T model;

@@ -54,7 +54,7 @@ namespace Helper
         std::vector<MockNodeAdapter> children;
         children.reserve(nChildNode(name));
 
-        for(int i = 0; i < node_->child.size(); ++i)
+        for(size_t i = 0u; i < node_->child.size(); ++i)
         {
             if(node_->child[i].tag == name)
             {

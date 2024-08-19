@@ -14,7 +14,7 @@ namespace ThermFile::Mesh
         return Common::loadFromXMLFile<Mesh>(fileName, topNodeName);
     }
 
-    Mesh loadMeshFromZipFile(std::string const& fileName)
+    Mesh loadMeshFromZipFile(std::string const & fileName)
     {
         return Common::loadFromZipFile<Mesh>(fileName, ThermZip::MeshName, topNodeName);
     }
@@ -33,4 +33,9 @@ namespace ThermFile::Mesh
     {
         return Common::saveToZIPFile(mesh, ThermZip::MeshName, zipFileName, topNodeName);
     }
-}
+
+    Mesh loadMeshFromString(const std::string & xmlString)
+    {
+        return Common::loadFromXMLString<Mesh>(xmlString, topNodeName);
+    }
+}   // namespace ThermFile::Mesh

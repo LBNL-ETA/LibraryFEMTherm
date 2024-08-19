@@ -15,7 +15,9 @@ IF ( CMAKE_COMPILER_IS_GNUCXX OR "x${CMAKE_CXX_COMPILER_ID}" STREQUAL "xClang" )
       ADD_CXX_DEFINITIONS("-std=gnu++14") # Enable C++11 features in MINGW
     else()
       ADD_CXX_DEFINITIONS("-std=c++14") # Enable C++11 features in g++
-      ADD_CXX_DEFINITIONS("-fPIC")
+      if(NOT WIN32)
+        ADD_CXX_DEFINITIONS("-fPIC")
+      endif()
     endif()
     ADD_CXX_DEFINITIONS("-pedantic") # Turn on warnings about constructs/situations that may be non-portable or outside of the standard
     ADD_CXX_DEFINITIONS("-Wall -Wextra") # Turn on warnings
