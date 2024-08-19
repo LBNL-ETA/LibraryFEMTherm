@@ -71,6 +71,7 @@ namespace BCTypesLibrary
     class DB
     {
     public:
+        DB() = default;
         explicit DB(const std::string & xmlName);
 
         std::vector<TypeRecord> & getBoundaryConditions();
@@ -95,6 +96,9 @@ namespace BCTypesLibrary
 
         //! \brief Saves current state of object to XML file (provided through object constructor)
         [[nodiscard]] int saveToFile() const;
+
+        void loadFromXMLString(const std::string & xmlString);
+        [[nodiscard]] std::string saveToXMLString() const;
 
         [[nodiscard]] TypeRecord getDefaultRecord() const;
 
