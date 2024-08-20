@@ -430,4 +430,9 @@ namespace ThermZip
         return exists(geometry) && exists(heatFlux) && exists(heatFluxEdges) && exists(humidity) && exists(temperature)
                && exists(waterContent) && exists(waterFlux) && exists(waterFluxEdges);
     }
+
+    std::string addTimestepDirectoryToFileName(const std::string & fileName)
+    {
+        return (TimestepFilesDir / fileName).string();
+    }
 }   // namespace ThermZip

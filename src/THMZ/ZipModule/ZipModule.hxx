@@ -83,6 +83,11 @@ namespace ThermZip
     bool zipFiles(const std::string & sourceDirectory, const std::string & destinationZipFile);
     void unzipFiles(std::string_view source, std::string_view destination);
 
+    //! Simple helper function to add a timestep directory to a file name. If file name is "file.txt"
+    //! and timestep directory is "timestep_1", the result will be "timestep_1/file.txt"
+    //! For now timestep directory is hardcoded and the value is "timestep input files"
+    std::string addTimestepDirectoryToFileName(const std::string & fileName);
+
     //! Zips files into a zip archive
     //! \param fileContents The content of the files to zip where the key is the file name and the value is the content of
     //! the file
