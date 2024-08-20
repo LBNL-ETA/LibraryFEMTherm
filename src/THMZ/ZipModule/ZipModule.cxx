@@ -271,6 +271,7 @@ namespace ThermZip
                 //auto fileEnd = fileBuffer.rend() - std::find(fileBuffer.rbegin(), fileBuffer.rend(), '>');
                 //fileContents[fileStat.m_filename] =
                 //  std::string(fileBuffer.begin() + fileStart, fileBuffer.begin() + fileEnd);
+                fileContents[fileStat.m_filename] = std::string(fileBuffer.begin(), fileBuffer.end());
             }
             else
             {
