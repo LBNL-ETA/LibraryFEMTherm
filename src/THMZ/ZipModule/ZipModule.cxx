@@ -266,10 +266,11 @@ namespace ThermZip
                     throw std::runtime_error(msg.str());
                 }
 
-                auto fileStart = std::find(fileBuffer.begin(), fileBuffer.end(), '<') - fileBuffer.begin();
-                auto fileEnd = fileBuffer.rend() - std::find(fileBuffer.rbegin(), fileBuffer.rend(), '>');
-                fileContents[fileStat.m_filename] =
-                  std::string(fileBuffer.begin() + fileStart, fileBuffer.begin() + fileEnd);
+                // TODO: Delete this if tests in THERM pass
+                //auto fileStart = std::find(fileBuffer.begin(), fileBuffer.end(), '<') - fileBuffer.begin();
+                //auto fileEnd = fileBuffer.rend() - std::find(fileBuffer.rbegin(), fileBuffer.rend(), '>');
+                //fileContents[fileStat.m_filename] =
+                //  std::string(fileBuffer.begin() + fileStart, fileBuffer.begin() + fileEnd);
             }
             else
             {
