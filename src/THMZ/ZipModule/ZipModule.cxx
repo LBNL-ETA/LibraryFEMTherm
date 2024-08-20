@@ -57,14 +57,14 @@ namespace ThermZip
         return File::Unknown;
     }
 
-    const std::map<Results, std::string> ResultsToString = {{Results::Geometry, GeometryFileName},
-                                                            {Results::HeatFlux, HeatFluxFileName},
-                                                            {Results::HeatFluxEdges, HeatFluxEdgesFileName},
-                                                            {Results::Humidities, HumidityFileName},
-                                                            {Results::Temperatures, TemperatureFileName},
-                                                            {Results::WaterContent, WaterContentFileName},
-                                                            {Results::WaterFlux, WaterFluxFileName},
-                                                            {Results::WaterFluxEdges, WaterFluxEdgesFileName}};
+    const std::map<Results, std::string> ResultsToString = {{Results::Geometry, getGeometryFileName()},
+                                                            {Results::HeatFlux, getHeatFluxFileName()},
+                                                            {Results::HeatFluxEdges, getHeatFluxEdgesFileName()},
+                                                            {Results::Humidities, getHumidityFileName()},
+                                                            {Results::Temperatures, getTemperatureFileName()},
+                                                            {Results::WaterContent, getWaterContentFileName()},
+                                                            {Results::WaterFlux, getWaterFluxFileName()},
+                                                            {Results::WaterFluxEdges, getWaterFluxEdgesFileName()}};
 
     std::string toString(Results results)
     {
@@ -89,7 +89,7 @@ namespace ThermZip
 
     std::string resultsDirectory(const std::string & directory)
     {
-        return directory + "\\" + ResultsDir;
+        return directory + "\\" + ResultsDirPath.string();
     }
 
     std::string timestepFilesDirectory(const std::string & directory)
@@ -416,14 +416,14 @@ namespace ThermZip
 
     bool allResultsExist(const std::string & aResultsDirectory)
     {
-        const std::string geometry = aResultsDirectory + "\\" + GeometryFileName;
-        const std::string heatFlux = aResultsDirectory + "\\" + HeatFluxFileName;
-        const std::string heatFluxEdges = aResultsDirectory + "\\" + HeatFluxEdgesFileName;
-        const std::string humidity = aResultsDirectory + "\\" + HumidityFileName;
-        const std::string temperature = aResultsDirectory + "\\" + TemperatureFileName;
-        const std::string waterContent = aResultsDirectory + "\\" + WaterContentFileName;
-        const std::string waterFlux = aResultsDirectory + "\\" + WaterFluxFileName;
-        const std::string waterFluxEdges = aResultsDirectory + "\\" + WaterFluxEdgesFileName;
+        const std::string geometry = aResultsDirectory + "\\" + getGeometryFileName();
+        const std::string heatFlux = aResultsDirectory + "\\" + getHeatFluxFileName();
+        const std::string heatFluxEdges = aResultsDirectory + "\\" + getHeatFluxEdgesFileName();
+        const std::string humidity = aResultsDirectory + "\\" + getHumidityFileName();
+        const std::string temperature = aResultsDirectory + "\\" + getTemperatureFileName();
+        const std::string waterContent = aResultsDirectory + "\\" + getWaterContentFileName();
+        const std::string waterFlux = aResultsDirectory + "\\" + getWaterFluxFileName();
+        const std::string waterFluxEdges = aResultsDirectory + "\\" + getWaterFluxEdgesFileName();
 
         using std::filesystem::exists;
 

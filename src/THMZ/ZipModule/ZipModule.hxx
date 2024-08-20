@@ -15,15 +15,26 @@ namespace ThermZip
     const std::string TransientTypeBCFileName = "TransientTypeBC.xml";
 
     // Transient results directory
-    const std::string ResultsDir = "transient results";
-    const std::string GeometryFileName = "Geometry.xml";
-    const std::string HeatFluxFileName = "HeatFlux.csv";
-    const std::string HeatFluxEdgesFileName = "HeatFluxEdges.csv";
-    const std::string HumidityFileName = "Humidities.csv";
-    const std::string TemperatureFileName = "Temperatures.csv";
-    const std::string WaterContentFileName = "WaterContent.csv";
-    const std::string WaterFluxFileName = "WaterFlux.csv";
-    const std::string WaterFluxEdgesFileName = "WaterFluxEdges.csv";
+
+    const std::filesystem::path ResultsDirPath = "transient results";
+
+    const std::filesystem::path GeometryFilePath = ResultsDirPath / "Geometry.xml";
+    const std::filesystem::path HeatFluxFilePath = ResultsDirPath / "HeatFlux.csv";
+    const std::filesystem::path HeatFluxEdgesFilePath = ResultsDirPath / "HeatFluxEdges.csv";
+    const std::filesystem::path HumidityFilePath = ResultsDirPath / "Humidities.csv";
+    const std::filesystem::path TemperatureFilePath = ResultsDirPath / "Temperatures.csv";
+    const std::filesystem::path WaterContentFilePath = ResultsDirPath / "WaterContent.csv";
+    const std::filesystem::path WaterFluxFilePath = ResultsDirPath / "WaterFlux.csv";
+    const std::filesystem::path WaterFluxEdgesFilePath = ResultsDirPath / "WaterFluxEdges.csv";
+
+    inline std::string getGeometryFileName() { return GeometryFilePath.string(); }
+    inline std::string getHeatFluxFileName() { return HeatFluxFilePath.string(); }
+    inline std::string getHeatFluxEdgesFileName() { return HeatFluxEdgesFilePath.string(); }
+    inline std::string getHumidityFileName() { return HumidityFilePath.string(); }
+    inline std::string getTemperatureFileName() { return TemperatureFilePath.string(); }
+    inline std::string getWaterContentFileName() { return WaterContentFilePath.string(); }
+    inline std::string getWaterFluxFileName() { return WaterFluxFilePath.string(); }
+    inline std::string getWaterFluxEdgesFileName() { return WaterFluxEdgesFilePath.string(); }
 
     // Timestep boundary conditions directory
     const std::string TimestepFilesDir = "timestep input files";
