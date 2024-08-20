@@ -19,7 +19,7 @@ namespace ThermZip
             std::vector<std::string> result;
             result.reserve(files.size());
 
-            std::string transientDir = std::string(directory).append(TimestepFilesDir + "\\");
+            std::string transientDir = std::string(directory).append(TimestepFilesDir.string() + "\\");
             Common::createDirectoryIfNotExists(transientDir);
 
             for(const auto & file : files)
@@ -94,7 +94,7 @@ namespace ThermZip
 
     std::string timestepFilesDirectory(const std::string & directory)
     {
-        return directory + "\\" + TimestepFilesDir;
+        return directory + "\\" + TimestepFilesDir.string();
     }
 
     std::string modelFileName(const std::string & directory)

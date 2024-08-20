@@ -37,7 +37,7 @@ namespace ThermZip
     inline std::string getWaterFluxEdgesFileName() { return WaterFluxEdgesFilePath.string(); }
 
     // Timestep boundary conditions directory
-    const std::string TimestepFilesDir = "timestep input files";
+    const std::filesystem::path TimestepFilesDir = "timestep input files";
 
     const std::string SteadyStateResultsName = "SteadyStateResults.xml";
     const std::string SteadyStateMeshResultsName = "SteadyStateMeshResults.xml";
