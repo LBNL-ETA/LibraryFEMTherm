@@ -237,7 +237,7 @@ namespace ThermZip
         std::map<std::string, std::string> fileContents;
 
         size_t fileCount = mz_zip_reader_get_num_files(&zipArchive);
-        for(size_t i = 0; i < fileCount; ++i)
+        for(mz_uint i = 0; i < fileCount; ++i)
         {
             mz_zip_archive_file_stat fileStat;
             if(!mz_zip_reader_file_stat(&zipArchive, i, &fileStat))
@@ -257,10 +257,7 @@ namespace ThermZip
             {
                 std::vector<char> fileBuffer(fileStat.m_uncomp_size);
 
-                size_t extractedSize = mz_zip_reader_extract_to_mem_no_alloc(
-                  &zipArchive, i, fileBuffer.data(), fileBuffer.size(), 0, nullptr, 0);
-
-                if(extractedSize != fileStat.m_uncomp_size)
+                if(!mz_zip_reader_extract_to_mem(&zipArchive, i, fileBuffer.data(), fileStat.m_uncomp_size, 0))
                 {
                     std::stringstream msg;
                     msg << "Failed to extract file: " << fileStat.m_filename;
