@@ -44,34 +44,6 @@ namespace ThermZip
     const std::string MeshName = "Mesh.xml";
     const std::string CMALibrary = "CMALibrary.xml";
 
-    enum class File
-    {
-        Unknown,
-        Gases,
-        Materials,
-        SteadyStateBC,
-        TransientTypeBC
-    };
-
-    std::string toString(File file);
-    File toFile(const std::string & file);
-
-    enum class Results
-    {
-        Unknown,
-        Geometry,
-        HeatFlux,
-        HeatFluxEdges,
-        Humidities,
-        Temperatures,
-        WaterContent,
-        WaterFlux,
-        WaterFluxEdges
-    };
-
-    std::string toString(Results results);
-    Results toResults(const std::string & results);
-
     bool zipFiles(const std::string & sourceDirectory, const std::string & destinationZipFile);
     void unzipFiles(std::string_view source, std::string_view destination);
 
