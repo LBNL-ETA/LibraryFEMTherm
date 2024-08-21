@@ -223,7 +223,6 @@ namespace ThermZip
 
     std::map<std::string, std::string> unzipFiles(std::string_view source, std::vector<std::string> const & fnames)
     {
-        // Read the test.zip file into memory
         std::vector<char> zipBuffer = readFileToBuffer(std::string(source));
 
         mz_zip_archive zipArchive;
@@ -237,7 +236,7 @@ namespace ThermZip
         std::map<std::string, std::string> fileContents;
 
         size_t fileCount = mz_zip_reader_get_num_files(&zipArchive);
-        for(mz_uint i = 0; i < fileCount; ++i)
+        for(size_t i = 0; i < fileCount; ++i)
         {
             mz_zip_archive_file_stat fileStat;
             if(!mz_zip_reader_file_stat(&zipArchive, i, &fileStat))
@@ -255,7 +254,7 @@ namespace ThermZip
 
             if(!mz_zip_reader_is_file_a_directory(&zipArchive, i))
             {
-                std::vector<char> fileBuffer(fileStat.m_uncomp_size);
+                std::vector<char> fileBuffer(fileStat.m_uncomp_size + 1, 0);   // +1 to ensure null-termination
 
                 if(!mz_zip_reader_extract_to_mem(&zipArchive, i, fileBuffer.data(), fileStat.m_uncomp_size, 0))
                 {
@@ -265,11 +264,17 @@ namespace ThermZip
                     throw std::runtime_error(msg.str());
                 }
 
-                fileContents[fileStat.m_filename] = std::string(fileBuffer.begin(), fileBuffer.end());
-            }
-            else
-            {
-                continue;
+                // Create a string, ensuring only valid data is included
+                std::string extractedContent(fileBuffer.data(), fileStat.m_uncomp_size);
+
+                // Optional: Trim any unwanted characters at the end
+                size_t end = extractedContent.find_last_not_of("\0\xFF\xFE\xFD");
+                if(end != std::string::npos)
+                {
+                    extractedContent = extractedContent.substr(0, end + 1);
+                }
+
+                fileContents[fileStat.m_filename] = extractedContent;
             }
         }
 
