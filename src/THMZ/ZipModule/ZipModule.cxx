@@ -191,8 +191,7 @@ namespace ThermZip
         for(const auto & [filePath, content] : fileContents)
         {
             // Add the file content to the zip archive
-            if(!mz_zip_writer_add_mem(
-                 &zipArchive, filePath.c_str(), content.data(), content.size(), MZ_BEST_COMPRESSION))
+            if(!mz_zip_writer_add_mem(&zipArchive, filePath.c_str(), content.data(), content.size(), MZ_DEFAULT_LEVEL))
             {
                 mz_zip_writer_end(&zipArchive);
                 std::stringstream msg;
@@ -258,7 +257,10 @@ namespace ThermZip
             {
                 std::vector<char> fileBuffer(fileStat.m_uncomp_size);
 
-                if(!mz_zip_reader_extract_to_mem(&zipArchive, i, fileBuffer.data(), fileBuffer.size(), 0))
+                size_t extractedSize = mz_zip_reader_extract_to_mem_no_alloc(
+                  &zipArchive, i, fileBuffer.data(), fileBuffer.size(), 0, nullptr, 0);
+
+                if(extractedSize != fileStat.m_uncomp_size)
                 {
                     std::stringstream msg;
                     msg << "Failed to extract file: " << fileStat.m_filename;
@@ -266,11 +268,6 @@ namespace ThermZip
                     throw std::runtime_error(msg.str());
                 }
 
-                // TODO: Delete this if tests in THERM pass
-                //auto fileStart = std::find(fileBuffer.begin(), fileBuffer.end(), '<') - fileBuffer.begin();
-                //auto fileEnd = fileBuffer.rend() - std::find(fileBuffer.rbegin(), fileBuffer.rend(), '>');
-                //fileContents[fileStat.m_filename] =
-                //  std::string(fileBuffer.begin() + fileStart, fileBuffer.begin() + fileEnd);
                 fileContents[fileStat.m_filename] = std::string(fileBuffer.begin(), fileBuffer.end());
             }
             else
