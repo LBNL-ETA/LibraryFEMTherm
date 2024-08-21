@@ -72,14 +72,6 @@ namespace ThermZip
     std::string toString(Results results);
     Results toResults(const std::string & results);
 
-    std::string resultsDirectory(const std::string & directory);
-    std::string timestepFilesDirectory(const std::string & directory);
-
-    std::string modelFileName(const std::string & directory);
-    std::string steadyStateResultsName(const std::string & directory);
-    std::string steadyStateMeshResultsName(const std::string & directory);
-    std::string meshName(const std::string & directory);
-
     bool zipFiles(const std::string & sourceDirectory, const std::string & destinationZipFile);
     void unzipFiles(std::string_view source, std::string_view destination);
 
@@ -115,16 +107,5 @@ namespace ThermZip
     //! \param text The content of the file to add to the zip archive
     //! \return 1 if the file was successfully added to the zip archive, 0 otherwise
     int addToZipFile(std::string_view zipFileName, std::string_view fileName, std::string_view text);
-
-    std::optional<std::string> getFilePathIfExists(const std::string & directory, File enumValue);
-
-    std::optional<std::string> getFilePathIfExists(const std::string & directory, Results enumValue);
-
-    std::string fullPath(const std::string & directory, File enumValue);
-
-    std::string fullPath(const std::string & directory, Results enumValue);
-
-    // Helper function for THERM to determine if all result files are stored and ready for the display
-    bool allResultsExist(const std::string & aResultsDirectory);
 
 }   // namespace ThermZip

@@ -87,36 +87,6 @@ namespace ThermZip
         return Results::Unknown;
     }
 
-    std::string resultsDirectory(const std::string & directory)
-    {
-        return directory + "\\" + ResultsDirPath.string();
-    }
-
-    std::string timestepFilesDirectory(const std::string & directory)
-    {
-        return directory + "\\" + TimestepFilesDir.string();
-    }
-
-    std::string modelFileName(const std::string & directory)
-    {
-        return directory + "\\" + ModelFileName;
-    }
-
-    std::string steadyStateResultsName(const std::string & directory)
-    {
-        return directory + "\\" + SteadyStateResultsName;
-    }
-
-    std::string steadyStateMeshResultsName(const std::string & directory)
-    {
-        return directory + "\\" + SteadyStateMeshResultsName;
-    }
-
-    std::string meshName(const std::string & directory)
-    {
-        return directory + "\\" + MeshName;
-    }
-
     namespace Helper
     {
         // Utility function for creating a relative path
@@ -236,7 +206,7 @@ namespace ThermZip
         std::map<std::string, std::string> fileContents;
 
         size_t fileCount = mz_zip_reader_get_num_files(&zipArchive);
-        for(size_t i = 0; i < fileCount; ++i)
+        for(mz_uint i = 0; i < fileCount; ++i)
         {
             mz_zip_archive_file_stat fileStat;
             if(!mz_zip_reader_file_stat(&zipArchive, i, &fileStat))
@@ -375,61 +345,6 @@ namespace ThermZip
         }
 
         mz_zip_reader_end(&zip_archive);
-    }
-
-    std::optional<std::string> getFilePathIfExists(const std::string & directory, File enumValue)
-    {
-        std::optional<std::string> result;
-
-        const auto path{directory + "\\" + toString(enumValue)};
-
-        if(std::filesystem::exists(path))
-        {
-            result = path;
-        }
-
-        return result;
-    }
-
-    std::optional<std::string> getFilePathIfExists(const std::string & directory, Results enumValue)
-    {
-        std::optional<std::string> result;
-
-        const auto path{resultsDirectory(directory) + "\\" + toString(enumValue)};
-
-        if(std::filesystem::exists(path))
-        {
-            result = path;
-        }
-
-        return result;
-    }
-
-    std::string fullPath(const std::string & directory, File enumValue)
-    {
-        return {directory + "\\" + toString(enumValue)};
-    }
-
-    std::string fullPath(const std::string & directory, Results enumValue)
-    {
-        return {resultsDirectory(directory) + "\\" + toString(enumValue)};
-    }
-
-    bool allResultsExist(const std::string & aResultsDirectory)
-    {
-        const std::string geometry = aResultsDirectory + "\\" + getGeometryFileName();
-        const std::string heatFlux = aResultsDirectory + "\\" + getHeatFluxFileName();
-        const std::string heatFluxEdges = aResultsDirectory + "\\" + getHeatFluxEdgesFileName();
-        const std::string humidity = aResultsDirectory + "\\" + getHumidityFileName();
-        const std::string temperature = aResultsDirectory + "\\" + getTemperatureFileName();
-        const std::string waterContent = aResultsDirectory + "\\" + getWaterContentFileName();
-        const std::string waterFlux = aResultsDirectory + "\\" + getWaterFluxFileName();
-        const std::string waterFluxEdges = aResultsDirectory + "\\" + getWaterFluxEdgesFileName();
-
-        using std::filesystem::exists;
-
-        return exists(geometry) && exists(heatFlux) && exists(heatFluxEdges) && exists(humidity) && exists(temperature)
-               && exists(waterContent) && exists(waterFlux) && exists(waterFluxEdges);
     }
 
     std::string addTimestepDirectoryToFileName(const std::string & fileName)
