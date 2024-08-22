@@ -11,6 +11,28 @@
 namespace ThermFile
 {
     template<typename NodeAdapter>
+    const NodeAdapter & operator>>(const NodeAdapter & node, ThermFile::RadianceModeTags & tags)
+    {
+        node >> FileParse::Child{"ShadeInName", tags.shadeInName};
+        node >> FileParse::Child{"ShadeInTag", tags.shadeInTag};
+        node >> FileParse::Child{"ShadeOutName", tags.shadeOutName};
+        node >> FileParse::Child{"ShadeOutTag", tags.shadeOutTag};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    NodeAdapter & operator<<(NodeAdapter & node, const ThermFile::RadianceModeTags & tags)
+    {
+        node << FileParse::Child{"ShadeInName", tags.shadeInName};
+        node << FileParse::Child{"ShadeInTag", tags.shadeInTag};
+        node << FileParse::Child{"ShadeOutName", tags.shadeOutName};
+        node << FileParse::Child{"ShadeOutTag", tags.shadeOutTag};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, ThermFile::ThermModel & model)
     {
         node >> FileParse::Child{"Version", model.version};
@@ -18,6 +40,7 @@ namespace ThermFile
         node >> FileParse::Child{"Preferences", model.preferences};
         node >> FileParse::Child{"Properties", model.properties};
         node >> FileParse::Child{"GlazingOrigin", model.glazingOrigin};
+        node >> FileParse::Child{"RadianceTags", model.radianceTags};
         node >> FileParse::Child{{"Cavities", "Cavity"}, model.cavities};
         node >> FileParse::Child{{"Polygons", "Polygon"}, model.polygons};
         node >> FileParse::Child{{"Boundaries", "Boundary"}, model.boundaryConditions};
@@ -35,6 +58,7 @@ namespace ThermFile
         node << FileParse::Child{"Preferences", model.preferences};
         node << FileParse::Child{"Properties", model.properties};
         node << FileParse::Child{"GlazingOrigin", model.glazingOrigin};
+        node << FileParse::Child{"RadianceTags", model.radianceTags};
         node << FileParse::Child{{"Cavities", "Cavity"}, model.cavities};
         node << FileParse::Child{{"Polygons", "Polygon"}, model.polygons};
         node << FileParse::Child{{"Boundaries", "Boundary"}, model.boundaryConditions};

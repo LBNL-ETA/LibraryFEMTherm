@@ -350,7 +350,17 @@ namespace Helper
             std::vector<ThermFile::Polygon> polygons{polygon1(), polygon2()};
             std::vector<ThermFile::Boundary> bcs{bc1(), bc2()};
 
-            return {"1", false, preferences, properties, glazingOrigin, cavities, polygons, bcs, {}, std::nullopt};
+            return {"1",
+                    false,
+                    preferences,
+                    properties,
+                    glazingOrigin,
+                    std::nullopt,
+                    cavities,
+                    polygons,
+                    bcs,
+                    {},
+                    std::nullopt};
         }
 
         Helper::MockNode equivalentNodeStructure()

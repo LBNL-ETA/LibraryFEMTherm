@@ -26,6 +26,15 @@
 			<xs:element name="GlazingSystem" type="GlazingSystem" minOccurs="1" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
+	
+	<xs:complexType name="RadianceTags">
+		<xs:sequence>
+			<xs:element name="ShadeInName" type="xs:string" minOccurs="1" maxOccurs="1" />
+			<xs:element name="ShadeInTag" type="xs:string" minOccurs="1" maxOccurs="1" />
+			<xs:element name="ShadeOutName" type="xs:string" minOccurs="1" maxOccurs="1" />
+			<xs:element name="ShadeOutTag" type="xs:string" minOccurs="1" maxOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
 	<xs:element name="ThermModel">
 		<xs:complexType>
 			<xs:sequence>
@@ -34,6 +43,7 @@
 				<xs:element name="Preferences" type="Preferences" minOccurs="1" maxOccurs="1"/>
 				<xs:element name="Properties" type="Properties" minOccurs="1" maxOccurs="1"/>
 				<xs:element name="GlazingOrigin" type="Point" minOccurs="1" maxOccurs="1"/>
+				<xs:element name="RadianceTags" type="RadianceTags" minOccurs="0" maxOccurs="1" />
 				<xs:element name="Cavities" type="Cavities" minOccurs="0" maxOccurs="1"/>
 				<xs:element name="Polygons" type="Polygons" minOccurs="0" maxOccurs="1"/>
 				<xs:element name="Boundaries" type="Boundaries" minOccurs="0" maxOccurs="1"/>
