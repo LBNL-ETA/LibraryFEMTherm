@@ -137,6 +137,7 @@ namespace ThermFile
     //! @fluxTag - flux tag of the boundary condition.
     //! @isBlocking - flag indicating if the boundary condition is blocking.
     //! @neighborPolygonUUID - unique identifier of the neighbor polygon.
+    //! @neighborPolygonUUID2 - unique identifier of the second neighbor polygon.
     //! @origin - origin of the boundary condition.
     //! @points - points that is boundary condition made of.
     //! @Side - side of the boundary condition.
@@ -155,6 +156,7 @@ namespace ThermFile
         std::string fluxTag;
         bool isBlocking{false};
         std::string neighborPolygonUUID;
+        std::optional<std::string> neighborPolygonUUID2;
         Point origin;
         Point startPoint;
         Point endPoint;

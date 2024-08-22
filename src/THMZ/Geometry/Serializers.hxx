@@ -229,6 +229,7 @@ namespace ThermFile
         node >> FileParse::Child{"FluxTag", boundaryCondition.fluxTag};
         node >> FileParse::Child{"IsBlocking", boundaryCondition.isBlocking};
         node >> FileParse::Child{"NeighborPolygonUUID", boundaryCondition.neighborPolygonUUID};
+        node >> FileParse::Child{"NeighborPolygonUUID2", boundaryCondition.neighborPolygonUUID2};
         node >> FileParse::Child{"Origin", boundaryCondition.origin};
         node >> FileParse::Child{"StartPoint", boundaryCondition.startPoint};
         node >> FileParse::Child{"EndPoint", boundaryCondition.endPoint};
@@ -256,6 +257,7 @@ namespace ThermFile
         node << FileParse::Child{"FluxTag", boundaryCondition.fluxTag};
         node << FileParse::Child{"IsBlocking", boundaryCondition.isBlocking};
         node << FileParse::Child{"NeighborPolygonUUID", boundaryCondition.neighborPolygonUUID};
+        node << FileParse::Child{"NeighborPolygonUUID2", boundaryCondition.neighborPolygonUUID2};
         node << FileParse::Child{"Origin", boundaryCondition.origin};
         node << FileParse::Child{"StartPoint", boundaryCondition.startPoint};
         node << FileParse::Child{"EndPoint", boundaryCondition.endPoint};
