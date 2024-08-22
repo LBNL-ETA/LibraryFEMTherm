@@ -10,6 +10,14 @@
 			<xs:enumeration value="Condensation Resistance"/>
 		</xs:restriction>
 	</xs:simpleType>
+	
+	<xs:simpleType name="MaterialSide">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Front" />
+			<xs:enumeration value="Back" />
+		</xs:restriction>
+	</xs:simpleType>
+
 	<xs:simpleType name="EdgeType">
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="Flux"/>
@@ -18,7 +26,7 @@
 			<xs:enumeration value="Radiation"/>
 			<xs:enumeration value="Radiation Enclosure"/>
 		</xs:restriction>
-	</xs:simpleType>	
+	</xs:simpleType>
 	<xs:simpleType name="BCPosition">
 		<xs:annotation>
 			<xs:documentation>
