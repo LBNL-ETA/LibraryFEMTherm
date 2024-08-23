@@ -73,9 +73,21 @@ add_library(${target_name} STATIC ${SOURCES})
 set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
 
 if(MSVC)
-    target_compile_options(${target_name} PRIVATE /MD)
-    target_compile_options(FileParse PRIVATE /MD)
-    target_compile_options(miniz PRIVATE /MD)
+    # Set the correct runtime library flags for the entire project
+    set(CMAKE_CXX_FLAGS_DEBUG "/MDd /Zi /Ob0 /Od /RTC1")
+    set(CMAKE_CXX_FLAGS_RELEASE "/MD /O2 /Ob2 /DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/MD /Zi /O2 /Ob1 /DNDEBUG")
+    set(CMAKE_CXX_FLAGS_MINSIZEREL "/MD /O1 /Ob1 /DNDEBUG")
+
+    # Ensure that all dependencies also use the correct runtime library
+    target_compile_options(${target_name} PRIVATE /MDd)
+    target_compile_options(FileParse PRIVATE /MDd)
+    target_compile_options(miniz PRIVATE /MDd)
+
+    if(DOWNLOAD_GTEST)
+        target_compile_options(gtest PRIVATE /MDd)
+        target_compile_options(gmock PRIVATE /MDd)
+    endif()
 endif()
 
 target_link_libraries(${target_name} PUBLIC FileParse miniz)
