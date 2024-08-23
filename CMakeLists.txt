@@ -16,17 +16,17 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${GLOBAL_OUTPUT_PATH})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${GLOBAL_OUTPUT_PATH})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${GLOBAL_OUTPUT_PATH})
 
-# google test will not be created by this project if this is not main project. Main project is expected to handle google test.
+# google test will not be created by this project if this is not the main project. Main project is expected to handle google test.
 get_directory_property(hasParent PARENT_DIRECTORY)
 
 if(hasParent)
-    set( BUILD_LibraryFEMTHERM_TESTING OFF )
-    set( DOWNLOAD_GTEST OFF )
-    if( BUILD_TESTING STREQUAL ON ) # Parent testing is ON
-        set( BUILD_KeffC_TESTING ON )
+    set(BUILD_LibraryFEMTHERM_TESTING OFF)
+    set(DOWNLOAD_GTEST OFF)
+    if(BUILD_TESTING STREQUAL ON) # Parent testing is ON
+        set(BUILD_KeffC_TESTING ON)
     endif()
 else()
-    option( BUILD_LibraryFEMTHERM_TESTING "Build testing targets" ON )
+    option(BUILD_LibraryFEMTHERM_TESTING "Build testing targets" ON)
     set(DOWNLOAD_GTEST ON)
 endif()
 
@@ -36,7 +36,7 @@ include(CMakeLists-FileParse.txt)
 include(CMakeLists-miniz.txt)
 
 include_directories(src)
-include_directories( ${CMAKE_BINARY_DIR}/xmlParser-src/include )
+include_directories(${CMAKE_BINARY_DIR}/xmlParser-src/include)
 
 # Download and include GoogleTest directly if needed
 if(DOWNLOAD_GTEST)
@@ -53,8 +53,6 @@ if(DOWNLOAD_GTEST)
     if(MSVC)
         # Force all targets, including external ones, to use the same runtime library
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-        target_compile_options(gtest PRIVATE /MD)
-        target_compile_options(gmock PRIVATE /MD)
     endif()
 
     # Link GTest with test targets
@@ -72,36 +70,16 @@ add_library(${target_name} STATIC ${SOURCES})
 
 set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
 
+# Configure runtime library for different build types
 if(MSVC)
     # Set the correct runtime library flags for the entire project
-    set(CMAKE_CXX_FLAGS_DEBUG "/MDd /Zi /Ob0 /Od /RTC1")
-    set(CMAKE_CXX_FLAGS_RELEASE "/MD /O2 /Ob2 /DNDEBUG")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/MD /Zi /O2 /Ob1 /DNDEBUG")
-    set(CMAKE_CXX_FLAGS_MINSIZEREL "/MD /O1 /Ob1 /DNDEBUG")
-
-    # Ensure that all dependencies also use the correct runtime library
-    target_compile_options(${target_name} PRIVATE /MDd)
-    target_compile_options(FileParse PRIVATE /MDd)
-    target_compile_options(miniz PRIVATE /MDd)
-
-    if(DOWNLOAD_GTEST)
-        target_compile_options(gtest PRIVATE /MDd)
-        target_compile_options(gmock PRIVATE /MDd)
-    endif()
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MD")
+    set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} /MD")
 endif()
 
 target_link_libraries(${target_name} PUBLIC FileParse miniz)
-
-# Disable warnings for the external projects
-if(MSVC)
-    target_compile_options(FileParse PRIVATE /w)
-else()
-    set_source_files_properties(
-        ${CMAKE_BINARY_DIR}/_deps/xmlparser-src/src/xmlParser.cpp
-        PROPERTIES
-        COMPILE_FLAGS -w
-    )
-endif()
 
 if(BUILD_LibraryFEMTHERM_TESTING)
     add_subdirectory(tst)
