@@ -109,18 +109,12 @@ TEST_F(TestBCSteadyStateLibraryXMLSaving, Comprehensive)
 
     const std::string uuid{"7a863ad6-c537-11ea-87d0-0242ac130003"};
 
-    BCSteadyStateLibrary::BoundaryCondition record{uuid};
-    record.Name = "Test Name";
-    record.Color = "0xFAB2A6";
+    BCSteadyStateLibrary::Comprehensive comprehensive{0.5,
+                                                      BCSteadyStateLibrary::Convection{0.0, 0.0},
+                                                      BCSteadyStateLibrary::ConstantFlux{0.0},
+                                                      BCSteadyStateLibrary::Radiation{}};
 
-    BCSteadyStateLibrary::Comprehensive comprehensive;
-    BCSteadyStateLibrary::Convection convection;
-    BCSteadyStateLibrary::ConstantFlux constantFlux;
-    BCSteadyStateLibrary::Radiation radiation;
-    comprehensive.convection = convection;
-    comprehensive.constantFlux = constantFlux;
-    comprehensive.radiation = radiation;
-    record.data = comprehensive;
+    BCSteadyStateLibrary::BoundaryCondition record{uuid, "Test Name", false, "0xFAB2A6", comprehensive, "", false};
 
     bcLibraryDB.addBoundaryCondition(record);
     const auto error{bcLibraryDB.saveToFile()};

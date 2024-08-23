@@ -227,7 +227,8 @@ TEST_F(TestTHMXGeometry, PolygonDeserialization)
                                       {{20.0, 0.5}, {25.0, 0.6}, {30.0, 0.7}},
                                       "Some Cavity uuid",
                                       {"Attribute1", "Attribute2"},
-                                      ThermFile::PolygonType::Glass};
+                                      ThermFile::PolygonType::Glass,
+                                      std::nullopt};
 
     Helper::expect_near(correctPolygon, polygon, 1e-6);
 }
@@ -243,7 +244,7 @@ TEST_F(TestTHMXGeometry, PolygonSerialization)
                                {{20.0, 0.5}, {25.0, 0.6}, {30.0, 0.7}},
                                "Some Cavity uuid",
                                {"Attribute1", "Attribute2"},
-                               ThermFile::PolygonType::Material};
+                               ThermFile::PolygonType::Material, std::nullopt};
 
     Helper::MockNode node{"Polygon"};
     Helper::MockNodeAdapter adapter{&node};
@@ -417,7 +418,8 @@ TEST_F(TestTHMXGeometry, BoundaryConditionDeserialization)
        "true",
        "Some Neighbor Polygon UUID",
        {"20", "0.5"},
-       {"20", "0.5"}, {"25", "0.6"},
+       {"20", "0.5"},
+       {"25", "0.6"},
        "1",
        {"0.9", "20", "true"},
        {"Interior", "125"},
@@ -502,7 +504,8 @@ TEST_F(TestTHMXGeometry, BoundaryConditionSerialization)
        "true",
        "Some Neighbor Polygon UUID",
        {"20", "0.5"},
-       {"20", "0.5"}, {"25", "0.6"},
+       {"20", "0.5"},
+       {"25", "0.6"},
        "1",
        {"0.9", "20", "true"},
        {"Interior", "125"},

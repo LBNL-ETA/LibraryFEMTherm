@@ -130,7 +130,6 @@ TEST_F(TestMaterialsXMLReading, ReadShade1ByUUID) {
 }
 
 TEST_F(TestMaterialsXMLReading, Enclosure1ByUUID) {
-    static const auto tolerance{1e-6};
     const std::string fileContent{TestMaterial::testDatabase()};
 
     File::createFileFromString(getFileName(), fileContent);

@@ -73,25 +73,6 @@ namespace
         return parent;
     }
 
-    Helper::MockNode & insertDoubleLayer(Helper::MockNode & parent,
-                                         const std::string & thicknessIn,
-                                         const std::string & thicknessOut,
-                                         const std::string & conductivityIn,
-                                         const std::string & conductivityOut,
-                                         const std::vector<LayerInput> & options)
-    {
-        Helper::MockNode & doubleLayerNode = Helper::addChildNode(parent, "DoubleLayer");
-        addChildNode(doubleLayerNode, "ThicknessIn", thicknessIn);
-        addChildNode(doubleLayerNode, "ThicknessOut", thicknessOut);
-        addChildNode(doubleLayerNode, "ConductivityIn", conductivityIn);
-        addChildNode(doubleLayerNode, "ConductivityOut", conductivityOut);
-
-        std::for_each(
-          begin(options), end(options), [&](const LayerInput & option) { insertLayerOption(doubleLayerNode, option); });
-
-        return parent;
-    }
-
     void expectBestWorstValuesNear(const ThermFile::CMAGapSpacer & correct,
                                    const ThermFile::CMAGapSpacer & actual,
                                    const double tolerance)
@@ -123,32 +104,6 @@ namespace
             ASSERT_NEAR(singleLayer.option[i].hcout, correctSingleLayer.option[i].hcout, tolerance);
             ASSERT_NEAR(singleLayer.option[i].emissivityIn, correctSingleLayer.option[i].emissivityIn, tolerance);
             ASSERT_NEAR(singleLayer.option[i].emissivityOut, correctSingleLayer.option[i].emissivityOut, tolerance);
-        }
-    }
-
-    void compareDoubleLayer(const std::variant<ThermFile::CMASingleLayer, ThermFile::CMADoubleLayer> & variant,
-                            const ThermFile::CMADoubleLayer & correctDoubleLayer,
-                            const double tolerance = 1e-6)
-    {
-        ASSERT_TRUE(std::holds_alternative<ThermFile::CMADoubleLayer>(variant));
-        const auto & doubleLayer = std::get<ThermFile::CMADoubleLayer>(variant);
-
-        ASSERT_NEAR(doubleLayer.thicknessIn, correctDoubleLayer.thicknessIn, tolerance);
-        ASSERT_NEAR(doubleLayer.thicknessOut, correctDoubleLayer.thicknessOut, tolerance);
-        ASSERT_NEAR(doubleLayer.conductivityIn, correctDoubleLayer.conductivityIn, tolerance);
-        ASSERT_NEAR(doubleLayer.conductivityOut, correctDoubleLayer.conductivityOut, tolerance);
-
-        ASSERT_EQ(doubleLayer.option.size(), correctDoubleLayer.option.size());
-        for(size_t i = 0; i < doubleLayer.option.size(); ++i)
-        {
-            ASSERT_EQ(static_cast<int>(doubleLayer.option[i].glazingCase),
-                      static_cast<int>(correctDoubleLayer.option[i].glazingCase));
-            ASSERT_EQ(static_cast<int>(doubleLayer.option[i].spacerCase),
-                      static_cast<int>(correctDoubleLayer.option[i].spacerCase));
-            ASSERT_NEAR(doubleLayer.option[i].hcin, correctDoubleLayer.option[i].hcin, tolerance);
-            ASSERT_NEAR(doubleLayer.option[i].hcout, correctDoubleLayer.option[i].hcout, tolerance);
-            ASSERT_NEAR(doubleLayer.option[i].emissivityIn, correctDoubleLayer.option[i].emissivityIn, tolerance);
-            ASSERT_NEAR(doubleLayer.option[i].emissivityOut, correctDoubleLayer.option[i].emissivityOut, tolerance);
         }
     }
 }   // namespace

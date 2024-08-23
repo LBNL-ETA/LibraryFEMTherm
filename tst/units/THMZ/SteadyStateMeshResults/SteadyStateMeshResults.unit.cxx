@@ -100,7 +100,10 @@ TEST_F(TestMesh, MeshCaseResultsDeserialization)
     ThermFile::CaseMeshResults correctMeshResults{ThermFile::RunType::UFactor,
                                                   std::nullopt,   // glazingCase
                                                   std::nullopt,   // spacerCase
-                                                  {{1u, 12.38, 1.29, 0.12}, {2u, 13.38, 2.29, 1.12}}};
+                                                  {{1u, 12.38, 1.29, 0.12}, {2u, 13.38, 2.29, 1.12}},
+                                                  {},
+                                                  {},
+                                                  {}};
     Helper::expect_near(correctMeshResults, meshResults, 1e-6);
 }
 
@@ -109,7 +112,7 @@ TEST_F(TestMesh, MeshCaseResultsSerialization)
     ThermFile::CaseMeshResults meshResults{ThermFile::RunType::UFactor,
                                            std::nullopt,   // glazingCase
                                            std::nullopt,   // spacerCase
-                                           {{1u, 12.38, 1.29, 0.12}, {2u, 13.38, 2.29, 1.12}}};
+                                           {{1u, 12.38, 1.29, 0.12}, {2u, 13.38, 2.29, 1.12}}, {}, {}, {}};
 
     Helper::MockNode node{"Case"};
     Helper::MockNodeAdapter adapter{&node};
@@ -143,38 +146,94 @@ TEST_F(TestMesh, MeshResultsDeserialization)
     adapter >> results;
 
     //clang-format off
-    ThermFile::MeshResults correctResults{"1",
-                                          {{ThermFile::RunType::UFactor,
-                                            std::nullopt,   // glazingCase
-                                            std::nullopt,   // spacerCase
-                                            {{1u, 12.38, 1.29, 0.12}, {2u, 13.38, 2.29, 1.12}}},
-                                           {ThermFile::RunType::CondensationResistance,
-                                            std::nullopt,   // glazingCase
-                                            std::nullopt,   // spacerCase
-                                            {{1u, 14.40, 2.30, 0.25}, {2u, 15.50, 3.45, 1.25}}}},
-                                          {{ThermFile::RunType::UFactor,
-                                            std::nullopt,   // glazingCase
-                                            std::nullopt,   // spacerCase
-                                            {{"Frame", {1u, 2u, 3u}}, {"Edge", {4u, 5u, 6u}}}},
-                                           {ThermFile::RunType::CondensationResistance,
-                                            std::nullopt,   // glazingCase
-                                            std::nullopt,   // spacerCase
-                                            {{"Frame", {7u, 8u, 9u}}, {"Edge", {10u, 11u, 12u}}}}}};
+    ThermFile::MeshResults correctResults
+    {"1",
+        {
+            {
+                ThermFile::RunType::UFactor,
+                std::nullopt,   // glazingCase
+                std::nullopt,   // spacerCase
+                {
+                    {1u, 12.38, 1.29, 0.12},
+                    {2u, 13.38, 2.29, 1.12}
+                },
+                {},
+                {},
+                {}
+            },
+            {
+                ThermFile::RunType::CondensationResistance,
+                std::nullopt,   // glazingCase
+                std::nullopt,   // spacerCase
+                {
+                    {1u, 14.40, 2.30, 0.25},
+                    {2u, 15.50, 3.45, 1.25}
+                },
+                {},
+                {},
+                {}
+            }
+        },
+        {
+            {
+                ThermFile::RunType::UFactor,
+                std::nullopt,   // glazingCase
+                std::nullopt,   // spacerCase
+                {
+                    {"Frame", {1u, 2u, 3u}},
+                    {"Edge", {4u, 5u, 6u}}
+                }
+            },
+            {
+                ThermFile::RunType::CondensationResistance,
+                std::nullopt,   // glazingCase
+                std::nullopt,   // spacerCase
+                {
+                    {"Frame", {7u, 8u, 9u}},
+                    {"Edge", {10u, 11u, 12u}}
+                }
+            }
+        }
+    };
     //clang-format on
     Helper::expect_near(correctResults, results, 1e-6);
 }
 
 TEST_F(TestMesh, MeshResultsSerialization)
 {
-    ThermFile::MeshResults meshResults{"1",
-                                       {{ThermFile::RunType::UFactor,
-                                         std::nullopt,   // glazingCase
-                                         std::nullopt,   // spacerCase
-                                         {{1u, 12.38, 1.29, 0.12}, {2u, 13.38, 2.29, 1.12}}},
-                                        {ThermFile::RunType::CondensationResistance,
-                                         std::nullopt,   // glazingCase
-                                         std::nullopt,   // spacerCase
-                                         {{1u, 14.40, 2.30, 0.25}, {2u, 15.50, 3.45, 1.25}}}}};
+    // clang-format off
+    ThermFile::MeshResults meshResults
+    {
+        "1",                // version
+        {                   // std::vector<CaseMeshResults>
+            {
+                ThermFile::RunType::UFactor,    // resultsType
+                std::nullopt,                   // glazingCase
+                std::nullopt,                   // spacerCase
+                {                               // std::vector<NodeResults>
+                    {1u, 12.38, 1.29, 0.12},    // NodeResults
+                    {2u, 13.38, 2.29, 1.12}     // NodeResults
+                },
+                {},                             // std::vector<EdgeResults> elementEdges
+                {},                             // std::vector<EdgeResults> polygonEdges
+                {}                              // std::vector<size_t> temperatureCountourNodeIDs
+            },
+            {
+                ThermFile::RunType::CondensationResistance,     // resultsType
+                std::nullopt,                                   // glazingCase
+                std::nullopt,                                   // spacerCase
+                {                                               // std::vector<NodeResults>
+                    {1u, 14.40, 2.30, 0.25},                    // NodeResults
+                    {2u, 15.50, 3.45, 1.25}                     // NodeResults
+                },
+                {},                                             // std::vector<EdgeResults> elementEdges
+                {},                                             // std::vector<EdgeResults> polygonEdges
+                {}                                              // std::vector<size_t> temperatureCountourNodeIDs
+            }
+        },
+        {}                  // std::vector<TagNodesCase>
+    };
+    //clang-format on
 
     Helper::MockNode node{"MeshResults"};
     Helper::MockNodeAdapter adapter{&node};
