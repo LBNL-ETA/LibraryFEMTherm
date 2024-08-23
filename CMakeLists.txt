@@ -20,14 +20,14 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${GLOBAL_OUTPUT_PATH})
 get_directory_property(hasParent PARENT_DIRECTORY)
 
 if(hasParent)
-  set( BUILD_LibraryFEMTHERM_TESTING OFF )
-  set( DOWNLOAD_GTEST OFF )
-  if( BUILD_TESTING STREQUAL ON ) # Parent testing is ON
-    set( BUILD_KeffC_TESTING ON )
-  endif()
+    set( BUILD_LibraryFEMTHERM_TESTING OFF )
+    set( DOWNLOAD_GTEST OFF )
+    if( BUILD_TESTING STREQUAL ON ) # Parent testing is ON
+        set( BUILD_KeffC_TESTING ON )
+    endif()
 else()
-	option( BUILD_LibraryFEMTHERM_TESTING "Build testing targets" ON )
-	set(DOWNLOAD_GTEST ON)
+    option( BUILD_LibraryFEMTHERM_TESTING "Build testing targets" ON )
+    set(DOWNLOAD_GTEST ON)
 endif()
 
 # Download external projects automatically
@@ -40,24 +40,26 @@ include_directories( ${CMAKE_BINARY_DIR}/xmlParser-src/include )
 
 # Download and include GoogleTest directly if needed
 if(DOWNLOAD_GTEST)
-	include(FetchContent)
+    include(FetchContent)
 
-	FetchContent_Declare(
-			googletest
-			GIT_REPOSITORY https://github.com/google/googletest.git
-			GIT_TAG v1.13.0
-	)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.13.0
+    )
 
-	FetchContent_MakeAvailable(googletest)
+    FetchContent_MakeAvailable(googletest)
 
-	# Prevent GoogleTest from overriding compiler/linker options on MSVC
-	if (MSVC)
-		set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-	endif()
+    if(MSVC)
+        # Force all targets, including external ones, to use the same runtime library
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+        target_compile_options(gtest PRIVATE /MD)
+        target_compile_options(gmock PRIVATE /MD)
+    endif()
 
-	# Link GTest with test targets
-	include_directories(${gtest_SOURCE_DIR}/include)
-	include_directories(${gmock_SOURCE_DIR}/include)
+    # Link GTest with test targets
+    include_directories(${gtest_SOURCE_DIR}/include)
+    include_directories(${gmock_SOURCE_DIR}/include)
 endif()
 
 file(GLOB_RECURSE SOURCES_HXX "src/*.hxx")
@@ -70,27 +72,33 @@ add_library(${target_name} STATIC ${SOURCES})
 
 set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
 
-target_link_libraries( ${target_name} PUBLIC FileParse miniz)
+if(MSVC)
+    target_compile_options(${target_name} PRIVATE /MD)
+    target_compile_options(FileParse PRIVATE /MD)
+    target_compile_options(miniz PRIVATE /MD)
+endif()
+
+target_link_libraries(${target_name} PUBLIC FileParse miniz)
 
 # Disable warnings for the external projects
 if(MSVC)
-	target_compile_options(FileParse PRIVATE /w)
+    target_compile_options(FileParse PRIVATE /w)
 else()
-	set_source_files_properties(
-			${CMAKE_BINARY_DIR}/_deps/xmlparser-src/src/xmlParser.cpp
-			PROPERTIES
-			COMPILE_FLAGS -w
-	)
+    set_source_files_properties(
+        ${CMAKE_BINARY_DIR}/_deps/xmlparser-src/src/xmlParser.cpp
+        PROPERTIES
+        COMPILE_FLAGS -w
+    )
 endif()
 
 if(BUILD_LibraryFEMTHERM_TESTING)
-	add_subdirectory(tst)
+    add_subdirectory(tst)
 endif()
 
 config_compiler_and_linker_LibraryFEMTHERM()
 
 if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc /utf-8")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /utf-8")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /utf-8")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /utf-8")
 endif()
