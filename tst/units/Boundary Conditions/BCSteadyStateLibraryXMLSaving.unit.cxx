@@ -18,12 +18,8 @@ TEST_F(TestBCSteadyStateLibraryXMLSaving, Simplified)
 
     const std::string uuid{"7a863ad6-c537-11ea-87d0-0242ac130003"};
 
-    BCSteadyStateLibrary::BoundaryCondition record{uuid};
-    record.Name = "Test Name";
-    record.Color = "0xFAB2A6";
-
-    BCSteadyStateLibrary::Simplified simplified;
-    record.data = simplified;
+    BCSteadyStateLibrary::BoundaryCondition record{
+      uuid, "Test Name", false, "0xFAB2A6", BCSteadyStateLibrary::Simplified(), "", false};
 
     bcLibraryDB.addBoundaryCondition(record);
     const auto error{bcLibraryDB.saveToFile()};
@@ -68,12 +64,8 @@ TEST_F(TestBCSteadyStateLibraryXMLSaving, RadiationSurface)
 
     const std::string uuid{"7a863ad6-c537-11ea-87d0-0242ac130003"};
 
-    BCSteadyStateLibrary::BoundaryCondition record{uuid};
-    record.Name = "Test Name";
-    record.Color = "0xFAB2A6";
-
-    BCSteadyStateLibrary::RadiationSurface radiation;
-    record.data = radiation;
+    BCSteadyStateLibrary::BoundaryCondition record{
+      uuid, "Test Name", false, "0xFAB2A6", BCSteadyStateLibrary::RadiationSurface(), "", false};
 
     bcLibraryDB.addBoundaryCondition(record);
     const auto error{bcLibraryDB.saveToFile()};
