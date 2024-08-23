@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 
 #include "Materials/Materials.hxx"
+#include "Materials/Common.hxx"
 #include "LibraryUtilities/FileManipulation.hxx"
 
 class TestImportExportFile : public testing::Test

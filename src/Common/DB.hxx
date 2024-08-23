@@ -13,6 +13,23 @@
 namespace Common
 {
     template<typename T>
+    T loadFromXMLString(const std::string & data, const std::string & nodeTypeName)
+    {
+        // Attempt to load the top node for the given type
+        const auto xmlNode = getTopNodeFromString(data, nodeTypeName);
+
+        // Create an instance of the type
+        T model;
+        if(xmlNode.has_value())
+        {
+            // Assume that `operator>>` is overloaded for T and xmlNode type
+            xmlNode.value() >> model;
+        }
+
+        return model;
+    }
+
+    template<typename T>
     T loadFromXMLFile(std::string_view fileName, const std::string & nodeTypeName)
     {
         // Convert std::string_view to std::string for file operations
@@ -40,27 +57,7 @@ namespace Common
     }
 
     template<typename T>
-    T loadFromXMLString(const std::string & data, const std::string & nodeTypeName)
-    {
-
-        // Attempt to load the top node for the given type
-        const auto xmlNode = getTopNodeFromString(data, nodeTypeName);
-
-        // Create an instance of the type
-        T model;
-        if(xmlNode.has_value())
-        {
-            // Assume that `operator>>` is overloaded for T and xmlNode type
-            xmlNode.value() >> model;
-        }
-
-        return model;
-    }
-
-    template<typename T>
-    T loadFromZipFile(const std::string & zipFileName,
-                      const std::string & fileName,
-                      const std::string & nodeTypeName)
+    T loadFromZipFile(const std::string & zipFileName, const std::string & fileName, const std::string & nodeTypeName)
     {
         auto contents = ThermZip::unzipFile(zipFileName, fileName);
         return loadFromXMLString<T>(contents, nodeTypeName);
@@ -75,5 +72,25 @@ namespace Common
         node << object;
 
         return node.writeToFile(fileName.data());
+    }
+
+    template<typename T>
+    std::string saveToXMLString(const T & object, const std::string & nodeName)
+    {
+        auto node = createTopNode(nodeName);
+
+        node << object;
+
+        return node.getContent();
+    }
+
+    template<typename T>
+    int saveToZIPFile(const T & object,
+                      std::string_view fileName,
+                      std::string_view zipFileName,
+                      const std::string & nodeName)
+
+    {
+        return ThermZip::addToZipFile(zipFileName, fileName, saveToXMLString(object, nodeName));
     }
 }   // namespace Common

@@ -2,12 +2,10 @@
 
 #include <string>
 
+#include "SteadyState.hxx"
+
 namespace BCSteadyStateLibrary
 {
-    struct Comprehensive;
-    struct Simplified;
-    struct RadiationSurface;
-
     class Tags
     {
     public:

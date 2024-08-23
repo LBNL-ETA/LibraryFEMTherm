@@ -50,7 +50,7 @@ namespace Helper
         EXPECT_EQ(calculated.has_value(), correct.has_value());
         if(correct.has_value() && calculated.has_value())
         {
-            assertOptionalEq(correct.value(), calculated.value());
+            EXPECT_EQ(correct.value(), calculated.value());
         }
     }
 

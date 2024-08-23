@@ -30,6 +30,8 @@ namespace Helper
     [[maybe_unused]] MockNode &
       addChildNode(MockNode & parentNode, std::string_view tag, std::string_view text = "");
     [[maybe_unused]] MockNode &
+      addChildNodeIfNotEmpty(MockNode & parentNode, std::string_view tag, std::string_view text = "");
+    [[maybe_unused]] MockNode &
       addChildNode(MockNode & parentNode, std::string_view tag, MockNode childNode);
     void addChildNode(MockNode & parentNode, MockNode childNode);
 
@@ -54,6 +56,8 @@ namespace Helper
         void addText(std::string_view text) override;
 
         [[nodiscard]] MockNode getNode() const;
+
+        std::string getContent() const override;
 
     private:
         MockNode * node_{nullptr};

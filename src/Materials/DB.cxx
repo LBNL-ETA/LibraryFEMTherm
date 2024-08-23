@@ -39,6 +39,30 @@ namespace MaterialsLibrary
         }
     }
 
+    void DB::loadFromXMLString(const std::string & xmlString)
+    {
+        using MaterialsLibrary::operator>>;
+
+        auto node{getTopNodeFromString(xmlString, MaterialsLibrary::materialsString())};
+        if(node.has_value())
+        {
+            node.value() >> FileParse::Child{"Version", m_Version};
+            node.value() >> FileParse::Child{MaterialsLibrary::materialString(), m_Materials};
+        }
+    }
+
+    std::string DB::saveToXMLString() const
+    {
+        using MaterialsLibrary::operator<<;
+
+        XMLNodeAdapter node{createTopNode(MaterialsLibrary::materialsString())};
+
+        node << FileParse::Child{"Version", m_Version};
+        node << FileParse::Child{MaterialsLibrary::materialString(), m_Materials};
+
+        return node.getContent();
+    }
+
     std::optional<Material> DB::getMaterialByName(std::string_view materialName)
     {
         return getMaterialByPredicate([&materialName](const Material & mat) { return mat.Name == materialName; });

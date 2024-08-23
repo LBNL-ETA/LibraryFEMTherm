@@ -113,8 +113,8 @@ namespace Helper
         }
     }
 
-    void expect_near(const ThermFile::BoundaryCondition & expected,
-                     const ThermFile::BoundaryCondition & actual,
+    void expect_near(const ThermFile::Boundary & expected,
+                     const ThermFile::Boundary & actual,
                      const double tolerance)
     {
         EXPECT_EQ(expected.ID, actual.ID);
@@ -124,11 +124,8 @@ namespace Helper
         EXPECT_EQ(expected.isBlocking, actual.isBlocking);
         EXPECT_EQ(expected.neighborPolygonUUID, actual.neighborPolygonUUID);
         expect_near(expected.origin, actual.origin, tolerance);
-        ASSERT_EQ(expected.points.size(), actual.points.size());
-        for(size_t i = 0; i < expected.points.size(); ++i)
-        {
-            expect_near(expected.points[i], actual.points[i], tolerance);
-        }
+        expect_near(expected.startPoint, actual.startPoint, tolerance);
+        expect_near(expected.endPoint, actual.endPoint, tolerance);
         EXPECT_EQ(expected.Side, actual.Side);
         expect_near(expected.thermalEmissionProperties, actual.thermalEmissionProperties, tolerance);
         if(expected.shadeData.has_value())
@@ -412,7 +409,8 @@ namespace Helper
                                                  std::string isBlocking,
                                                  std::string neighborPolygonUUID,
                                                  MockPointNode && origin,
-                                                 MockPoints && points,
+                                                 MockPointNode && startPoint,
+                                                 MockPointNode && endPoint,
                                                  std::string side,
                                                  MockThermalEmissionProperties && thermalEmissionProperties,
                                                  MockShadeData && shadeData,
@@ -431,7 +429,8 @@ namespace Helper
         isBlocking(std::move(isBlocking)),
         neighborPolygonUUID(std::move(neighborPolygonUUID)),
         origin(std::move(origin)),
-        points(std::move(points)),
+        startPoint(std::move(startPoint)),
+        endPoint(std::move(endPoint)),
         side(std::move(side)),
         thermalEmissionProperties(std::move(thermalEmissionProperties)),
         shadeData(std::move(shadeData)),
@@ -445,9 +444,9 @@ namespace Helper
         status(std::move(status))
     {}
 
-    Helper::MockNode generateBoundaryConditionNode(MockBoundaryCondition && boundaryCondition)
+    Helper::MockNode generateBoundaryNode(MockBoundaryCondition && boundaryCondition)
     {
-        Helper::MockNode node{"BoundaryCondition"};
+        Helper::MockNode node{"Boundary"};
         addChildNode(node, "ID", boundaryCondition.id);
         addChildNode(node, "UUID", boundaryCondition.uuid);
         addChildNode(node, "Name", boundaryCondition.name);
@@ -457,12 +456,13 @@ namespace Helper
         auto originNode = generatePointNode(boundaryCondition.origin);
         originNode.tag = "Origin";
         addChildNode(node, originNode);
-        auto & pointsNode{addChildNode(node, "Points")};
-        for(const auto & point : boundaryCondition.points)
-        {
-            auto pointNode = generatePointNode(point);
-            addChildNode(pointsNode, pointNode);
-        }
+        auto startNode = generatePointNode(boundaryCondition.startPoint);
+        startNode.tag = "StartPoint";
+        addChildNode(node, startNode);
+        auto endNode = generatePointNode(boundaryCondition.endPoint);
+        endNode.tag = "EndPoint";
+        addChildNode(node, endNode);
+
         addChildNode(node, "Side", boundaryCondition.side);
         auto thermalEmissionPropertiesNode =
           generateThermalEmissionPropertiesNode(std::move(boundaryCondition.thermalEmissionProperties));

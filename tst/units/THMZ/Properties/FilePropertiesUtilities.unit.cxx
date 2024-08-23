@@ -67,7 +67,6 @@ TEST_F(TestFilePropertiesUtilities, CreateModelExposureOther)
 
 TEST_F(TestFilePropertiesUtilities, GetMeshParameterLimitsQuadTreeMesher)
 {
-    ThermFile::MeshControl meshControl{ThermFile::MesherType::QuadTreeMesher};
     auto limits = getMeshParameterLimits(ThermFile::MesherType::QuadTreeMesher);
     ASSERT_EQ(limits.minimum, 3u);
     ASSERT_EQ(limits.maximum, 12u);

@@ -3,13 +3,9 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include <algorithm>
 
 #include "Definitions.hxx"
-
-namespace BCInputFileLibrary
-{
-    struct BoundaryConditionRecords;
-}
 
 namespace BCTypesLibrary
 {
@@ -52,8 +48,8 @@ namespace BCTypesLibrary
         std::string UUID;
         std::string Name{"Default Name"};
         bool Protected{false};
-        BCType BCType{BCType::Transient};
-        BCModel BCModel{BCModel::Neumann};
+        BCType bcType{BCType::Transient};
+        BCModel bcModel{BCModel::Neumann};
 
         std::optional<ConvectionRecord> ConvectionBc;
         std::optional<RadiationRecord> RadiationBc;
@@ -75,6 +71,7 @@ namespace BCTypesLibrary
     class DB
     {
     public:
+        DB() = default;
         explicit DB(const std::string & xmlName);
 
         std::vector<TypeRecord> & getBoundaryConditions();
@@ -99,6 +96,9 @@ namespace BCTypesLibrary
 
         //! \brief Saves current state of object to XML file (provided through object constructor)
         [[nodiscard]] int saveToFile() const;
+
+        void loadFromXMLString(const std::string & xmlString);
+        [[nodiscard]] std::string saveToXMLString() const;
 
         [[nodiscard]] TypeRecord getDefaultRecord() const;
 

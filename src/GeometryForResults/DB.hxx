@@ -12,8 +12,10 @@ namespace GeometryLibrary
         InputGeometryDataRecord() = default;
 
         void loadFromXMLFile(const std::string & fileName);
-
         [[nodiscard]] int saveToXML(const std::string & fileName) const;
+
+        void loadFromXMLString(const std::string & xmlString);
+        [[nodiscard]] std::string saveToXMLString() const;
 
         void addMaterial(size_t id, const std::string & name, const std::string & color);
         void addNode(size_t id, double x, double y);
