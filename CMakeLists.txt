@@ -1,12 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 
+project(LibraryFEMTHERM VERSION 1.0.0)
 set(target_name LibraryFEMTHERM)
-
-project(${target_name})
-
-set(CMAKE_PROJECT_VERSION_MAJOR "1")
-set(CMAKE_PROJECT_VERSION_MINOR "0")
-set(CMAKE_PROJECT_VERSION_PATCH "0")
 
 include(cmake/LibraryFEMTHERMProjectMacros.cmake)
 include(cmake/LibraryFEMTHERMinternal_utils.cmake)
@@ -40,35 +35,30 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 include(CMakeLists-FileParse.txt)
 include(CMakeLists-miniz.txt)
 
-#add_subdirectory("${CMAKE_SOURCE_DIR}/../../Products/miniz" miniz)
-
 include_directories(src)
 include_directories( ${CMAKE_BINARY_DIR}/xmlParser-src/include )
-#include_directories(${CMAKE_SOURCE_DIR}/../../Products/miniz)
-#include_directories(${CMAKE_SOURCE_DIR}/../../Products/miniz/build)
 
-if( DOWNLOAD_GTEST STREQUAL ON )
-	configure_file(CMakeLists-GTest.txt.in ${CMAKE_BINARY_DIR}/googletest-download/CMakeLists.txt)
-	execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
-	execute_process(COMMAND ${CMAKE_COMMAND} --build .
-			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+# Download and include GoogleTest directly if needed
+if(DOWNLOAD_GTEST)
+	include(FetchContent)
 
-	# Prevent GoogleTest from overriding our compiler/linker options
-	# when building with Visual Studio
-	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+	FetchContent_Declare(
+			googletest
+			GIT_REPOSITORY https://github.com/google/googletest.git
+			GIT_TAG v1.13.0
+	)
 
-	# Add googletest directly to our build. This adds
-	# the following targets: gtest, gtest_main, gmock
-	# and gmock_main
-	add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
-			${CMAKE_BINARY_DIR}/googletest-build)
+	FetchContent_MakeAvailable(googletest)
 
-	# Now simply link your own targets against gtest, gmock,
-	# etc. as appropriate
+	# Prevent GoogleTest from overriding compiler/linker options on MSVC
+	if (MSVC)
+		set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+	endif()
 
-	include_directories( ${CMAKE_BINARY_DIR}/googletest-src/include )
-endif ()
+	# Link GTest with test targets
+	include_directories(${gtest_SOURCE_DIR}/include)
+	include_directories(${gmock_SOURCE_DIR}/include)
+endif()
 
 file(GLOB_RECURSE SOURCES_HXX "src/*.hxx")
 file(GLOB_RECURSE SOURCES_CXX "src/*.cxx")
@@ -82,34 +72,19 @@ set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
 
 target_link_libraries( ${target_name} PUBLIC FileParse miniz)
 
+# Disable warnings for the external projects
+if(MSVC)
+	target_compile_options(FileParse PRIVATE /w)
+else()
+	set_source_files_properties(
+			${CMAKE_BINARY_DIR}/_deps/xmlparser-src/src/xmlParser.cpp
+			PROPERTIES
+			COMPILE_FLAGS -w
+	)
+endif()
+
 if(BUILD_LibraryFEMTHERM_TESTING)
-	include_directories(src)
-	include_directories(tst/helper)
-
-  file( GLOB all_test_src RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-  "tst/main.cxx"
-  "tst/units/Boundary Conditions/*.cxx"
-  "tst/units/CMA/*.cxx"
-  "tst/units/Common/*.cxx"
-  "tst/units/Gases/*.cxx"
-  "tst/units/Geometry/*.cxx"
-  "tst/units/Materials/*.cxx"
-  "tst/units/THMZ/CMA/*.cxx"
-  "tst/units/THMZ/Common/*.cxx"
-  "tst/units/THMZ/Geometry/*.cxx"
-  "tst/units/THMZ/GlazingSystem/*.cxx"
-  "tst/units/THMZ/Mesh/*.cxx"
-  "tst/units/THMZ/Preferences/*.cxx"
-  "tst/units/THMZ/Properties/*.cxx"
-  "tst/units/THMZ/SteadyStateMeshResults/*.cxx"
-  "tst/units/THMZ/SteadyStateResults/*.cxx"
-  "tst/units/THMZ/*.cxx"
-  "tst/helper/Common/*.hxx"
-  "tst/helper/*.hxx"
-  "tst/helper/*.cxx" )
-  LIST( APPEND test_src ${all_test_src} )
-
-  CREATE_TEST_TARGETS_LibraryFEMTHERM( ${target_name} "${test_src}" "" )
+	add_subdirectory(tst)
 endif()
 
 config_compiler_and_linker_LibraryFEMTHERM()

@@ -1,9 +1,11 @@
-# Download and create miniz
-configure_file(CMakeLists-miniz.txt.in ${CMAKE_BINARY_DIR}/miniz-download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/miniz-download)
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/miniz-download)
- 
-add_subdirectory(${CMAKE_BINARY_DIR}/miniz-src "${CMAKE_CURRENT_BINARY_DIR}/miniz-src")
-set(miniz_LIB "${CMAKE_SHARED_LIBRARY_PREFIX}miniz${CMAKE_SHARED_LIBRARY_SUFFIX}")
+cmake_minimum_required(VERSION 3.8)
+
+include(FetchContent)
+
+FetchContent_Declare(
+  miniz
+  GIT_REPOSITORY https://github.com/richgel999/miniz
+  GIT_TAG "3.0.2"
+)
+
+FetchContent_MakeAvailable(miniz)
