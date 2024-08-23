@@ -1,7 +1,7 @@
 #include <map>
 
 #include "GravityProperties.hxx"
-#include "Common/GeometryDefintions.hxx"
+#include "Common/GeometryDefinitions.hxx"
 #include "LibraryUtilities/Common.hxx"
 
 namespace ThermFile::Gravity

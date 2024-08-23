@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:include schemaLocation="Common.xsd"/>
 	<xs:simpleType name="Direction">
 		<xs:annotation>
 			<xs:documentation> Direction is used for two different cases: - Heat flow - Glazing
@@ -95,7 +96,7 @@
 			<xs:element name="CavityUUID" type="xs:string" minOccurs="0" maxOccurs="1"/>
 			<xs:element name="Attributes" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="Type" type="PolygonType" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="LinkID" type="xs:integer" minOccurs="0" maxOccurs="1"/> 
+			<xs:element name="LinkID" type="xs:integer" minOccurs="0" maxOccurs="1"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="GeometrySpecification">
@@ -149,12 +150,15 @@
 			<xs:element name="FluxTag" type="xs:string" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="IsBlocking" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="NeighborPolygonUUID" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="NeighborPolygonUUID2" type="xs:string" minOccurs="0" maxOccurs="1"/>
 			<xs:element name="Origin" type="Point" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="Points" type="Points" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="StartPoint" type="Point" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="EndPoint" type="Point" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="Side" type="xs:integer" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="ThermalEmissionProperties" type="ThermalEmissionProperties" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="ShadeData" type="ShadeData" minOccurs="0" maxOccurs="1"/>
 			<xs:element name="IsIlluminated" type="xs:boolean" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="MaterialSide" type="MaterialSide" minOccurs="0" maxOccurs="1"/>
 			<xs:element name="TransientData" type="TransientData" minOccurs="0" maxOccurs="1"/>
 			<xs:element name="GeometrySpecification" type="GeometrySpecification" minOccurs="0" maxOccurs="1"/>
 			<xs:element name="EdgeID" type="xs:integer" minOccurs="1" maxOccurs="1"/>

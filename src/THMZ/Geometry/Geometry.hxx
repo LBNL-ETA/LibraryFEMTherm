@@ -137,6 +137,7 @@ namespace ThermFile
     //! @fluxTag - flux tag of the boundary condition.
     //! @isBlocking - flag indicating if the boundary condition is blocking.
     //! @neighborPolygonUUID - unique identifier of the neighbor polygon.
+    //! @neighborPolygonUUID2 - unique identifier of the second neighbor polygon.
     //! @origin - origin of the boundary condition.
     //! @points - points that is boundary condition made of.
     //! @Side - side of the boundary condition.
@@ -147,7 +148,7 @@ namespace ThermFile
     //! @typeRecordUUID - type record UUID of the boundary condition.
     //! @geometrySpecification - geometry specification of the boundary condition.
     //! @EdgeID - unique identifier of the edge.
-    struct BoundaryCondition
+    struct Boundary
     {
         size_t ID{0u};
         std::string uuid;
@@ -155,8 +156,10 @@ namespace ThermFile
         std::string fluxTag;
         bool isBlocking{false};
         std::string neighborPolygonUUID;
+        std::optional<std::string> neighborPolygonUUID2;
         Point origin;
-        std::vector<Point> points;
+        Point startPoint;
+        Point endPoint;
         size_t Side{0u};
         ThermalEmissionProperties thermalEmissionProperties;
         std::optional<ShadeData> shadeData;

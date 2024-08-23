@@ -5,4 +5,5 @@
 namespace CMALibrary
 {
     CMAData loadCMADataFromFile(const std::string & fileName);
+    CMAData loadCMADataFromZipFile(const std::string & fileName);
 }

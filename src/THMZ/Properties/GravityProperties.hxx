@@ -3,10 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace Geometry
-{
-    struct GravityVector;
-}
+#include "Common/GeometryDefinitions.hxx"
 
 namespace ThermFile::Gravity
 {

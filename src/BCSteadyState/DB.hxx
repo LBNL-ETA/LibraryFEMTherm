@@ -10,7 +10,11 @@ namespace BCSteadyStateLibrary
     class DB
     {
     public:
+        DB() = default;
         explicit DB(const std::string & xmlFileName);
+
+        void loadFromXMLString(const std::string & xmlString);
+        [[nodiscard]] std::string saveToXMLString() const;
 
         [[nodiscard]] std::optional<BoundaryCondition>
           getBoundaryConditionByUUID(std::string_view uuid) const;

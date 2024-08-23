@@ -8,10 +8,9 @@
 #include <chrono>
 
 #include "Enumerators.hxx"
-#include "Utilities.hxx"
 #include "GravityProperties.hxx"
 
-#include "Common/GeometryDefintions.hxx"
+#include "Common/GeometryDefinitions.hxx"
 #include "LibraryUtilities/TimeRoutines.hxx"
 
 namespace ThermFile

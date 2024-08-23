@@ -54,7 +54,7 @@ namespace Helper
         std::vector<MockNodeAdapter> children;
         children.reserve(nChildNode(name));
 
-        for(int i = 0; i < node_->child.size(); ++i)
+        for(size_t i = 0u; i < node_->child.size(); ++i)
         {
             if(node_->child[i].tag == name)
             {
@@ -96,6 +96,12 @@ namespace Helper
         return *node_;
     }
 
+    // Not used in tests. Implement only if used.
+    std::string MockNodeAdapter::getContent() const
+    {
+        return "";
+    }
+
     MockNode & addChildNode(MockNode & parentNode, std::string_view tag, std::string_view text)
     {
         MockNode node;
@@ -105,6 +111,16 @@ namespace Helper
         parentNode.child.push_back(node);
 
         return parentNode.child.back();
+    }
+
+    MockNode & addChildNodeIfNotEmpty(MockNode & parentNode, std::string_view tag, std::string_view text)
+    {
+        if(text.empty())
+        {
+            return parentNode;
+        }
+
+        return addChildNode(parentNode, tag, text);
     }
 
     MockNode & addChildNode(MockNode & parentNode, std::string_view tag, MockNode childNode)

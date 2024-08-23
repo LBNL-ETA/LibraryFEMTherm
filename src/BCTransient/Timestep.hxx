@@ -254,6 +254,7 @@ namespace BCInputFileLibrary
         BoundaryConditionTimestep() = default;
 
         void loadFromXMLFile(const std::string & fileName);
+        void loadFromXMLString(const std::string & xmlString);
 
         bool isLoadSuccesful() const;
 

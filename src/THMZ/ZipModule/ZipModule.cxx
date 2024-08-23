@@ -6,140 +6,12 @@
 #include <sstream>
 #include <iterator>
 #include <fstream>
+#include <algorithm>
 
 #include "Common/Common.hxx"
 
 namespace ThermZip
 {
-    const std::string ModelFileName = "Model.xml";
-    const std::string GasesFileName = "Gases.xml";
-    const std::string MaterialsFileName = "Materials.xml";
-    const std::string SteadyStateBCFileName = "SteadyStateBC.xml";
-    const std::string TransientTypeBCFileName = "TransientTypeBC.xml";
-
-    // Transient results directory
-    const std::string ResultsDir = "transient results";
-    const std::string GeometryFileName = "Geometry.xml";
-    const std::string HeatFluxFileName = "HeatFlux.csv";
-    const std::string HeatFluxEdgesFileName = "HeatFluxEdges.csv";
-    const std::string HumidityFileName = "Humidities.csv";
-    const std::string TemperatureFileName = "Temperatures.csv";
-    const std::string WaterContentFileName = "WaterContent.csv";
-    const std::string WaterFluxFileName = "WaterFlux.csv";
-    const std::string WaterFluxEdgesFileName = "WaterFluxEdges.csv";
-
-    // Timestep boundary conditions directory
-    const std::string TimestepFilesDir = "timestep input files";
-
-    const std::string SteadyStateResultsName = "SteadyStateResults.xml";
-    const std::string SteadyStateMeshResultsName = "SteadyStateMeshResults.xml";
-    const std::string MeshName = "Mesh.xml";
-
-    namespace
-    {
-        std::vector<std::string> buildTransientFiles(std::string_view directory, const std::vector<std::string> & files)
-        {
-            std::vector<std::string> result;
-            result.reserve(files.size());
-
-            std::string transientDir = std::string(directory).append(TimestepFilesDir + "\\");
-            Common::createDirectoryIfNotExists(transientDir);
-
-            for(const auto & file : files)
-            {
-                result.push_back(transientDir + file);
-            }
-
-            return result;
-        }
-    }   // namespace
-
-    const std::map<File, std::string> FileToString = {{File::Gases, GasesFileName},
-                                                      {File::Materials, MaterialsFileName},
-                                                      {File::SteadyStateBC, SteadyStateBCFileName},
-                                                      {File::TransientTypeBC, TransientTypeBCFileName}};
-
-    std::string toString(File file)
-    {
-        if(FileToString.find(file) != FileToString.end())
-        {
-            return FileToString.at(file);
-        }
-        return {};
-    }
-
-    File toFile(const std::string & file)
-    {
-        for(const auto & entry : FileToString)
-        {
-            if(entry.second == file)
-            {
-                return entry.first;
-            }
-        }
-        return File::Unknown;
-    }
-
-    const std::map<Results, std::string> ResultsToString = {{Results::Geometry, GeometryFileName},
-                                                            {Results::HeatFlux, HeatFluxFileName},
-                                                            {Results::HeatFluxEdges, HeatFluxEdgesFileName},
-                                                            {Results::Humidities, HumidityFileName},
-                                                            {Results::Temperatures, TemperatureFileName},
-                                                            {Results::WaterContent, WaterContentFileName},
-                                                            {Results::WaterFlux, WaterFluxFileName},
-                                                            {Results::WaterFluxEdges, WaterFluxEdgesFileName}};
-
-    std::string toString(Results results)
-    {
-        if(ResultsToString.find(results) != ResultsToString.end())
-        {
-            return ResultsToString.at(results);
-        }
-        return {};
-    }
-
-    Results toResults(const std::string & results)
-    {
-        for(const auto & entry : ResultsToString)
-        {
-            if(entry.second == results)
-            {
-                return entry.first;
-            }
-        }
-        return Results::Unknown;
-    }
-
-    std::string resultsDirectory(const std::string & directory)
-    {
-        return directory + "\\" + ResultsDir;
-    }
-
-    std::string timestepFilesDirectory(const std::string & directory)
-    {
-        return directory + "\\" + TimestepFilesDir;
-    }
-
-    std::string modelFileName(const std::string & directory)
-    {
-        return directory + "\\" + ModelFileName;
-    }
-
-    std::string steadyStateResultsName(const std::string & directory)
-    {
-        return directory + "\\" + SteadyStateResultsName;
-    }
-
-    std::string steadyStateMeshResultsName(const std::string & directory)
-    {
-        return directory + "\\" + SteadyStateMeshResultsName;
-    }
-
-    std::string meshName(const std::string & directory)
-    {
-        return directory + "\\" + MeshName;
-    }
-
     namespace Helper
     {
         // Utility function for creating a relative path
@@ -162,11 +34,6 @@ namespace ThermZip
             return fullPath;   // Return the original path if basePath not found
         }
     }   // namespace Helper
-
-    bool zipFiles(std::map<std::string, std::string> const& data, const std::string& destinationZipFile)
-    {
-        return true;
-    }
 
     bool zipFiles(const std::string & sourceDirectory, const std::string & destinationZipFile)
     {
@@ -204,6 +71,39 @@ namespace ThermZip
         return true;
     }
 
+    void zipFiles(const std::map<std::string, std::string> & fileContents, const std::string & zipFileName)
+    {
+        mz_zip_archive zipArchive;
+        memset(&zipArchive, 0, sizeof(zipArchive));
+
+        // Initialize the zip archive for writing
+        if(!mz_zip_writer_init_file(&zipArchive, zipFileName.c_str(), 0))
+        {
+            throw std::runtime_error("Failed to initialize zip archive for writing");
+        }
+
+        // Iterate over each file in the map
+        for(const auto & [filePath, content] : fileContents)
+        {
+            // Add the file content to the zip archive
+            if(!mz_zip_writer_add_mem(&zipArchive, filePath.c_str(), content.data(), content.size(), MZ_DEFAULT_LEVEL))
+            {
+                mz_zip_writer_end(&zipArchive);
+                std::stringstream msg;
+                msg << "Failed to add file to zip: " << filePath;
+                throw std::runtime_error(msg.str());
+            }
+        }
+
+        // Finalize and close the zip archive
+        if(!mz_zip_writer_finalize_archive(&zipArchive))
+        {
+            mz_zip_writer_end(&zipArchive);
+            throw std::runtime_error("Failed to finalize zip archive");
+        }
+
+        mz_zip_writer_end(&zipArchive);
+    }
 
     // Helper function to read a file into a buffer
     std::vector<char> readFileToBuffer(const std::string & filename)
@@ -216,9 +116,8 @@ namespace ThermZip
         return std::vector<char>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     }
 
-    std::map<std::string, std::string> unzipFiles(std::string_view source)
+    std::map<std::string, std::string> unzipFiles(std::string_view source, std::vector<std::string> const & fnames)
     {
-        // Read the test.zip file into memory
         std::vector<char> zipBuffer = readFileToBuffer(std::string(source));
 
         mz_zip_archive zipArchive;
@@ -232,7 +131,7 @@ namespace ThermZip
         std::map<std::string, std::string> fileContents;
 
         size_t fileCount = mz_zip_reader_get_num_files(&zipArchive);
-        for(size_t i = 0; i < fileCount; ++i)
+        for(mz_uint i = 0; i < fileCount; ++i)
         {
             mz_zip_archive_file_stat fileStat;
             if(!mz_zip_reader_file_stat(&zipArchive, i, &fileStat))
@@ -243,26 +142,34 @@ namespace ThermZip
                 throw std::runtime_error(msg.str());
             }
 
+            if(!fnames.empty() && std::find(fnames.begin(), fnames.end(), fileStat.m_filename) == fnames.end())
+            {
+                continue;
+            }
+
             if(!mz_zip_reader_is_file_a_directory(&zipArchive, i))
             {
-                std::vector<char> fileBuffer(fileStat.m_uncomp_size);
+                std::vector<char> fileBuffer(fileStat.m_uncomp_size + 1, 0);   // +1 to ensure null-termination
 
-                if(!mz_zip_reader_extract_to_mem(&zipArchive, i, fileBuffer.data(), fileBuffer.size(), 0))
+                if(!mz_zip_reader_extract_to_mem(&zipArchive, i, fileBuffer.data(), fileStat.m_uncomp_size, 0))
                 {
                     std::stringstream msg;
                     msg << "Failed to extract file: " << fileStat.m_filename;
                     mz_zip_reader_end(&zipArchive);
                     throw std::runtime_error(msg.str());
                 }
-				
-                auto fileStart = std::find(fileBuffer.begin(), fileBuffer.end(), '<') - fileBuffer.begin();
-                auto fileEnd = fileBuffer.rend() - std::find(fileBuffer.rbegin(), fileBuffer.rend(), '>');
-                fileContents[fileStat.m_filename] =
-                  std::string(fileBuffer.begin() + fileStart, fileBuffer.begin() + fileEnd);
-            }
-            else
-            {
-                continue;
+
+                // Create a string, ensuring only valid data is included
+                std::string extractedContent(fileBuffer.data(), fileStat.m_uncomp_size);
+
+                // Optional: Trim any unwanted characters at the end
+                size_t end = extractedContent.find_last_not_of("\0\xFF\xFE\xFD");
+                if(end != std::string::npos)
+                {
+                    extractedContent = extractedContent.substr(0, end + 1);
+                }
+
+                fileContents[fileStat.m_filename] = extractedContent;
             }
         }
 
@@ -273,16 +180,56 @@ namespace ThermZip
 
     std::string unzipFile(std::string_view zipFileName, std::string_view fileName)
     {
-        auto contents = unzipFiles(zipFileName);
+        std::vector<std::string> fnames{std::string(fileName)};
+        auto contents = unzipFiles(zipFileName, fnames);
         auto itr = contents.find(std::string(fileName));
-        if (itr == contents.end())
+        if(itr == contents.end())
         {
             std::stringstream msg;
-            msg << "THMZ file " << zipFileName << " does not contain " << fileName; 
+            msg << "THMZ file " << zipFileName << " does not contain " << fileName;
             throw std::runtime_error(msg.str());
         }
 
         return itr->second;
+    }
+
+    int addToZipFile(std::string_view zipFileName, std::string_view fileName, std::string_view text)
+    {
+        // Step 1: Extract existing files
+        std::vector<std::string> fileNames;   // Empty vector to extract all files
+
+        std::map<std::string, std::string> existingFiles = std::filesystem::exists(zipFileName)
+                                                             ? unzipFiles(zipFileName, fileNames)
+                                                             : std::map<std::string, std::string>();
+
+        // Step 2: Add or replace the target file in the map
+        existingFiles[std::string(fileName)] = std::string(text);
+
+        // Step 3: Recreate the zip archive
+        mz_zip_archive zipArchive;
+        memset(&zipArchive, 0, sizeof(zipArchive));
+
+        // Initialize the writer for a new zip file
+        if(!mz_zip_writer_init_file(&zipArchive, std::string(zipFileName).c_str(), 0))
+        {
+            throw std::runtime_error("Failed to initialize zip archive for writing");
+        }
+
+        // Add all files back to the archive
+        for(const auto & [name, content] : existingFiles)
+        {
+            if(!mz_zip_writer_add_mem(&zipArchive, name.c_str(), content.data(), content.size(), 0))
+            {
+                mz_zip_writer_end(&zipArchive);
+                throw std::runtime_error("Failed to add file to zip archive");
+            }
+        }
+
+        // Finalize and close the zip archive
+        mz_zip_writer_finalize_archive(&zipArchive);
+        mz_zip_writer_end(&zipArchive);
+
+        return 1;   // Return success
     }
 
     void unzipFiles(std::string_view sourceView, std::string_view destinationView)
@@ -325,58 +272,8 @@ namespace ThermZip
         mz_zip_reader_end(&zip_archive);
     }
 
-    std::optional<std::string> getFilePathIfExists(const std::string & directory, File enumValue)
+    std::string addTimestepDirectoryToFileName(const std::string & fileName)
     {
-        std::optional<std::string> result;
-
-        const auto path{directory + "\\" + toString(enumValue)};
-
-        if(std::filesystem::exists(path))
-        {
-            result = path;
-        }
-
-        return result;
-    }
-
-    std::optional<std::string> getFilePathIfExists(const std::string & directory, Results enumValue)
-    {
-        std::optional<std::string> result;
-
-        const auto path{resultsDirectory(directory) + "\\" + toString(enumValue)};
-
-        if(std::filesystem::exists(path))
-        {
-            result = path;
-        }
-
-        return result;
-    }
-
-    std::string fullPath(const std::string & directory, File enumValue)
-    {
-        return {directory + "\\" + toString(enumValue)};
-    }
-
-    std::string fullPath(const std::string & directory, Results enumValue)
-    {
-        return {resultsDirectory(directory) + "\\" + toString(enumValue)};
-    }
-
-    bool allResultsExist(const std::string & aResultsDirectory)
-    {
-        const std::string geometry = aResultsDirectory + "\\" + GeometryFileName;
-        const std::string heatFlux = aResultsDirectory + "\\" + HeatFluxFileName;
-        const std::string heatFluxEdges = aResultsDirectory + "\\" + HeatFluxEdgesFileName;
-        const std::string humidity = aResultsDirectory + "\\" + HumidityFileName;
-        const std::string temperature = aResultsDirectory + "\\" + TemperatureFileName;
-        const std::string waterContent = aResultsDirectory + "\\" + WaterContentFileName;
-        const std::string waterFlux = aResultsDirectory + "\\" + WaterFluxFileName;
-        const std::string waterFluxEdges = aResultsDirectory + "\\" + WaterFluxEdgesFileName;
-
-        using std::filesystem::exists;
-
-        return exists(geometry) && exists(heatFlux) && exists(heatFluxEdges) && exists(humidity) && exists(temperature)
-               && exists(waterContent) && exists(waterFlux) && exists(waterFluxEdges);
+        return (TimestepFilesDir / fileName).string();
     }
 }   // namespace ThermZip

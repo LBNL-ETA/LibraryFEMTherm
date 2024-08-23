@@ -17,7 +17,7 @@ namespace GasesLibrary
 {
 
     template<typename T>
-    T processGasesNode(const std::string_view & fileName, const std::string & tag)
+    T processGasesNodeFromFile(const std::string_view & fileName, const std::string & tag)
     {
         Tags fileTags;
         const auto gasesNode = getTopNodeFromFile(fileName.data(), fileTags.gases());
@@ -32,22 +32,50 @@ namespace GasesLibrary
         return result;
     }
 
+    template<typename T>
+    T processGasesNodeFromString(const std::string_view & xmlString, const std::string & tag)
+    {
+        Tags fileTags;
+        const auto gasesNode = getTopNodeFromString(xmlString.data(), fileTags.gases());
+
+        T result{};
+
+        if(gasesNode.has_value())
+        {
+            gasesNode.value() >> FileParse::Child{tag, result};
+        }
+
+        return result;
+    }
+
     std::string loadVersionFromXMLFile(std::string_view fileName)
     {
         Tags tag;
-        return processGasesNode<std::string>(fileName, "Version");
+        return processGasesNodeFromFile<std::string>(fileName, "Version");
     }
 
     std::vector<Gas> loadGasesFromXMLFile(std::string_view fileName)
     {
         Tags tag;
-        return processGasesNode<std::vector<Gas>>(fileName, tag.gas());
+        return processGasesNodeFromFile<std::vector<Gas>>(fileName, tag.gas());
+    }
+
+    std::vector<Gas> loadGasesDataFromXMLString(std::string_view xmlString)
+    {
+        Tags tag;
+        return processGasesNodeFromString<std::vector<Gas>>(xmlString, tag.gas());
     }
 
     std::vector<PureGas> loadPureGasesFromXMLFile(std::string_view fileName)
     {
         Tags tag;
-        return processGasesNode<std::vector<PureGas>>(fileName, tag.pureGas());
+        return processGasesNodeFromFile<std::vector<PureGas>>(fileName, tag.pureGas());
+    }
+
+    std::vector<PureGas> loadPureGasesFromXMLString(std::string_view xmlString)
+    {
+        Tags tag;
+        return processGasesNodeFromString<std::vector<PureGas>>(xmlString, tag.pureGas());
     }
 
     DB::DB(const std::string & fileName) : m_FileName(fileName)
@@ -57,8 +85,7 @@ namespace GasesLibrary
         {
             Tags tag;
             // This is minimal requirement for XML file. Otherwise, component will crash.
-            const std::string fileContent{
-              Common::generateXmlContent(tag.gases(), "Gases.xsd", m_Version)};
+            const std::string fileContent{Common::generateXmlContent(tag.gases(), "Gases.xsd", m_Version)};
             File::createFileFromString(fileName, fileContent);
         }
 
@@ -108,6 +135,20 @@ namespace GasesLibrary
         saveGases(gasesNode);
 
         return gasesNode.writeToFile(m_FileName);
+    }
+
+    std::string DB::saveToXMLString()
+    {
+        removeTemporaryRecords();
+
+        Tags tag;
+        auto gasesNode{createTopNode(tag.gases())};
+
+        gasesNode << FileParse::Child{"Version", m_Version};
+        savePureGases(gasesNode);
+        saveGases(gasesNode);
+
+        return gasesNode.getContent();
     }
 
     void DB::savePureGases(XMLNodeAdapter & gasesNode) const

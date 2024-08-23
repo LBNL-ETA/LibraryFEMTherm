@@ -6,8 +6,8 @@
 		<UUID>8a0494b0-d5ba-11ea-87d0-0242ac130003</UUID>
 		<Name>Fixed film coefficient - Indoor</Name>
 		<Protected>true</Protected>
-		<BCType>Transient</BCType>
-		<BCModel>Neumann</BCModel>
+		<bcType>Transient</bcType>
+		<bcModel>Neumann</bcModel>
 		<Convection>
 			<Model>Fixed Convection Coefficient</Model>
 		</Convection>
@@ -20,8 +20,8 @@
 		<UUID>62618ab2-b946-11e9-a2a3-2a2ae2dbcce4</UUID>
 		<Name>Fixed film coefficient with fixed radiation coefficient</Name>
 		<Protected>true</Protected>
-		<BCType>Transient</BCType>
-		<BCModel>Neumann</BCModel>
+		<bcType>Transient</bcType>
+		<bcModel>Neumann</bcModel>
 		<Convection>
 			<Model>Fixed Convection Coefficient</Model>
 		</Convection>
@@ -37,8 +37,8 @@
 		<UUID>d5bea3f2-b241-11e9-a2a3-2a2ae2dbcce4</UUID>
 		<Name>ASHRAE Outside</Name>
 		<Protected>true</Protected>
-		<BCType>Transient</BCType>
-		<BCModel>Neumann</BCModel>
+		<bcType>Transient</bcType>
+		<bcModel>Neumann</bcModel>
 		<Convection>
 			<Model>ASHRAE/NFRC Outside</Model>
 		</Convection>
@@ -51,8 +51,8 @@
 		<UUID>d5bea8e8-b241-11e9-a2a3-2a2ae2dbcce4</UUID>
 		<Name>SteadyState Interior</Name>
 		<Protected>true</Protected>
-		<BCType>SteadyState</BCType>
-		<BCModel>Neumann</BCModel>
+		<bcType>SteadyState</bcType>
+		<bcModel>Neumann</bcModel>
 		<Convection>
 			<Model>Fixed Convection Coefficient</Model>
 			<Temperature>22</Temperature>
@@ -73,8 +73,8 @@
 		<UUID>47868197-d763-3152-c16f9b3f2374</UUID>
 		<Name>Fixed temperature and humidity</Name>
 		<Protected>false</Protected>
-		<BCType>Transient</BCType>
-		<BCModel>Dirichlet</BCModel>
+		<bcType>Transient</bcType>
+		<bcModel>Dirichlet</bcModel>
 		<Convection>
 			<Model>ASHRAE/NFRC Outside</Model>
 		</Convection>
@@ -87,8 +87,8 @@
 		<UUID>ce967c3c-9af6-660f-c2d546559065</UUID>
 		<Name>ASHRAE Inside Convection Only</Name>
 		<Protected>false</Protected>
-		<BCType>Transient</BCType>
-		<BCModel>Neumann</BCModel>
+		<bcType>Transient</bcType>
+		<bcModel>Neumann</bcModel>
 		<Convection>
 			<Model>ASHRAE/NFRC Inside</Model>
 		</Convection>
@@ -101,8 +101,8 @@
 		<UUID>c4f6b9dc-4d83-81af-50b7904f8323</UUID>
 		<Name>Constant Heat Flux Outside</Name>
 		<Protected>false</Protected>
-		<BCType>Transient</BCType>
-		<BCModel>Neumann</BCModel>
+		<bcType>Transient</bcType>
+		<bcModel>Neumann</bcModel>
 		<Convection>
 			<Model>ASHRAE/NFRC Outside</Model>
 		</Convection>
@@ -115,8 +115,8 @@
 		<UUID>e61711c8-da8a-2c2e-df7c3ba5cdcd</UUID>
 		<Name>Constant Heat Flux Inside</Name>
 		<Protected>false</Protected>
-		<BCType>Transient</BCType>
-		<BCModel>Neumann</BCModel>
+		<bcType>Transient</bcType>
+		<bcModel>Neumann</bcModel>
 		<Convection>
 			<Model>ASHRAE/NFRC Outside</Model>
 		</Convection>
@@ -129,8 +129,8 @@
 		<UUID>9ed9a69e-97d9-0ad5-fa0f26c411a0</UUID>
 		<Name>Fixed temperature</Name>
 		<Protected>false</Protected>
-		<BCType>Transient</BCType>
-		<BCModel>Dirichlet</BCModel>
+		<bcType>Transient</bcType>
+		<bcModel>Dirichlet</bcModel>
 		<Convection>
 			<Model>ASHRAE/NFRC Outside</Model>
 		</Convection>
@@ -143,8 +143,8 @@
 		<UUID>ef02822f-b878-4d6c-0fe0feaf90a9</UUID>
 		<Name>Kimura Only</Name>
 		<Protected>false</Protected>
-		<BCType>Transient</BCType>
-		<BCModel>Neumann</BCModel>
+		<bcType>Transient</bcType>
+		<bcModel>Neumann</bcModel>
 		<Convection>
 			<Model>Kimura</Model>
 		</Convection>
@@ -157,8 +157,8 @@
 		<UUID>46499ed8-4daa-957b-35e9040fd347</UUID>
 		<Name>Fixed film coefficient - Outdoor</Name>
 		<Protected>false</Protected>
-		<BCType>Transient</BCType>
-		<BCModel>Neumann</BCModel>
+		<bcType>Transient</bcType>
+		<bcModel>Neumann</bcModel>
 		<Convection>
 			<Model>Fixed Convection Coefficient</Model>
 		</Convection>

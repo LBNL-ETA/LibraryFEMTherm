@@ -1,50 +1,44 @@
 <?xml version="1.0"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 	<xs:include schemaLocation="Common.xsd"/>
+	
 	<xs:complexType name="NodeResults">
 		<xs:all>
 			<xs:element name="Index" type="xs:integer" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="Temperature" type="xs:double" minOccurs="1" maxOccurs="1"/>
-			<!-- units
-            [Celsius] -->
 			<xs:element name="X-flux" type="xs:double" minOccurs="1" maxOccurs="1"/>
-			<!-- units
-            [W/m] -->
 			<xs:element name="Y-flux" type="xs:double" minOccurs="1" maxOccurs="1"/>
-			<!-- units
-            [W/m] -->
 		</xs:all>
 	</xs:complexType>
+
 	<xs:complexType name="Nodes">
 		<xs:sequence>
 			<xs:element name="Node" type="NodeResults" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
+	
 	<xs:complexType name="EdgeResults">
 		<xs:all>
 			<xs:element name="Type" type="EdgeType" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="Index" type="xs:integer" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="Area" type="xs:double" minOccurs="1" maxOccurs="1"/>
-			<!-- units
-                [m] -->
 			<xs:element name="Flux" type="xs:double" minOccurs="1" maxOccurs="1"/>
-			<!-- units
-                [W/m] -->
 			<xs:element name="HeatRate" type="xs:double" minOccurs="1" maxOccurs="1"/>
-			<!-- units
-                [W] -->
 		</xs:all>
 	</xs:complexType>
+	
 	<xs:complexType name="Edges">
 		<xs:sequence>
 			<xs:element name="Edge" type="EdgeResults" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
+	
 	<xs:complexType name="TemperatureContourData">
 		<xs:sequence>
 			<xs:element name="NodeID" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
+	
 	<xs:complexType name="CaseMeshResults">
 		<xs:sequence>
 			<xs:element name="ResultsType" type="ModelType" minOccurs="0" maxOccurs="1"/>
@@ -56,12 +50,35 @@
 			<xs:element name="TemperatureContourData" type="TemperatureContourData" minOccurs="1" maxOccurs="1"/>
 		</xs:sequence>
 	</xs:complexType>
+	
+	<xs:complexType name="TagNodesSequence">
+		<xs:sequence>
+			<xs:element name="Node" type="xs:integer" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="TagNodes">
+		<xs:sequence>
+			<xs:element name="Name" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Nodes" type="TagNodesSequence" minOccurs="1" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="TagNodesCase">
+		<xs:sequence>
+			<xs:element name="ResultsType" type="ModelType" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Tag" type="TagNodes" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	
 	<xs:element name="MeshResults">
 		<xs:complexType>
 			<xs:sequence>
-			  <xs:element name="Version" type="xs:string" minOccurs="1" maxOccurs="1"/>
+				<xs:element name="Version" type="xs:string" minOccurs="1" maxOccurs="1"/>
 				<xs:element name="Case" type="CaseMeshResults" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="TagNodesCase" type="TagNodesCase" minOccurs="0" maxOccurs="unbounded"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
+	
 </xs:schema>

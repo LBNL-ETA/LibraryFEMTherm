@@ -40,7 +40,7 @@ namespace BCTypesLibrary
     bool operator==(const TypeRecord & lhs, const TypeRecord & rhs)
     {
         return lhs.UUID == rhs.UUID && lhs.Name == rhs.Name && lhs.Protected == rhs.Protected
-               && lhs.BCType == rhs.BCType && lhs.BCModel == rhs.BCModel && lhs.ConvectionBc == rhs.ConvectionBc
+               && lhs.bcType == rhs.bcType && lhs.bcModel == rhs.bcModel && lhs.ConvectionBc == rhs.ConvectionBc
                && lhs.RadiationBc == rhs.RadiationBc && lhs.SolarBc == rhs.SolarBc && lhs.UseHeatFlux == rhs.UseHeatFlux
                && lhs.HeatFlux == rhs.HeatFlux && lhs.UseTemperature == rhs.UseTemperature
                && lhs.Temperature == rhs.Temperature && lhs.UseHumidity == rhs.UseHumidity

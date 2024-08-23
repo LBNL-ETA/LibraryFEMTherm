@@ -298,7 +298,8 @@ TEST_F(TestGlazingSystem, GlazingSystemSerializer)
                                            0.5,
                                            0.25,
                                            false,
-                                           "EdgeTag"};
+                                           "EdgeTag",
+                                           {}};
 
     Helper::MockNode elementNode("GlazingSystem");
     Helper::MockNodeAdapter adapter{&elementNode};
@@ -443,7 +444,8 @@ TEST_F(TestGlazingSystem, GlazingSystemDeserializer)
       0.5,
       0.25,
       false,
-      "EdgeTag"};
+      "EdgeTag",
+      {}};
 
     Helper::expect_near(correctGlazingSystem, actualGlazingSystem, 1e-6);
 }

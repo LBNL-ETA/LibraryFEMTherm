@@ -7,10 +7,6 @@
 
 #include "Tags.hxx"
 
-namespace XMLParser {
-    struct XMLNode;
-}
-
 namespace GasesLibrary {
     struct Coefficients {
         Coefficients() = default;

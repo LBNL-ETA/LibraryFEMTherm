@@ -16,7 +16,7 @@ namespace GasesLibrary
     {}
 
     Component::Component(double fraction, const std::string & pureGasName) :
-        PureGasName(pureGasName), Fraction(fraction)
+        Fraction(fraction), PureGasName(pureGasName)
     {}
 
     Gas::Gas(const std::string & uuid,

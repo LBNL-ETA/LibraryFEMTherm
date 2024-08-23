@@ -4,19 +4,24 @@
 #include <vector>
 #include <optional>
 
-#include "Gases.hxx"
+#include <fileParse/XMLNodeAdapter.hxx>
 
-class XMLNodeAdapter;
+#include "Gases.hxx"
 
 namespace GasesLibrary
 {
     [[nodiscard]] std::string loadVersionFromXMLFile(std::string_view fileName);
+
     [[nodiscard]] std::vector<Gas> loadGasesFromXMLFile(std::string_view fileName);
+    [[nodiscard]] std::vector<Gas> loadGasesDataFromXMLString(std::string_view xmlString);
+
     [[nodiscard]] std::vector<PureGas> loadPureGasesFromXMLFile(std::string_view fileName);
+    [[nodiscard]] std::vector<PureGas> loadPureGasesFromXMLString(std::string_view xmlString);
 
     class DB
     {
     public:
+        DB() = default;
         explicit DB(const std::string & fileName);
 
         [[nodiscard]] std::optional<PureGas> getPureGasByUUID(std::string_view uuid) const;
@@ -51,6 +56,7 @@ namespace GasesLibrary
         void addGasesData(const GasesData & gasData);
 
         [[nodiscard]] int saveToFile();
+        [[nodiscard]] std::string saveToXMLString();
 
         //! \brief Deletes all materials that belong to given project
         void deleteGasesWithProjectName(const std::string & projectName);

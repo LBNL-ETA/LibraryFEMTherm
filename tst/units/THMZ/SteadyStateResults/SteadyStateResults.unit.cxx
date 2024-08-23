@@ -17,13 +17,13 @@ TEST_F(TestSteadyStateResults, ProjectionDeserialization)
     ThermFile::Projection projection;
     adapter >> projection;
 
-    ThermFile::Projection correctProjection{ThermFile::UValueDimensionType::XProjected, 20.0, 0.5};
+    ThermFile::Projection correctProjection{ThermFile::UValueDimensionType::XProjected, 20.0, 0.5, std::nullopt};
     Helper::expect_near(correctProjection, projection, 1e-6);
 }
 
 TEST_F(TestSteadyStateResults, ProjectionSerialization)
 {
-    ThermFile::Projection projection{ThermFile::UValueDimensionType::YProjected, 32.7, 0.65};
+    ThermFile::Projection projection{ThermFile::UValueDimensionType::YProjected, 32.7, 0.65, std::nullopt};
 
     Helper::MockNode node{"Projection"};
     Helper::MockNodeAdapter adapter{&node};
@@ -48,25 +48,38 @@ TEST_F(TestSteadyStateResults, UFactorsNodeDeserialization)
     ThermFile::SteadyStateUFactors result;
     adapter >> result;
 
-    ThermFile::SteadyStateUFactors correctResult{"Edge",
-                                                 39.0,
-                                                 23.94,
-                                                 ThermFile::UValueDimensionType::YProjected,
-                                                 {{ThermFile::UValueDimensionType::XProjected, 20.0, 0.5},
-                                                  {ThermFile::UValueDimensionType::YProjected, 32.7, 0.65},
-                                                  {ThermFile::UValueDimensionType::TotalLength, 40.0, 0.75}}};
+    //clang-format off
+    ThermFile::SteadyStateUFactors correctResult{
+      "Edge",                                       // Edge name
+      39.0,                                         // U-factor
+      23.94,                                        // SHGC
+      ThermFile::UValueDimensionType::YProjected,   // Dimension type
+      {
+        // Projections
+        {ThermFile::UValueDimensionType::XProjected, 20.0, 0.5, std::nullopt},    // Projected X
+        {ThermFile::UValueDimensionType::YProjected, 32.7, 0.65, std::nullopt},   // Projected Y
+        {ThermFile::UValueDimensionType::TotalLength, 40.0, 0.75, std::nullopt}   // Total Length
+      }};
+    //clang-format on
+
     Helper::expect_near(correctResult, result, 1e-6);
 }
 
 TEST_F(TestSteadyStateResults, UFactorsNodeSerialization)
 {
-    ThermFile::SteadyStateUFactors result{"Edge",
-                                          39.0,
-                                          23.94,
-                                          ThermFile::UValueDimensionType::YProjected,
-                                          {{ThermFile::UValueDimensionType::XProjected, 20.0, 0.5},
-                                           {ThermFile::UValueDimensionType::YProjected, 32.7, 0.65},
-                                           {ThermFile::UValueDimensionType::TotalLength, 40.0, 0.75}}};
+    //clang-format off
+    ThermFile::SteadyStateUFactors result{
+      "Edge",                                       // Edge name
+      39.0,                                         // U-factor
+      23.94,                                        // SHGC
+      ThermFile::UValueDimensionType::YProjected,   // Dimension type
+      {
+        // Projections
+        {ThermFile::UValueDimensionType::XProjected, 20.0, 0.5, std::nullopt},    // Projected X
+        {ThermFile::UValueDimensionType::YProjected, 32.7, 0.65, std::nullopt},   // Projected Y
+        {ThermFile::UValueDimensionType::TotalLength, 40.0, 0.75, std::nullopt}   // Total Length
+      }};
+    //clang-format on
 
     Helper::MockNode node{"UFactors"};
     Helper::MockNodeAdapter adapter{&node};
@@ -108,29 +121,38 @@ TEST_F(TestSteadyStateResults, CaseDeserialization)
     ThermFile::SteadyStateResultsCase result;
     adapter >> result;
 
+    // clang-format off
     ThermFile::SteadyStateResultsCase correctResult{
-      ThermFile::RunType::UFactor,
-      std::nullopt,   // No simulation error
-      std::nullopt,   // No glazing case
-      std::nullopt,   // No spacer case
-      {{
-         "Edge",
-         39.0,
-         23.94,
-         ThermFile::UValueDimensionType::YProjected,
-         {{ThermFile::UValueDimensionType::XProjected, 20.0, 0.5},
-          {ThermFile::UValueDimensionType::YProjected, 32.7, 0.65},
-          {ThermFile::UValueDimensionType::TotalLength, 40.0, 0.75}},
-       },
-       {
-         "Frame",
-         45.2,
-         18.35,
-         ThermFile::UValueDimensionType::YProjected,
-         {{ThermFile::UValueDimensionType::YProjected, 18.5, 0.55},
-          {ThermFile::UValueDimensionType::XProjected, 30.2, 0.60},
-          {ThermFile::UValueDimensionType::CustomRotationProjected, 42.5, 0.80}},
-       }}};
+        ThermFile::RunType::UFactor,  // Run type
+        std::nullopt,                 // Simulation error
+        std::nullopt,                 // Glazing case
+        std::nullopt,                 // Spacer case
+        {  // U-factors
+            { // U-factor
+               "Edge",  // Edge name
+               39.0,    // U-factor
+               23.94,   // SHGC
+               ThermFile::UValueDimensionType::YProjected, // Dimension type
+               {  // std::vector<Projection>
+                   {ThermFile::UValueDimensionType::XProjected, 20.0, 0.5, std::nullopt}, // Projection
+                   {ThermFile::UValueDimensionType::YProjected, 32.7, 0.65, std::nullopt}, // Projection
+                   {ThermFile::UValueDimensionType::TotalLength, 40.0, 0.75, std::nullopt} // Projection
+               },
+            },
+            {  // U-factor
+                "Frame",
+                45.2,
+                18.35,
+                ThermFile::UValueDimensionType::YProjected,
+                {
+                    {ThermFile::UValueDimensionType::YProjected, 18.5, 0.55, std::nullopt},
+                    {ThermFile::UValueDimensionType::XProjected, 30.2, 0.60, std::nullopt},
+                    {ThermFile::UValueDimensionType::CustomRotationProjected, 42.5, 0.80, std::nullopt}
+                },
+            }
+        }
+    };
+    // clang-format on
 
     Helper::expect_near(correctResult, result, 1e-6);
 }
@@ -146,16 +168,16 @@ TEST_F(TestSteadyStateResults, CaseSerialization)
         39.0,
         23.94,
         ThermFile::UValueDimensionType::YProjected,
-        {{ThermFile::UValueDimensionType::XProjected, 20.0, 0.5},
-         {ThermFile::UValueDimensionType::YProjected, 32.7, 0.65},
-         {ThermFile::UValueDimensionType::TotalLength, 40.0, 0.75}}},
+        {{ThermFile::UValueDimensionType::XProjected, 20.0, 0.5, std::nullopt},
+         {ThermFile::UValueDimensionType::YProjected, 32.7, 0.65, std::nullopt},
+         {ThermFile::UValueDimensionType::TotalLength, 40.0, 0.75, std::nullopt}}},
        {"Frame",
         45.2,
         18.35,
         ThermFile::UValueDimensionType::YProjected,
-        {{ThermFile::UValueDimensionType::YProjected, 18.5, 0.55},
-         {ThermFile::UValueDimensionType::XProjected, 30.2, 0.60},
-         {ThermFile::UValueDimensionType::CustomRotationProjected, 42.5, 0.80}}}}};
+        {{ThermFile::UValueDimensionType::YProjected, 18.5, 0.55, std::nullopt},
+         {ThermFile::UValueDimensionType::XProjected, 30.2, 0.60, std::nullopt},
+         {ThermFile::UValueDimensionType::CustomRotationProjected, 42.5, 0.80, std::nullopt}}}}};
 
     Helper::MockNode node{"Case"};
     Helper::MockNodeAdapter adapter{&node};
@@ -236,16 +258,16 @@ TEST_F(TestSteadyStateResults, ResultsDeserialization)
           36.0,
           23.94,
           ThermFile::UValueDimensionType::YProjected,
-          {{ThermFile::UValueDimensionType::XProjected, 22.0, 0.55},
-           {ThermFile::UValueDimensionType::YProjected, 34.7, 0.66},
-           {ThermFile::UValueDimensionType::TotalLength, 41.0, 0.76}}},
+          {{ThermFile::UValueDimensionType::XProjected, 22.0, 0.55, std::nullopt},
+           {ThermFile::UValueDimensionType::YProjected, 34.7, 0.66, std::nullopt},
+           {ThermFile::UValueDimensionType::TotalLength, 41.0, 0.76, std::nullopt}}},
          {"Frame",
           46.2,
           18.35,
           ThermFile::UValueDimensionType::YProjected,
-          {{ThermFile::UValueDimensionType::XProjected, 19.5, 0.56},
-           {ThermFile::UValueDimensionType::YProjected, 31.2, 0.61},
-           {ThermFile::UValueDimensionType::CustomRotationProjected, 43.5, 0.81}}}}},
+          {{ThermFile::UValueDimensionType::XProjected, 19.5, 0.56, std::nullopt},
+           {ThermFile::UValueDimensionType::YProjected, 31.2, 0.61, std::nullopt},
+           {ThermFile::UValueDimensionType::CustomRotationProjected, 43.5, 0.81, std::nullopt}}}}},
        {ThermFile::RunType::CondensationResistance,
         std::nullopt,   // No simulation error
         std::nullopt,   // No glazing case
@@ -254,16 +276,16 @@ TEST_F(TestSteadyStateResults, ResultsDeserialization)
           0.5,
           1.0,
           ThermFile::UValueDimensionType::YProjected,
-          {{ThermFile::UValueDimensionType::XProjected, 1.0, 0.1},
-           {ThermFile::UValueDimensionType::YProjected, 2.0, 0.2},
-           {ThermFile::UValueDimensionType::TotalLength, 3.0, 0.3}}},
+          {{ThermFile::UValueDimensionType::XProjected, 1.0, 0.1, std::nullopt},
+           {ThermFile::UValueDimensionType::YProjected, 2.0, 0.2, std::nullopt},
+           {ThermFile::UValueDimensionType::TotalLength, 3.0, 0.3, std::nullopt}}},
          {"Frame",
           0.6,
           1.1,
           ThermFile::UValueDimensionType::YProjected,
-          {{ThermFile::UValueDimensionType::XProjected, 1.1, 0.11},
-           {ThermFile::UValueDimensionType::YProjected, 2.1, 0.21},
-           {ThermFile::UValueDimensionType::CustomRotationProjected, 3.1, 0.31}}}}}}};
+          {{ThermFile::UValueDimensionType::XProjected, 1.1, 0.11, std::nullopt},
+           {ThermFile::UValueDimensionType::YProjected, 2.1, 0.21, std::nullopt},
+           {ThermFile::UValueDimensionType::CustomRotationProjected, 3.1, 0.31, std::nullopt}}}}}}};
 
     // Use your existing or similar comparison function to verify the deserialization results
     Helper::expect_near(correctResults, results, 1e-6);
@@ -282,15 +304,15 @@ TEST_F(TestSteadyStateResults, ResultsSerialization)
           36.0,
           23.94,
           ThermFile::UValueDimensionType::YProjected,
-          {{ThermFile::UValueDimensionType::XProjected, 22.0, 0.55},
-           {ThermFile::UValueDimensionType::YProjected, 34.7, 0.66},
-           {ThermFile::UValueDimensionType::TotalLength, 41.0, 0.76}}},
+          {{ThermFile::UValueDimensionType::XProjected, 22.0, 0.55, std::nullopt},
+           {ThermFile::UValueDimensionType::YProjected, 34.7, 0.66, std::nullopt},
+           {ThermFile::UValueDimensionType::TotalLength, 41.0, 0.76, std::nullopt}}},
          {"Frame",
           46.2,
           18.35,
           ThermFile::UValueDimensionType::YProjected,
-          {{ThermFile::UValueDimensionType::XProjected, 19.5, 0.56},
-           {ThermFile::UValueDimensionType::YProjected, 31.2, 0.61},
+          {{ThermFile::UValueDimensionType::XProjected, 19.5, 0.56, std::nullopt},
+           {ThermFile::UValueDimensionType::YProjected, 31.2, 0.61, std::nullopt},
            {ThermFile::UValueDimensionType::CustomRotationProjected, 43.5, 0.81, 23}}}}},
        {ThermFile::RunType::CondensationResistance,
         std::nullopt,   // No simulation error
@@ -300,15 +322,15 @@ TEST_F(TestSteadyStateResults, ResultsSerialization)
           0.5,
           1.0,
           ThermFile::UValueDimensionType::YProjected,
-          {{ThermFile::UValueDimensionType::XProjected, 1.0, 0.1},
-           {ThermFile::UValueDimensionType::YProjected, 2.0, 0.2},
-           {ThermFile::UValueDimensionType::TotalLength, 3.0, 0.3}}},
+          {{ThermFile::UValueDimensionType::XProjected, 1.0, 0.1, std::nullopt},
+           {ThermFile::UValueDimensionType::YProjected, 2.0, 0.2, std::nullopt},
+           {ThermFile::UValueDimensionType::TotalLength, 3.0, 0.3, std::nullopt}}},
          {"Frame",
           0.6,
           1.1,
           ThermFile::UValueDimensionType::YProjected,
-          {{ThermFile::UValueDimensionType::XProjected, 1.1, 0.11},
-           {ThermFile::UValueDimensionType::YProjected, 2.1, 0.21},
+          {{ThermFile::UValueDimensionType::XProjected, 1.1, 0.11, std::nullopt},
+           {ThermFile::UValueDimensionType::YProjected, 2.1, 0.21, std::nullopt},
            {ThermFile::UValueDimensionType::CustomRotationProjected, 3.1, 0.31, 48}}}}}}};
 
     Helper::MockNode node{"Results"};

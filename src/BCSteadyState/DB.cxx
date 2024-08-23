@@ -38,6 +38,29 @@ namespace BCSteadyStateLibrary
         }
     }
 
+    void DB::loadFromXMLString(const std::string &xmlString)
+    {
+        BCSteadyStateLibrary::Tags tags;
+        const auto xBCNode{getTopNodeFromString(xmlString, tags.boundaryConditions())};
+
+        if(xBCNode.has_value())
+        {
+            xBCNode.value() >> FileParse::Child{"Version", m_Version};
+            xBCNode.value() >> FileParse::Child{tags.boundaryCondition(), m_BoundaryConditions};
+        }
+    }
+
+    std::string DB::saveToXMLString() const
+    {
+        BCSteadyStateLibrary::Tags tags;
+        auto node{createTopNode(tags.boundaryConditions())};
+
+        node << FileParse::Child{"Version", m_Version};
+        node << FileParse::Child{tags.boundaryCondition(), m_BoundaryConditions};
+
+        return node.getContent();
+    }
+
     std::vector<BoundaryCondition> DB::loadBoundaryConditionsFromFile(const std::string & xmlFileName)
     {
         BCSteadyStateLibrary::Tags tags;
