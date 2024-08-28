@@ -8,6 +8,12 @@ include(cmake/LibraryFEMTHERMinternal_utils.cmake)
 include(cmake/LibraryFEMTHERMCompilerFlags.cmake)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+# Set the runtime library to /MD or /MT for all projects
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
 set(GLOBAL_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
@@ -69,15 +75,6 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES})
 add_library(${target_name} STATIC ${SOURCES})
 
 set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
-
-# Configure runtime library for different build types
-if(MSVC)
-    # Set the correct runtime library flags for the entire project
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MD")
-    set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} /MD")
-endif()
 
 target_link_libraries(${target_name} PUBLIC FileParse miniz)
 
