@@ -6,8 +6,7 @@
 #include <sstream>
 #include <iterator>
 #include <fstream>
-
-#include "Common/Common.hxx"
+#include <algorithm>
 
 namespace ThermZip
 {
