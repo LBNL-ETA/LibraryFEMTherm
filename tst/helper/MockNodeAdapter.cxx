@@ -14,6 +14,27 @@ namespace Helper
     MockNode::MockNode(std::string tag) : tag(std::move(tag))
     {}
 
+    MockNode & MockNode::addChild(const std::string & tagName)
+    {
+        // add child
+        child.emplace_back(tagName);
+        return child.back();
+    }
+
+    void MockNode::addAttribute(std::string_view name, std::string_view value)
+    {
+        attributes_[name.data()] = value.data();
+    }
+
+    std::optional<std::string> MockNode::getAttribute(std::string_view name) const
+    {
+        if(auto it = attributes_.find(name.data()); it != attributes_.end())
+        {
+            return it->second;
+        }
+        return std::nullopt;
+    }
+
     bool MockNodeAdapter::isEmpty() const
     {
         return node_ == nullptr || (node_->child.empty() && node_->text.empty());
@@ -100,6 +121,24 @@ namespace Helper
     std::string MockNodeAdapter::getContent() const
     {
         return "";
+    }
+
+    void MockNodeAdapter::addAttribute(std::string_view name, std::string_view value)
+    {
+        if(node_ != nullptr)
+        {
+            node_->addAttribute(name, value);
+        }
+    }
+
+    std::optional<std::string> MockNodeAdapter::getAttribute(std::string_view name) const
+    {
+        if(node_ != nullptr)
+        {
+            return node_->getAttribute(name);
+        }
+
+        return std::nullopt;
     }
 
     MockNode & addChildNode(MockNode & parentNode, std::string_view tag, std::string_view text)

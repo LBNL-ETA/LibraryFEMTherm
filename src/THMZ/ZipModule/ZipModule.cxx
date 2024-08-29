@@ -8,8 +8,6 @@
 #include <fstream>
 #include <algorithm>
 
-#include "Common/Common.hxx"
-
 namespace ThermZip
 {
     namespace Helper
