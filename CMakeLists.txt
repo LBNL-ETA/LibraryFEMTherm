@@ -10,11 +10,6 @@ include(cmake/LibraryFEMTHERMCompilerFlags.cmake)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Set the runtime library to /MD or /MT for all projects
-if(MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif()
-
 set(GLOBAL_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 # Sets global output directory for single configuration
@@ -46,24 +41,26 @@ include_directories(${CMAKE_BINARY_DIR}/xmlParser-src/include)
 
 # Download and include GoogleTest directly if needed
 if(DOWNLOAD_GTEST)
-    include(FetchContent)
+    configure_file(CMakeLists-GTest.txt.in ${CMAKE_BINARY_DIR}/googletest-download/CMakeLists.txt)
+	execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+	execute_process(COMMAND ${CMAKE_COMMAND} --build .
+			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
 
-    FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG v1.13.0
-    )
+	# Prevent GoogleTest from overriding our compiler/linker options
+	# when building with Visual Studio
+	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-    FetchContent_MakeAvailable(googletest)
+	# Add googletest directly to our build. This adds
+	# the following targets: gtest, gtest_main, gmock
+	# and gmock_main
+	add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
+			${CMAKE_BINARY_DIR}/googletest-build)
 
-    if(MSVC)
-        # Force all targets, including external ones, to use the same runtime library
-        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    endif()
+	# Now simply link your own targets against gtest, gmock,
+	# etc. as appropriate
 
-    # Link GTest with test targets
-    include_directories(${gtest_SOURCE_DIR}/include)
-    include_directories(${gmock_SOURCE_DIR}/include)
+	include_directories( ${CMAKE_BINARY_DIR}/googletest-src/include )
 endif()
 
 file(GLOB_RECURSE SOURCES_HXX "src/*.hxx")

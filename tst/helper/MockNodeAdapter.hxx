@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <map>
 
 #include <fileParse/INodeAdapter.hxx>
 
@@ -19,12 +20,13 @@ namespace Helper
         std::string text;
         std::vector<MockNode> child;
 
-        MockNode & addChild(const std::string & tagName)
-        {
-            // add child
-            child.emplace_back(tagName);
-            return child.back();
-        }
+        std::map<std::string, std::string> attributes_;
+
+        MockNode & addChild(const std::string & tagName);
+
+        void addAttribute(std::string_view name, std::string_view value);
+
+        [[nodiscard]] std::optional<std::string> getAttribute(std::string_view name) const;
     };
 
     [[maybe_unused]] MockNode &
@@ -57,7 +59,10 @@ namespace Helper
 
         [[nodiscard]] MockNode getNode() const;
 
-        std::string getContent() const override;
+        [[nodiscard]] std::string getContent() const override;
+
+        void addAttribute(std::string_view name, std::string_view value) override;
+        [[nodiscard]] std::optional<std::string> getAttribute(std::string_view name) const override;
 
     private:
         MockNode * node_{nullptr};

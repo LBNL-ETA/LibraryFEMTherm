@@ -6,7 +6,6 @@
 #include <sstream>
 #include <iterator>
 #include <fstream>
-#include <algorithm>
 
 #include "Common/Common.hxx"
 
