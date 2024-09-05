@@ -9,12 +9,12 @@ namespace ThermFile
 {
     const std::string topNodeName = "ThermModel";
 
-    ThermModel loadThermModelFromFile(std::string_view fileName)
+    std::optional<ThermModel> loadThermModelFromFile(std::string_view fileName)
     {
         return Common::loadFromXMLFile<ThermModel>(fileName, topNodeName);
     }
 
-    ThermModel loadThermModelFromZipFile(std::string const & zipFileName)
+    std::optional<ThermModel> loadThermModelFromZipFile(std::string const & zipFileName)
     {
         return Common::loadFromZipFile<ThermModel>(zipFileName, ThermZip::ModelFileName, topNodeName);
     }
@@ -34,7 +34,7 @@ namespace ThermFile
         return Common::saveToZIPFile(model, ThermZip::ModelFileName, zipFileName, topNodeName);
     }
 
-    ThermModel loadThermModelFromString(const std::string & xmlString)
+    std::optional<ThermModel> loadThermModelFromString(const std::string & xmlString)
     {
         return Common::loadFromXMLString<ThermModel>(xmlString, topNodeName);
     }

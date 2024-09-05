@@ -4,7 +4,6 @@
 #include <fstream>
 #include <optional>
 
-#include <fileParse/XMLNodeAdapter.hxx>
 #include <fileParse/FileDataHandler.hxx>
 
 #include "LibraryUtilities/StringRoutines.hxx"
@@ -14,7 +13,8 @@
 namespace Common
 {
     template<typename T>
-    T loadFromZipFile(const std::string & zipFileName, const std::string & fileName, const std::string & nodeTypeName)
+    std::optional<T>
+      loadFromZipFile(const std::string & zipFileName, const std::string & fileName, const std::string & nodeTypeName)
     {
         auto contents = ThermZip::unzipFile(zipFileName, fileName);
         return loadFromXMLString<T>(contents, nodeTypeName);

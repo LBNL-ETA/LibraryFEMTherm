@@ -8,17 +8,18 @@
 namespace ThermFile
 {
     const std::string topNodeName = "Results";
-    SteadyStateResults loadSteadyStateResultsFromFile(const std::string & fileName)
+
+    std::optional<SteadyStateResults> loadSteadyStateResultsFromFile(const std::string & fileName)
     {
         return Common::loadFromXMLFile<SteadyStateResults>(fileName, topNodeName);
     }
 
-    SteadyStateResults loadSteadyStateResultsFromZipFile(const std::string & fileName)
+    std::optional<SteadyStateResults> loadSteadyStateResultsFromZipFile(const std::string & fileName)
     {
         return Common::loadFromZipFile<SteadyStateResults>(fileName, ThermZip::SteadyStateResultsName, topNodeName);
     }
 
-    SteadyStateResults loadSteadyStateResultsFromString(const std::string & data)
+    std::optional<SteadyStateResults> loadSteadyStateResultsFromString(const std::string & data)
     {
         return Common::loadFromXMLString<SteadyStateResults>(data, topNodeName);
     }
