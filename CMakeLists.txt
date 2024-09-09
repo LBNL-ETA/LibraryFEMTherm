@@ -33,7 +33,18 @@ endif()
 
 # Download external projects automatically
 option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
-include(CMakeLists-FileParse.txt)
+
+include(FetchContent)
+
+FetchContent_Declare(
+	FileParse
+	GIT_REPOSITORY https://github.com/LBNL-ETA/FileParse.git
+	GIT_TAG BaseLoaderRoutines
+	)
+
+# Make FileParse available to the current project
+FetchContent_MakeAvailable(FileParse)
+
 include(CMakeLists-miniz.txt)
 
 include_directories(src)
