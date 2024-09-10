@@ -41,23 +41,35 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
-FetchContent_Declare(
-    FileParse
-    GIT_REPOSITORY https://github.com/LBNL-ETA/FileParse.git
-    GIT_TAG BaseLoaderRoutines
-)
+if(NOT TARGET xmlParser)
+    FetchContent_Declare(
+            XMLParser
+            GIT_REPOSITORY https://github.com/LBNL-ETA/XMLParser.git
+            GIT_TAG v1.0.1
+    )
 
-FetchContent_Declare(
-    miniz
-    GIT_REPOSITORY https://github.com/richgel999/miniz
-    GIT_TAG "3.0.2"
-)
+    FetchContent_MakeAvailable(XMLParser)
+endif()
 
-FetchContent_MakeAvailable(FileParse miniz)
+if(NOT TARGET FileParse)
+    FetchContent_Declare(
+        FileParse
+        GIT_REPOSITORY https://github.com/LBNL-ETA/FileParse.git
+        GIT_TAG BaseLoaderRoutines
+    )
 
-# Correct alias names
-add_library(FileParseAlias_LibraryFEMTHERM ALIAS FileParse)
-add_library(minizAlias_LibraryFEMTHERM ALIAS miniz)
+    FetchContent_MakeAvailable(FileParse)
+endif()
+
+if(NOT TARGET miniz)
+    FetchContent_Declare(
+        miniz
+        GIT_REPOSITORY https://github.com/richgel999/miniz
+        GIT_TAG "3.0.2"
+    )
+
+    FetchContent_MakeAvailable(miniz)
+endif()
 
 include_directories(src)
 include_directories(${CMAKE_BINARY_DIR}/xmlParser-src/include)
@@ -89,7 +101,7 @@ add_library(${target_name} STATIC ${SOURCES})
 set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
 
 # Use the correct alias names
-target_link_libraries(${target_name} PRIVATE FileParseAlias_LibraryFEMTHERM minizAlias_LibraryFEMTHERM)
+target_link_libraries(${target_name} PRIVATE FileParse miniz)
 
 if(BUILD_LibraryFEMTHERM_TESTING)
     add_subdirectory(tst)
