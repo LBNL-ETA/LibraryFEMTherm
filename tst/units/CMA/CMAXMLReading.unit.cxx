@@ -43,7 +43,11 @@ TEST_F(TestCMAXMLReading, CMAData)
 
     File::createFileFromString(fileName, fileContent);
 
-    CMALibrary::CMAData data{CMALibrary::loadCMADataFromFile(fileName)};
+    auto optData{CMALibrary::loadCMADataFromFile(fileName)};
+
+    ASSERT_TRUE(optData.has_value());
+
+    CMALibrary::CMAData data{optData.value()};
 
     EXPECT_NEAR(25.5, data.environment.Tin, tolerance);
     EXPECT_NEAR(-14.12, data.environment.Tout, tolerance);

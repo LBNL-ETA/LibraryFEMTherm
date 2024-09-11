@@ -9,12 +9,12 @@ namespace ThermFile
 {
     const std::string topNodeName = "MeshResults";
 
-    MeshResults loadSteadyStateMeshResultsFromFile(const std::string & fileName)
+    std::optional<MeshResults> loadSteadyStateMeshResultsFromFile(const std::string & fileName)
     {
         return Common::loadFromXMLFile<MeshResults>(fileName, topNodeName);
     }
 
-    MeshResults loadSteadyStateMeshResultsFromZipFile(const std::string & fileName)
+    std::optional<MeshResults> loadSteadyStateMeshResultsFromZipFile(const std::string & fileName)
     {
         return Common::loadFromZipFile<MeshResults>(fileName, ThermZip::SteadyStateMeshResultsName, topNodeName);
     }
@@ -34,7 +34,7 @@ namespace ThermFile
         return Common::saveToZIPFile(results, ThermZip::SteadyStateMeshResultsName, zipFileName, topNodeName);
     }
 
-    MeshResults loadSteadyStateMeshResultsFromString(const std::string & xmlString)
+    std::optional<MeshResults> loadSteadyStateMeshResultsFromString(const std::string & xmlString)
     {
         return Common::loadFromXMLString<MeshResults>(xmlString, topNodeName);
     }
