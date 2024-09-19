@@ -77,7 +77,7 @@
 			<xs:element name="Emissivity" type="xs:double" minOccurs="1" maxOccurs="1"/>
 		</xs:sequence>
 	</xs:complexType>
-	<xs:element name="Boundary">
+	<xs:element name="BoundaryCondition">
 		<xs:complexType>
 			<xs:complexContent>
 				<xs:extension base="Record">
@@ -93,8 +93,8 @@
 	<xs:element name="BoundaryConditions">
 		<xs:complexType>
 			<xs:sequence>
-			  <xs:element name="Version" minOccurs="1" maxOccurs="1" />
-				<xs:element ref="Boundary" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="Version" minOccurs="1" maxOccurs="1"/>
+				<xs:element ref="BoundaryCondition" minOccurs="0" maxOccurs="unbounded"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
