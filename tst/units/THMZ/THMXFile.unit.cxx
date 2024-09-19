@@ -49,7 +49,11 @@ TEST_F(TestTHMXFile, XMLOperations)
         std::filesystem::remove(fileName);
         ThermFile::saveToFile(model, fileName);
 
-        ThermFile::ThermModel loadedModel{ThermFile::loadThermModelFromFile(fileName)};
+        auto optModel{ThermFile::loadThermModelFromFile(fileName)};
+
+        ASSERT_TRUE(optModel.has_value());
+
+        ThermFile::ThermModel loadedModel{optModel.value()};
 
         constexpr auto tolerance{1e-6};
         Helper::expect_near(model, loadedModel, tolerance);

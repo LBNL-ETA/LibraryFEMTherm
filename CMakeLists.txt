@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
 
-project(LibraryFEMTHERM VERSION 1.0.0)
+# Force all targets to use the dynamic runtime library on MSVC
+if (MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
+project(LibraryFEMTHERM VERSION 1.0.0 LANGUAGES CXX)
 set(target_name LibraryFEMTHERM)
 
 include(cmake/LibraryFEMTHERMProjectMacros.cmake)
@@ -33,34 +38,56 @@ endif()
 
 # Download external projects automatically
 option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
-include(CMakeLists-FileParse.txt)
-include(CMakeLists-miniz.txt)
+
+include(FetchContent)
+
+if(NOT TARGET xmlParser)
+    FetchContent_Declare(
+            XMLParser
+            GIT_REPOSITORY https://github.com/LBNL-ETA/XMLParser.git
+            GIT_TAG v1.0.1
+    )
+
+    FetchContent_MakeAvailable(XMLParser)
+endif()
+
+if(NOT TARGET FileParse)
+    FetchContent_Declare(
+        FileParse
+        GIT_REPOSITORY https://github.com/LBNL-ETA/FileParse.git
+        GIT_TAG Version_0.8
+    )
+
+    FetchContent_MakeAvailable(FileParse)
+endif()
+
+if(NOT TARGET miniz)
+    FetchContent_Declare(
+        miniz
+        GIT_REPOSITORY https://github.com/richgel999/miniz
+        GIT_TAG "3.0.2"
+    )
+
+    FetchContent_MakeAvailable(miniz)
+endif()
 
 include_directories(src)
 include_directories(${CMAKE_BINARY_DIR}/xmlParser-src/include)
 
-# Download and include GoogleTest directly if needed
 if(DOWNLOAD_GTEST)
-    configure_file(CMakeLists-GTest.txt.in ${CMAKE_BINARY_DIR}/googletest-download/CMakeLists.txt)
-	execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
-	execute_process(COMMAND ${CMAKE_COMMAND} --build .
-			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+    if(MSVC)
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    endif()
+    if(NOT TARGET gtest)
+        FetchContent_Declare(
+            googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG v1.13.0
+        )
+        FetchContent_MakeAvailable(googletest)
 
-	# Prevent GoogleTest from overriding our compiler/linker options
-	# when building with Visual Studio
-	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-	# Add googletest directly to our build. This adds
-	# the following targets: gtest, gtest_main, gmock
-	# and gmock_main
-	add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
-			${CMAKE_BINARY_DIR}/googletest-build)
-
-	# Now simply link your own targets against gtest, gmock,
-	# etc. as appropriate
-
-	include_directories( ${CMAKE_BINARY_DIR}/googletest-src/include )
+        include_directories(${gtest_SOURCE_DIR}/include)
+    endif()
 endif()
 
 file(GLOB_RECURSE SOURCES_HXX "src/*.hxx")
@@ -73,10 +100,13 @@ add_library(${target_name} STATIC ${SOURCES})
 
 set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
 
-target_link_libraries(${target_name} PUBLIC FileParse miniz)
+# Use the correct alias names
+target_link_libraries(${target_name} PRIVATE FileParse miniz)
 
 if(BUILD_LibraryFEMTHERM_TESTING)
     add_subdirectory(tst)
+    # Add include directories for tests if necessary
+    target_include_directories(LibraryFEMTHERM_tests PRIVATE ${fileparse_SOURCE_DIR}/include)
 endif()
 
 config_compiler_and_linker_LibraryFEMTHERM()
