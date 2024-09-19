@@ -55,7 +55,7 @@ if(NOT TARGET FileParse)
     FetchContent_Declare(
         FileParse
         GIT_REPOSITORY https://github.com/LBNL-ETA/FileParse.git
-        GIT_TAG BaseLoaderRoutines
+        GIT_TAG Version_0.8
     )
 
     FetchContent_MakeAvailable(FileParse)
