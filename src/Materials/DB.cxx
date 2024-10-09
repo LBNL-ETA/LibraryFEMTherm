@@ -80,7 +80,7 @@ namespace MaterialsLibrary
         return m_Materials[0];
     }
 
-    std::optional<Material> DB::getMaterialByUUID(const std::string & uuid)
+    std::optional<Material> DB::getByUUID(const std::string & uuid)
     {
         std::optional<Material> result;
 
@@ -142,7 +142,7 @@ namespace MaterialsLibrary
 
     void DB::updateOrAddMaterial(const Material & material)
     {
-        const auto mat{getMaterialByUUID(material.UUID)};
+        const auto mat{getByUUID(material.UUID)};
         mat.has_value() ? updateMaterial(material) : addMaterial(material);
     }
 

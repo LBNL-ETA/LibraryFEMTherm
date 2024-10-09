@@ -255,7 +255,7 @@ namespace GasesLibrary
         return std::nullopt;
     }
 
-    std::optional<GasesData> DB::getGasDataByUUID(std::string_view uuid) const
+    std::optional<GasesData> DB::getByUUID(std::string_view uuid) const
     {
         std::optional<GasesData> result;
 

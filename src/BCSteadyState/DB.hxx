@@ -17,7 +17,7 @@ namespace BCSteadyStateLibrary
         [[nodiscard]] std::string saveToXMLString() const;
 
         [[nodiscard]] std::optional<BoundaryCondition>
-          getBoundaryConditionByUUID(std::string_view uuid) const;
+          getByUUID(std::string_view uuid) const;
         [[nodiscard]] std::optional<BoundaryCondition>
           getBoundaryConditionByName(std::string_view name) const;
         [[nodiscard]] std::optional<BoundaryCondition>

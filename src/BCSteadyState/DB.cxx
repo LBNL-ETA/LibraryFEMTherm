@@ -93,7 +93,7 @@ namespace BCSteadyStateLibrary
         return node.writeToFile(m_FileName);
     }
 
-    std::optional<BoundaryCondition> DB::getBoundaryConditionByUUID(std::string_view uuid) const
+    std::optional<BoundaryCondition> DB::getByUUID(std::string_view uuid) const
     {
         return getBoundaryCondition(uuid, [uuid](const BoundaryCondition & obj) { return obj.UUID == uuid; });
     }

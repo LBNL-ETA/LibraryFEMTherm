@@ -62,6 +62,7 @@ namespace BCTypesLibrary
         bool UseHumidity{false};
         std::optional<double> Humidity;
         std::string Color{"FFFFFF"};
+        std::string ProjectName;
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +76,7 @@ namespace BCTypesLibrary
         explicit DB(const std::string & xmlName);
 
         std::vector<TypeRecord> & getBoundaryConditions();
-        std::optional<TypeRecord> getBoundaryConditionByUUID(std::string_view uuid);
+        std::optional<TypeRecord> getByUUID(std::string_view uuid);
         std::optional<TypeRecord> getBoundaryConditionByName(std::string_view name);
 
         //! \brief Updates current record with new data

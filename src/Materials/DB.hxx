@@ -39,7 +39,7 @@ namespace MaterialsLibrary
         //!
         //! @uuid - Universal Unique Identifier for which search will be performed.
         //! @return - Material record. It will be empty if material with given uuid does not exist.
-        [[nodiscard]] std::optional<Material> getMaterialByUUID(const std::string & uuid);
+        [[nodiscard]] std::optional<Material> getByUUID(const std::string & uuid);
 
         //! \brief Default record is needed to select something at the beginning
         [[nodiscard]] Material getDefaultRecord() const;

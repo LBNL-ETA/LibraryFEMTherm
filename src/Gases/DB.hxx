@@ -32,7 +32,7 @@ namespace GasesLibrary
         [[nodiscard]] std::optional<Gas> getGasByName(std::string_view name) const;
         [[nodiscard]] std::optional<Gas> getGasByDisplayName(std::string_view name) const;
 
-        [[nodiscard]] std::optional<GasesData> getGasDataByUUID(std::string_view uuid) const;
+        [[nodiscard]] std::optional<GasesData> getByUUID(std::string_view uuid) const;
         [[nodiscard]] std::optional<GasesData> getGasDataByName(std::string_view name) const;
         [[nodiscard]] std::optional<GasesData> getGasDataByDisplayName(const std::string & name) const;
 
