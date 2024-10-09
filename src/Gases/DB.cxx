@@ -402,7 +402,7 @@ namespace GasesLibrary
         return result;
     }
 
-    void DB::deleteGasesWithUUID(const std::string & uuid)
+    void DB::deleteWithUUID(const std::string & uuid)
     {
         m_Gases.erase(
           std::remove_if(m_Gases.begin(), m_Gases.end(), [&uuid](const Gas & gas) { return gas.UUID == uuid; }),

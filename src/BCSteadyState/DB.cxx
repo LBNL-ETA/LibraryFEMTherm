@@ -113,7 +113,7 @@ namespace BCSteadyStateLibrary
         return m_FileName;
     }
 
-    void DB::deleteRecordWithUUID(std::string_view uuid)
+    void DB::deleteWithUUID(std::string_view uuid)
     {
         m_BoundaryConditions.erase(std::remove_if(m_BoundaryConditions.begin(),
                                                   m_BoundaryConditions.end(),

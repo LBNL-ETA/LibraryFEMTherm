@@ -27,7 +27,7 @@ namespace BCSteadyStateLibrary
 
         [[nodiscard]] std::string getFileName() const;
 
-        void deleteRecordWithUUID(std::string_view uuid);
+        void deleteWithUUID(std::string_view uuid);
 
         void addBoundaryCondition(const BoundaryCondition & condition);
 

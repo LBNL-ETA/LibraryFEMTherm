@@ -146,7 +146,7 @@ namespace MaterialsLibrary
         mat.has_value() ? updateMaterial(material) : addMaterial(material);
     }
 
-    void DB::deleteMaterialWithUUID(std::string_view uuid)
+    void DB::deleteWithUUID(std::string_view uuid)
     {
         m_Materials.erase(std::remove_if(std::begin(m_Materials),
                                          std::end(m_Materials),

@@ -63,7 +63,7 @@ namespace MaterialsLibrary
         void updateOrAddMaterial(const Material & material);
 
         //! \brief Deletes materials with given uuid
-        void deleteMaterialWithUUID(std::string_view uuid);
+        void deleteWithUUID(std::string_view uuid);
 
         //! \brief Saves current state of object to XML file (provided through object constructor)
         [[nodiscard]] int saveToFile() const;

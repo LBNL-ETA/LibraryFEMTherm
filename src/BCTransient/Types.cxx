@@ -93,7 +93,7 @@ namespace BCTypesLibrary
         }
     }
 
-    void DB::deleteBCTypeWithUUID(std::string_view uuid)
+    void DB::deleteWithUUID(std::string_view uuid)
     {
         m_BoundaryConditions.erase(std::remove_if(std::begin(m_BoundaryConditions),
                                                   std::end(m_BoundaryConditions),

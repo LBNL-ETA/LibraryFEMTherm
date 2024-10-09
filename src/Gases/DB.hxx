@@ -60,7 +60,7 @@ namespace GasesLibrary
 
         //! \brief Deletes all materials that belong to given project
         void deleteGasesWithProjectName(const std::string & projectName);
-        void deleteGasesWithUUID(const std::string & uuid);
+        void deleteWithUUID(const std::string & uuid);
 
     private:
         void savePureGases(XMLNodeAdapter & gasesNode) const;
