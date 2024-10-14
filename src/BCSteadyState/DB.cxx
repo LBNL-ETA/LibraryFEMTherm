@@ -76,7 +76,7 @@ namespace BCSteadyStateLibrary
         return boundaryConditions;
     }
 
-    void DB::addBoundaryCondition(const BoundaryCondition & condition)
+    void DB::add(const BoundaryCondition & condition)
     {
         m_BoundaryConditions.emplace_back(condition);
     }
@@ -98,7 +98,7 @@ namespace BCSteadyStateLibrary
         return getBoundaryCondition(uuid, [uuid](const BoundaryCondition & obj) { return obj.UUID == uuid; });
     }
 
-    std::optional<BoundaryCondition> DB::getBoundaryConditionByName(std::string_view name) const
+    std::optional<BoundaryCondition> DB::getByName(std::string_view name) const
     {
         return getBoundaryCondition(name, [name](const BoundaryCondition & obj) { return obj.Name == name; });
     }
@@ -121,7 +121,7 @@ namespace BCSteadyStateLibrary
                                    m_BoundaryConditions.end());
     }
 
-    std::vector<std::string> DB::getBoundaryConditionNames() const
+    std::vector<std::string> DB::getNames() const
     {
         std::vector<std::string> names;
         names.reserve(m_BoundaryConditions.size());
@@ -132,7 +132,7 @@ namespace BCSteadyStateLibrary
         return names;
     }
 
-    std::vector<std::string> DB::getBoundaryConditionDisplayNames() const
+    std::vector<std::string> DB::getDisplayNames() const
     {
         std::vector<std::string> names;
         names.reserve(m_BoundaryConditions.size());
@@ -153,7 +153,7 @@ namespace BCSteadyStateLibrary
     }
 
     std::optional<BoundaryCondition>
-      DB::getBoundaryConditionByDisplayName(std::string_view displayName) const
+      DB::getByDisplayName(std::string_view displayName) const
     {
         return getBoundaryCondition(displayName, [displayName](const BoundaryCondition & obj) {
             return LibraryCommon::DisplayName(obj) == displayName;

@@ -77,20 +77,20 @@ namespace BCTypesLibrary
 
         std::vector<TypeRecord> & getBoundaryConditions();
         std::optional<TypeRecord> getByUUID(std::string_view uuid);
-        std::optional<TypeRecord> getBoundaryConditionByName(std::string_view name);
+        std::optional<TypeRecord> getByName(std::string_view name);
 
         //! \brief Updates current record with new data
         //!
         //! @bcType - Record that will be updated in the library
-        void updateBCType(const TypeRecord & bcType);
+        void update(const TypeRecord & bcType);
 
         //! \brief Adds boundary condition type into the database.
         //! Note that bc type is still not saved into XML file. There is separate function that does that.
         //! @bcType - Boundary Condition Type that will be stored into database.
-        void addBCType(const TypeRecord & bcType);
+        void add(const TypeRecord & bcType);
 
         //! \brief Update current record or in case record does not exists, it add new to the database.
-        void updateOrAddBCType(const TypeRecord & material);
+        void updateOrAdd(const TypeRecord & material);
 
         //! \brief Removes record with given uuid
         void deleteWithUUID(std::string_view uuid);

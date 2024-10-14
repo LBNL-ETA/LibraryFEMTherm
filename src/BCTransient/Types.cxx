@@ -58,12 +58,12 @@ namespace BCTypesLibrary
     }
 
 
-    std::optional<TypeRecord> DB::getBoundaryConditionByName(std::string_view name)
+    std::optional<TypeRecord> DB::getByName(std::string_view name)
     {
         return getBoundaryCondition([&name](const TypeRecord & bc) { return bc.Name == name; });
     }
 
-    void DB::updateBCType(const TypeRecord & bcType)
+    void DB::update(const TypeRecord & bcType)
     {
         auto it = std::find_if(m_BoundaryConditions.begin(),
                                m_BoundaryConditions.end(),
@@ -75,21 +75,21 @@ namespace BCTypesLibrary
         }
     }
 
-    void DB::addBCType(const TypeRecord & bcType)
+    void DB::add(const TypeRecord & bcType)
     {
         m_BoundaryConditions.emplace_back(bcType);
     }
 
-    void DB::updateOrAddBCType(const TypeRecord & bcType)
+    void DB::updateOrAdd(const TypeRecord & bcType)
     {
         const auto bc{getByUUID(bcType.UUID)};
         if(bc.has_value())
         {
-            updateBCType(bcType);
+            update(bcType);
         }
         else
         {
-            addBCType(bcType);
+            add(bcType);
         }
     }
 

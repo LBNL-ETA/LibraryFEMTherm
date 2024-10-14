@@ -9,7 +9,7 @@
 
 namespace GeometryLibrary
 {
-    void InputGeometryDataRecord::addMaterialPolygon(const MaterialPolygon & materialPolygon)
+    void InputGeometryDataRecord::addPolygon(const MaterialPolygon & materialPolygon)
     {
         materialPolygons.emplace_back(materialPolygon);
     }
@@ -96,7 +96,7 @@ namespace GeometryLibrary
         return node.getContent();
     }
 
-    void InputGeometryDataRecord::addMaterial(const size_t id, const std::string & name, const std::string & color)
+    void InputGeometryDataRecord::add(const size_t id, const std::string & name, const std::string & color)
     {
         materials.emplace_back(id, name, color);
     }

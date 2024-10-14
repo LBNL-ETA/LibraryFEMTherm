@@ -33,7 +33,7 @@ TEST_F(TestMaterialsXMLReading, ReadMaterial1ByUUID) {
     File::createFileFromString(getFileName(), fileContent);
 
     MaterialsLibrary::DB materialDB{getFileName()};
-    auto aMaterial{materialDB.getMaterialByUUID("26fc05d4-a7aa-43a1-b473-c984caefea5b")};
+    auto aMaterial{materialDB.getByUUID("26fc05d4-a7aa-43a1-b473-c984caefea5b")};
 
     EXPECT_EQ(aMaterial.has_value(), true);
 
@@ -76,7 +76,7 @@ TEST_F(TestMaterialsXMLReading, ReadShade1ByUUID) {
     File::createFileFromString(getFileName(), fileContent);
 
     MaterialsLibrary::DB materialDB{getFileName()};
-    auto aMaterial{materialDB.getMaterialByUUID("08eeb0cc-bb61-4a45-8746-27d450868de6")};
+    auto aMaterial{materialDB.getByUUID("08eeb0cc-bb61-4a45-8746-27d450868de6")};
 
     EXPECT_EQ(aMaterial.has_value(), true);
 
@@ -135,7 +135,7 @@ TEST_F(TestMaterialsXMLReading, Enclosure1ByUUID) {
     File::createFileFromString(getFileName(), fileContent);
 
     MaterialsLibrary::DB materialDB{getFileName()};
-    auto aMaterial{materialDB.getMaterialByUUID("c28a0554-3148-4a57-bb22-d93852b1604e")};
+    auto aMaterial{materialDB.getByUUID("c28a0554-3148-4a57-bb22-d93852b1604e")};
 
     EXPECT_EQ(aMaterial.has_value(), true);
 
@@ -158,7 +158,7 @@ TEST_F(TestMaterialsXMLReading, ReadMaterial1ByName) {
     File::createFileFromString(getFileName(), fileContent);
 
     MaterialsLibrary::DB materialDB{getFileName()};
-    auto aMaterial{materialDB.getMaterialByName("Test Material 1")};
+    auto aMaterial{materialDB.getByName("Test Material 1")};
 
     EXPECT_EQ(aMaterial.has_value(), true);
 
@@ -197,7 +197,7 @@ TEST_F(TestMaterialsXMLReading, GasNames) {
 
     MaterialsLibrary::DB materialsDB{getFileName()};
     const auto & materials{materialsDB.getMaterials()};
-    const auto gasNames{MaterialsLibrary::getGasNames(materials)};
+    const auto gasNames{MaterialsLibrary::getNames(materials)};
 
     const std::set<std::string, std::less<>> expectedGasNames{"Air", "Argon"};
 
@@ -210,7 +210,7 @@ TEST_F(TestMaterialsXMLReading, ReadMaterialEmptyMoistureByName) {
     File::createFileFromString(getFileName(), fileContent);
 
     MaterialsLibrary::DB materialDB{getFileName()};
-    auto aMaterial{materialDB.getMaterialByName("Test Material Empty Moisture 1")};
+    auto aMaterial{materialDB.getByName("Test Material Empty Moisture 1")};
 
     EXPECT_EQ(aMaterial.has_value(), true);
 

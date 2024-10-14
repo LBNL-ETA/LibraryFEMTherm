@@ -19,9 +19,9 @@ namespace BCSteadyStateLibrary
         [[nodiscard]] std::optional<BoundaryCondition>
           getByUUID(std::string_view uuid) const;
         [[nodiscard]] std::optional<BoundaryCondition>
-          getBoundaryConditionByName(std::string_view name) const;
+          getByName(std::string_view name) const;
         [[nodiscard]] std::optional<BoundaryCondition>
-          getBoundaryConditionByDisplayName(std::string_view displayName) const;
+          getByDisplayName(std::string_view displayName) const;
 
         [[nodiscard]] std::vector<BoundaryCondition> & getBoundaryConditions();
 
@@ -29,10 +29,10 @@ namespace BCSteadyStateLibrary
 
         void deleteWithUUID(std::string_view uuid);
 
-        void addBoundaryCondition(const BoundaryCondition & condition);
+        void add(const BoundaryCondition & condition);
 
-        [[nodiscard]] std::vector<std::string> getBoundaryConditionNames() const;
-        [[nodiscard]] std::vector<std::string> getBoundaryConditionDisplayNames() const;
+        [[nodiscard]] std::vector<std::string> getNames() const;
+        [[nodiscard]] std::vector<std::string> getDisplayNames() const;
 
         void deleteRecordsWithProjectName(std::string_view projectName);
 

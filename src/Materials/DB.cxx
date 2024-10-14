@@ -63,13 +63,13 @@ namespace MaterialsLibrary
         return node.getContent();
     }
 
-    std::optional<Material> DB::getMaterialByName(std::string_view materialName)
+    std::optional<Material> DB::getByName(std::string_view materialName)
     {
         return getMaterialByPredicate([&materialName](const Material & mat) { return mat.Name == materialName; });
     }
 
 
-    std::optional<Material> DB::getMaterialByDisplayName(std::string_view materialName)
+    std::optional<Material> DB::getByDisplayName(std::string_view materialName)
     {
         return getMaterialByPredicate(
           [&materialName](const Material & mat) { return LibraryCommon::DisplayName(mat) == materialName; });
@@ -80,7 +80,7 @@ namespace MaterialsLibrary
         return m_Materials[0];
     }
 
-    std::optional<Material> DB::getByUUID(const std::string & uuid)
+    std::optional<Material> DB::getByUUID(std::string_view uuid)
     {
         std::optional<Material> result;
 
@@ -99,7 +99,7 @@ namespace MaterialsLibrary
         return result;
     }
 
-    std::vector<std::string> DB::getMaterialNames() const
+    std::vector<std::string> DB::getNames() const
     {
         std::vector<std::string> names;
         names.reserve(m_Materials.size());
@@ -112,7 +112,7 @@ namespace MaterialsLibrary
         return names;
     }
 
-    std::vector<std::string> DB::getMaterialDisplayNames() const
+    std::vector<std::string> DB::getDisplayNames() const
     {
         std::vector<std::string> names;
         names.reserve(m_Materials.size());
@@ -124,12 +124,12 @@ namespace MaterialsLibrary
         return names;
     }
 
-    void DB::addMaterial(const Material & material)
+    void DB::add(const Material & material)
     {
         m_Materials.emplace_back(material);
     }
 
-    void DB::updateMaterial(const Material & material)
+    void DB::update(const Material & material)
     {
         for(auto & mat : m_Materials)
         {
@@ -140,10 +140,10 @@ namespace MaterialsLibrary
         }
     }
 
-    void DB::updateOrAddMaterial(const Material & material)
+    void DB::updateOrAdd(const Material & material)
     {
         const auto mat{getByUUID(material.UUID)};
-        mat.has_value() ? updateMaterial(material) : addMaterial(material);
+        mat.has_value() ? update(material) : add(material);
     }
 
     void DB::deleteWithUUID(std::string_view uuid)
@@ -193,7 +193,7 @@ namespace MaterialsLibrary
         return m_Materials;
     }
 
-    void DB::deleteRecordsWithProjectName(const std::string & projectName)
+    void DB::deleteRecordsWithProjectName(std::string_view projectName)
     {
         m_Materials.erase(std::remove_if(std::begin(m_Materials),
                                          std::end(m_Materials),
@@ -226,7 +226,7 @@ namespace MaterialsLibrary
         return std::nullopt;
     }
 
-    std::set<std::string, std::less<>> getGasNames(const std::vector<Material> & materials)
+    std::set<std::string, std::less<>> getNames(const std::vector<Material> & materials)
     {
         std::set<std::string, std::less<>> gasNames;
         for(const auto & material : materials)

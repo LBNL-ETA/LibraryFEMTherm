@@ -26,13 +26,13 @@ TEST_F(TestMaterialsXMLSaving, SaveMaterialXML)
 
     MaterialsLibrary::Material record = MaterialsLibrary::generate(uuid, MaterialsLibrary::MaterialType::Solid);
 
-    materialDB.addMaterial(record);
+    materialDB.add(record);
     const auto error{materialDB.saveToFile()};
     EXPECT_EQ(error, 0);
 
     MaterialsLibrary::DB testDB{fileName};
 
-    const auto testRecord{testDB.getMaterialByUUID(uuid)};
+    const auto testRecord{testDB.getByUUID(uuid)};
 
     EXPECT_EQ(testRecord.has_value(), true);
 
@@ -43,7 +43,7 @@ TEST_F(TestMaterialsXMLSaving, SaveMaterialXML)
     std::filesystem::remove(fileName);
 }
 
-TEST_F(TestMaterialsXMLSaving, UpdateMaterialXMLProperties)
+TEST_F(TestMaterialsXMLSaving, updateXMLProperties)
 {
     const std::string fileName{"TestSave.xm"};
 
@@ -53,7 +53,7 @@ TEST_F(TestMaterialsXMLSaving, UpdateMaterialXMLProperties)
 
     MaterialsLibrary::Material record = MaterialsLibrary::generate(uuid, MaterialsLibrary::MaterialType::Solid);
 
-    materialDB.addMaterial(record);
+    materialDB.add(record);
 
     record.Name = "Test Name";
 
@@ -63,14 +63,14 @@ TEST_F(TestMaterialsXMLSaving, UpdateMaterialXMLProperties)
 
     solid->hygroThermal->Roughness = MaterialsLibrary::MaterialRoughness::Smooth;
 
-    materialDB.updateMaterial(record);
+    materialDB.update(record);
 
     const auto error{materialDB.saveToFile()};
     EXPECT_EQ(error, 0);
 
     MaterialsLibrary::DB testDB{fileName};
 
-    const auto testRecord{testDB.getMaterialByUUID(uuid)};
+    const auto testRecord{testDB.getByUUID(uuid)};
     ASSERT_TRUE(testRecord.has_value());
 
     ASSERT_TRUE(MaterialsLibrary::isSolid(testRecord.value()));
@@ -106,14 +106,14 @@ TEST_F(TestMaterialsXMLSaving, AddMoistureStorageFunction)
 
     solid->hygroThermal->MoistureStorageFunction = moistureStorageFunction;
 
-    materialDB.addMaterial(record);
+    materialDB.add(record);
 
     const auto error{materialDB.saveToFile()};
     EXPECT_EQ(error, 0);
 
     MaterialsLibrary::DB testDB{fileName};
 
-    const auto testRecord{testDB.getMaterialByUUID(uuid)};
+    const auto testRecord{testDB.getByUUID(uuid)};
 
     ASSERT_TRUE(testRecord.has_value());
     ASSERT_TRUE(MaterialsLibrary::isSolid(testRecord.value()));
@@ -151,14 +151,14 @@ TEST_F(TestMaterialsXMLSaving, DeleteMaterialXML)
 
     const std::string uuid{"26fc05d4-a7aa-43a1-b473-c984caefea5b"};
 
-    materialDB.deleteMaterialWithUUID(uuid);
+    materialDB.deleteWithUUID(uuid);
 
     const auto error{materialDB.saveToFile()};
     EXPECT_EQ(error, 0);
 
     MaterialsLibrary::DB testDB{fileName};
 
-    const auto testRecord{testDB.getMaterialByUUID(uuid)};
+    const auto testRecord{testDB.getByUUID(uuid)};
 
     EXPECT_EQ(testRecord.has_value(), false);
 
