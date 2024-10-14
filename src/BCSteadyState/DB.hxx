@@ -29,6 +29,15 @@ namespace BCSteadyStateLibrary
 
         void deleteWithUUID(std::string_view uuid);
 
+        //! \brief Updates current record with new data
+        //!
+        //! @material - Record that will be updated in the library. Material must match by uuid in order to have other
+        //! properties updated.
+        void update(const BoundaryCondition & condition);
+
+        //! \brief Update current record or in case record does not exists, it add new to the database.
+        void updateOrAdd(const BoundaryCondition & condition);
+
         void add(const BoundaryCondition & condition);
 
         [[nodiscard]] std::vector<std::string> getNames() const;

@@ -76,6 +76,23 @@ namespace BCSteadyStateLibrary
         return boundaryConditions;
     }
 
+    void DB::update(const BoundaryCondition & condition)
+    {
+        for(auto & bc: m_BoundaryConditions)
+        {
+            if(bc.UUID == condition.UUID)
+            {
+                bc = condition;
+            }
+        }
+    }
+
+    void DB::updateOrAdd(const BoundaryCondition & condition)
+    {
+        const auto bc{getByUUID(condition.UUID)};
+        bc.has_value() ? update(condition) : add(condition);
+    }
+
     void DB::add(const BoundaryCondition & condition)
     {
         m_BoundaryConditions.emplace_back(condition);
