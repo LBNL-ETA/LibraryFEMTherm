@@ -41,7 +41,7 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
-set(LIBRARYFEMTHERM_FILEPARSE_VERSION "Version_1.0")
+set(LIBRARYFEMTHERM_FILEPARSE_VERSION "Version_1.0" CACHE INTERNAL "Required FileParse version for LibraryFEMTHERM")
 FetchContent_Declare(
     FileParse
     GIT_REPOSITORY https://github.com/LBNL-ETA/FileParse.git
