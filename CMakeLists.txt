@@ -41,22 +41,18 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
-set(LIBRARYFEMTHERM_FILEPARSE_VERSION "Version_1.0" CACHE INTERNAL "Required FileParse version for LibraryFEMTHERM")
 FetchContent_Declare(
     FileParse
     GIT_REPOSITORY https://github.com/LBNL-ETA/FileParse.git
-    GIT_TAG ${LIBRARYFEMTHERM_FILEPARSE_VERSION}
+    GIT_TAG "Version_1.0"
 )
 
 FetchContent_MakeAvailable(FileParse)
 
-
-set(LIBRARYFEMTHERM_MINIZ_VERSION "3.0.2")
-
 FetchContent_Declare(
     miniz
     GIT_REPOSITORY https://github.com/richgel999/miniz
-    GIT_TAG ${LIBRARYFEMTHERM_MINIZ_VERSION}
+    GIT_TAG "3.0.2"
 )
 FetchContent_MakeAvailable(miniz)
 
