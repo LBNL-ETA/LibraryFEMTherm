@@ -41,35 +41,24 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
-if(NOT TARGET xmlParser)
-    FetchContent_Declare(
-            XMLParser
-            GIT_REPOSITORY https://github.com/LBNL-ETA/XMLParser.git
-            GIT_TAG v1.0.1
-    )
+set(LIBRARYFEMTHERM_FILEPARSE_VERSION "Version_1.0")
+FetchContent_Declare(
+    FileParse
+    GIT_REPOSITORY https://github.com/LBNL-ETA/FileParse.git
+    GIT_TAG ${LIBRARYFEMTHERM_FILEPARSE_VERSION}
+)
 
-    FetchContent_MakeAvailable(XMLParser)
-endif()
+FetchContent_MakeAvailable(FileParse)
 
-if(NOT TARGET FileParse)
-    FetchContent_Declare(
-        FileParse
-        GIT_REPOSITORY https://github.com/LBNL-ETA/FileParse.git
-        GIT_TAG Version_1.0
-    )
 
-    FetchContent_MakeAvailable(FileParse)
-endif()
+set(LIBRARYFEMTHERM_MINIZ_VERSION "3.0.2")
 
-if(NOT TARGET miniz)
-    FetchContent_Declare(
-        miniz
-        GIT_REPOSITORY https://github.com/richgel999/miniz
-        GIT_TAG "3.0.2"
-    )
-
-    FetchContent_MakeAvailable(miniz)
-endif()
+FetchContent_Declare(
+    miniz
+    GIT_REPOSITORY https://github.com/richgel999/miniz
+    GIT_TAG ${LIBRARYFEMTHERM_MINIZ_VERSION}
+)
+FetchContent_MakeAvailable(miniz)
 
 include_directories(src)
 include_directories(${CMAKE_BINARY_DIR}/xmlParser-src/include)
