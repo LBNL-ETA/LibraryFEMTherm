@@ -41,18 +41,22 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
+set(FileParse_Branch "Version_1.0")
+
 FetchContent_Declare(
     FileParse
     GIT_REPOSITORY https://github.com/LBNL-ETA/FileParse.git
-    GIT_TAG "Version_1.0"
+    GIT_TAG ${FileParse_Branch}
 )
 
 FetchContent_MakeAvailable(FileParse)
 
+set(miniz_Branch "3.0.2")
+
 FetchContent_Declare(
     miniz
     GIT_REPOSITORY https://github.com/richgel999/miniz
-    GIT_TAG "3.0.2"
+    GIT_TAG ${miniz_Branch}
 )
 FetchContent_MakeAvailable(miniz)
 
@@ -87,6 +91,9 @@ set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
 
 # Use the correct alias names
 target_link_libraries(${target_name} PRIVATE FileParse miniz)
+
+set_property(TARGET ${target_name} PROPERTY FileParse_Branch ${FileParse_Branch})
+set_property(TARGET ${target_name} PROPERTY miniz_Branch ${miniz_Branch})
 
 if(BUILD_LibraryFEMTHERM_TESTING)
     add_subdirectory(tst)
