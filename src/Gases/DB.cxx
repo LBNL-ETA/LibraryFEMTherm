@@ -255,7 +255,7 @@ namespace GasesLibrary
         return std::nullopt;
     }
 
-    std::optional<GasesData> DB::getGasDataByUUID(std::string_view uuid) const
+    std::optional<GasesData> DB::getByUUID(std::string_view uuid) const
     {
         std::optional<GasesData> result;
 
@@ -272,7 +272,7 @@ namespace GasesLibrary
         return result;
     }
 
-    std::optional<GasesData> DB::getGasDataByName(std::string_view name) const
+    std::optional<GasesData> DB::getByName(std::string_view name) const
     {
         std::optional<GasesData> result;
 
@@ -289,7 +289,7 @@ namespace GasesLibrary
         return result;
     }
 
-    std::optional<GasesData> DB::getGasDataByDisplayName(const std::string & name) const
+    std::optional<GasesData> DB::getByDisplayName(const std::string & name) const
     {
         std::optional<GasesData> result;
 
@@ -306,7 +306,7 @@ namespace GasesLibrary
         return result;
     }
 
-    void DB::deleteGasesWithProjectName(const std::string & projectName)
+    void DB::deleteWithProjectName(const std::string & projectName)
     {
         m_Gases.erase(std::remove_if(m_Gases.begin(),
                                      m_Gases.end(),
@@ -314,7 +314,7 @@ namespace GasesLibrary
                       m_Gases.end());
     }
 
-    std::vector<std::string> DB::getGasNames() const
+    std::vector<std::string> DB::getNames() const
     {
         std::vector<std::string> names;
         names.reserve(m_Gases.size());
@@ -327,7 +327,7 @@ namespace GasesLibrary
         return names;
     }
 
-    std::vector<std::string> DB::getGasDisplayNames() const
+    std::vector<std::string> DB::getDisplayNames() const
     {
         std::vector<std::string> names;
         names.reserve(m_Gases.size());
@@ -402,14 +402,14 @@ namespace GasesLibrary
         return result;
     }
 
-    void DB::deleteGasesWithUUID(const std::string & uuid)
+    void DB::deleteWithUUID(std::string_view uuid)
     {
         m_Gases.erase(
           std::remove_if(m_Gases.begin(), m_Gases.end(), [&uuid](const Gas & gas) { return gas.UUID == uuid; }),
           m_Gases.end());
     }
 
-    void DB::addGasesData(const GasesData & gasData)
+    void DB::add(const GasesData & gasData)
     {
         // add gas only if gasData.gas.uuid is not in the library
         if(!getGasByUUID(gasData.gas.UUID).has_value())

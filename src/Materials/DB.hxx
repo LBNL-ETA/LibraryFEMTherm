@@ -31,45 +31,45 @@ namespace MaterialsLibrary
         //!
         //! @materialName - Material name for which search will be performed.
         //! @return - Material record. It will be empty if material name does not exist.
-        [[nodiscard]] std::optional<Material> getMaterialByName(std::string_view materialName);
+        [[nodiscard]] std::optional<Material> getByName(std::string_view materialName);
 
-        [[nodiscard]] std::optional<Material> getMaterialByDisplayName(std::string_view materialName);
+        [[nodiscard]] std::optional<Material> getByDisplayName(std::string_view materialName);
 
         //! \brief Search and returns material by uuid.
         //!
         //! @uuid - Universal Unique Identifier for which search will be performed.
         //! @return - Material record. It will be empty if material with given uuid does not exist.
-        [[nodiscard]] std::optional<Material> getMaterialByUUID(const std::string & uuid);
+        [[nodiscard]] std::optional<Material> getByUUID(std::string_view uuid);
 
         //! \brief Default record is needed to select something at the beginning
         [[nodiscard]] Material getDefaultRecord() const;
 
-        [[nodiscard]] std::vector<std::string> getMaterialNames() const;
+        [[nodiscard]] std::vector<std::string> getNames() const;
 
-        [[nodiscard]] std::vector<std::string> getMaterialDisplayNames() const;
+        [[nodiscard]] std::vector<std::string> getDisplayNames() const;
 
         //! \brief Adds material into database.
         //! Note that material is still not saved into XML file. There is separate function that does that.
         //! @material - Material that will be stored into database.
-        void addMaterial(const Material & material);
+        void add(const Material & material);
 
         //! \brief Updates current record with new data
         //!
         //! @material - Record that will be updated in the library. Material must match by uuid in order to have other
         //! properties updated.
-        void updateMaterial(const Material & material);
+        void update(const Material & material);
 
         //! \brief Update current record or in case record does not exists, it add new to the database.
-        void updateOrAddMaterial(const Material & material);
+        void updateOrAdd(const Material & material);
 
         //! \brief Deletes materials with given uuid
-        void deleteMaterialWithUUID(std::string_view uuid);
+        void deleteWithUUID(std::string_view uuid);
 
         //! \brief Saves current state of object to XML file (provided through object constructor)
         [[nodiscard]] int saveToFile() const;
 
         //! \brief Deletes all materials that belong to given project
-        void deleteRecordsWithProjectName(const std::string & projectName);
+        void deleteRecordsWithProjectName(std::string_view projectName);
 
         [[nodiscard]] std::string getFileName() const;
 
@@ -92,5 +92,5 @@ namespace MaterialsLibrary
     };
 
     //! \brief Returns all the gas names used by cavities in the library
-    [[nodiscard]] std::set<std::string, std::less<>> getGasNames(const std::vector<Material> & materials);
+    [[nodiscard]] std::set<std::string, std::less<>> getNames(const std::vector<Material> & materials);
 }
