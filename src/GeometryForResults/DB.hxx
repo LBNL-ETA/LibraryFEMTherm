@@ -17,11 +17,11 @@ namespace GeometryLibrary
         void loadFromXMLString(const std::string & xmlString);
         [[nodiscard]] std::string saveToXMLString() const;
 
-        void addMaterial(size_t id, const std::string & name, const std::string & color);
+        void add(size_t id, const std::string & name, const std::string & color);
         void addNode(size_t id, double x, double y);
         void addElement(size_t id, size_t node1, size_t node2, size_t node3, size_t node4, size_t materialID);
 
-        void addMaterialPolygon(const MaterialPolygon & materialPolygon);
+        void addPolygon(const MaterialPolygon & materialPolygon);
 
         void addEdgeNode(size_t nodeId);
 

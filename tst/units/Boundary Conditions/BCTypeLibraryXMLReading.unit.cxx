@@ -22,7 +22,7 @@ TEST_F(TestBCLibraryXMLReading, ReadBCLibraryXML)
     File::createFileFromString(fileName, fileContent);
 
     BCTypesLibrary::DB bcLibraryDB{fileName};
-    auto aBC{bcLibraryDB.getBoundaryConditionByUUID("d5bea8e8-b241-11e9-a2a3-2a2ae2dbcce4")};
+    auto aBC{bcLibraryDB.getByUUID("d5bea8e8-b241-11e9-a2a3-2a2ae2dbcce4")};
 
     EXPECT_EQ(aBC.has_value(), true);
 

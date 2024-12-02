@@ -51,7 +51,7 @@ TEST_F(TestBCSteadyStateLibraryXMLLoading, GetRecordByUUID_Comprehensive)
         BCSteadyStateLibrary::Radiation{BCSteadyStateLibrary::AutomaticEnclosure{21.0, 1.0}}},
       ""};
 
-    const auto bc{bcLibraryDB.getBoundaryConditionByUUID(uuid)};
+    const auto bc{bcLibraryDB.getByUUID(uuid)};
 
     EXPECT_EQ(bc.has_value(), true);
 
@@ -79,7 +79,7 @@ TEST_F(TestBCSteadyStateLibraryXMLLoading, GetRecordByUUID_Comprehensive_Invalid
                                           std::nullopt,
                                           BCSteadyStateLibrary::Radiation{BCSteadyStateLibrary::ManualEnclosure{}}}, ""};
 
-    const auto bc{bcLibraryDB.getBoundaryConditionByUUID(uuid)};
+    const auto bc{bcLibraryDB.getByUUID(uuid)};
 
     EXPECT_EQ(bc.has_value(), true);
 
@@ -103,7 +103,7 @@ TEST_F(TestBCSteadyStateLibraryXMLLoading, GetRecordByUUID_InvalidBCType)
                                                           "0xFF0000",
                                                           BCSteadyStateLibrary::RadiationSurface{21.0, 1.0}, ""};
 
-    const auto bc{bcLibraryDB.getBoundaryConditionByUUID(uuid)};
+    const auto bc{bcLibraryDB.getByUUID(uuid)};
 
     EXPECT_EQ(bc.has_value(), true);
 
@@ -125,7 +125,7 @@ TEST_F(TestBCSteadyStateLibraryXMLLoading, GetRecordByName_Simplified)
     const BCSteadyStateLibrary::BoundaryCondition correct{
       "61d7bd1c-22c6-4ea0-8720-0696e8c194ad", name, true, "0xFFFFFF", BCSteadyStateLibrary::Simplified{0, 0, 0.5}, ""};
 
-    const auto bc{bcLibraryDB.getBoundaryConditionByName(name)};
+    const auto bc{bcLibraryDB.getByName(name)};
 
     EXPECT_EQ(bc.has_value(), true);
 
@@ -149,7 +149,7 @@ TEST_F(TestBCSteadyStateLibraryXMLLoading, GetRecordByName_RadiationSurface)
                                                           "0x00FF00",
                                                           BCSteadyStateLibrary::RadiationSurface{21.0, 1.0}, ""};
 
-    const auto bc{bcLibraryDB.getBoundaryConditionByName(name)};
+    const auto bc{bcLibraryDB.getByName(name)};
 
     EXPECT_EQ(bc.has_value(), true);
 

@@ -22,13 +22,13 @@ TEST_F(TestBCLibraryXMLSaving, SaveBCLibraryXML1)
 
     BCTypesLibrary::TypeRecord record{uuid};
 
-    bcLibraryDB.addBCType(record);
+    bcLibraryDB.add(record);
     const auto error{bcLibraryDB.saveToFile()};
     EXPECT_EQ(error, 0);
 
     BCTypesLibrary::DB testDB{fileName};
 
-    const auto testRecord{testDB.getBoundaryConditionByUUID(uuid)};
+    const auto testRecord{testDB.getByUUID(uuid)};
 
     const auto recordExists{testRecord.has_value()};
     EXPECT_EQ(recordExists, true);

@@ -32,16 +32,16 @@ namespace GasesLibrary
         [[nodiscard]] std::optional<Gas> getGasByName(std::string_view name) const;
         [[nodiscard]] std::optional<Gas> getGasByDisplayName(std::string_view name) const;
 
-        [[nodiscard]] std::optional<GasesData> getGasDataByUUID(std::string_view uuid) const;
-        [[nodiscard]] std::optional<GasesData> getGasDataByName(std::string_view name) const;
-        [[nodiscard]] std::optional<GasesData> getGasDataByDisplayName(const std::string & name) const;
+        [[nodiscard]] std::optional<GasesData> getByUUID(std::string_view uuid) const;
+        [[nodiscard]] std::optional<GasesData> getByName(std::string_view name) const;
+        [[nodiscard]] std::optional<GasesData> getByDisplayName(const std::string & name) const;
 
         [[nodiscard]] std::vector<Gas> & getGases();
         [[nodiscard]] std::vector<PureGas> & getPureGases();
         [[nodiscard]] std::vector<GasesData> getGasesData() const;
 
-        [[nodiscard]] std::vector<std::string> getGasNames() const;
-        [[nodiscard]] std::vector<std::string> getGasDisplayNames() const;
+        [[nodiscard]] std::vector<std::string> getNames() const;
+        [[nodiscard]] std::vector<std::string> getDisplayNames() const;
 
         [[nodiscard]] std::vector<std::string> getPureGasNames() const;
 
@@ -53,14 +53,14 @@ namespace GasesLibrary
         void addOrUpdatePureGas(const PureGas & pure);
         void addGas(const Gas & gas);
 
-        void addGasesData(const GasesData & gasData);
+        void add(const GasesData & gasData);
 
         [[nodiscard]] int saveToFile();
         [[nodiscard]] std::string saveToXMLString();
 
         //! \brief Deletes all materials that belong to given project
-        void deleteGasesWithProjectName(const std::string & projectName);
-        void deleteGasesWithUUID(const std::string & uuid);
+        void deleteWithProjectName(const std::string & projectName);
+        void deleteWithUUID(std::string_view uuid);
 
     private:
         void savePureGases(XMLNodeAdapter & gasesNode) const;

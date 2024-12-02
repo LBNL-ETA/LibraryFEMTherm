@@ -17,22 +17,31 @@ namespace BCSteadyStateLibrary
         [[nodiscard]] std::string saveToXMLString() const;
 
         [[nodiscard]] std::optional<BoundaryCondition>
-          getBoundaryConditionByUUID(std::string_view uuid) const;
+          getByUUID(std::string_view uuid) const;
         [[nodiscard]] std::optional<BoundaryCondition>
-          getBoundaryConditionByName(std::string_view name) const;
+          getByName(std::string_view name) const;
         [[nodiscard]] std::optional<BoundaryCondition>
-          getBoundaryConditionByDisplayName(std::string_view displayName) const;
+          getByDisplayName(std::string_view displayName) const;
 
         [[nodiscard]] std::vector<BoundaryCondition> & getBoundaryConditions();
 
         [[nodiscard]] std::string getFileName() const;
 
-        void deleteRecordWithUUID(std::string_view uuid);
+        void deleteWithUUID(std::string_view uuid);
 
-        void addBoundaryCondition(const BoundaryCondition & condition);
+        //! \brief Updates current record with new data
+        //!
+        //! @material - Record that will be updated in the library. Material must match by uuid in order to have other
+        //! properties updated.
+        void update(const BoundaryCondition & condition);
 
-        [[nodiscard]] std::vector<std::string> getBoundaryConditionNames() const;
-        [[nodiscard]] std::vector<std::string> getBoundaryConditionDisplayNames() const;
+        //! \brief Update current record or in case record does not exists, it add new to the database.
+        void updateOrAdd(const BoundaryCondition & condition);
+
+        void add(const BoundaryCondition & condition);
+
+        [[nodiscard]] std::vector<std::string> getNames() const;
+        [[nodiscard]] std::vector<std::string> getDisplayNames() const;
 
         void deleteRecordsWithProjectName(std::string_view projectName);
 

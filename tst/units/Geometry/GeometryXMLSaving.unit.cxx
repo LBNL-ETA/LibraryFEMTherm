@@ -20,7 +20,7 @@ TEST_F(TestGeometryXMLSaving, SaveGeometryXML)
     std::filesystem::remove(fileName);
 
     GeometryLibrary::InputGeometryDataRecord inGeom;
-    inGeom.addMaterial(1u, "Test name", "ff8080");
+    inGeom.add(1u, "Test name", "ff8080");
     inGeom.addNode(1u, 0, 0);
     inGeom.addNode(2u, 0, 1);
     inGeom.addNode(3u, 1, 1);
@@ -33,7 +33,7 @@ TEST_F(TestGeometryXMLSaving, SaveGeometryXML)
     matPoly.addNode(2u);
     matPoly.addNode(3u);
     matPoly.addNode(4u);
-    inGeom.addMaterialPolygon(matPoly);
+    inGeom.addPolygon(matPoly);
 
     inGeom.modelEnclosure.node = {1u, 2u, 3u, 4u};
 

@@ -21,13 +21,13 @@ TEST_F(TestBCSteadyStateLibraryXMLSaving, Simplified)
     BCSteadyStateLibrary::BoundaryCondition record{
       uuid, "Test Name", false, "0xFAB2A6", BCSteadyStateLibrary::Simplified(), "", false};
 
-    bcLibraryDB.addBoundaryCondition(record);
+    bcLibraryDB.add(record);
     const auto error{bcLibraryDB.saveToFile()};
     EXPECT_EQ(error, 0);
 
     BCSteadyStateLibrary::DB testDB{fileName};
 
-    const auto testRecord{testDB.getBoundaryConditionByUUID(uuid)};
+    const auto testRecord{testDB.getByUUID(uuid)};
 
     const auto recordExists{testRecord.has_value()};
     EXPECT_EQ(recordExists, true);
@@ -67,13 +67,13 @@ TEST_F(TestBCSteadyStateLibraryXMLSaving, RadiationSurface)
     BCSteadyStateLibrary::BoundaryCondition record{
       uuid, "Test Name", false, "0xFAB2A6", BCSteadyStateLibrary::RadiationSurface(), "", false};
 
-    bcLibraryDB.addBoundaryCondition(record);
+    bcLibraryDB.add(record);
     const auto error{bcLibraryDB.saveToFile()};
     EXPECT_EQ(error, 0);
 
     BCSteadyStateLibrary::DB testDB{fileName};
 
-    const auto testRecord{testDB.getBoundaryConditionByUUID(uuid)};
+    const auto testRecord{testDB.getByUUID(uuid)};
 
     const auto recordExists{testRecord.has_value()};
     EXPECT_EQ(recordExists, true);
@@ -116,13 +116,13 @@ TEST_F(TestBCSteadyStateLibraryXMLSaving, Comprehensive)
 
     BCSteadyStateLibrary::BoundaryCondition record{uuid, "Test Name", false, "0xFAB2A6", comprehensive, "", false};
 
-    bcLibraryDB.addBoundaryCondition(record);
+    bcLibraryDB.add(record);
     const auto error{bcLibraryDB.saveToFile()};
     EXPECT_EQ(error, 0);
 
     BCSteadyStateLibrary::DB testDB{fileName};
 
-    const auto testRecord{testDB.getBoundaryConditionByUUID(uuid)};
+    const auto testRecord{testDB.getByUUID(uuid)};
 
     const auto recordExists{testRecord.has_value()};
     EXPECT_EQ(recordExists, true);

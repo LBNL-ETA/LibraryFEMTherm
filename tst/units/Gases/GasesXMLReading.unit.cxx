@@ -112,7 +112,7 @@ TEST_F(TestGasesXMLReading, ReadGasDataMixture_AirArgon)
     File::createFileFromString(fileName, fileContent);
 
     GasesLibrary::DB gasesDB{fileName};
-    const auto aGas{gasesDB.getGasDataByName("Air 10%/Argon 90%")};
+    const auto aGas{gasesDB.getByName("Air 10%/Argon 90%")};
 
     EXPECT_EQ(aGas.has_value(), true);
 
@@ -174,7 +174,7 @@ TEST_F(TestGasesXMLReading, ReadGasMixture_AirArgonByUUID)
     File::createFileFromString(fileName, fileContent);
 
     GasesLibrary::DB gasesDB{fileName};
-    const auto aGas{gasesDB.getGasDataByUUID("37881919-7cdf-4428-bf5c-10702bc78415")};
+    const auto aGas{gasesDB.getByUUID("37881919-7cdf-4428-bf5c-10702bc78415")};
 
     EXPECT_EQ(aGas.has_value(), true);
 
@@ -236,7 +236,7 @@ TEST_F(TestGasesXMLReading, ReadGasMixture_AirArgonByDisplayName)
     File::createFileFromString(fileName, fileContent);
 
     GasesLibrary::DB gasesDB{fileName};
-    const auto aGas{gasesDB.getGasDataByDisplayName("Air 10%/Argon 90%")};
+    const auto aGas{gasesDB.getByDisplayName("Air 10%/Argon 90%")};
 
     EXPECT_EQ(aGas.has_value(), true);
 
@@ -298,7 +298,7 @@ TEST_F(TestGasesXMLReading, ReadGasDataMixture_AirSF6)
     File::createFileFromString(fileName, fileContent);
 
     GasesLibrary::DB gasesDB{fileName};
-    const auto aGas{gasesDB.getGasDataByName("Air 10%/SF6 90%")};
+    const auto aGas{gasesDB.getByName("Air 10%/SF6 90%")};
 
     EXPECT_EQ(aGas.has_value(), true);
 
@@ -337,7 +337,7 @@ TEST_F(TestGasesXMLReading, AllGasesNames)
     File::createFileFromString(fileName, fileContent);
 
     GasesLibrary::DB gasesDB{fileName};
-    const auto gases{gasesDB.getGasNames()};
+    const auto gases{gasesDB.getNames()};
 
     const std::vector<std::string> correctGases{"Air 10%/Argon 90%", "Air 10%/SF6 90%"};
 
@@ -359,7 +359,7 @@ TEST_F(TestGasesXMLReading, AllGasesDisplayNames)
     File::createFileFromString(fileName, fileContent);
 
     GasesLibrary::DB gasesDB{fileName};
-    const auto gases{gasesDB.getGasDisplayNames()};
+    const auto gases{gasesDB.getDisplayNames()};
 
     const std::vector<std::string> correctGases{"Air 10%/Argon 90%", "Air 10%/SF6 90%"};
 
