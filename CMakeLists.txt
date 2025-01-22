@@ -5,7 +5,7 @@ if (MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-project(LibraryFEMTHERM VERSION 1.0.0 LANGUAGES CXX)
+project(LibraryFEMTHERM VERSION 0.6.0 LANGUAGES CXX)
 set(target_name LibraryFEMTHERM)
 
 include(cmake/LibraryFEMTHERMProjectMacros.cmake)
@@ -41,7 +41,7 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
-set(FileParse_Branch "Version_1.0.1")
+set(FileParse_Branch "Version_1.0.3")
 
 FetchContent_Declare(
     FileParse
@@ -107,4 +107,11 @@ if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc /utf-8")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /utf-8")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /utf-8")
+endif()
+
+# Warning levels
+if (MSVC)
+    add_compile_options(/W4)
+else()
+    add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
