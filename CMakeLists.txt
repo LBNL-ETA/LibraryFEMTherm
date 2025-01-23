@@ -41,7 +41,7 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
-set(FileParse_Branch "CapsInsensitiveEnums")
+set(FileParse_Branch "Version_1.0.4")
 
 FetchContent_Declare(
     FileParse
