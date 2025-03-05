@@ -70,7 +70,7 @@ TEST_F(TestBCSteadyStateUtilityRoutines, TestSimplifiedAirTemperature)
 
 TEST_F(TestBCSteadyStateUtilityRoutines, TestRadiationSurfaceAirTemperature)
 {
-    bc.data = BCSteadyStateLibrary::RadiationSurface{45.0, 0.9};
+    bc.data = RadiationSurface{.temperature=45.0, .emissivity=0.9};
     auto temp = airTemperature(bc);
     ASSERT_FALSE(temp.has_value());
 }
@@ -158,7 +158,7 @@ TEST_F(TestBCSteadyStateUtilityRoutines, TestLinearizedRadiationFilmCoefficient)
 
 TEST_F(TestBCSteadyStateUtilityRoutines, RadiationSurfaceTemperature)
 {
-    BCSteadyStateLibrary::RadiationSurface surface{291.15, 0.5};
+    BCSteadyStateLibrary::RadiationSurface surface{.temperature=291.15, .emissivity=0.5};
     bc.data = surface;
 
     auto temperature = radiationTemperature(bc);
@@ -238,7 +238,7 @@ TEST_F(TestBCSteadyStateUtilityRoutines, AutoEnclosureEmissivity)
 
 TEST_F(TestBCSteadyStateUtilityRoutines, RadiationSurfaceEmissivity)
 {
-    BCSteadyStateLibrary::RadiationSurface surface{291.15, 0.5};
+    BCSteadyStateLibrary::RadiationSurface surface{.temperature = 291.15, .emissivity=0.5};
     bc.data = surface;
 
     auto temperature = emissivity(bc);

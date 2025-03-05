@@ -12,11 +12,6 @@ namespace BCInputFileLibrary
 
     struct TARPTimestep
     {
-        TARPTimestep() = default;
-        TARPTimestep(const std::optional<size_t> & id, double temperature, double humidity);
-
-        TARPTimestep(double temperature, double humidity);
-
         std::optional<size_t> id;
         double temperature{0};
         double humidity{0};
@@ -28,10 +23,6 @@ namespace BCInputFileLibrary
 
     struct ASHRAEInside
     {
-        ASHRAEInside() = default;
-        ASHRAEInside(const std::optional<size_t> & id, double temperature, double humidity);
-        ASHRAEInside(double temperature, double humidity);
-
         std::optional<size_t> id;
         double temperature{0};
         double humidity{0};
@@ -43,10 +34,6 @@ namespace BCInputFileLibrary
 
     struct ASHRAEOutside
     {
-        ASHRAEOutside() = default;
-        ASHRAEOutside(const std::optional<size_t> & id, double temperature, double humidity, double wind_speed);
-        ASHRAEOutside(double temperature, double humidity, double wind_speed);
-
         std::optional<size_t> id;
         double temperature{0};
         double humidity{0};
@@ -59,13 +46,6 @@ namespace BCInputFileLibrary
 
     struct FixedFilmCoefficient
     {
-        FixedFilmCoefficient() = default;
-        FixedFilmCoefficient(const std::optional<size_t> & id,
-                             double temperature,
-                             double humidity,
-                             double fixed_film_coefficient);
-        FixedFilmCoefficient(double temperature, double humidity, double fixed_film_coefficient);
-
         std::optional<size_t> id;
         double temperature{0};
         double humidity{0};
@@ -78,14 +58,6 @@ namespace BCInputFileLibrary
 
     struct YazdanianKlems
     {
-        YazdanianKlems() = default;
-        YazdanianKlems(const std::optional<size_t> & id,
-                       double temperature,
-                       double humidity,
-                       double wind_speed,
-                       double wind_direction);
-        YazdanianKlems(double temperature, double humidity, double wind_speed, double wind_direction);
-
         std::optional<size_t> id;
         double temperature{0};
         double humidity{0};
@@ -99,14 +71,6 @@ namespace BCInputFileLibrary
 
     struct Kimura
     {
-        Kimura() = default;
-        Kimura(const std::optional<size_t> & id,
-               double temperature,
-               double humidity,
-               double wind_speed,
-               double wind_direction);
-        Kimura(double temperature, double humidity, double wind_speed, double wind_direction);
-
         std::optional<size_t> id;
         double temperature{0};
         double humidity{0};
@@ -120,14 +84,6 @@ namespace BCInputFileLibrary
 
     struct Montazeri
     {
-        Montazeri() = default;
-        Montazeri(const std::optional<size_t> & id,
-                  double temperature,
-                  double humidity,
-                  double wind_speed,
-                  double wind_direction);
-        Montazeri(double temperature, double humidity, double wind_speed, double wind_direction);
-
         std::optional<size_t> id;
         double temperature{0};
         double humidity{0};
@@ -156,10 +112,6 @@ namespace BCInputFileLibrary
 
     struct FixedRadiation
     {
-        FixedRadiation() = default;
-        FixedRadiation(const std::optional<size_t> & id, double temperature, double hr);
-        FixedRadiation(double temperature, double hr);
-
         std::optional<size_t> id;
         double temperature{0};
         double hr{0};
@@ -171,10 +123,6 @@ namespace BCInputFileLibrary
 
     struct BlackBodyRadiation
     {
-        BlackBodyRadiation() = default;
-        BlackBodyRadiation(const std::optional<size_t> & id, double temperature, double emissivity);
-        BlackBodyRadiation(double temperature, double emissivity);
-
         std::optional<size_t> id;
         double temperature{0};
         double emissivity{0};
@@ -196,10 +144,6 @@ namespace BCInputFileLibrary
 
     struct HeatFlux
     {
-        HeatFlux() = default;
-        HeatFlux(const std::optional<size_t> & id, double heat_flux);
-        explicit HeatFlux(double heat_flux);
-
         std::optional<size_t> id;
         double heatFlux{0};
     };
@@ -210,10 +154,6 @@ namespace BCInputFileLibrary
 
     struct SolarRadiation
     {
-        SolarRadiation() = default;
-        SolarRadiation(const std::optional<size_t> & id, double solar_radiation);
-        explicit SolarRadiation(double solar_radiation);
-
         std::optional<size_t> id;
         double solarRadiation{0};
     };
@@ -224,10 +164,6 @@ namespace BCInputFileLibrary
 
     struct FixedTemperature
     {
-        FixedTemperature() = default;
-        FixedTemperature(const std::optional<size_t> & id, double temperature);
-        explicit FixedTemperature(double temperature);
-
         std::optional<size_t> id;
         double temperature{0};
     };
@@ -238,10 +174,6 @@ namespace BCInputFileLibrary
 
     struct FixedHumidity
     {
-        FixedHumidity() = default;
-        FixedHumidity(const std::optional<size_t> & id, double humidity);
-        explicit FixedHumidity(double humidity);
-
         std::optional<size_t> id;
         double humidity{0};
     };
@@ -251,7 +183,6 @@ namespace BCInputFileLibrary
     /////////////////////////////////////////////////////////////////////////////////
     struct BoundaryConditionTimestep
     {
-        BoundaryConditionTimestep() = default;
 
         void loadFromXMLFile(const std::string & fileName);
         void loadFromXMLString(const std::string & xmlString);

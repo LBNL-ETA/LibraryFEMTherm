@@ -77,7 +77,8 @@ TEST_F(TestBCSteadyStateLibraryXMLLoading, GetRecordByUUID_Comprehensive_Invalid
       BCSteadyStateLibrary::Comprehensive{0.5,
                                           BCSteadyStateLibrary::Convection{21.0, 4.65},
                                           std::nullopt,
-                                          BCSteadyStateLibrary::Radiation{BCSteadyStateLibrary::ManualEnclosure{}}}, ""};
+                                          BCSteadyStateLibrary::Radiation{BCSteadyStateLibrary::ManualEnclosure{}}},
+      ""};
 
     const auto bc{bcLibraryDB.getByUUID(uuid)};
 
@@ -97,11 +98,13 @@ TEST_F(TestBCSteadyStateLibraryXMLLoading, GetRecordByUUID_InvalidBCType)
 
     const std::string uuid{"4c179ded-3f34-4102-b8d6-46d8e6d1c6d9"};
 
-    const BCSteadyStateLibrary::BoundaryCondition correct{uuid,
-                                                          "Interior (20 tilt) Aluminum Frame (convection only)",
-                                                          true,
-                                                          "0xFF0000",
-                                                          BCSteadyStateLibrary::RadiationSurface{21.0, 1.0}, ""};
+    const BCSteadyStateLibrary::BoundaryCondition correct{
+      uuid,
+      "Interior (20 tilt) Aluminum Frame (convection only)",
+      true,
+      "0xFF0000",
+      BCSteadyStateLibrary::RadiationSurface{.temperature = 21.0, .emissivity = 1.0},
+      ""};
 
     const auto bc{bcLibraryDB.getByUUID(uuid)};
 
@@ -143,11 +146,13 @@ TEST_F(TestBCSteadyStateLibraryXMLLoading, GetRecordByName_RadiationSurface)
 
     const std::string name{"Radiation Surface"};
 
-    const BCSteadyStateLibrary::BoundaryCondition correct{"d2539cd7-c6e6-4265-b2b9-dc482b1e1798",
-                                                          name,
-                                                          true,
-                                                          "0x00FF00",
-                                                          BCSteadyStateLibrary::RadiationSurface{21.0, 1.0}, ""};
+    const BCSteadyStateLibrary::BoundaryCondition correct{
+      "d2539cd7-c6e6-4265-b2b9-dc482b1e1798",
+      name,
+      true,
+      "0x00FF00",
+      BCSteadyStateLibrary::RadiationSurface{.temperature = 21.0, .emissivity = 1.0},
+      ""};
 
     const auto bc{bcLibraryDB.getByName(name)};
 
@@ -165,11 +170,13 @@ TEST_F(TestBCSteadyStateLibraryXMLLoading, GetDefaultRadiationSurface)
     File::createFileFromString(getFileName(), fileContent);
     BCSteadyStateLibrary::DB bcLibraryDB{getFileName()};
 
-    const BCSteadyStateLibrary::BoundaryCondition correct{"04e294fb-beaa-4838-b663-a05e0942bb72",
-                                                          "Default Radiation Surface",
-                                                          true,
-                                                          "0xFF0000",
-                                                          BCSteadyStateLibrary::RadiationSurface{21.0, 1.0}, ""};
+    const BCSteadyStateLibrary::BoundaryCondition correct{
+      "04e294fb-beaa-4838-b663-a05e0942bb72",
+      "Default Radiation Surface",
+      true,
+      "0xFF0000",
+      BCSteadyStateLibrary::RadiationSurface{.temperature = 21.0, .emissivity = 1.0},
+      ""};
 
     const auto bc{bcLibraryDB.getDefaultRadiationSurface()};
 
