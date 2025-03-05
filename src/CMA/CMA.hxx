@@ -8,20 +8,12 @@ namespace CMALibrary
 {
     struct Environment
     {
-        // Make default constructor and constructor with arguments
-        // explicit to avoid implicit conversion.
-        explicit Environment() = default;
-        explicit Environment(double tin, double tout);
-
         double Tin{21.0};     // Celsius
         double Tout{-18.0};   // Celsius
     };
 
     struct LayerValues
     {
-        explicit LayerValues() = default;
-        LayerValues(double hcin, double hcout, double emissivityIn, double emissivityOut);
-
         double hcin{0.0};    // W/m^2-K
         double hcout{0.0};   // W/m^2-K
         double emissivityIn{0.0};
@@ -30,9 +22,6 @@ namespace CMALibrary
 
     struct LayerOptionsKey
     {
-        LayerOptionsKey() = default;
-        LayerOptionsKey(Option glazing, Option spacer) : glazing(glazing), spacer(spacer){};
-
         Option glazing{Option::Low};
         Option spacer{Option::Low};
     };
@@ -43,9 +32,6 @@ namespace CMALibrary
 
     struct SingleLayer
     {
-        explicit SingleLayer() = default;
-        explicit SingleLayer(double thickness, LayerOptions layerOptions);
-
         double thickness{0.006};   // m
         double conductivity{1.0};  // W/m-K
         LayerOptions layerOptions{{{Option::Low, Option::Low}, {3.415185, 26, 0.026, 0.84}},
@@ -56,9 +42,6 @@ namespace CMALibrary
 
     struct DoubleLayer
     {
-        explicit DoubleLayer() = default;
-        explicit DoubleLayer(double thickness1, double thickness2, LayerOptions layerOptions);
-
         double thickness1{0.006};   // m
         double thickness2{0.006};   // m
         double conductivity1{1.0};  // W/m-K
