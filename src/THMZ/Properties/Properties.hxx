@@ -12,6 +12,7 @@
 
 #include "Common/GeometryDefinitions.hxx"
 #include "LibraryUtilities/TimeRoutines.hxx"
+#include "THMZ/Mesh/Mesh.hxx"
 
 namespace ThermFile
 {
@@ -23,6 +24,7 @@ namespace ThermFile
         inline static double DefaultHumidity{0.5};
 
         ConstantInitialConditions() = default;
+        ConstantInitialConditions(double temperature, double humidity);
 
         double temperature{DefaultTemperature};
         double humidity{DefaultHumidity};
@@ -60,6 +62,13 @@ namespace ThermFile
         inline static bool DefaultExcludeThermalConductivityTemperatureDependent{true};
 
         ModelingOptions() = default;
+        ModelingOptions(bool excludeWaterLiquidTransportation,
+                        bool excludeHeatOfEvaporation,
+                        bool excludeCapillaryConduction,
+                        bool excludeVaporDiffusionConduction,
+                        bool excludeLatentHeatOfFusion,
+                        bool excludeThermalConductivityMoistureDependent,
+                        bool excludeThermalConductivityTemperatureDependent);
 
         bool excludeWaterLiquidTransportation{DefaultExcludeWaterLiquidTransportation};
         bool excludeHeatOfEvaporation{DefaultExcludeHeatOfEvaporation};
@@ -89,6 +98,10 @@ namespace ThermFile
         inline static size_t DefaultNumberOfTimesteps{8670};
 
         EngineParameters() = default;
+        EngineParameters(double convergenceTolerance,
+                         double relaxationParameter,
+                         double timeStep,
+                         size_t numberOfTimesteps);
 
         double convergenceTolerance{DefaultConvergenceTolerance};
         double relaxationParameter{DefaultRelaxationParameter};
@@ -117,6 +130,11 @@ namespace ThermFile
         inline static size_t DefaultMaximumIterations{5};
 
         MeshControl() = default;
+        MeshControl(MesherType meshType,
+                    size_t meshParameter,
+                    bool runErrorEstimator,
+                    double errorEnergyNorm,
+                    size_t maximumIterations);
 
         MesherType meshType{MesherType::Simmetrix_Version_2022};
         size_t meshParameter{DefaultMeshParameter};
@@ -138,6 +156,7 @@ namespace ThermFile
         inline static bool DefaultCheckForCorrectWINDOWBCOnGlazingSystem{false};
 
         MiscProperties() = default;
+        MiscProperties(bool radianceMode, bool useCRforGlazingSystem, bool checkForCorrectWINDOWBCOnGlazingSystem);
 
         bool radianceMode{DefaultRadianceMode};
         bool useCRforGlazingSystem{DefaultUseCRForGlazingSystem};
@@ -158,6 +177,10 @@ namespace ThermFile
         inline static bool DefaultViewFactorSmoothing{true};
 
         HeatTransferModelingOptions() = default;
+        HeatTransferModelingOptions(bool automaticallyAdjustRelaxationParameter,
+                                    double adjustmentStep,
+                                    size_t maximumIterations,
+                                    bool viewFactorSmoothing);
 
         bool automaticallyAdjustRelaxationParameter{DefaultAutomaticallyAdjustRelaxationParameter};
         double adjustmentStep{DefaultAdjustmentStep};
@@ -180,6 +203,7 @@ namespace ThermFile
         inline static double DefaultCardinalOrientation{0};
 
         ModelOrientation() = default;
+        ModelOrientation(Orientation orientation, double cardinalOrientation);
 
         Orientation orientation{DefaultOrientation};
         double cardinalOrientation{DefaultCardinalOrientation};
@@ -193,18 +217,36 @@ namespace ThermFile
     struct General
     {
         // Defaults
-        inline static std::string DefaultCreationDate{Timer::timeToString(std::chrono::system_clock::now())};
-        inline static std::string DefaultLastModified{Timer::timeToString(std::chrono::system_clock::now())};
+        // Static function to ensure proper initialization timing
+        static std::string getDefaultCreationDate() {
+            return Timer::timeToString(std::chrono::system_clock::now());
+        }
+
+        static std::string getDefaultLastModified() {
+            return Timer::timeToString(std::chrono::system_clock::now());
+        }
 
         General() = default;
+        General(std::string calcVersion,
+                std::string fileName,
+                std::string directory,
+                std::string creationDate,
+                std::string lastModified,
+                std::string creationVersion,
+                std::string lastModifiedVersion,
+                std::string title,
+                std::string createdBy,
+                std::string company,
+                std::string client,
+                std::string notes);
 
         void setModifiedIsEqualToCreate();
 
         std::string calcVersion;
         std::string fileName;
         std::string directory;
-        std::string creationDate{DefaultCreationDate};
-        std::string lastModified{DefaultLastModified};
+        std::string creationDate{getDefaultCreationDate()};
+        std::string lastModified{getDefaultLastModified()};
         std::string creationVersion;
         std::string lastModifiedVersion;
         std::string title;
@@ -231,6 +273,19 @@ namespace ThermFile
           SteadyStateCalculationMethodology::ssNoTimeVariable};
 
         CalculationOptions() = default;
+        CalculationOptions(SimulationEngine simulationEngine,
+                           CalculationMode calculationMode,
+                           bool simulateMoisture,
+                           bool simulateThermal,
+                           ModelingOptions modelingOptions,
+                           TransientCalculationMethodology transientCalculationMethodology,
+                           SteadyStateCalculationMethodology steadyStateCalculationMethodology,
+                           ConstantInitialConditions constantInitialConditionsTransient,
+                           ConstantInitialConditions constantInitialConditionsSteadyState,
+                           EngineParameters engineParameters,
+                           MeshControl meshControl,
+                           HeatTransferModelingOptions heatTransferModelingOptions,
+                           MiscProperties miscProperties);
 
         SimulationEngine simulationEngine{DefaultSimulationEngine};
         CalculationMode calculationMode{DefaultCalculationMode};
@@ -274,6 +329,7 @@ namespace ThermFile
         inline static double DefaultModelOrientation{0.0};
 
         ModelExposure() = default;
+        ModelExposure(double modelOrientation, Gravity::Orientation gravityOrientation, ExposureType exposureType);
 
         double modelOrientation{DefaultModelOrientation};
         Gravity::Orientation gravityOrientation{DefaultGravityOrientation};
@@ -289,6 +345,7 @@ namespace ThermFile
         inline static double DefaultCheckingTolerance{0.1};
 
         Miscellaneous() = default;
+        Miscellaneous(double floatTolerance, double checkingTolerance);
 
         double floatTolerance{DefaultFloatTolerance};
         double checkingTolerance{DefaultCheckingTolerance};

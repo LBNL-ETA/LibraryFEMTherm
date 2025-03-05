@@ -12,7 +12,7 @@ include(cmake/LibraryFEMTHERMProjectMacros.cmake)
 include(cmake/LibraryFEMTHERMinternal_utils.cmake)
 include(cmake/LibraryFEMTHERMCompilerFlags.cmake)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(GLOBAL_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)

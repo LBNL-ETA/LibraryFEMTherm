@@ -55,7 +55,8 @@ namespace BCSteadyStateLibrary
 
     using RadiationOptions = std::variant<AutomaticEnclosure, ManualEnclosure, BlackBodyRadiation, LinearizedRadiation>;
 
-    struct Radiation{
+    struct Radiation
+    {
         Radiation() = default;
         explicit Radiation(const AutomaticEnclosure & automaticEnclosure);
         explicit Radiation(const ManualEnclosure & manualEnclosure);
@@ -68,6 +69,10 @@ namespace BCSteadyStateLibrary
     struct Comprehensive
     {
         Comprehensive() = default;
+        Comprehensive(double relativeHumidity,
+                      std::optional<Convection> convection,
+                      std::optional<ConstantFlux> constantFlux,
+                      std::optional<Radiation> radiation);
 
         double relativeHumidity{0.5};
         std::optional<Convection> convection;
@@ -95,8 +100,16 @@ namespace BCSteadyStateLibrary
         double emissivity{0};
     };
 
-    struct BoundaryCondition {
+    struct BoundaryCondition
+    {
         BoundaryCondition() = default;
+        BoundaryCondition(std::string UUID,
+                          std::string Name,
+                          bool Protected,
+                          std::string Color,
+                          std::variant<Comprehensive, Simplified, RadiationSurface> data,
+                          std::string ProjectName,
+                          bool isIGUSurface = false);
 
         std::string UUID;
         std::string Name;
@@ -106,8 +119,8 @@ namespace BCSteadyStateLibrary
 
         std::string ProjectName;
 
-        //! Unfortunately, the design of current code base requires this flag to be used. All other boundary conditions are
-        //! treated in the same way except boundary condition IGUs.
+        //! Unfortunately, the design of current code base requires this flag to be used. All other boundary conditions
+        //! are treated in the same way except boundary condition IGUs.
         bool isIGUSurface{false};
     };
-}
+}   // namespace BCSteadyStateLibrary
