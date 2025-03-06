@@ -28,14 +28,11 @@ TEST_F(TestGeometryXMLSaving, SaveGeometryXML)
 
     inGeom.addElement(1u, 1u, 2u, 3u, 4u, 1u);
 
-    GeometryLibrary::MaterialPolygon matPoly{1u, 1u};
-    matPoly.addNode(1u);
-    matPoly.addNode(2u);
-    matPoly.addNode(3u);
-    matPoly.addNode(4u);
+    GeometryLibrary::MaterialPolygon matPoly{.id = 1u, .materialID = 1u};
+    matPoly.m_Nodes.insert(std::begin(matPoly.m_Nodes), {1u, 2u, 3u, 4u});
     inGeom.addPolygon(matPoly);
 
-    inGeom.modelEnclosure.node = {1u, 2u, 3u, 4u};
+    inGeom.modelEnclosure = {1u, 2u, 3u, 4u};
 
     const auto error{inGeom.saveToXML(fileName)};
     EXPECT_EQ(error, 0);
@@ -59,7 +56,7 @@ TEST_F(TestGeometryXMLSaving, SaveGeometryXML)
     const auto numOfMaterialPolygons{inputGeometry.materialPolygons.size()};
     EXPECT_EQ(numOfMaterialPolygons, 1u);
 
-    const auto numOfEnclosureNodes{inputGeometry.modelEnclosure.node.size()};
+    const auto numOfEnclosureNodes{inputGeometry.modelEnclosure.size()};
     EXPECT_EQ(numOfEnclosureNodes, 4u);
 
     std::filesystem::remove(fileName);

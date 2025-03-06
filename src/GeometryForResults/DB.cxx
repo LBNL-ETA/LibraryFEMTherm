@@ -16,7 +16,7 @@ namespace GeometryLibrary
 
     void InputGeometryDataRecord::addEdgeNode(const size_t nodeId)
     {
-        modelEnclosure.node.emplace_back(nodeId);
+        modelEnclosure.emplace_back(nodeId);
     }
 
     namespace Helper

@@ -39,7 +39,7 @@ TEST_F(TestGeometryXMLReading, ReadGeomteryXML)
     const auto numOfMaterialPolygons{inputGeometry.materialPolygons.size()};
     EXPECT_EQ(numOfMaterialPolygons, 1u);
 
-    const auto numOfEnclosureNodes{inputGeometry.modelEnclosure.node.size()};
+    const auto numOfEnclosureNodes{inputGeometry.modelEnclosure.size()};
     EXPECT_EQ(numOfEnclosureNodes, 14u);
 
     std::filesystem::remove(fileName);

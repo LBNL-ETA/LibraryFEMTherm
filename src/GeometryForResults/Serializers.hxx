@@ -162,7 +162,7 @@ namespace GeometryLibrary
     template<typename NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, GeometryLibrary::ModelEnclosure & modelEnclosure)
     {
-        node >> FileParse::Child{{"ModelEnclosure", "NodeID"}, modelEnclosure.node};
+        node >> FileParse::Child{{"ModelEnclosure", "NodeID"}, modelEnclosure};
 
         return node;
     }
@@ -170,7 +170,7 @@ namespace GeometryLibrary
     template<typename NodeAdapter>
     NodeAdapter & operator<<(NodeAdapter & node, const GeometryLibrary::ModelEnclosure & modelEnclosure)
     {
-        node << FileParse::Child{{"ModelEnclosure", "NodeID"}, modelEnclosure.node};
+        node << FileParse::Child{{"ModelEnclosure", "NodeID"}, modelEnclosure};
 
         return node;
     }
