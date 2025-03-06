@@ -5,7 +5,7 @@ if (MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-project(LibraryFEMTHERM VERSION 0.6.0 LANGUAGES CXX)
+project(LibraryFEMTHERM VERSION 0.7.0 LANGUAGES CXX)
 set(target_name LibraryFEMTHERM)
 
 include(cmake/LibraryFEMTHERMProjectMacros.cmake)
@@ -41,7 +41,7 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
-set(FileParse_Branch "Version_1.0.4")
+set(FileParse_Branch "CPP20Conversion")
 
 FetchContent_Declare(
     FileParse
