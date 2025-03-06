@@ -266,7 +266,7 @@ namespace GasesLibrary
             {
                 pureGases.emplace_back(getPureGasByName(component.PureGasName));
             }
-            result = GasesData{gas.value(), pureGases};
+            result = GasesData{.gas = gas.value(), .components = pureGases, .Name = ""};
         }
 
         return result;
@@ -283,7 +283,7 @@ namespace GasesLibrary
             {
                 pureGases.emplace_back(getPureGasByName(component.PureGasName));
             }
-            result = GasesData{gas.value(), pureGases};
+            result = GasesData{.gas = gas.value(), .components = pureGases, .Name = ""};
         }
 
         return result;
@@ -300,7 +300,7 @@ namespace GasesLibrary
             {
                 pureGases.emplace_back(getPureGasByDisplayName(component.PureGasName));
             }
-            result = GasesData{gas.value(), pureGases};
+            result = GasesData{.gas = gas.value(), .components = pureGases, .Name = ""};
         }
 
         return result;

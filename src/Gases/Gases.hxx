@@ -7,27 +7,18 @@
 
 #include "Tags.hxx"
 
-namespace GasesLibrary {
-    struct Coefficients {
-        Coefficients() = default;
-
-        Coefficients(double a, double b, double c);
-
+namespace GasesLibrary
+{
+    struct Coefficients
+    {
         double A{0.0};
         double B{0.0};
         double C{0.0};
     };
 
     //! \brief Structure to hold properties of gas. It will be used by two different structures.
-    struct GasProperties {
-        GasProperties() = default;
-
-        GasProperties(double molecularWeight,
-                      double specificHeatRatio,
-                      const Coefficients &conductivity,
-                      const Coefficients &viscosity,
-                      const Coefficients &specificHeat);
-
+    struct GasProperties
+    {
         double MolecularWeight{0.0};
         double SpecificHeatRatio{0.0};
         Coefficients Conductivity;
@@ -35,70 +26,49 @@ namespace GasesLibrary {
         Coefficients SpecificHeat;
     };
 
-    struct GasCommon {
-        GasCommon() = default;
-
-        GasCommon(const std::string &uuid, const std::string &name, bool isProtected);
-
+    struct GasCommon
+    {
         std::string UUID;
         std::string Name;
         bool Protected{false};
     };
 
-    struct PureGas : public GasCommon {
-        PureGas() = default;
-
-        PureGas(const std::string &uuid,
-                const std::string &name,
-                bool isProtected,
-                const GasProperties &properties);
-
+    struct PureGas : public GasCommon
+    {
         GasProperties Properties;
 
         //! This is used to assign record to certain project.
         //! This property is not (and should not be) saved into the XML file.
-        std::string ProjectName;
+        std::string ProjectName{""};
     };
 
-    struct Component {
-        Component() = default;
-
-        Component(double fraction, const std::string &pureGasName);
-
+    struct Component
+    {
         double Fraction{0.0};
         std::string PureGasName;
     };
 
-    struct Gas : public GasCommon {
-        Gas() = default;
-
-        Gas(const std::string &uuid,
-            const std::string &name,
-            bool isProtected,
-            const std::vector<Component> &components);
-
+    struct Gas : public GasCommon
+    {
         std::vector<Component> Components;
 
         //! This is used to assign record to certain project.
         //! This property is not (and should not be) saved into the XML file.
-        std::string ProjectName;
+        std::string ProjectName{""};
     };
 
     //! \brief This is used to create complete gas data structure needed for calculations and serialization. It can also
     //! be used to validate gas completeness in the XML library.
-    struct GasesData {
-        GasesData() = default;
-
-        GasesData(const Gas &gas, const std::vector<std::optional<PureGas>> &components);
-
+    struct GasesData
+    {
         Gas gas;
         std::vector<std::optional<PureGas>> components;
 
-        std::string Name;
-        std::string ProjectName;
+        std::string Name{""};
+        std::string ProjectName{""};
         bool Protected{false};
     };
 
-    [[nodiscard]] bool isGasesDataComplete(const GasesData &data);
+    [[nodiscard]] bool isGasesDataComplete(const GasesData & data);
 
 }   // namespace GasesLibrary
