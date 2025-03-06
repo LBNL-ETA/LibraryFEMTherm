@@ -9,16 +9,6 @@
 
 namespace MaterialsLibrary
 {
-    /////////////////////////////////////////////////////////////////////////////////////////////////////
-    ///   Material
-    /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    Integrated::Integrated(OpticalType solar, OpticalType visible) : Solar(solar), Visible(visible)
-    {}
-
-    Integrated::Integrated(Infrared IR, OpticalType solar, OpticalType visible) : IR(IR), Solar(solar), Visible(visible)
-    {}
-
     Material generate(std::string uuid, MaterialType type)
     {
         std::map<MaterialType, std::function<void(Material &)>> materialActions = {

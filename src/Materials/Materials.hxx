@@ -121,10 +121,6 @@ namespace MaterialsLibrary
 
     struct Integrated
     {
-        Integrated() = default;
-        Integrated(Infrared IR, OpticalType solar, OpticalType visible);
-        Integrated(OpticalType solar, OpticalType visible);
-
         Infrared IR;
         std::optional<OpticalType> Solar;
         std::optional<OpticalType> Visible;
@@ -164,8 +160,6 @@ namespace MaterialsLibrary
     //! \brief Material record is kept for displaying it in screen lists.
     struct Material
     {
-        Material() = default;
-
         std::string UUID{};
         std::string Name{"Default Name"};
 
