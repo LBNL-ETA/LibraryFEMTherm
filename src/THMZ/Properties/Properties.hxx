@@ -20,14 +20,8 @@ namespace ThermFile
     //! transient or steady-state conditions.
     struct ConstantInitialConditions
     {
-        inline static double DefaultTemperature{21};
-        inline static double DefaultHumidity{0.5};
-
-        ConstantInitialConditions() = default;
-        ConstantInitialConditions(double temperature, double humidity);
-
-        double temperature{DefaultTemperature};
-        double humidity{DefaultHumidity};
+        double temperature{21};
+        double humidity{0.5};
     };
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -52,31 +46,13 @@ namespace ThermFile
     //! constant or temperature dependent
     struct ModelingOptions
     {
-        // Defaults
-        inline static bool DefaultExcludeWaterLiquidTransportation{true};
-        inline static bool DefaultExcludeHeatOfEvaporation{true};
-        inline static bool DefaultExcludeCapillaryConduction{true};
-        inline static bool DefaultExcludeVaporDiffusionConduction{true};
-        inline static bool DefaultExcludeLatentHeatOfFusion{true};
-        inline static bool DefaultExcludeThermalConductivityMoistureDependent{true};
-        inline static bool DefaultExcludeThermalConductivityTemperatureDependent{true};
-
-        ModelingOptions() = default;
-        ModelingOptions(bool excludeWaterLiquidTransportation,
-                        bool excludeHeatOfEvaporation,
-                        bool excludeCapillaryConduction,
-                        bool excludeVaporDiffusionConduction,
-                        bool excludeLatentHeatOfFusion,
-                        bool excludeThermalConductivityMoistureDependent,
-                        bool excludeThermalConductivityTemperatureDependent);
-
-        bool excludeWaterLiquidTransportation{DefaultExcludeWaterLiquidTransportation};
-        bool excludeHeatOfEvaporation{DefaultExcludeHeatOfEvaporation};
-        bool excludeCapillaryConduction{DefaultExcludeCapillaryConduction};
-        bool excludeVaporDiffusionConduction{DefaultExcludeVaporDiffusionConduction};
-        bool excludeLatentHeatOfFusion{DefaultExcludeLatentHeatOfFusion};
-        bool excludeThermalConductivityMoistureDependent{DefaultExcludeThermalConductivityMoistureDependent};
-        bool excludeThermalConductivityTemperatureDependent{DefaultExcludeThermalConductivityTemperatureDependent};
+        bool excludeWaterLiquidTransportation{true};
+        bool excludeHeatOfEvaporation{true};
+        bool excludeCapillaryConduction{true};
+        bool excludeVaporDiffusionConduction{true};
+        bool excludeLatentHeatOfFusion{true};
+        bool excludeThermalConductivityMoistureDependent{true};
+        bool excludeThermalConductivityTemperatureDependent{true};
     };
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -91,22 +67,10 @@ namespace ThermFile
     //! @param numberOfTimesteps Defines number of timesteps to be used in the simulation
     struct EngineParameters
     {
-        // Defaults
-        inline static double DefaultConvergenceTolerance{1e-5};
-        inline static double DefaultRelaxationParameter{1.0};
-        inline static double DefaultTimeStep{3600};
-        inline static size_t DefaultNumberOfTimesteps{8670};
-
-        EngineParameters() = default;
-        EngineParameters(double convergenceTolerance,
-                         double relaxationParameter,
-                         double timeStep,
-                         size_t numberOfTimesteps);
-
-        double convergenceTolerance{DefaultConvergenceTolerance};
-        double relaxationParameter{DefaultRelaxationParameter};
-        double timeStep{DefaultTimeStep};
-        size_t numberOfTimesteps{DefaultNumberOfTimesteps};
+        double convergenceTolerance{1e-5};
+        double relaxationParameter{1.0};
+        double timeStep{3600};
+        size_t numberOfTimesteps{8670};
     };
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -122,25 +86,11 @@ namespace ThermFile
     //! order to achieve error norm.
     struct MeshControl
     {
-        // Defaults
-        inline static size_t DefaultMesherType{1u};
-        inline static size_t DefaultMeshParameter{6};
-        inline static bool DefaultRunErrorEstimator{true};
-        inline static double DefaultErrorEnergyNorm{10};
-        inline static size_t DefaultMaximumIterations{5};
-
-        MeshControl() = default;
-        MeshControl(MesherType meshType,
-                    size_t meshParameter,
-                    bool runErrorEstimator,
-                    double errorEnergyNorm,
-                    size_t maximumIterations);
-
         MesherType meshType{MesherType::Simmetrix_Version_2022};
-        size_t meshParameter{DefaultMeshParameter};
-        bool runErrorEstimator{DefaultRunErrorEstimator};
-        double errorEnergyNorm{DefaultErrorEnergyNorm};
-        size_t maximumIterations{DefaultMaximumIterations};
+        size_t meshParameter{6u};
+        bool runErrorEstimator{true};
+        double errorEnergyNorm{10};
+        size_t maximumIterations{5};
     };
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -150,17 +100,9 @@ namespace ThermFile
     //! \brief Miscellaneous properties
     struct MiscProperties
     {
-        // Defaults
-        inline static bool DefaultRadianceMode{false};
-        inline static bool DefaultUseCRForGlazingSystem{false};
-        inline static bool DefaultCheckForCorrectWINDOWBCOnGlazingSystem{false};
-
-        MiscProperties() = default;
-        MiscProperties(bool radianceMode, bool useCRforGlazingSystem, bool checkForCorrectWINDOWBCOnGlazingSystem);
-
-        bool radianceMode{DefaultRadianceMode};
-        bool useCRforGlazingSystem{DefaultUseCRForGlazingSystem};
-        bool checkForCorrectWINDOWBCOnGlazingSystem{DefaultCheckForCorrectWINDOWBCOnGlazingSystem};
+        bool radianceMode{false};
+        bool useCRforGlazingSystem{false};
+        bool checkForCorrectWINDOWBCOnGlazingSystem{false};
     };
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -170,22 +112,10 @@ namespace ThermFile
     //! \brief Various heat transfer modeling options
     struct HeatTransferModelingOptions
     {
-        // Defaults
-        inline static bool DefaultAutomaticallyAdjustRelaxationParameter{true};
-        inline static double DefaultAdjustmentStep{-0.01};
-        inline static size_t DefaultMaximumIterations{25};
-        inline static bool DefaultViewFactorSmoothing{true};
-
-        HeatTransferModelingOptions() = default;
-        HeatTransferModelingOptions(bool automaticallyAdjustRelaxationParameter,
-                                    double adjustmentStep,
-                                    size_t maximumIterations,
-                                    bool viewFactorSmoothing);
-
-        bool automaticallyAdjustRelaxationParameter{DefaultAutomaticallyAdjustRelaxationParameter};
-        double adjustmentStep{DefaultAdjustmentStep};
-        size_t maximumIterations{DefaultMaximumIterations};
-        bool viewFactorSmoothing{DefaultViewFactorSmoothing};
+        bool automaticallyAdjustRelaxationParameter{true};
+        double adjustmentStep{-0.01};
+        size_t maximumIterations{25};
+        bool viewFactorSmoothing{true};
     };
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -198,15 +128,8 @@ namespace ThermFile
     //! @param cardinalOrientation Finer orientation setting.
     struct ModelOrientation
     {
-        // Defaults
-        inline static Orientation DefaultOrientation{Orientation::North};
-        inline static double DefaultCardinalOrientation{0};
-
-        ModelOrientation() = default;
-        ModelOrientation(Orientation orientation, double cardinalOrientation);
-
-        Orientation orientation{DefaultOrientation};
-        double cardinalOrientation{DefaultCardinalOrientation};
+        Orientation orientation{Orientation::North};
+        double cardinalOrientation{0};
     };
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -216,37 +139,13 @@ namespace ThermFile
     //! \brief Class used to group General settings tab in Therm File Options screen.
     struct General
     {
-        // Defaults
-        // Static function to ensure proper initialization timing
-        static std::string getDefaultCreationDate() {
-            return Timer::timeToString(std::chrono::system_clock::now());
-        }
-
-        static std::string getDefaultLastModified() {
-            return Timer::timeToString(std::chrono::system_clock::now());
-        }
-
-        General() = default;
-        General(std::string calcVersion,
-                std::string fileName,
-                std::string directory,
-                std::string creationDate,
-                std::string lastModified,
-                std::string creationVersion,
-                std::string lastModifiedVersion,
-                std::string title,
-                std::string createdBy,
-                std::string company,
-                std::string client,
-                std::string notes);
-
         void setModifiedIsEqualToCreate();
 
         std::string calcVersion;
         std::string fileName;
         std::string directory;
-        std::string creationDate{getDefaultCreationDate()};
-        std::string lastModified{getDefaultLastModified()};
+        std::string creationDate{Timer::timeToString(std::chrono::system_clock::now())};
+        std::string lastModified{Timer::timeToString(std::chrono::system_clock::now())};
         std::string creationVersion;
         std::string lastModifiedVersion;
         std::string title;
@@ -262,38 +161,13 @@ namespace ThermFile
 
     struct CalculationOptions
     {
-        // Defaults
-        inline static SimulationEngine DefaultSimulationEngine{SimulationEngine::Conrad};
-        inline static CalculationMode DefaultCalculationMode{CalculationMode::cmTransient};
-        inline static bool DefaultSimulateMoisture{true};
-        inline static bool DefaultSimulateThermal{true};
-        inline static TransientCalculationMethodology DefaultTransientCalculationMethodology{
-          TransientCalculationMethodology::icConstantEverywhere};
-        inline static SteadyStateCalculationMethodology DefaultSteadyStateCalculationMethodology{
-          SteadyStateCalculationMethodology::ssNoTimeVariable};
-
-        CalculationOptions() = default;
-        CalculationOptions(SimulationEngine simulationEngine,
-                           CalculationMode calculationMode,
-                           bool simulateMoisture,
-                           bool simulateThermal,
-                           ModelingOptions modelingOptions,
-                           TransientCalculationMethodology transientCalculationMethodology,
-                           SteadyStateCalculationMethodology steadyStateCalculationMethodology,
-                           ConstantInitialConditions constantInitialConditionsTransient,
-                           ConstantInitialConditions constantInitialConditionsSteadyState,
-                           EngineParameters engineParameters,
-                           MeshControl meshControl,
-                           HeatTransferModelingOptions heatTransferModelingOptions,
-                           MiscProperties miscProperties);
-
-        SimulationEngine simulationEngine{DefaultSimulationEngine};
-        CalculationMode calculationMode{DefaultCalculationMode};
-        bool simulateMoisture{DefaultSimulateMoisture};
-        bool simulateThermal{DefaultSimulateThermal};
+        SimulationEngine simulationEngine{SimulationEngine::Conrad};
+        CalculationMode calculationMode{CalculationMode::cmTransient};
+        bool simulateMoisture{true};
+        bool simulateThermal{true};
         ModelingOptions modelingOptions;
-        TransientCalculationMethodology transientCalculationMethodology{DefaultTransientCalculationMethodology};
-        SteadyStateCalculationMethodology steadyStateCalculationMethodology{DefaultSteadyStateCalculationMethodology};
+        TransientCalculationMethodology transientCalculationMethodology{TransientCalculationMethodology::icConstantEverywhere};
+        SteadyStateCalculationMethodology steadyStateCalculationMethodology{SteadyStateCalculationMethodology::ssNoTimeVariable};
         ConstantInitialConditions constantInitialConditionsTransient;
         ConstantInitialConditions constantInitialConditionsSteadyState;
         EngineParameters engineParameters;
@@ -302,19 +176,14 @@ namespace ThermFile
         MiscProperties miscProperties;
     };
 
-    //! \brief Base class to keep data for assembly and cross section type.
+    using CrossSectionType = std::variant<WindowCrossSectionType, OpaqueCrossSectionType, OtherCrossSectionType>;
+
+    //! \brief Base class to keep data for assembly and cross-section type.
     struct ExposureType
     {
-        ExposureType() = default;
-
-        ExposureType(ModelPurpose modelPurpose,
-                     std::variant<WindowCrossSectionType, OpaqueCrossSectionType, OtherCrossSectionType> crossSection,
-                     std::optional<OpaqueAssemblyType> assemblyType = std::nullopt);
-
         ModelPurpose modelPurpose{ModelPurpose::Window_TransparentFacade};
-        std::variant<WindowCrossSectionType, OpaqueCrossSectionType, OtherCrossSectionType> crossSection{
-          WindowCrossSectionType::Sill};
-        std::optional<OpaqueAssemblyType> assemblyType;
+        CrossSectionType crossSection{WindowCrossSectionType::Sill};
+        std::optional<OpaqueAssemblyType> assemblyType{std::nullopt};
     };
 
     ////////////////////////////////////////////////////////////////////////////////////
@@ -324,31 +193,18 @@ namespace ThermFile
     //! \brief Keeps all necessary data to used on Calculation Option tab in Therm File Properties screen
     struct ModelExposure
     {
-        // Defaults
-        inline static Gravity::Orientation DefaultGravityOrientation{Gravity::Orientation::Down};
-        inline static double DefaultModelOrientation{0.0};
+        double modelOrientation{0.0};
+        Gravity::Orientation gravityOrientation{Gravity::Orientation::Down};
 
-        ModelExposure() = default;
-        ModelExposure(double modelOrientation, Gravity::Orientation gravityOrientation, ExposureType exposureType);
-
-        double modelOrientation{DefaultModelOrientation};
-        Gravity::Orientation gravityOrientation{DefaultGravityOrientation};
-
-        ExposureType exposureType{};
+        ExposureType exposureType;
     };
 
     void setGravityOrientation(const Geometry::GravityVector & vector, ModelExposure & modelExposure);
 
     struct Miscellaneous
     {
-        inline static double DefaultFloatTolerance{0.02};
-        inline static double DefaultCheckingTolerance{0.1};
-
-        Miscellaneous() = default;
-        Miscellaneous(double floatTolerance, double checkingTolerance);
-
-        double floatTolerance{DefaultFloatTolerance};
-        double checkingTolerance{DefaultCheckingTolerance};
+        double floatTolerance{0.02};
+        double checkingTolerance{0.1};
     };
 
     ////////////////////////////////////////////////////////////////////////////////////
