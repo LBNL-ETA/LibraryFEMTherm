@@ -300,7 +300,7 @@ namespace GasesLibrary
             {
                 pureGases.emplace_back(getPureGasByDisplayName(component.PureGasName));
             }
-            result = GasesData{.gas = gas.value(), .components = pureGases, .Name = ""};
+            result = GasesData{.gas = gas.value(), .components = pureGases, .Name = gas->Name};
         }
 
         return result;
