@@ -6,6 +6,7 @@
 #include <vector>
 #include <array>
 #include <algorithm>
+#include <span>
 
 namespace LibraryCommon
 {
@@ -106,12 +107,4 @@ namespace LibraryCommon
 
         return (!value1 && !value2);
     }
-
-    template<typename T, std::predicate<const T&> Predicate>
-    std::optional<T> findElement(const std::vector<T> & elements, Predicate predicate)
-    {
-        const auto it = std::ranges::find_if(elements, predicate);
-        return (it != std::end(elements)) ? std::optional<T>(*it) : std::nullopt;
-    }
-
 }   // namespace LibraryCommon

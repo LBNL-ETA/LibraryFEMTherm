@@ -41,6 +41,16 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
+set(LBNLCPPCommon_Branch "main")
+
+FetchContent_Declare(
+        LBNLCPPCommon
+        GIT_REPOSITORY https://github.com/LBNL-ETA/LBNLCPPCommon.git
+        GIT_TAG ${LBNLCPPCommon_Branch}
+)
+
+FetchContent_MakeAvailable(LBNLCPPCommon)
+
 set(FileParse_Branch "Version_1.0.5")
 
 FetchContent_Declare(
@@ -89,8 +99,9 @@ add_library(${target_name} STATIC ${SOURCES})
 
 set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
 
-# Use the correct alias names
-target_link_libraries(${target_name} PRIVATE FileParse miniz)
+target_include_directories(${target_name} PRIVATE ${LBNLCPPCommon_SOURCE_DIR}/include)
+
+target_link_libraries(${target_name} PRIVATE FileParse LBNLCPPCommon miniz)
 
 set_property(TARGET ${target_name} PROPERTY FileParse_Branch ${FileParse_Branch})
 set_property(TARGET ${target_name} PROPERTY miniz_Branch ${miniz_Branch})

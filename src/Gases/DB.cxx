@@ -6,6 +6,9 @@
 #include <fileParse/XMLNodeAdapter.hxx>
 #include <fileParse/Vector.hxx>
 
+#include <lbnl/algorithm.hxx>
+#include <lbnl/optional.hxx>
+
 #include "Serializers.hxx"
 #include "Operators.hxx"
 
@@ -20,32 +23,26 @@ namespace GasesLibrary
     T processGasesNodeFromFile(const std::string_view & fileName, const std::string & tag)
     {
         Tags fileTags;
-        const auto gasesNode = getTopNodeFromFile(fileName.data(), fileTags.gases());
-
-        T result{};
-
-        if(gasesNode.has_value())
-        {
-            gasesNode.value() >> FileParse::Child{tag, result};
-        }
-
-        return result;
+        return lbnl::and_then(getTopNodeFromFile(fileName.data(), fileTags.gases()),
+                              [&](auto & node) {
+                                  T result{};
+                                  node >> FileParse::Child{tag, result};
+                                  return result;
+                              })
+          .value_or(T{});   // Return empty T if no value
     }
 
     template<typename T>
     T processGasesNodeFromString(const std::string_view & xmlString, const std::string & tag)
     {
         Tags fileTags;
-        const auto gasesNode = getTopNodeFromString(xmlString.data(), fileTags.gases());
-
-        T result{};
-
-        if(gasesNode.has_value())
-        {
-            gasesNode.value() >> FileParse::Child{tag, result};
-        }
-
-        return result;
+        return lbnl::and_then(getTopNodeFromString(xmlString.data(), fileTags.gases()),
+                              [&](auto & node) {
+                                  T result{};
+                                  node >> FileParse::Child{tag, result};
+                                  return result;
+                              })
+          .value_or(T{});   // Return empty T if no value
     }
 
     std::string loadVersionFromXMLFile(std::string_view fileName)
@@ -192,12 +189,12 @@ namespace GasesLibrary
 
     std::optional<Gas> DB::getGasByUUID(std::string_view uuid) const
     {
-        return LibraryCommon::findElement(m_Gases, [&uuid](const Gas & gas) { return gas.UUID == uuid; });
+        return lbnl::findElement(m_Gases, [&uuid](const Gas & gas) { return gas.UUID == uuid; });
     }
 
     std::optional<Gas> DB::getGasByName(std::string_view name) const
     {
-        return LibraryCommon::findElement(m_Gases, [&name](const Gas & gas) { return gas.Name == name; });
+        return lbnl::findElement(m_Gases, [&name](const Gas & gas) { return gas.Name == name; });
     }
 
     std::vector<Gas> & DB::getGases()
