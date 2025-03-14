@@ -190,23 +190,14 @@ namespace GasesLibrary
         return std::nullopt;
     }
 
-    namespace Helper
-    {
-        std::optional<Gas> findGas(const std::vector<Gas> & gases, const std::function<bool(const Gas &)> & predicate)
-        {
-            const auto it = std::ranges::find_if(gases, predicate);
-            return (it != std::end(gases)) ? std::optional<Gas>(*it) : std::nullopt;
-        }
-    }
-
     std::optional<Gas> DB::getGasByUUID(std::string_view uuid) const
     {
-        return Helper::findGas(m_Gases, [&uuid](const Gas & gas) { return gas.UUID == uuid; });
+        return LibraryCommon::findElement(m_Gases, [&uuid](const Gas & gas) { return gas.UUID == uuid; });
     }
 
     std::optional<Gas> DB::getGasByName(std::string_view name) const
     {
-        return Helper::findGas(m_Gases, [&name](const Gas & gas) { return gas.Name == name; });
+        return LibraryCommon::findElement(m_Gases, [&name](const Gas & gas) { return gas.Name == name; });
     }
 
     std::vector<Gas> & DB::getGases()
