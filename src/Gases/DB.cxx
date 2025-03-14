@@ -396,7 +396,7 @@ namespace GasesLibrary
             {
                 pureGases.emplace_back(getPureGasByDisplayName(component.PureGasName));
             }
-            result.emplace_back(gas, pureGases);
+            result.emplace_back(gas, pureGases, gas.Name);
         }
 
         return result;
