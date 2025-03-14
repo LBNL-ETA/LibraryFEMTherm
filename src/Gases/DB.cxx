@@ -190,30 +190,23 @@ namespace GasesLibrary
         return std::nullopt;
     }
 
+    namespace Helper
+    {
+        std::optional<Gas> findGas(const std::vector<Gas> & gases, const std::function<bool(const Gas &)> & predicate)
+        {
+            const auto it = std::ranges::find_if(gases, predicate);
+            return (it != std::end(gases)) ? std::optional<Gas>(*it) : std::nullopt;
+        }
+    }
+
     std::optional<Gas> DB::getGasByUUID(std::string_view uuid) const
     {
-        // clang-format off
-        const auto it = std::ranges::find_if(m_Gases,
-            [&uuid](const Gas & gas)
-            {
-                return gas.UUID == uuid;
-            });
-        // clang-format on
-
-        return (it != m_Gases.end()) ? std::optional<Gas>(*it) : std::nullopt;
+        return Helper::findGas(m_Gases, [&uuid](const Gas & gas) { return gas.UUID == uuid; });
     }
 
     std::optional<Gas> DB::getGasByName(std::string_view name) const
     {
-        for(const auto & gas : m_Gases)
-        {
-            if(gas.Name == name)
-            {
-                return gas;
-            }
-        }
-
-        return std::nullopt;
+        return Helper::findGas(m_Gases, [&name](const Gas & gas) { return gas.Name == name; });
     }
 
     std::vector<Gas> & DB::getGases()
@@ -232,8 +225,9 @@ namespace GasesLibrary
 
     void DB::removeTemporaryRecords()
     {
-        auto newEnd = std::remove_if(
-          m_Gases.begin(), m_Gases.end(), [](const Gas & gas) { return LibraryCommon::isRecordTemporary(gas); });
+        auto newEnd = std::ranges::remove_if(m_Gases, [](const Gas & gas) {
+                          return LibraryCommon::isRecordTemporary(gas);
+                      }).begin();
         m_Gases.erase(newEnd, m_Gases.end());
     }
 
@@ -308,10 +302,7 @@ namespace GasesLibrary
 
     void DB::deleteWithProjectName(const std::string & projectName)
     {
-        m_Gases.erase(std::remove_if(m_Gases.begin(),
-                                     m_Gases.end(),
-                                     [&projectName](const Gas & gas) { return gas.ProjectName == projectName; }),
-                      m_Gases.end());
+        std::erase_if(m_Gases, [&projectName](const Gas & gas) { return gas.ProjectName == projectName; });
     }
 
     std::vector<std::string> DB::getNames() const

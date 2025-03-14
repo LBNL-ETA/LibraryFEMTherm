@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <functional>
 
 #include <fileParse/XMLNodeAdapter.hxx>
 
