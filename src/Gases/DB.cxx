@@ -192,15 +192,15 @@ namespace GasesLibrary
 
     std::optional<Gas> DB::getGasByUUID(std::string_view uuid) const
     {
-        for(const auto & gas : m_Gases)
-        {
-            if(gas.UUID == uuid)
+        // clang-format off
+        const auto it = std::ranges::find_if(m_Gases,
+            [&uuid](const Gas & gas)
             {
-                return gas;
-            }
-        }
+                return gas.UUID == uuid;
+            });
+        // clang-format on
 
-        return std::nullopt;
+        return (it != m_Gases.end()) ? std::optional<Gas>(*it) : std::nullopt;
     }
 
     std::optional<Gas> DB::getGasByName(std::string_view name) const
@@ -392,10 +392,9 @@ namespace GasesLibrary
             std::vector<std::optional<PureGas>> pureGases;
             pureGases.reserve(gas.Components.size());
 
-            for(const auto & component : gas.Components)
-            {
-                pureGases.emplace_back(getPureGasByDisplayName(component.PureGasName));
-            }
+            std::ranges::transform(gas.Components, std::back_inserter(pureGases), [this](const auto & component) {
+                return getPureGasByDisplayName(component.PureGasName);
+            });
             result.emplace_back(gas, pureGases, gas.Name);
         }
 
@@ -404,9 +403,7 @@ namespace GasesLibrary
 
     void DB::deleteWithUUID(std::string_view uuid)
     {
-        m_Gases.erase(
-          std::remove_if(m_Gases.begin(), m_Gases.end(), [&uuid](const Gas & gas) { return gas.UUID == uuid; }),
-          m_Gases.end());
+        std::erase_if(m_Gases, [&uuid](const Gas & gas) { return gas.UUID == uuid; });
     }
 
     void DB::add(const GasesData & gasData)
