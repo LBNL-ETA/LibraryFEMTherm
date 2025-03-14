@@ -29,20 +29,23 @@ namespace GasesLibrary
                                   node >> FileParse::Child{tag, result};
                                   return result;
                               })
-          .value_or(T{});   // Return empty T if no value
+          .value_or(T{});
     }
 
     template<typename T>
     T processGasesNodeFromString(const std::string_view & xmlString, const std::string & tag)
     {
+        using lbnl::operator|;
+        using lbnl::operator||;
+
         Tags fileTags;
-        return lbnl::and_then(getTopNodeFromString(xmlString.data(), fileTags.gases()),
-                              [&](auto & node) {
-                                  T result{};
-                                  node >> FileParse::Child{tag, result};
-                                  return result;
-                              })
-          .value_or(T{});   // Return empty T if no value
+        return getTopNodeFromString(xmlString.data(), fileTags.gases())
+            | [&](auto& node) {
+                T result{};
+                node >> FileParse::Child{tag, result};
+                return result;
+        }
+        || [] { return T{}; };  // Return default `T{}` when no value exists
     }
 
     std::string loadVersionFromXMLFile(std::string_view fileName)
