@@ -20,16 +20,19 @@ namespace GasesLibrary
 {
 
     template<typename T>
-    T processGasesNodeFromFile(const std::string_view & fileName, const std::string & tag)
+    T processGasesNodeFromFile(const std::string_view& fileName, const std::string& tag)
     {
+        using lbnl::operator|;
+        using lbnl::operator||;
+
         Tags fileTags;
-        return lbnl::and_then(getTopNodeFromFile(fileName.data(), fileTags.gases()),
-                              [&](auto & node) {
-                                  T result{};
-                                  node >> FileParse::Child{tag, result};
-                                  return result;
-                              })
-          .value_or(T{});
+        return getTopNodeFromFile(fileName.data(), fileTags.gases())
+            | [&](auto& node) {
+                T result{};
+                node >> FileParse::Child{tag, result};
+                return result;
+        }
+        || [] { return T{}; };
     }
 
     template<typename T>
