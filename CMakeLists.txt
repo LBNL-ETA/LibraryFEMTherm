@@ -41,11 +41,11 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
-set(LBNLCPPCommon_Branch "main")
+set(LBNLCPPCommon_Branch "v0.1")
 
 FetchContent_Declare(
         LBNLCPPCommon
-        GIT_REPOSITORY https://github.com/LBNL-ETA/LBNLCPPCommon.git
+        GIT_REPOSITORY git@bitbucket.org:vidanovic/lbnlcppcommon.git
         GIT_TAG ${LBNLCPPCommon_Branch}
 )
 
