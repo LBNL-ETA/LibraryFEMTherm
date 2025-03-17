@@ -82,15 +82,15 @@ TEST(TestBCSteadyStateOperators, SimplifiedInequality) {
 
 // Test RadiationSurface Equality
 TEST(TestBCSteadyStateOperators, RadiationSurfaceEquality) {
-    BCSteadyStateLibrary::RadiationSurface surface1(100.0, 0.9);
-    BCSteadyStateLibrary::RadiationSurface surface2(100.0, 0.9);
+    BCSteadyStateLibrary::RadiationSurface surface1(false, 100.0, 0.9);
+    BCSteadyStateLibrary::RadiationSurface surface2(false, 100.0, 0.9);
     EXPECT_TRUE(surface1 == surface2);
 }
 
 // Test RadiationSurface Inequality
 TEST(TestBCSteadyStateOperators, RadiationSurfaceInequality) {
-    BCSteadyStateLibrary::RadiationSurface surface3(100.0, 0.9);
-    BCSteadyStateLibrary::RadiationSurface surface4(101.0, 0.8);
+    BCSteadyStateLibrary::RadiationSurface surface3(true, 100.0, 0.9);
+    BCSteadyStateLibrary::RadiationSurface surface4(false, 101.0, 0.8);
     EXPECT_TRUE(surface3 != surface4);
 }
 
