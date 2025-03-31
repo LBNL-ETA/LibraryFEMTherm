@@ -5,6 +5,8 @@
 #include <fileParse/Vector.hxx>
 
 #include "DB.hxx"
+#include "Common/DB.hxx"
+
 #include "SteadyState.hxx"
 #include "Tags.hxx"
 #include "Serializers.hxx"
@@ -38,7 +40,7 @@ namespace BCSteadyStateLibrary
         }
     }
 
-    void DB::loadFromXMLString(const std::string &xmlString)
+    void DB::loadFromXMLString(const std::string & xmlString)
     {
         BCSteadyStateLibrary::Tags tags;
         const auto xBCNode{getTopNodeFromString(xmlString, tags.boundaryConditions())};
@@ -61,6 +63,21 @@ namespace BCSteadyStateLibrary
         return node.getContent();
     }
 
+    void DB::loadFromZipFile(const std::string & zipFileName)
+    {
+        auto values = Common::loadFromXMLFile<std::vector<BoundaryCondition>>(zipFileName, "BoundaryConditions");
+        if(values)
+        {
+            m_BoundaryConditions = values.value();
+        }
+    }
+
+    int DB::saveToZipFile(std::string_view zipFileName) const
+    {
+        return Common::saveToZIPFile(
+          m_BoundaryConditions, ThermZip::SteadyStateBCFileName, zipFileName, "BoundaryConditions");
+    }
+
     std::vector<BoundaryCondition> DB::loadBoundaryConditionsFromFile(const std::string & xmlFileName)
     {
         BCSteadyStateLibrary::Tags tags;
@@ -78,7 +95,7 @@ namespace BCSteadyStateLibrary
 
     void DB::update(const BoundaryCondition & condition)
     {
-        for(auto & bc: m_BoundaryConditions)
+        for(auto & bc : m_BoundaryConditions)
         {
             if(bc.UUID == condition.UUID)
             {
@@ -169,8 +186,7 @@ namespace BCSteadyStateLibrary
           m_BoundaryConditions.end());
     }
 
-    std::optional<BoundaryCondition>
-      DB::getByDisplayName(std::string_view displayName) const
+    std::optional<BoundaryCondition> DB::getByDisplayName(std::string_view displayName) const
     {
         return getBoundaryCondition(displayName, [displayName](const BoundaryCondition & obj) {
             return LibraryCommon::DisplayName(obj) == displayName;

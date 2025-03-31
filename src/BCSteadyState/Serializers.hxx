@@ -47,7 +47,8 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, BCSteadyStateLibrary::AutomaticEnclosure & automaticEnclosure)
+    const NodeAdapter & operator>>(const NodeAdapter & node,
+                                   BCSteadyStateLibrary::AutomaticEnclosure & automaticEnclosure)
     {
         BCSteadyStateLibrary::Tags tag;
         node >> FileParse::Child{tag.temperature(), automaticEnclosure.temperature};
@@ -81,7 +82,8 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, BCSteadyStateLibrary::BlackBodyRadiation & blackBodyRadiation)
+    const NodeAdapter & operator>>(const NodeAdapter & node,
+                                   BCSteadyStateLibrary::BlackBodyRadiation & blackBodyRadiation)
     {
         BCSteadyStateLibrary::Tags tag;
         node >> FileParse::Child{tag.temperature(), blackBodyRadiation.temperature};
@@ -99,7 +101,8 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, BCSteadyStateLibrary::LinearizedRadiation & linearizedRadiation)
+    const NodeAdapter & operator>>(const NodeAdapter & node,
+                                   BCSteadyStateLibrary::LinearizedRadiation & linearizedRadiation)
     {
         BCSteadyStateLibrary::Tags tag;
         node >> FileParse::Child{tag.temperature(), linearizedRadiation.temperature};
@@ -207,7 +210,8 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, BCSteadyStateLibrary::BoundaryCondition & boundaryCondition)
+    const NodeAdapter & operator>>(const NodeAdapter & node,
+                                   BCSteadyStateLibrary::BoundaryCondition & boundaryCondition)
     {
         BCSteadyStateLibrary::Tags tag;
         node >> FileParse::Child{tag.uuid(), boundaryCondition.UUID};
@@ -215,7 +219,8 @@ namespace BCSteadyStateLibrary
         node >> FileParse::Child{tag.protectedTag(), boundaryCondition.Protected};
         node >> FileParse::Child{tag.color(), boundaryCondition.Color};
         node >> FileParse::Child{tag.isIGUSurface(), boundaryCondition.isIGUSurface};
-        FileParse::deserializeVariant(node, {"Comprehensive", "Simplified", "RadiationSurface"}, boundaryCondition.data);
+        FileParse::deserializeVariant(
+          node, {"Comprehensive", "Simplified", "RadiationSurface"}, boundaryCondition.data);
 
         return node;
     }
@@ -233,4 +238,22 @@ namespace BCSteadyStateLibrary
 
         return node;
     }
-}
+
+    template<typename NodeAdapter>
+    const NodeAdapter & operator>>(const NodeAdapter & node, std::vector<BoundaryCondition> & boundaryCondition)
+    {
+        Tags tag;
+        node >> FileParse::Child{tag.boundaryConditions(), boundaryCondition};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    NodeAdapter & operator<<(NodeAdapter & node, const std::vector<BoundaryCondition> & boundaryCondition)
+    {
+        Tags tag;
+        node << FileParse::Child{tag.boundaryConditions(), boundaryCondition};
+
+        return node;
+    }
+}   // namespace BCSteadyStateLibrary

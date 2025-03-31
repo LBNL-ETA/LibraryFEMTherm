@@ -16,6 +16,9 @@ namespace BCSteadyStateLibrary
         void loadFromXMLString(const std::string & xmlString);
         [[nodiscard]] std::string saveToXMLString() const;
 
+        void loadFromZipFile(const std::string & zipFileName);
+        int saveToZipFile(std::string_view zipFileName) const;
+
         [[nodiscard]] std::optional<BoundaryCondition>
           getByUUID(std::string_view uuid) const;
         [[nodiscard]] std::optional<BoundaryCondition>
