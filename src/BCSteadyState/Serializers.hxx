@@ -243,7 +243,7 @@ namespace BCSteadyStateLibrary
     const NodeAdapter & operator>>(const NodeAdapter & node, std::vector<BoundaryCondition> & boundaryCondition)
     {
         Tags tag;
-        node >> FileParse::Child{tag.boundaryConditions(), boundaryCondition};
+        node >> FileParse::Child{tag.boundaryCondition(), boundaryCondition};
 
         return node;
     }
@@ -252,7 +252,7 @@ namespace BCSteadyStateLibrary
     NodeAdapter & operator<<(NodeAdapter & node, const std::vector<BoundaryCondition> & boundaryCondition)
     {
         Tags tag;
-        node << FileParse::Child{tag.boundaryConditions(), boundaryCondition};
+        node << FileParse::Child{tag.boundaryCondition(), boundaryCondition};
 
         return node;
     }

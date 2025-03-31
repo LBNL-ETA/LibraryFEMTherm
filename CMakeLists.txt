@@ -109,6 +109,8 @@ set_property(TARGET ${target_name} PROPERTY miniz_Branch ${miniz_Branch})
 if(BUILD_LibraryFEMTHERM_TESTING)
     add_subdirectory(tst)
     # Add include directories for tests if necessary
+    set(TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tst")
+    target_compile_definitions(LibraryFEMTHERM_tests PRIVATE TEST_DATA_DIR="${TEST_DATA_DIR}")
     target_include_directories(LibraryFEMTHERM_tests PRIVATE ${fileparse_SOURCE_DIR}/include)
 endif()
 
