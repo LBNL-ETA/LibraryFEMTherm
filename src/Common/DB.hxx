@@ -2,6 +2,7 @@
 
 #include <string>
 #include <optional>
+#include <filesystem>
 
 #include <fileParse/FileDataHandler.hxx>
 
@@ -13,6 +14,10 @@ namespace Common
     std::optional<T>
       loadFromZipFile(const std::string & zipFileName, const std::string & fileName, const std::string & nodeTypeName)
     {
+        if(!std::filesystem::exists(zipFileName))
+        {
+            return std::nullopt;
+        }
         auto contents = ThermZip::unzipFile(zipFileName, fileName);
         return loadFromXMLString<T>(contents, nodeTypeName);
     }
