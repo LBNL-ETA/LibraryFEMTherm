@@ -84,16 +84,10 @@ namespace MaterialsLibrary
     {
         std::optional<Material> result;
 
-        if(auto it = std::find_if(
-             m_Materials.begin(), m_Materials.end(), [&](const Material & obj) { return obj.UUID == uuid; });
+        if(auto it = std::ranges::find_if(m_Materials, [&](const Material & obj) { return obj.UUID == uuid; });
            it != m_Materials.end())
         {
             result = *it;
-        }
-
-        if(uuid.empty())
-        {
-            result = m_Materials[m_DefaultRecordIndex];
         }
 
         return result;
