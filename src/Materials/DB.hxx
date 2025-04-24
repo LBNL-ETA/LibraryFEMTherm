@@ -48,24 +48,23 @@ namespace MaterialsLibrary
 
         [[nodiscard]] std::vector<std::string> getDisplayNames() const;
 
-        //! \brief Adds material into database.
-        //! Note that material is still not saved into XML file. There is separate function that does that.
-        //! @material - Material that will be stored into database.
+        //! \brief Adds material into a database.
+        //! Note that material is still not saved into the XML file. There is a separate function that does that.
+        //! @material - Material that will be stored into the database.
         void add(const Material & material);
 
         //! \brief Updates current record with new data
         //!
-        //! @material - Record that will be updated in the library. Material must match by uuid in order to have other
-        //! properties updated.
+        //! @material Record to update in the library. Updates apply only if the UUID matches.
         void update(const Material & material);
 
-        //! \brief Update current record or in case record does not exists, it add new to the database.
+        //! \brief Update current record or in case record do not exist, it adds new to the database.
         void updateOrAdd(const Material & material);
 
         //! \brief Deletes materials with given uuid
         void deleteWithUUID(std::string_view uuid);
 
-        //! \brief Saves current state of object to XML file (provided through object constructor)
+        //! \brief Saves current state of an object to XML file (provided through object constructor)
         [[nodiscard]] int saveToFile() const;
 
         //! \brief Deletes all materials that belong to given project
@@ -87,7 +86,7 @@ namespace MaterialsLibrary
 
         std::string m_Version{"1"};
 
-        //! \brief Loads materials from XML file.
+        //! \brief Loads materials from the XML file.
         std::vector<Material> loadMaterialsFromXMLFile(const std::string & materialXMLFileName);
     };
 
