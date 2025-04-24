@@ -2,6 +2,7 @@
 #include <fstream>
 #include <set>
 
+#include <lbnl/algorithm.hxx>
 #include <fileParse/XMLNodeAdapter.hxx>
 
 #include "DB.hxx"
@@ -12,7 +13,6 @@
 
 #include "LibraryUtilities/FileManipulation.hxx"
 #include "LibraryUtilities/Common.hxx"
-#include "LibraryUtilities/StringRoutines.hxx"
 
 namespace MaterialsLibrary
 {
@@ -22,7 +22,7 @@ namespace MaterialsLibrary
 
     DB::DB(const std::string & xmlFileName) : m_FileName(xmlFileName)
     {
-        // Check if file exists and create an empty one if it doesn't.
+        // Check if the file exists and create an empty one if it doesn't.
         if(std::ifstream f(xmlFileName); !f.good())
         {
             const std::string fileContent{Common::generateXmlContent("Materials", "Materials.xsd", m_Version)};
@@ -80,42 +80,19 @@ namespace MaterialsLibrary
         return m_Materials[0];
     }
 
-    std::optional<Material> DB::getByUUID(std::string_view uuid)
+    std::optional<Material> DB::getByUUID(std::string_view uuid) const
     {
-        std::optional<Material> result;
-
-        if(auto it = std::ranges::find_if(m_Materials, [&](const Material & obj) { return obj.UUID == uuid; });
-           it != m_Materials.end())
-        {
-            result = *it;
-        }
-
-        return result;
+        return lbnl::findElement(m_Materials, [&uuid](const Material & mat) { return mat.UUID == uuid; });
     }
 
     std::vector<std::string> DB::getNames() const
     {
-        std::vector<std::string> names;
-        names.reserve(m_Materials.size());
-
-        for(const auto & material : m_Materials)
-        {
-            names.push_back(material.Name);
-        }
-
-        return names;
+        return lbnl::transform_to_vector(m_Materials, [](const Material & mat) { return mat.Name; });
     }
 
     std::vector<std::string> DB::getDisplayNames() const
     {
-        std::vector<std::string> names;
-        names.reserve(m_Materials.size());
-
-        for(const auto & material : m_Materials)
-        {
-            names.push_back(LibraryCommon::DisplayName(material));
-        }
-        return names;
+        return lbnl::transform_to_vector(m_Materials, [](const Material & m) { return LibraryCommon::DisplayName(m); });
     }
 
     void DB::add(const Material & material)
@@ -125,13 +102,9 @@ namespace MaterialsLibrary
 
     void DB::update(const Material & material)
     {
-        for(auto & mat : m_Materials)
-        {
-            if(mat.UUID == material.UUID)
-            {
-                mat = material;
-            }
-        }
+        m_Materials = lbnl::transform_if(m_Materials,
+                                         [&](const Material & m) { return m.UUID == material.UUID; },
+                                         [&](const Material &) { return material; });
     }
 
     void DB::updateOrAdd(const Material & material)
