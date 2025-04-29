@@ -82,7 +82,7 @@ namespace MaterialsLibrary
 
     std::optional<Material> DB::getByUUID(std::string_view uuid) const
     {
-        return lbnl::findElement(m_Materials, [&uuid](const Material & mat) { return mat.UUID == uuid; });
+        return lbnl::find_element(m_Materials, [&uuid](const Material & mat) { return mat.UUID == uuid; });
     }
 
     std::vector<std::string> DB::getNames() const

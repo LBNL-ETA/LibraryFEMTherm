@@ -195,12 +195,12 @@ namespace GasesLibrary
 
     std::optional<Gas> DB::getGasByUUID(std::string_view uuid) const
     {
-        return lbnl::findElement(m_Gases, [&uuid](const Gas & gas) { return gas.UUID == uuid; });
+        return lbnl::find_element(m_Gases, [&uuid](const Gas & gas) { return gas.UUID == uuid; });
     }
 
     std::optional<Gas> DB::getGasByName(std::string_view name) const
     {
-        return lbnl::findElement(m_Gases, [&name](const Gas & gas) { return gas.Name == name; });
+        return lbnl::find_element(m_Gases, [&name](const Gas & gas) { return gas.Name == name; });
     }
 
     std::vector<Gas> & DB::getGases()
