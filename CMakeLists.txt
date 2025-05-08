@@ -45,7 +45,7 @@ set(LBNLCPPCommon_Branch "v0.9")
 
 FetchContent_Declare(
         LBNLCPPCommon
-        GIT_REPOSITORY git@bitbucket.org:vidanovic/lbnlcppcommon.git
+        GIT_REPOSITORY https://github.com/LBNL-ETA/LBNLCPPCommon.git
         GIT_TAG ${LBNLCPPCommon_Branch}
 )
 
