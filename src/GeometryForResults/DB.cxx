@@ -98,17 +98,17 @@ namespace GeometryLibrary
 
     void InputGeometryDataRecord::add(const size_t id, const std::string & name, const std::string & color)
     {
-        materials.emplace_back(id, name, color);
+        materials.push_back(Material{id, name, color});
     }
 
     void InputGeometryDataRecord::addNode(const size_t id, const double x, const double y)
     {
-        nodes.emplace_back(id, x, y);
+        nodes.push_back(Node{ id, x, y });
     }
 
     void InputGeometryDataRecord::addElement(
       size_t id, size_t node1, size_t node2, size_t node3, size_t node4, size_t materialID)
     {
-        elements.emplace_back(id, node1, node2, node3, node4, materialID);
+        elements.push_back(Element{ id, node1, node2, node3, node4, materialID });
     }
 }   // namespace GeometryLibrary

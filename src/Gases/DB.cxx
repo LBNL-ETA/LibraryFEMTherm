@@ -20,19 +20,17 @@ namespace GasesLibrary
 {
 
     template<typename T>
-    T processGasesNodeFromFile(const std::string_view& fileName, const std::string& tag)
+    T processGasesNodeFromFile(const std::string_view & fileName, const std::string & tag)
     {
         using lbnl::operator|;
         using lbnl::operator||;
 
         Tags fileTags;
-        return getTopNodeFromFile(fileName.data(), fileTags.gases())
-            | [&](auto& node) {
-                T result{};
-                node >> FileParse::Child{tag, result};
-                return result;
-        }
-        || [] { return T{}; };
+        return getTopNodeFromFile(fileName.data(), fileTags.gases()) | [&](auto & node) {
+            T result{};
+            node >> FileParse::Child{tag, result};
+            return result;
+        } || [] { return T{}; };
     }
 
     template<typename T>
@@ -42,13 +40,11 @@ namespace GasesLibrary
         using lbnl::operator||;
 
         Tags fileTags;
-        return getTopNodeFromString(xmlString.data(), fileTags.gases())
-            | [&](auto& node) {
-                T result{};
-                node >> FileParse::Child{tag, result};
-                return result;
-        }
-        || [] { return T{}; };  // Return default `T{}` when no value exists
+        return getTopNodeFromString(xmlString.data(), fileTags.gases()) | [&](auto & node) {
+            T result{};
+            node >> FileParse::Child{tag, result};
+            return result;
+        } || [] { return T{}; };   // Return default `T{}` when no value exists
     }
 
     std::string loadVersionFromXMLFile(std::string_view fileName)
@@ -219,9 +215,8 @@ namespace GasesLibrary
 
     void DB::removeTemporaryRecords()
     {
-        auto newEnd = std::ranges::remove_if(m_Gases, [](const Gas & gas) {
-                          return LibraryCommon::isRecordTemporary(gas);
-                      }).begin();
+        auto newEnd = std::remove_if(
+          m_Gases.begin(), m_Gases.end(), [](const Gas & gas) { return LibraryCommon::isRecordTemporary(gas); });
         m_Gases.erase(newEnd, m_Gases.end());
     }
 
@@ -380,7 +375,8 @@ namespace GasesLibrary
             std::ranges::transform(gas.Components, std::back_inserter(pureGases), [this](const auto & component) {
                 return getPureGasByDisplayName(component.PureGasName);
             });
-            result.emplace_back(gas, pureGases, gas.Name);
+            GasesData data{gas, pureGases, gas.Name};
+            result.push_back(std::move(data));
         }
 
         return result;
