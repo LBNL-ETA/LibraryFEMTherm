@@ -70,9 +70,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(miniz)
 
-include_directories(src)
-include_directories(${CMAKE_BINARY_DIR}/xmlParser-src/include)
-
 if(DOWNLOAD_GTEST)
     if(MSVC)
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -99,7 +96,12 @@ add_library(${target_name} STATIC ${SOURCES})
 
 set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
 
-target_include_directories(${target_name} PRIVATE ${LBNLCPPCommon_SOURCE_DIR}/include)
+target_include_directories(${target_name}
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${fileparse_SOURCE_DIR}/include
+        ${LBNLCPPCommon_SOURCE_DIR}/include
+)
 
 target_link_libraries(${target_name} PRIVATE FileParse LBNLCPPCommon miniz)
 
@@ -111,7 +113,6 @@ if(BUILD_LibraryFEMTHERM_TESTING)
     # Add include directories for tests if necessary
     set(TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tst")
     target_compile_definitions(LibraryFEMTHERM_tests PRIVATE TEST_DATA_DIR="${TEST_DATA_DIR}")
-    target_include_directories(LibraryFEMTHERM_tests PRIVATE ${fileparse_SOURCE_DIR}/include)
 endif()
 
 config_compiler_and_linker_LibraryFEMTHERM()
