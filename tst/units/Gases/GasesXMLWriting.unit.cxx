@@ -79,8 +79,8 @@ TEST_F(TestGasesXMLWriting, WriteGasMixtureXML)
 
     gas.Name = correctName;
     gas.UUID = correctUUID;
-    gas.Components.emplace_back(0.1, "Air");
-    gas.Components.emplace_back(0.9, "Argon");
+    gas.Components.push_back({0.1, "Air"});
+    gas.Components.push_back({0.9, "Argon"});
 
     const std::string fileName{"TestWrite.xm"};
     std::filesystem::remove(fileName);
