@@ -18,9 +18,18 @@ namespace Common
         {
             return std::nullopt;
         }
-        auto contents = ThermZip::unzipFile(zipFileName, fileName);
-        return loadFromXMLString<T>(contents, nodeTypeName);
+
+        try
+        {
+            auto contents = ThermZip::unzipFile(zipFileName, fileName);
+            return loadFromXMLString<T>(contents, nodeTypeName);
+        }
+        catch(const std::runtime_error &)
+        {
+            return std::nullopt;
+        }
     }
+
 
     template<typename T>
     int saveToZIPFile(const T & object,

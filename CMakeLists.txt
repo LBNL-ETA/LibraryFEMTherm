@@ -5,7 +5,7 @@ if (MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-project(LibraryFEMTHERM VERSION 0.8.0 LANGUAGES CXX)
+project(LibraryFEMTHERM VERSION 0.9.0 LANGUAGES CXX)
 set(target_name LibraryFEMTHERM)
 
 include(cmake/LibraryFEMTHERMProjectMacros.cmake)
@@ -41,7 +41,7 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
-set(LBNLCPPCommon_Branch "v0.9")
+set(LBNLCPPCommon_Branch "v0.11")
 
 FetchContent_Declare(
         LBNLCPPCommon
@@ -61,7 +61,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(FileParse)
 
-set(miniz_Branch "3.0.2")
+set(miniz_Branch "89d7a5f6c3ce8893ea042b0a9d2a2d9975589ac9")
 
 FetchContent_Declare(
     miniz
