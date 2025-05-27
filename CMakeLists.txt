@@ -61,7 +61,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(FileParse)
 
-set(miniz_Branch "3.0.2")
+set(miniz_Branch "89d7a5f6c3ce8893ea042b0a9d2a2d9975589ac9")
 
 FetchContent_Declare(
     miniz
