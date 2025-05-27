@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include <BCSteadyState/DB.hxx>
+#include <THMZ/SteadyStateResults/DB.hxx>
 
 TEST(TestSteadyStateBC, Deserialization)
 {
@@ -19,4 +20,15 @@ TEST(TestSteadyStateBC, Deserialization)
     EXPECT_EQ("Adiabatic", names[0]);
     EXPECT_EQ("ShadeInE", names[1]);
     EXPECT_EQ("ShadeOutE", names[2]);
+}
+
+TEST(ThermFileLoad, FailsGracefullyWhenResultsMissingInsideZip)
+{
+    std::filesystem::path product_path(TEST_DATA_DIR);
+    product_path /= "products";
+    product_path /= "sample-sill-no-results.thmz";
+
+    auto result = ThermFile::loadSteadyStateResultsFromZipFile(product_path.string());
+
+    EXPECT_FALSE(result.has_value()) << "Expected no results from malformed or incomplete THMZ file";
 }
