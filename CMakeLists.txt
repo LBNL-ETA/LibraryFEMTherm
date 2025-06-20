@@ -41,7 +41,7 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
-set(LBNLCPPCommon_Branch "v0.11")
+set(LBNLCPPCommon_Branch "LazyEvaluation")
 
 FetchContent_Declare(
         LBNLCPPCommon
