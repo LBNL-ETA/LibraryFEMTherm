@@ -77,7 +77,7 @@ namespace MaterialsLibrary
 
     Material DB::getDefaultRecord() const
     {
-        return m_Materials[0];
+        return m_Materials[m_DefaultRecordIndex];
     }
 
     std::optional<Material> DB::getByUUID(std::string_view uuid) const
