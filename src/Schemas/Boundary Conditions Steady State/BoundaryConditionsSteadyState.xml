@@ -168,6 +168,7 @@
 				<BlackBodyRadiation>
 					<Temperature>-18</Temperature>
 					<Emissivity>1</Emissivity>
+					<ViewFactor>1</ViewFactor>
 				</BlackBodyRadiation>
 			</Radiation>
 		</Comprehensive>

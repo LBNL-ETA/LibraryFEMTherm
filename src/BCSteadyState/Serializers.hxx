@@ -11,9 +11,9 @@
 namespace BCSteadyStateLibrary
 {
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, BCSteadyStateLibrary::Convection & convection)
+    const NodeAdapter & operator>>(const NodeAdapter & node, Convection & convection)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
 
         node >> FileParse::Child{tag.temperature(), convection.temperature};
         node >> FileParse::Child{tag.filmCoefficient(), convection.filmCoefficient};
@@ -22,7 +22,7 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const BCSteadyStateLibrary::Convection & convection)
+    NodeAdapter & operator<<(NodeAdapter & node, const Convection & convection)
     {
         BCSteadyStateLibrary::Tags tag;
         node << FileParse::Child{tag.temperature(), convection.temperature};
@@ -31,26 +31,25 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, BCSteadyStateLibrary::ConstantFlux & constantFlux)
+    const NodeAdapter & operator>>(const NodeAdapter & node, ConstantFlux & constantFlux)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node >> FileParse::Child{tag.flux(), constantFlux.flux};
         return node;
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const BCSteadyStateLibrary::ConstantFlux & constantFlux)
+    NodeAdapter & operator<<(NodeAdapter & node, const ConstantFlux & constantFlux)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node << FileParse::Child{tag.flux(), constantFlux.flux};
         return node;
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node,
-                                   BCSteadyStateLibrary::AutomaticEnclosure & automaticEnclosure)
+    const NodeAdapter & operator>>(const NodeAdapter & node, AutomaticEnclosure & automaticEnclosure)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node >> FileParse::Child{tag.temperature(), automaticEnclosure.temperature};
         node >> FileParse::Child{tag.emissivity(), automaticEnclosure.emissivity};
 
@@ -58,69 +57,69 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const BCSteadyStateLibrary::AutomaticEnclosure & automaticEnclosure)
+    NodeAdapter & operator<<(NodeAdapter & node, const AutomaticEnclosure & automaticEnclosure)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node << FileParse::Child{tag.temperature(), automaticEnclosure.temperature};
         node << FileParse::Child{tag.emissivity(), automaticEnclosure.emissivity};
         return node;
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, BCSteadyStateLibrary::ManualEnclosure &)
+    const NodeAdapter & operator>>(const NodeAdapter & node, ManualEnclosure &)
     {
         return node;
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const BCSteadyStateLibrary::ManualEnclosure &)
+    NodeAdapter & operator<<(NodeAdapter & node, const ManualEnclosure &)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         // TODO: Charlie wants emissivity here. emtpyNode used to avoid compilation warning [[nodicard]]
         const auto emptyNode{node.addChild(tag.manualEnclosure())};
         return node;
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node,
-                                   BCSteadyStateLibrary::BlackBodyRadiation & blackBodyRadiation)
+    const NodeAdapter & operator>>(const NodeAdapter & node, BlackBodyRadiation & blackBodyRadiation)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node >> FileParse::Child{tag.temperature(), blackBodyRadiation.temperature};
         node >> FileParse::Child{tag.emissivity(), blackBodyRadiation.emissivity};
+        node >> FileParse::Child{tag.viewFactor(), blackBodyRadiation.viewFactor};
         return node;
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const BCSteadyStateLibrary::BlackBodyRadiation & blackBodyRadiation)
+    NodeAdapter & operator<<(NodeAdapter & node, const BlackBodyRadiation & blackBodyRadiation)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node << FileParse::Child{tag.temperature(), blackBodyRadiation.temperature};
         node << FileParse::Child{tag.emissivity(), blackBodyRadiation.emissivity};
+        node << FileParse::Child{tag.viewFactor(), blackBodyRadiation.viewFactor};
         return node;
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node,
-                                   BCSteadyStateLibrary::LinearizedRadiation & linearizedRadiation)
+    const NodeAdapter & operator>>(const NodeAdapter & node, LinearizedRadiation & linearizedRadiation)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node >> FileParse::Child{tag.temperature(), linearizedRadiation.temperature};
         node >> FileParse::Child{tag.filmCoefficient(), linearizedRadiation.filmCoefficient};
         return node;
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const BCSteadyStateLibrary::LinearizedRadiation & linearizedRadiation)
+    NodeAdapter & operator<<(NodeAdapter & node, const LinearizedRadiation & linearizedRadiation)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node << FileParse::Child{tag.temperature(), linearizedRadiation.temperature};
         node << FileParse::Child{tag.filmCoefficient(), linearizedRadiation.filmCoefficient};
         return node;
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, BCSteadyStateLibrary::Radiation & radiation)
+    const NodeAdapter & operator>>(const NodeAdapter & node, Radiation & radiation)
     {
         FileParse::deserializeOptionalVariant(
           node,
@@ -131,7 +130,7 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const BCSteadyStateLibrary::Radiation & radiation)
+    NodeAdapter & operator<<(NodeAdapter & node, const Radiation & radiation)
     {
         FileParse::serializeOptionalVariant(
           node,
@@ -142,9 +141,9 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, BCSteadyStateLibrary::Comprehensive & comprehensive)
+    const NodeAdapter & operator>>(const NodeAdapter & node, Comprehensive & comprehensive)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node >> FileParse::Child{tag.relativeHumidity(), comprehensive.relativeHumidity};
         node >> FileParse::Child{tag.convection(), comprehensive.convection};
         node >> FileParse::Child{tag.constantFlux(), comprehensive.constantFlux};
@@ -154,9 +153,9 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const BCSteadyStateLibrary::Comprehensive & comprehensive)
+    NodeAdapter & operator<<(NodeAdapter & node, const Comprehensive & comprehensive)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node << FileParse::Child{tag.relativeHumidity(), comprehensive.relativeHumidity};
         node << FileParse::Child{tag.convection(), comprehensive.convection};
         node << FileParse::Child{tag.constantFlux(), comprehensive.constantFlux};
@@ -166,9 +165,9 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, BCSteadyStateLibrary::Simplified & simplified)
+    const NodeAdapter & operator>>(const NodeAdapter & node, Simplified & simplified)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node >> FileParse::Child{tag.temperature(), simplified.temperature};
         node >> FileParse::Child{tag.filmCoefficient(), simplified.filmCoefficient};
         node >> FileParse::Child{tag.relativeHumidity(), simplified.relativeHumidity};
@@ -177,9 +176,9 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const BCSteadyStateLibrary::Simplified & simplified)
+    NodeAdapter & operator<<(NodeAdapter & node, const Simplified & simplified)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node << FileParse::Child{tag.temperature(), simplified.temperature};
         node << FileParse::Child{tag.filmCoefficient(), simplified.filmCoefficient};
         node << FileParse::Child{tag.relativeHumidity(), simplified.relativeHumidity};
@@ -188,9 +187,9 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, BCSteadyStateLibrary::RadiationSurface & radiationSurface)
+    const NodeAdapter & operator>>(const NodeAdapter & node, RadiationSurface & radiationSurface)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node >> FileParse::Child{tag.temperature(), radiationSurface.temperature};
         node >> FileParse::Child{tag.emissivity(), radiationSurface.emissivity};
         node >> FileParse::Child{tag.isDefault(), radiationSurface.isDefault};
@@ -199,9 +198,9 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const BCSteadyStateLibrary::RadiationSurface & radiationSurface)
+    NodeAdapter & operator<<(NodeAdapter & node, const RadiationSurface & radiationSurface)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node << FileParse::Child{tag.isDefault(), radiationSurface.isDefault};
         node << FileParse::Child{tag.temperature(), radiationSurface.temperature};
         node << FileParse::Child{tag.emissivity(), radiationSurface.emissivity};
@@ -210,10 +209,9 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node,
-                                   BCSteadyStateLibrary::BoundaryCondition & boundaryCondition)
+    const NodeAdapter & operator>>(const NodeAdapter & node, BoundaryCondition & boundaryCondition)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node >> FileParse::Child{tag.uuid(), boundaryCondition.UUID};
         node >> FileParse::Child{tag.name(), boundaryCondition.Name};
         node >> FileParse::Child{tag.protectedTag(), boundaryCondition.Protected};
@@ -226,9 +224,9 @@ namespace BCSteadyStateLibrary
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const BCSteadyStateLibrary::BoundaryCondition & boundaryCondition)
+    NodeAdapter & operator<<(NodeAdapter & node, const BoundaryCondition & boundaryCondition)
     {
-        BCSteadyStateLibrary::Tags tag;
+        Tags tag;
         node << FileParse::Child{tag.uuid(), boundaryCondition.UUID};
         node << FileParse::Child{tag.name(), boundaryCondition.Name};
         node << FileParse::Child{tag.protectedTag(), boundaryCondition.Protected};

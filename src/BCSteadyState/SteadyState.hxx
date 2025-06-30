@@ -30,6 +30,7 @@ namespace BCSteadyStateLibrary
     {
         double temperature{0};
         double emissivity{0};
+        double viewFactor{0};
     };
 
     struct LinearizedRadiation
@@ -70,9 +71,9 @@ namespace BCSteadyStateLibrary
     struct BoundaryCondition
     {
         std::string UUID;
-        std::string Name;
+        std::string Name{"Default Name"};
         bool Protected{false};
-        std::string Color;
+        std::string Color{"0x0078D7"};
         std::variant<Comprehensive, Simplified, RadiationSurface> data;
 
         std::string ProjectName;
