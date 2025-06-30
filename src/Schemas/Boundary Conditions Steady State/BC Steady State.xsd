@@ -2,13 +2,14 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 	<xs:complexType name="Record" abstract="true">
 		<xs:sequence>
-			<xs:element name="UUID" type="xs:string" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="Name" type="xs:string" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="Protected" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="Color" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="UUID" type="xs:string"/>
+			<xs:element name="Name" type="xs:string"/>
+			<xs:element name="Protected" type="xs:boolean"/>
+			<xs:element name="Color" type="xs:string"/>
 			<xs:element name="IGUSurface" type="xs:boolean" minOccurs="0" maxOccurs="1"/>
 		</xs:sequence>
 	</xs:complexType>
+
 	<xs:element name="Convection">
 		<xs:complexType>
 			<xs:sequence>
@@ -17,6 +18,7 @@
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
+	
 	<xs:element name="ConstantFlux">
 		<xs:complexType>
 			<xs:sequence>
@@ -24,6 +26,7 @@
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
+	
 	<xs:element name="Radiation">
 		<xs:complexType>
 			<xs:choice>
@@ -41,6 +44,7 @@
 						<xs:sequence>
 							<xs:element name="Temperature" type="xs:double"/>
 							<xs:element name="Emissivity" type="xs:double"/>
+							<xs:element name="ViewFactor" type="xs:double"/>
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
@@ -55,28 +59,32 @@
 			</xs:choice>
 		</xs:complexType>
 	</xs:element>
+	
 	<xs:complexType name="Comprehensive">
 		<xs:sequence>
-			<xs:element name="RelativeHumidity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="RelativeHumidity" type="xs:double"/>
 			<xs:element ref="Convection" minOccurs="0" maxOccurs="1"/>
 			<xs:element ref="ConstantFlux" minOccurs="0" maxOccurs="1"/>
 			<xs:element ref="Radiation" minOccurs="0" maxOccurs="1"/>
 		</xs:sequence>
 	</xs:complexType>
+	
 	<xs:complexType name="Simplified">
 		<xs:sequence>
-			<xs:element name="Temperature" type="xs:double" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="FilmCoefficient" type="xs:double" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="RelativeHumidity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Temperature" type="xs:double"/>
+			<xs:element name="FilmCoefficient" type="xs:double"/>
+			<xs:element name="RelativeHumidity" type="xs:double"/>
 		</xs:sequence>
 	</xs:complexType>
+	
 	<xs:complexType name="RadiationSurface">
 		<xs:sequence>
 			<xs:element name="Default" type="xs:boolean" minOccurs="0" maxOccurs="1"/>
-			<xs:element name="Temperature" type="xs:double" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="Emissivity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Temperature" type="xs:double"/>
+			<xs:element name="Emissivity" type="xs:double"/>
 		</xs:sequence>
 	</xs:complexType>
+	
 	<xs:element name="BoundaryCondition">
 		<xs:complexType>
 			<xs:complexContent>
@@ -90,10 +98,11 @@
 			</xs:complexContent>
 		</xs:complexType>
 	</xs:element>
+	
 	<xs:element name="BoundaryConditions">
 		<xs:complexType>
 			<xs:sequence>
-				<xs:element name="Version" minOccurs="1" maxOccurs="1"/>
+				<xs:element name="Version"/>
 				<xs:element ref="BoundaryCondition" minOccurs="0" maxOccurs="unbounded"/>
 			</xs:sequence>
 		</xs:complexType>
