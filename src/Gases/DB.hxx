@@ -59,8 +59,9 @@ namespace GasesLibrary
         [[nodiscard]] int saveToFile();
         [[nodiscard]] std::string saveToXMLString();
 
-        //! \brief Deletes all materials that belong to given project
+        //! \brief Deletes all gases that have projectName set
         void deleteWithProjectName(const std::string & projectName);
+        void deleteTemporaryRecords();
         void deleteWithUUID(std::string_view uuid);
 
     private:
@@ -71,6 +72,7 @@ namespace GasesLibrary
         std::string m_Version{"1"};
         std::vector<PureGas> m_PureGases;
         std::vector<Gas> m_Gases;
-        void removeTemporaryRecords();
+        void removeTemporaryGasRecords();
+        void removeTemporaryPureGasRecords();
     };
 }   // namespace GasesLibrary

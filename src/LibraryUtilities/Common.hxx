@@ -80,6 +80,12 @@ namespace LibraryCommon
         return record.ProjectName && !record.ProjectName->empty();
     }
 
+    template<typename Container>
+    void removeTemporaryRecords(Container & container)
+    {
+        std::erase_if(container, [](const auto & record) { return isRecordTemporary(record); });
+    }
+
 
     template<typename T>
     std::string DisplayName(const T & record)

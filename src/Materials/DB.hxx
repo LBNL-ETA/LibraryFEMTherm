@@ -70,6 +70,9 @@ namespace MaterialsLibrary
         //! \brief Deletes all materials that belong to the given project.
         void deleteRecordsWithProjectName(std::string_view projectName);
 
+        //! \brief Deletes temporary records (ones that contain projectName)
+        void deleteTemporaryRecords();
+
         [[nodiscard]] std::string getFileName() const;
 
         //! \brief Sets the default record by material name.
