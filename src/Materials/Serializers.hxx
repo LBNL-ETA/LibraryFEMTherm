@@ -292,6 +292,7 @@ namespace MaterialsLibrary
 
         node >> FileParse::Child{"UUID", material.UUID};
         node >> FileParse::Child{"Name", material.Name};
+        node >> FileParse::Child{"ProjectName", material.ProjectName};
         node >> FileParse::Child{"Protected", material.Protected};
         node >> FileParse::Child{"Color", material.Color};
 
@@ -307,6 +308,7 @@ namespace MaterialsLibrary
 
         node << FileParse::Child{"UUID", material.UUID};
         node << FileParse::Child{"Name", material.Name};
+        node << FileParse::Child{"ProjectName", material.ProjectName};
         node << FileParse::Child{"Protected", material.Protected};
         node << FileParse::Child{"Color", material.Color};
 

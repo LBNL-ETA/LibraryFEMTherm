@@ -2,6 +2,7 @@
 
 #include <fileParse/Common.hxx>
 #include <fileParse/Vector.hxx>
+#include <fileParse/Optional.hxx>
 
 #include "Serializers.hxx"
 
@@ -82,24 +83,28 @@ namespace GasesLibrary
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, GasesLibrary::PureGas & pureGas)
+    const NodeAdapter & operator>>(const NodeAdapter & node, PureGas & pureGas)
     {
-        GasesLibrary::GasCommon & common = pureGas;
+        Tags tag;
+        node >> FileParse::Child{tag.projectName(), pureGas.ProjectName};
+
+        GasCommon & common = pureGas;
         node >> common;
 
-        GasesLibrary::Tags tag;
         node >> FileParse::Child{tag.properties(), pureGas.Properties};
 
         return node;
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const GasesLibrary::PureGas & pureGas)
+    NodeAdapter & operator<<(NodeAdapter & node, const PureGas & pureGas)
     {
-        const GasesLibrary::GasCommon & common = pureGas;
+        Tags tag;
+        node << FileParse::Child{tag.projectName(), pureGas.ProjectName};
+
+        const GasCommon & common = pureGas;
         node << common;
 
-        GasesLibrary::Tags tag;
         node << FileParse::Child{tag.properties(), pureGas.Properties};
 
         return node;
@@ -127,24 +132,28 @@ namespace GasesLibrary
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, GasesLibrary::Gas & gas)
+    const NodeAdapter & operator>>(const NodeAdapter & node, Gas & gas)
     {
-        GasesLibrary::GasCommon & common = gas;
+        Tags tag;
+        node >> FileParse::Child{tag.projectName(), gas.ProjectName};
+
+        GasCommon & common = gas;
         node >> common;
 
-        GasesLibrary::Tags tag;
         node >> FileParse::Child{{tag.components(), tag.component()}, gas.Components};
 
         return node;
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const GasesLibrary::Gas & gas)
+    NodeAdapter & operator<<(NodeAdapter & node, const Gas & gas)
     {
-        const GasesLibrary::GasCommon & common = gas;
+        Tags tag;
+        node << FileParse::Child{tag.projectName(), gas.ProjectName};
+
+        const GasCommon & common = gas;
         node << common;
 
-        GasesLibrary::Tags tag;
         node << FileParse::Child{{tag.components(), tag.component()}, gas.Components};
 
         return node;

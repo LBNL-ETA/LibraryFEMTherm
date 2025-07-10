@@ -180,11 +180,17 @@ namespace BCSteadyStateLibrary
 
     void DB::deleteRecordsWithProjectName(std::string_view projectName)
     {
-        m_BoundaryConditions.erase(
-          std::remove_if(m_BoundaryConditions.begin(),
-                         m_BoundaryConditions.end(),
-                         [projectName](const BoundaryCondition & obj) { return obj.ProjectName == projectName; }),
-          m_BoundaryConditions.end());
+        m_BoundaryConditions.erase(std::ranges::remove_if(m_BoundaryConditions,
+                                                          [projectName](const BoundaryCondition & obj) {
+                                                              return obj.ProjectName == projectName;
+                                                          })
+                                     .begin(),
+                                   m_BoundaryConditions.end());
+    }
+
+    void DB::deleteTemporaryRecords()
+    {
+        LibraryCommon::removeTemporaryRecords(m_BoundaryConditions);
     }
 
     std::optional<BoundaryCondition> DB::getByDisplayName(std::string_view displayName) const

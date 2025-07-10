@@ -77,13 +77,20 @@ namespace LibraryCommon
     template<typename T>
     bool isRecordTemporary(const T & record)
     {
-        return !record.ProjectName.empty();
+        return record.ProjectName && !record.ProjectName->empty();
     }
+
+    template<typename Container>
+    void removeTemporaryRecords(Container & container)
+    {
+        std::erase_if(container, [](const auto & record) { return isRecordTemporary(record); });
+    }
+
 
     template<typename T>
     std::string DisplayName(const T & record)
     {
-        return record.ProjectName.empty() ? record.Name : record.ProjectName + ":" + record.Name;
+        return !record.ProjectName ? record.Name : record.ProjectName.value() + ":" + record.Name;
     }
 
     template<typename T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>

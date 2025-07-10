@@ -170,6 +170,7 @@ namespace BCTypesLibrary
     {
         node >> FileParse::Child{"UUID", record.UUID};
         node >> FileParse::Child{"Name", record.Name};
+        node >> FileParse::Child{"ProjectName", record.ProjectName};
         node >> FileParse::Child{"Protected", record.Protected};
 
         node >> FileParse::Child{"bcType", record.bcType};
@@ -198,6 +199,7 @@ namespace BCTypesLibrary
     {
         node << FileParse::Child{"UUID", record.UUID};
         node << FileParse::Child{"Name", record.Name};
+        node << FileParse::Child{"ProjectName", record.ProjectName};
         node << FileParse::Child{"Protected", record.Protected};
 
         node << FileParse::Child{"bcType", record.bcType};

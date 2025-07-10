@@ -124,7 +124,7 @@ namespace GasesLibrary
 
     int DB::saveToFile()
     {
-        removeTemporaryRecords();
+        removeTemporaryGasRecords();
 
         Tags tag;
         auto gasesNode{createTopNode(tag.gases())};
@@ -138,7 +138,7 @@ namespace GasesLibrary
 
     std::string DB::saveToXMLString()
     {
-        removeTemporaryRecords();
+        removeTemporaryGasRecords();
 
         Tags tag;
         auto gasesNode{createTopNode(tag.gases())};
@@ -213,11 +213,14 @@ namespace GasesLibrary
         }
     }
 
-    void DB::removeTemporaryRecords()
+    void DB::removeTemporaryGasRecords()
     {
-        auto newEnd = std::remove_if(
-          m_Gases.begin(), m_Gases.end(), [](const Gas & gas) { return LibraryCommon::isRecordTemporary(gas); });
-        m_Gases.erase(newEnd, m_Gases.end());
+        LibraryCommon::removeTemporaryRecords(m_Gases);
+    }
+
+    void DB::removeTemporaryPureGasRecords()
+    {
+        LibraryCommon::removeTemporaryRecords(m_PureGases);
     }
 
     void DB::addGas(const Gas & gas)
@@ -249,7 +252,8 @@ namespace GasesLibrary
             {
                 pureGases.emplace_back(getPureGasByName(component.PureGasName));
             }
-            result = GasesData{.gas = gas.value(), .components = pureGases, .Name = gas->Name};
+            result = GasesData{
+              .gas = gas.value(), .components = pureGases, .Name = gas->Name, .ProjectName = {}, .Protected = false};
         }
 
         return result;
@@ -266,7 +270,8 @@ namespace GasesLibrary
             {
                 pureGases.emplace_back(getPureGasByName(component.PureGasName));
             }
-            result = GasesData{.gas = gas.value(), .components = pureGases, .Name = gas->Name};
+            result = GasesData{
+              .gas = gas.value(), .components = pureGases, .Name = gas->Name, .ProjectName = {}, .Protected = false};
         }
 
         return result;
@@ -283,7 +288,8 @@ namespace GasesLibrary
             {
                 pureGases.emplace_back(getPureGasByDisplayName(component.PureGasName));
             }
-            result = GasesData{.gas = gas.value(), .components = pureGases, .Name = gas->Name};
+            result = GasesData{
+              .gas = gas.value(), .components = pureGases, .Name = gas->Name, .ProjectName = {}, .Protected = false};
         }
 
         return result;
@@ -292,6 +298,12 @@ namespace GasesLibrary
     void DB::deleteWithProjectName(const std::string & projectName)
     {
         std::erase_if(m_Gases, [&projectName](const Gas & gas) { return gas.ProjectName == projectName; });
+    }
+
+    void DB::deleteTemporaryRecords()
+    {
+        removeTemporaryGasRecords();
+        removeTemporaryPureGasRecords();
     }
 
     std::vector<std::string> DB::getNames() const
@@ -375,7 +387,8 @@ namespace GasesLibrary
             std::ranges::transform(gas.Components, std::back_inserter(pureGases), [this](const auto & component) {
                 return getPureGasByDisplayName(component.PureGasName);
             });
-            GasesData data{gas, pureGases, gas.Name};
+            GasesData data{
+              .gas = gas, .components = pureGases, .Name = gas.Name, .ProjectName = {}, .Protected = false};
             result.push_back(std::move(data));
         }
 

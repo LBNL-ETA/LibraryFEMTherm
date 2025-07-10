@@ -68,8 +68,8 @@ TEST_F(TestGasesOperators, GasCommonNotEqual)
 
 TEST_F(TestGasesOperators, PureGas)
 {
-    const GasesLibrary::PureGas pureGas1{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}};
-    const GasesLibrary::PureGas pureGas2{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}};
+    const GasesLibrary::PureGas pureGas1{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}, {}};
+    const GasesLibrary::PureGas pureGas2{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}, {}};
 
     const bool result{pureGas1 == pureGas2};
 
@@ -78,8 +78,8 @@ TEST_F(TestGasesOperators, PureGas)
 
 TEST_F(TestGasesOperators, PureGasNotEqual)
 {
-    const GasesLibrary::PureGas pureGas1{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}};
-    const GasesLibrary::PureGas pureGas2{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 12}}};
+    const GasesLibrary::PureGas pureGas1{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}, {}};
+    const GasesLibrary::PureGas pureGas2{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 12}}, {}};
 
     const bool result{pureGas1 == pureGas2};
 
@@ -108,8 +108,8 @@ TEST_F(TestGasesOperators, ComponentNotEqual)
 
 TEST_F(TestGasesOperators, Gas)
 {
-    const GasesLibrary::Gas gas1{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}};
-    const GasesLibrary::Gas gas2{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}};
+    const GasesLibrary::Gas gas1{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}, {}};
+    const GasesLibrary::Gas gas2{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}, {}};
 
     const bool result{gas1 == gas2};
 
@@ -118,8 +118,8 @@ TEST_F(TestGasesOperators, Gas)
 
 TEST_F(TestGasesOperators, GasNotEqual)
 {
-    const GasesLibrary::Gas gas1{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}};
-    const GasesLibrary::Gas gas2{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Helium"}}};
+    const GasesLibrary::Gas gas1{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}, {}};
+    const GasesLibrary::Gas gas2{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Helium"}}, {}};
 
     const bool result{gas1 == gas2};
 
@@ -128,13 +128,13 @@ TEST_F(TestGasesOperators, GasNotEqual)
 
 TEST_F(TestGasesOperators, GasesData)
 {
-    const GasesLibrary::Gas gas1{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}};
-    const GasesLibrary::Gas gas2{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}};
-    const GasesLibrary::PureGas pureGas1{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}};
-    const GasesLibrary::PureGas pureGas2{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}};
+    const GasesLibrary::Gas gas1{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}, {}};
+    const GasesLibrary::Gas gas2{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}, {}};
+    const GasesLibrary::PureGas pureGas1{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}, {}};
+    const GasesLibrary::PureGas pureGas2{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}, {}};
 
-    const GasesLibrary::GasesData gasesData1{gas1, {pureGas1, pureGas2}};
-    const GasesLibrary::GasesData gasesData2{gas2, {pureGas1, pureGas2}};
+    const GasesLibrary::GasesData gasesData1{gas1, {pureGas1, pureGas2}, {}, {}, false};
+    const GasesLibrary::GasesData gasesData2{gas2, {pureGas1, pureGas2}, {}, {}, false};
 
     const bool result{gasesData1 == gasesData2};
 
@@ -143,13 +143,13 @@ TEST_F(TestGasesOperators, GasesData)
 
 TEST_F(TestGasesOperators, GasesDataNotEqual)
 {
-    const GasesLibrary::Gas gas1{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}};
-    const GasesLibrary::Gas gas2{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "SF6"}}};
-    const GasesLibrary::PureGas pureGas1{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}};
-    const GasesLibrary::PureGas pureGas2{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}};
+    const GasesLibrary::Gas gas1{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}, {}};
+    const GasesLibrary::Gas gas2{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "SF6"}}, {}};
+    const GasesLibrary::PureGas pureGas1{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}, {}};
+    const GasesLibrary::PureGas pureGas2{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}, {}};
 
-    const GasesLibrary::GasesData gasesData1{gas1, {pureGas1, pureGas2}};
-    const GasesLibrary::GasesData gasesData2{gas2, {pureGas1, pureGas2}};
+    const GasesLibrary::GasesData gasesData1{gas1, {pureGas1, pureGas2}, {}, {}, false};
+    const GasesLibrary::GasesData gasesData2{gas2, {pureGas1, pureGas2}, {}, {}, false};
 
     const bool result{gasesData1 == gasesData2};
 
@@ -158,13 +158,13 @@ TEST_F(TestGasesOperators, GasesDataNotEqual)
 
 TEST_F(TestGasesOperators, GasesDataEqualWithoutUUID)
 {
-    const GasesLibrary::Gas gas1{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}};
-    const GasesLibrary::Gas gas2{"uuid2", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}};
-    const GasesLibrary::PureGas pureGas1{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}};
-    const GasesLibrary::PureGas pureGas2{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}};
+    const GasesLibrary::Gas gas1{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}, {}};
+    const GasesLibrary::Gas gas2{"uuid2", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}, {}};
+    const GasesLibrary::PureGas pureGas1{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}, {}};
+    const GasesLibrary::PureGas pureGas2{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}, {}};
 
-    const GasesLibrary::GasesData gasesData1{gas1, {pureGas1, pureGas2}};
-    const GasesLibrary::GasesData gasesData2{gas2, {pureGas1, pureGas2}};
+    const GasesLibrary::GasesData gasesData1{gas1, {pureGas1, pureGas2}, {}, {}, false};
+    const GasesLibrary::GasesData gasesData2{gas2, {pureGas1, pureGas2}, {}, {}, false};
 
     const bool result{arePhysicalPropertiesEqual(gasesData1, gasesData2)};
 
@@ -173,13 +173,13 @@ TEST_F(TestGasesOperators, GasesDataEqualWithoutUUID)
 
 TEST_F(TestGasesOperators, GasesDataEqualWithoutUUID_NotEqual)
 {
-    const GasesLibrary::Gas gas1{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}};
-    const GasesLibrary::Gas gas2{"uuid2", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}};
-    const GasesLibrary::PureGas pureGas1{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 12}}};
-    const GasesLibrary::PureGas pureGas2{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}};
+    const GasesLibrary::Gas gas1{"uuid1", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}, {}};
+    const GasesLibrary::Gas gas2{"uuid2", "Gas1", false, {{0.1, "Air"}, {0.9, "Argon"}}, {}};
+    const GasesLibrary::PureGas pureGas1{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 12}}, {}};
+    const GasesLibrary::PureGas pureGas2{"uuid1", "Gas1", false, {1, 2, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}}, {}};
 
-    const GasesLibrary::GasesData gasesData1{gas1, {pureGas1, pureGas2}};
-    const GasesLibrary::GasesData gasesData2{gas2, {pureGas1, pureGas1}};
+    const GasesLibrary::GasesData gasesData1{gas1, {pureGas1, pureGas2}, {}, {}, false};
+    const GasesLibrary::GasesData gasesData2{gas2, {pureGas1, pureGas1}, {}, {}, false};
 
     const bool result{arePhysicalPropertiesEqual(gasesData1, gasesData2)};
 

@@ -5,7 +5,7 @@ if (MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-project(LibraryFEMTHERM VERSION 0.11.0 LANGUAGES CXX)
+project(LibraryFEMTHERM VERSION 0.12.0 LANGUAGES CXX)
 set(target_name LibraryFEMTHERM)
 
 include(cmake/LibraryFEMTHERMProjectMacros.cmake)

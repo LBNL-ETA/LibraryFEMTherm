@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "Gases/Gases.hxx"
+#include "Gases/Tags.hxx"
 
 class TestGasesXMLTags : public testing::Test
 {

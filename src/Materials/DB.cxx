@@ -102,9 +102,10 @@ namespace MaterialsLibrary
 
     void DB::update(const Material & material)
     {
-        m_Materials = lbnl::transform_if(m_Materials,
-                                         [&](const Material & m) { return m.UUID == material.UUID; },
-                                         [&](const Material &) { return material; });
+        m_Materials = lbnl::transform_if(
+          m_Materials,
+          [&](const Material & m) { return m.UUID == material.UUID; },
+          [&](const Material &) { return material; });
     }
 
     void DB::updateOrAdd(const Material & material)
@@ -142,14 +143,14 @@ namespace MaterialsLibrary
     {
         using MaterialsLibrary::operator>>;
 
-        const auto xmlNode{getTopNodeFromFile(materialXMLFileName, MaterialsLibrary::materialsString())};
+        const auto xmlNode{getTopNodeFromFile(materialXMLFileName, materialsString())};
 
         std::vector<Material> materials;
 
         if(xmlNode.has_value())
         {
             xmlNode.value() >> FileParse::Child{"Version", m_Version};
-            xmlNode.value() >> FileParse::Child{MaterialsLibrary::materialString(), materials};
+            xmlNode.value() >> FileParse::Child{materialString(), materials};
         }
 
         return materials;
@@ -162,10 +163,14 @@ namespace MaterialsLibrary
 
     void DB::deleteRecordsWithProjectName(std::string_view projectName)
     {
-        m_Materials.erase(std::remove_if(std::begin(m_Materials),
-                                         std::end(m_Materials),
-                                         [&](Material const & u) { return u.ProjectName == projectName; }),
-                          std::end(m_Materials));
+        m_Materials.erase(
+          std::ranges::remove_if(m_Materials, [&](Material const & u) { return u.ProjectName == projectName; }).begin(),
+          std::end(m_Materials));
+    }
+
+    void DB::deleteTemporaryRecords()
+    {
+        LibraryCommon::removeTemporaryRecords(m_Materials);
     }
 
     void DB::setDefaultRecord(std::string_view materialName)

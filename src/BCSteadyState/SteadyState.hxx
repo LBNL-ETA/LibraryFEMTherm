@@ -76,7 +76,7 @@ namespace BCSteadyStateLibrary
         std::string Color{"0x0078D7"};
         std::variant<Comprehensive, Simplified, RadiationSurface> data;
 
-        std::string ProjectName;
+        std::optional<std::string> ProjectName;
 
         //! Unfortunately, the design of current code base requires this flag to be used. All other boundary conditions
         //! are treated in the same way except boundary condition IGUs.
