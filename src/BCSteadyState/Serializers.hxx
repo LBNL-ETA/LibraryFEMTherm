@@ -214,6 +214,7 @@ namespace BCSteadyStateLibrary
         Tags tag;
         node >> FileParse::Child{tag.uuid(), boundaryCondition.UUID};
         node >> FileParse::Child{tag.name(), boundaryCondition.Name};
+        node >> FileParse::Child{tag.projectName(), boundaryCondition.ProjectName};
         node >> FileParse::Child{tag.protectedTag(), boundaryCondition.Protected};
         node >> FileParse::Child{tag.color(), boundaryCondition.Color};
         node >> FileParse::Child{tag.isIGUSurface(), boundaryCondition.isIGUSurface};
@@ -229,6 +230,7 @@ namespace BCSteadyStateLibrary
         Tags tag;
         node << FileParse::Child{tag.uuid(), boundaryCondition.UUID};
         node << FileParse::Child{tag.name(), boundaryCondition.Name};
+        node << FileParse::Child{tag.projectName(), boundaryCondition.ProjectName};
         node << FileParse::Child{tag.protectedTag(), boundaryCondition.Protected};
         node << FileParse::Child{tag.color(), boundaryCondition.Color};
         node << FileParse::Child{tag.isIGUSurface(), boundaryCondition.isIGUSurface};

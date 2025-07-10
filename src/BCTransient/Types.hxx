@@ -62,7 +62,7 @@ namespace BCTypesLibrary
         bool UseHumidity{false};
         std::optional<double> Humidity;
         std::string Color{"FFFFFF"};
-        std::string ProjectName;
+        std::optional<std::string> ProjectName;
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////////
