@@ -20,6 +20,7 @@ namespace GasesLibrary
 
         [[nodiscard]] std::string UUID() const;
         [[nodiscard]] std::string name() const;
+        [[nodiscard]] std::string projectName() const;
         [[nodiscard]] std::string protectedTag() const;
 
         [[nodiscard]] std::string pureGas() const;
@@ -47,6 +48,7 @@ namespace GasesLibrary
 
         const std::string m_UUID{"UUID"};
         const std::string m_Name{"Name"};
+        const std::string m_ProjectName{"ProjectName"};
         const std::string m_Protected{"Protected"};
 
         const std::string m_MolecularWeight{"MolecularWeight"};

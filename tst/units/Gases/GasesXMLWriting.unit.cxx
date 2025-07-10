@@ -53,7 +53,7 @@ TEST_F(TestGasesXMLWriting, WritePureGasesXML)
     pureGas.Properties.Viscosity = {4, 5, 6};
     pureGas.Properties.SpecificHeat = {7, 8, 9};
 
-    const std::string fileName{"TestWrite.xm"};
+    const std::string fileName{"TestWrite.xml"};
     std::filesystem::remove(fileName);
     GasesLibrary::DB gasesDB{fileName};
 

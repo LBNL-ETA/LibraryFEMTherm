@@ -1446,7 +1446,7 @@
     </Material>
     <Material>
         <UUID>6519c230-388d-11ea-a137-2e728ce88125</UUID>
-        <Name>Frame Cavity</Name>
+        <Name>Frame Cavity NFRC 100</Name>
         <Protected>false</Protected>
         <Color>0x00FF00</Color>
         <Cavity>

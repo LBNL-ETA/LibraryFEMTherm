@@ -48,6 +48,9 @@ namespace BCSteadyStateLibrary
 
         void deleteRecordsWithProjectName(std::string_view projectName);
 
+        //! \brief Deletes all temporary records (one with set ProjectName)
+        void deleteTemporaryRecords();
+
         [[nodiscard]] std::optional<BoundaryCondition> getDefaultRadiationSurface() const;
         [[nodiscard]] BoundaryCondition getDefaultRecord() const;
 

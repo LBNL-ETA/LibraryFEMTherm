@@ -4,9 +4,6 @@
 #include <vector>
 #include <optional>
 
-
-#include "Tags.hxx"
-
 namespace GasesLibrary
 {
     struct Coefficients
@@ -37,9 +34,7 @@ namespace GasesLibrary
     {
         GasProperties Properties;
 
-        //! This is used to assign record to certain project.
-        //! This property is not (and should not be) saved into the XML file.
-        std::string ProjectName{""};
+        std::optional<std::string> ProjectName;
     };
 
     struct Component
@@ -52,9 +47,7 @@ namespace GasesLibrary
     {
         std::vector<Component> Components;
 
-        //! This is used to assign record to certain project.
-        //! This property is not (and should not be) saved into the XML file.
-        std::string ProjectName{""};
+        std::optional<std::string> ProjectName;
     };
 
     //! \brief This is used to create complete gas data structure needed for calculations and serialization. It can also
@@ -64,8 +57,8 @@ namespace GasesLibrary
         Gas gas;
         std::vector<std::optional<PureGas>> components;
 
-        std::string Name{""};
-        std::string ProjectName{""};
+        std::string Name;
+        std::optional<std::string> ProjectName;
         bool Protected{false};
     };
 

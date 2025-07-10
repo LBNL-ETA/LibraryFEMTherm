@@ -119,7 +119,7 @@ TEST_F(TestGasesXMLReading, ReadGasDataMixture_AirArgon)
     const auto & gas{aGas.value()};
 
     EXPECT_EQ(gas.gas.Name, "Air 10%/Argon 90%");
-    EXPECT_EQ(gas.gas.ProjectName, "");
+    EXPECT_FALSE(gas.gas.ProjectName);
     constexpr auto correctNumberOfComponents{2u};
     EXPECT_EQ(correctNumberOfComponents, gas.gas.Components.size());
 
@@ -181,7 +181,7 @@ TEST_F(TestGasesXMLReading, ReadGasMixture_AirArgonByUUID)
     const auto & gas{aGas.value()};
 
     EXPECT_EQ(gas.gas.Name, "Air 10%/Argon 90%");
-    EXPECT_EQ(gas.gas.ProjectName, "");
+    EXPECT_FALSE(gas.gas.ProjectName);
     constexpr auto correctNumberOfComponents{2u};
     EXPECT_EQ(correctNumberOfComponents, gas.gas.Components.size());
 
@@ -243,7 +243,7 @@ TEST_F(TestGasesXMLReading, ReadGasMixture_AirArgonByDisplayName)
     const auto & gas{aGas.value()};
 
     EXPECT_EQ(gas.gas.Name, "Air 10%/Argon 90%");
-    EXPECT_EQ(gas.gas.ProjectName, "");
+    EXPECT_FALSE(gas.gas.ProjectName);
     constexpr auto correctNumberOfComponents{2u};
     EXPECT_EQ(correctNumberOfComponents, gas.gas.Components.size());
 
@@ -305,7 +305,7 @@ TEST_F(TestGasesXMLReading, ReadGasDataMixture_AirSF6)
     const auto & gas{aGas.value()};
 
     EXPECT_EQ(gas.gas.Name, "Air 10%/SF6 90%");
-    EXPECT_EQ(gas.gas.ProjectName, "");
+    EXPECT_FALSE(gas.gas.ProjectName);
     constexpr auto correctNumberOfComponents{2u};
     EXPECT_EQ(correctNumberOfComponents, gas.gas.Components.size());
 

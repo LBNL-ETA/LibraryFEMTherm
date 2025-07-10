@@ -163,9 +163,7 @@ namespace MaterialsLibrary
         std::string UUID{};
         std::string Name{"Default Name"};
 
-        //! This is used to assign record to certain project.
-        //! This property is not (and should not be) saved into the XML file.
-        std::string ProjectName;
+        std::optional<std::string> ProjectName;
 
         bool Protected{false};
 

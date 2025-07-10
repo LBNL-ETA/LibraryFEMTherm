@@ -27,6 +27,11 @@ namespace GasesLibrary
         return m_Name;
     }
 
+    std::string Tags::projectName() const
+    {
+        return m_ProjectName;
+    }
+
     std::string Tags::pureGas() const
     {
         return m_PureGas;

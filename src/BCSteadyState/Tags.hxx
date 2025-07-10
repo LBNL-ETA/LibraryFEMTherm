@@ -11,6 +11,7 @@ namespace BCSteadyStateLibrary
     public:
         [[nodiscard]] std::string uuid() const;
         [[nodiscard]] std::string name() const;
+        [[nodiscard]] std::string projectName() const;
         [[nodiscard]] std::string protectedTag() const;
         [[nodiscard]] std::string color() const;
 
@@ -41,6 +42,7 @@ namespace BCSteadyStateLibrary
     private:
         const std::string uuid_{"UUID"};
         const std::string name_{"Name"};
+        const std::string projectName_{"ProjectNameTag"};
         const std::string protectedTag_{"Protected"};
         const std::string color_{"Color"};
 
