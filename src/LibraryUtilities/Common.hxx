@@ -88,9 +88,11 @@ namespace LibraryCommon
 
 
     template<typename T>
-    std::string DisplayName(const T & record)
+    std::string DisplayName(const T & rec)
     {
-        return !record.ProjectName ? record.Name : record.ProjectName.value() + ":" + record.Name;
+        if(rec.ProjectName && !rec.ProjectName->empty())
+            return *rec.ProjectName + ":" + rec.Name;
+        return rec.Name;
     }
 
     template<typename T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
