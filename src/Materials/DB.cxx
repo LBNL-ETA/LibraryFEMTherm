@@ -178,7 +178,7 @@ namespace MaterialsLibrary
         size_t index = 0;
         for(const auto & material : m_Materials)
         {
-            if(material.Name == materialName)
+            if(LibraryCommon::DisplayName(material) == materialName)
             {
                 m_DefaultRecordIndex = index;
             }
