@@ -1456,6 +1456,30 @@
             <EmissivitySide2>0.84</EmissivitySide2>
         </Cavity>
     </Material>
+	<Material>
+		<UUID>0b46bbd7-0dbc-c148-3afe87431bf0</UUID>
+		<Name>Frame Cavity - CEN Simplified</Name>
+		<Protected>false</Protected>
+		<Color>0xB3FFB3</Color>
+		<Cavity>
+			<CavityStandard>CEN</CavityStandard>
+			<Gas>Air</Gas>
+			<EmissivitySide1>0.9</EmissivitySide1>
+			<EmissivitySide2>0.9</EmissivitySide2>
+		</Cavity>
+	</Material>
+	<Material>
+		<UUID>bfcd01b9-194e-84cf-27a720ae86d4</UUID>
+		<Name>Frame Cavity Slightly Ventilated NFRC 100</Name>
+		<Protected>false</Protected>
+		<Color>0x00FF80</Color>
+		<Cavity>
+			<CavityStandard>ISO15099Ventilated</CavityStandard>
+			<Gas>Air</Gas>
+			<EmissivitySide1>0.9</EmissivitySide1>
+			<EmissivitySide2>0.9</EmissivitySide2>
+		</Cavity>
+	</Material>
     <Material>
         <UUID>b0cd8c75-4d01-4c03-906e-10bc49830fce</UUID>
         <Name>Butadiene</Name>
