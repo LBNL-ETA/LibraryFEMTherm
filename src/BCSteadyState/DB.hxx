@@ -1,5 +1,8 @@
 #pragma once
 
+#include <algorithm>
+#include <optional>
+#include <string_view>
 #include <string>
 #include <vector>
 
