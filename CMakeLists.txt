@@ -51,7 +51,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(LBNLCPPCommon)
 
-set(FileParse_Branch "Version_1.0.5")
+set(FileParse_Branch "Version_1.0.9")
 
 FetchContent_Declare(
     FileParse

@@ -11,14 +11,14 @@ namespace BCInputFileLibrary
 
     void BoundaryConditionTimestep::loadFromXMLFile(const std::string & fileName)
     {
-        const auto xInputDataNode{getTopNodeFromFile(fileName, "InputBoundaryConditionsData")};
+        const auto xInputDataNode{getXMLTopNodeFromFile(fileName, "InputBoundaryConditionsData")};
 
         if(xInputDataNode.has_value())
         {
             xInputDataNode.value() >> FileParse::Child{"Version", version};
             xInputDataNode.value() >> FileParse::Child{"Name", name};
 
-            auto optTransient{xInputDataNode->getFirstChildByName("BoundaryConditionTransient")};
+            const auto optTransient{xInputDataNode->getFirstChildByName("BoundaryConditionTransient")};
             if(optTransient)
             {
                 const XMLNodeAdapter& xBCTransient{optTransient.value()};
@@ -33,7 +33,7 @@ namespace BCInputFileLibrary
     }
 
     void BoundaryConditionTimestep::loadFromXMLString(const std::string &xmlString) {
-        const auto xInputDataNode{getTopNodeFromString(xmlString, "InputBoundaryConditionsData")};
+        const auto xInputDataNode{getXMLTopNodeFromString(xmlString, "InputBoundaryConditionsData")};
 
         if(xInputDataNode.has_value())
         {

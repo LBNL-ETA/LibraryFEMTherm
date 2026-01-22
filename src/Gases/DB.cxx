@@ -26,7 +26,7 @@ namespace GasesLibrary
         using lbnl::operator||;
 
         Tags fileTags;
-        return getTopNodeFromFile(fileName.data(), fileTags.gases()) | [&](auto & node) {
+        return getXMLTopNodeFromFile(fileName.data(), fileTags.gases()) | [&](auto & node) {
             T result{};
             node >> FileParse::Child{tag, result};
             return result;
@@ -40,7 +40,7 @@ namespace GasesLibrary
         using lbnl::operator||;
 
         Tags fileTags;
-        return getTopNodeFromString(xmlString.data(), fileTags.gases()) | [&](auto & node) {
+        return getXMLTopNodeFromString(xmlString.data(), fileTags.gases()) | [&](auto & node) {
             T result{};
             node >> FileParse::Child{tag, result};
             return result;
@@ -127,7 +127,7 @@ namespace GasesLibrary
         removeTemporaryGasRecords();
 
         Tags tag;
-        auto gasesNode{createTopNode(tag.gases())};
+        auto gasesNode{createXMLTopNode(tag.gases())};
 
         gasesNode << FileParse::Child{"Version", m_Version};
         savePureGases(gasesNode);
@@ -141,7 +141,7 @@ namespace GasesLibrary
         removeTemporaryGasRecords();
 
         Tags tag;
-        auto gasesNode{createTopNode(tag.gases())};
+        auto gasesNode{createXMLTopNode(tag.gases())};
 
         gasesNode << FileParse::Child{"Version", m_Version};
         savePureGases(gasesNode);

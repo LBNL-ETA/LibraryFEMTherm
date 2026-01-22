@@ -43,7 +43,7 @@ namespace BCSteadyStateLibrary
     void DB::loadFromXMLString(const std::string & xmlString)
     {
         BCSteadyStateLibrary::Tags tags;
-        const auto xBCNode{getTopNodeFromString(xmlString, tags.boundaryConditions())};
+        const auto xBCNode{getXMLTopNodeFromString(xmlString, tags.boundaryConditions())};
 
         if(xBCNode.has_value())
         {
@@ -55,7 +55,7 @@ namespace BCSteadyStateLibrary
     std::string DB::saveToXMLString() const
     {
         BCSteadyStateLibrary::Tags tags;
-        auto node{createTopNode(tags.boundaryConditions())};
+        auto node{createXMLTopNode(tags.boundaryConditions())};
 
         node << FileParse::Child{"Version", m_Version};
         node << FileParse::Child{tags.boundaryCondition(), m_BoundaryConditions};
@@ -82,7 +82,7 @@ namespace BCSteadyStateLibrary
     std::vector<BoundaryCondition> DB::loadBoundaryConditionsFromFile(const std::string & xmlFileName)
     {
         BCSteadyStateLibrary::Tags tags;
-        const auto xBCNode{getTopNodeFromFile(xmlFileName, tags.boundaryConditions())};
+        const auto xBCNode{getXMLTopNodeFromFile(xmlFileName, tags.boundaryConditions())};
 
         std::vector<BoundaryCondition> boundaryConditions;
         if(xBCNode.has_value())
@@ -120,7 +120,7 @@ namespace BCSteadyStateLibrary
     {
         BCSteadyStateLibrary::Tags tags;
 
-        auto node{createTopNode(tags.boundaryConditions())};
+        auto node{createXMLTopNode(tags.boundaryConditions())};
 
         node << FileParse::Child{"Version", m_Version};
         node << FileParse::Child{tags.boundaryCondition(), m_BoundaryConditions};

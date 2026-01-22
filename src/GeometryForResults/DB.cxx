@@ -58,7 +58,7 @@ namespace GeometryLibrary
 
     void InputGeometryDataRecord::loadFromXMLFile(const std::string & fileName)
     {
-        const auto xInputDataNode{getTopNodeFromFile(fileName, "InputGeometryData")};
+        const auto xInputDataNode{getXMLTopNodeFromFile(fileName, "InputGeometryData")};
 
         if(xInputDataNode.has_value())
         {
@@ -69,7 +69,7 @@ namespace GeometryLibrary
 
     int InputGeometryDataRecord::saveToXML(const std::string & fileName) const
     {
-        XMLNodeAdapter node{createTopNode("InputGeometryData")};
+        XMLNodeAdapter node{createXMLTopNode("InputGeometryData")};
 
         Helper::saveToNode(node, version, materials, nodes, elements, materialPolygons, modelEnclosure);
 
@@ -78,7 +78,7 @@ namespace GeometryLibrary
 
     void InputGeometryDataRecord::loadFromXMLString(const std::string & xmlString)
     {
-        const auto xInputDataNode{getTopNodeFromString(xmlString, "InputGeometryData")};
+        const auto xInputDataNode{getXMLTopNodeFromString(xmlString, "InputGeometryData")};
 
         if(xInputDataNode.has_value())
         {
@@ -89,7 +89,7 @@ namespace GeometryLibrary
 
     std::string InputGeometryDataRecord::saveToXMLString() const
     {
-        XMLNodeAdapter node{createTopNode("InputGeometryData")};
+        XMLNodeAdapter node{createXMLTopNode("InputGeometryData")};
 
         Helper::saveToNode(node, version, materials, nodes, elements, materialPolygons, modelEnclosure);
 

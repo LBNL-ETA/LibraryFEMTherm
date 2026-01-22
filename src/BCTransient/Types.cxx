@@ -108,7 +108,7 @@ namespace BCTypesLibrary
 
     int DB::saveToFile() const
     {
-        auto node{createTopNode("BoundaryConditionsType")};
+        auto node{createXMLTopNode("BoundaryConditionsType")};
         node << FileParse::Child{"BoundaryConditionType", m_BoundaryConditions};
 
         return node.writeToFile(m_FileName);
@@ -116,7 +116,7 @@ namespace BCTypesLibrary
 
     void DB::loadFromXMLString(const std::string &xmlString)
     {
-        const auto xBCTypeNodes{getTopNodeFromString(xmlString, "BoundaryConditionsType")};
+        const auto xBCTypeNodes{getXMLTopNodeFromString(xmlString, "BoundaryConditionsType")};
 
         if(xBCTypeNodes.has_value())
         {
@@ -126,7 +126,7 @@ namespace BCTypesLibrary
 
     std::string DB::saveToXMLString() const
     {
-        auto node{createTopNode("BoundaryConditionsType")};
+        auto node{createXMLTopNode("BoundaryConditionsType")};
         node << FileParse::Child{"BoundaryConditionType", m_BoundaryConditions};
 
         return node.getContent();
@@ -134,7 +134,7 @@ namespace BCTypesLibrary
 
     std::vector<TypeRecord> DB::loadBoundaryConditionsFromFile(std::string_view inputFileName)
     {
-        const auto xBCTypeNodes{getTopNodeFromFile(inputFileName.data(), "BoundaryConditionsType")};
+        const auto xBCTypeNodes{getXMLTopNodeFromFile(inputFileName.data(), "BoundaryConditionsType")};
 
         std::vector<TypeRecord> BCTypes;
 

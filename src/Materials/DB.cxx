@@ -43,7 +43,7 @@ namespace MaterialsLibrary
     {
         using MaterialsLibrary::operator>>;
 
-        auto node{getTopNodeFromString(xmlString, MaterialsLibrary::materialsString())};
+        auto node{getXMLTopNodeFromString(xmlString, MaterialsLibrary::materialsString())};
         if(node.has_value())
         {
             node.value() >> FileParse::Child{"Version", m_Version};
@@ -55,7 +55,7 @@ namespace MaterialsLibrary
     {
         using MaterialsLibrary::operator<<;
 
-        XMLNodeAdapter node{createTopNode(MaterialsLibrary::materialsString())};
+        XMLNodeAdapter node{createXMLTopNode(MaterialsLibrary::materialsString())};
 
         node << FileParse::Child{"Version", m_Version};
         node << FileParse::Child{MaterialsLibrary::materialString(), m_Materials};
@@ -126,7 +126,7 @@ namespace MaterialsLibrary
     {
         using MaterialsLibrary::operator<<;
 
-        XMLNodeAdapter node{createTopNode(MaterialsLibrary::materialsString())};
+        XMLNodeAdapter node{createXMLTopNode(MaterialsLibrary::materialsString())};
 
         node << FileParse::Child{"Version", m_Version};
         node << FileParse::Child{MaterialsLibrary::materialString(), m_Materials};
@@ -143,7 +143,7 @@ namespace MaterialsLibrary
     {
         using MaterialsLibrary::operator>>;
 
-        const auto xmlNode{getTopNodeFromFile(materialXMLFileName, materialsString())};
+        const auto xmlNode{getXMLTopNodeFromFile(materialXMLFileName, materialsString())};
 
         std::vector<Material> materials;
 
