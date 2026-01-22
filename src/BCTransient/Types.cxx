@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <fstream>
 
-#include <fileParse/XMLNodeAdapter.hxx>
+#include <fileParse/FileDataHandler.hxx>
 #include <fileParse/Vector.hxx>
 
 #include "Types.hxx"
@@ -106,30 +106,48 @@ namespace BCTypesLibrary
         return m_BoundaryConditions[0];
     }
 
-    int DB::saveToFile() const
+    int DB::saveToFile(FileParse::FileFormat format) const
     {
-        auto node{createXMLTopNode("BoundaryConditionsType")};
-        node << FileParse::Child{"BoundaryConditionType", m_BoundaryConditions};
+        auto node{Common::createTopNode("BoundaryConditionsType", format)};
 
-        return node.writeToFile(m_FileName);
+        int result = 0;
+        std::visit(
+          [this, &result](auto & adapter) {
+              adapter << FileParse::Child{"BoundaryConditionType", m_BoundaryConditions};
+              result = adapter.writeToFile(m_FileName);
+          },
+          node);
+
+        return result;
     }
 
-    void DB::loadFromXMLString(const std::string &xmlString)
+    void DB::loadFromString(const std::string & str)
     {
-        const auto xBCTypeNodes{getXMLTopNodeFromString(xmlString, "BoundaryConditionsType")};
+        auto node{Common::getTopNodeFromString(str, "BoundaryConditionsType")};
 
-        if(xBCTypeNodes.has_value())
+        if(node.has_value())
         {
-            xBCTypeNodes.value() >> FileParse::Child{"BoundaryConditionType", m_BoundaryConditions};
+            std::visit(
+              [this](auto & adapter) {
+                  adapter >> FileParse::Child{"BoundaryConditionType", m_BoundaryConditions};
+              },
+              node.value());
         }
     }
 
-    std::string DB::saveToXMLString() const
+    std::string DB::saveToString(FileParse::FileFormat format) const
     {
-        auto node{createXMLTopNode("BoundaryConditionsType")};
-        node << FileParse::Child{"BoundaryConditionType", m_BoundaryConditions};
+        auto node{Common::createTopNode("BoundaryConditionsType", format)};
 
-        return node.getContent();
+        std::string content;
+        std::visit(
+          [this, &content](auto & adapter) {
+              adapter << FileParse::Child{"BoundaryConditionType", m_BoundaryConditions};
+              content = adapter.getContent();
+          },
+          node);
+
+        return content;
     }
 
     std::vector<TypeRecord> DB::loadBoundaryConditionsFromFile(std::string_view inputFileName)

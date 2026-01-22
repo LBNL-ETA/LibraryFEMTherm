@@ -3,6 +3,8 @@
 #include <set>
 #include <functional>
 
+#include <fileParse/FileFormat.hxx>
+
 #include "Materials.hxx"
 
 namespace MaterialsLibrary
@@ -18,8 +20,8 @@ namespace MaterialsLibrary
         DB() = default;
         explicit DB(const std::string & xmlFileName);
 
-        void loadFromXMLString(const std::string & xmlString);
-        [[nodiscard]] std::string saveToXMLString() const;
+        void loadFromString(const std::string & str);
+        [[nodiscard]] std::string saveToString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
         //! \brief Returns only solid materials from the XML file.
         //!
@@ -64,8 +66,8 @@ namespace MaterialsLibrary
         //! \brief Deletes materials with the given UUID.
         void deleteWithUUID(std::string_view uuid);
 
-        //! \brief Saves the current state of an object to the XML file (provided through the object constructor).
-        [[nodiscard]] int saveToFile() const;
+        //! \brief Saves the current state of an object to the file (provided through the object constructor).
+        [[nodiscard]] int saveToFile(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
         //! \brief Deletes all materials that belong to the given project.
         void deleteRecordsWithProjectName(std::string_view projectName);

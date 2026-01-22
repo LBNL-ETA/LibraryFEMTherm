@@ -11,7 +11,7 @@ namespace ThermFile::Mesh
 
     std::optional<Mesh> loadMeshFromFile(std::string_view fileName)
     {
-        return Common::loadFromXMLFile<Mesh>(fileName, topNodeName);
+        return Common::loadFromFile<Mesh>(fileName, topNodeName);
     }
 
     std::optional<Mesh> loadMeshFromZipFile(std::string const & fileName)
@@ -19,14 +19,21 @@ namespace ThermFile::Mesh
         return Common::loadFromZipFile<Mesh>(fileName, ThermZip::MeshName, topNodeName);
     }
 
-    int saveToFile(const Mesh & model, std::string_view fileName)
+    int saveToFile(const Mesh & model, std::string_view fileName, FileParse::FileFormat format)
     {
-        return Common::saveToXMLFile(model, fileName, topNodeName);
+        switch(format)
+        {
+            case FileParse::FileFormat::JSON:
+                return Common::saveToJSONFile(model, fileName, topNodeName);
+            case FileParse::FileFormat::XML:
+            default:
+                return Common::saveToXMLFile(model, fileName, topNodeName);
+        }
     }
 
-    std::string saveToString(const Mesh & mesh)
+    std::string saveToString(const Mesh & mesh, FileParse::FileFormat format)
     {
-        return Common::saveToXMLString(mesh, topNodeName);
+        return Common::saveToString(mesh, topNodeName, format);
     }
 
     int saveToZipFile(const Mesh & mesh, std::string_view zipFileName)
@@ -34,8 +41,8 @@ namespace ThermFile::Mesh
         return Common::saveToZIPFile(mesh, ThermZip::MeshName, zipFileName, topNodeName);
     }
 
-    std::optional<Mesh> loadMeshFromString(const std::string & xmlString)
+    std::optional<Mesh> loadMeshFromString(const std::string & str, FileParse::FileFormat format)
     {
-        return Common::loadFromXMLString<Mesh>(xmlString, topNodeName);
+        return Common::loadFromString<Mesh>(str, topNodeName, format);
     }
 }   // namespace ThermFile::Mesh

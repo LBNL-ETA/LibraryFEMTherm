@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <fstream>
 
-#include <fileParse/XMLNodeAdapter.hxx>
+#include <fileParse/FileDataHandler.hxx>
 #include <fileParse/Vector.hxx>
 
 #include <lbnl/algorithm.hxx>
@@ -122,42 +122,55 @@ namespace GasesLibrary
         m_PureGases.emplace_back(pure);
     }
 
-    int DB::saveToFile()
+    int DB::saveToFile(FileParse::FileFormat format)
     {
         removeTemporaryGasRecords();
 
         Tags tag;
-        auto gasesNode{createXMLTopNode(tag.gases())};
+        auto node{Common::createTopNode(tag.gases(), format)};
 
-        gasesNode << FileParse::Child{"Version", m_Version};
-        savePureGases(gasesNode);
-        saveGases(gasesNode);
+        int result = 0;
+        std::visit(
+          [this, &result](auto & adapter) {
+              adapter << FileParse::Child{"Version", m_Version};
+              savePureGases(adapter);
+              saveGases(adapter);
+              result = adapter.writeToFile(m_FileName);
+          },
+          node);
 
-        return gasesNode.writeToFile(m_FileName);
+        return result;
     }
 
-    std::string DB::saveToXMLString()
+    std::string DB::saveToString(FileParse::FileFormat format)
     {
         removeTemporaryGasRecords();
 
         Tags tag;
-        auto gasesNode{createXMLTopNode(tag.gases())};
+        auto node{Common::createTopNode(tag.gases(), format)};
 
-        gasesNode << FileParse::Child{"Version", m_Version};
-        savePureGases(gasesNode);
-        saveGases(gasesNode);
+        std::string content;
+        std::visit(
+          [this, &content](auto & adapter) {
+              adapter << FileParse::Child{"Version", m_Version};
+              savePureGases(adapter);
+              saveGases(adapter);
+              content = adapter.getContent();
+          },
+          node);
 
-        return gasesNode.getContent();
+        return content;
     }
 
-    void DB::savePureGases(XMLNodeAdapter & gasesNode) const
+    template<typename NodeType>
+    void DB::savePureGases(NodeType & gasesNode) const
     {
         for(const auto & gas : m_PureGases)
         {
             if(!LibraryCommon::isRecordTemporary(gas))
             {
                 Tags tag;
-                XMLNodeAdapter pureGasNode = gasesNode.addChild(tag.pureGas());
+                auto pureGasNode = gasesNode.addChild(tag.pureGas());
                 pureGasNode << gas;
             }
         }
@@ -204,7 +217,8 @@ namespace GasesLibrary
         return m_Gases;
     }
 
-    void DB::saveGases(XMLNodeAdapter & gasesNode) const
+    template<typename NodeType>
+    void DB::saveGases(NodeType & gasesNode) const
     {
         if(!m_Gases.empty())
         {

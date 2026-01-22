@@ -3,7 +3,7 @@
 #include <set>
 
 #include <lbnl/algorithm.hxx>
-#include <fileParse/XMLNodeAdapter.hxx>
+#include <fileParse/FileDataHandler.hxx>
 
 #include "DB.hxx"
 #include "Serializers.hxx"
@@ -39,28 +39,38 @@ namespace MaterialsLibrary
         }
     }
 
-    void DB::loadFromXMLString(const std::string & xmlString)
+    void DB::loadFromString(const std::string & str)
     {
         using MaterialsLibrary::operator>>;
 
-        auto node{getXMLTopNodeFromString(xmlString, MaterialsLibrary::materialsString())};
+        auto node{Common::getTopNodeFromString(str, materialsString())};
         if(node.has_value())
         {
-            node.value() >> FileParse::Child{"Version", m_Version};
-            node.value() >> FileParse::Child{MaterialsLibrary::materialString(), m_Materials};
+            std::visit(
+              [this](auto & adapter) {
+                  adapter >> FileParse::Child{"Version", m_Version};
+                  adapter >> FileParse::Child{materialString(), m_Materials};
+              },
+              node.value());
         }
     }
 
-    std::string DB::saveToXMLString() const
+    std::string DB::saveToString(FileParse::FileFormat format) const
     {
         using MaterialsLibrary::operator<<;
 
-        XMLNodeAdapter node{createXMLTopNode(MaterialsLibrary::materialsString())};
+        auto node{Common::createTopNode(materialsString(), format)};
 
-        node << FileParse::Child{"Version", m_Version};
-        node << FileParse::Child{MaterialsLibrary::materialString(), m_Materials};
+        std::string content;
+        std::visit(
+          [this, &content](auto & adapter) {
+              adapter << FileParse::Child{"Version", m_Version};
+              adapter << FileParse::Child{materialString(), m_Materials};
+              content = adapter.getContent();
+          },
+          node);
 
-        return node.getContent();
+        return content;
     }
 
     std::optional<Material> DB::getByName(std::string_view materialName)
@@ -122,16 +132,22 @@ namespace MaterialsLibrary
                           std::end(m_Materials));
     }
 
-    int DB::saveToFile() const
+    int DB::saveToFile(FileParse::FileFormat format) const
     {
         using MaterialsLibrary::operator<<;
 
-        XMLNodeAdapter node{createXMLTopNode(MaterialsLibrary::materialsString())};
+        auto node{Common::createTopNode(MaterialsLibrary::materialsString(), format)};
 
-        node << FileParse::Child{"Version", m_Version};
-        node << FileParse::Child{MaterialsLibrary::materialString(), m_Materials};
+        int result = 0;
+        std::visit(
+          [this, &result](auto & adapter) {
+              adapter << FileParse::Child{"Version", m_Version};
+              adapter << FileParse::Child{MaterialsLibrary::materialString(), m_Materials};
+              result = adapter.writeToFile(m_FileName);
+          },
+          node);
 
-        return node.writeToFile(m_FileName);
+        return result;
     }
 
     std::string DB::getFileName() const

@@ -5,7 +5,7 @@
 #include <optional>
 #include <functional>
 
-#include <fileParse/XMLNodeAdapter.hxx>
+#include <fileParse/FileFormat.hxx>
 
 #include "Gases.hxx"
 
@@ -56,8 +56,8 @@ namespace GasesLibrary
 
         void add(const GasesData & gasData);
 
-        [[nodiscard]] int saveToFile();
-        [[nodiscard]] std::string saveToXMLString();
+        [[nodiscard]] int saveToFile(FileParse::FileFormat format = FileParse::FileFormat::XML);
+        [[nodiscard]] std::string saveToString(FileParse::FileFormat format = FileParse::FileFormat::XML);
 
         //! \brief Deletes all gases that have projectName set
         void deleteWithProjectName(const std::string & projectName);
@@ -65,8 +65,10 @@ namespace GasesLibrary
         void deleteWithUUID(std::string_view uuid);
 
     private:
-        void savePureGases(XMLNodeAdapter & gasesNode) const;
-        void saveGases(XMLNodeAdapter & gasesNode) const;
+        template<typename NodeType>
+        void savePureGases(NodeType & gasesNode) const;
+        template<typename NodeType>
+        void saveGases(NodeType & gasesNode) const;
 
         std::string m_FileName;
         std::string m_Version{"1"};

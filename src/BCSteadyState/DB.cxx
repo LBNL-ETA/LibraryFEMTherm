@@ -1,7 +1,7 @@
 #include <fstream>
 #include <algorithm>
 
-#include <fileParse/XMLNodeAdapter.hxx>
+#include <fileParse/FileDataHandler.hxx>
 #include <fileParse/Vector.hxx>
 
 #include "DB.hxx"
@@ -40,27 +40,37 @@ namespace BCSteadyStateLibrary
         }
     }
 
-    void DB::loadFromXMLString(const std::string & xmlString)
+    void DB::loadFromString(const std::string & str)
     {
         BCSteadyStateLibrary::Tags tags;
-        const auto xBCNode{getXMLTopNodeFromString(xmlString, tags.boundaryConditions())};
+        auto node{Common::getTopNodeFromString(str, tags.boundaryConditions())};
 
-        if(xBCNode.has_value())
+        if(node.has_value())
         {
-            xBCNode.value() >> FileParse::Child{"Version", m_Version};
-            xBCNode.value() >> FileParse::Child{tags.boundaryCondition(), m_BoundaryConditions};
+            std::visit(
+              [this, &tags](auto & adapter) {
+                  adapter >> FileParse::Child{"Version", m_Version};
+                  adapter >> FileParse::Child{tags.boundaryCondition(), m_BoundaryConditions};
+              },
+              node.value());
         }
     }
 
-    std::string DB::saveToXMLString() const
+    std::string DB::saveToString(FileParse::FileFormat format) const
     {
         BCSteadyStateLibrary::Tags tags;
-        auto node{createXMLTopNode(tags.boundaryConditions())};
+        auto node{Common::createTopNode(tags.boundaryConditions(), format)};
 
-        node << FileParse::Child{"Version", m_Version};
-        node << FileParse::Child{tags.boundaryCondition(), m_BoundaryConditions};
+        std::string content;
+        std::visit(
+          [this, &tags, &content](auto & adapter) {
+              adapter << FileParse::Child{"Version", m_Version};
+              adapter << FileParse::Child{tags.boundaryCondition(), m_BoundaryConditions};
+              content = adapter.getContent();
+          },
+          node);
 
-        return node.getContent();
+        return content;
     }
 
     void DB::loadFromZipFile(const std::string & zipFileName)
@@ -116,16 +126,22 @@ namespace BCSteadyStateLibrary
         m_BoundaryConditions.emplace_back(condition);
     }
 
-    int DB::saveToFile() const
+    int DB::saveToFile(FileParse::FileFormat format) const
     {
         BCSteadyStateLibrary::Tags tags;
 
-        auto node{createXMLTopNode(tags.boundaryConditions())};
+        auto node{Common::createTopNode(tags.boundaryConditions(), format)};
 
-        node << FileParse::Child{"Version", m_Version};
-        node << FileParse::Child{tags.boundaryCondition(), m_BoundaryConditions};
+        int result = 0;
+        std::visit(
+          [this, &tags, &result](auto & adapter) {
+              adapter << FileParse::Child{"Version", m_Version};
+              adapter << FileParse::Child{tags.boundaryCondition(), m_BoundaryConditions};
+              result = adapter.writeToFile(m_FileName);
+          },
+          node);
 
-        return node.writeToFile(m_FileName);
+        return result;
     }
 
     std::optional<BoundaryCondition> DB::getByUUID(std::string_view uuid) const

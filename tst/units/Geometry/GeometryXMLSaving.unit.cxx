@@ -4,8 +4,6 @@
 #include "GeometryForResults/Geometry.hxx"
 #include "GeometryForResults/DB.hxx"
 
-#include "geometry1.hxx"
-
 class TestGeometryXMLSaving : public testing::Test
 {
 protected:
@@ -15,7 +13,7 @@ protected:
 
 TEST_F(TestGeometryXMLSaving, SaveGeometryXML)
 {
-    const std::string fileName{"TestRead.xm"};
+    const std::string fileName{"TestRead.xml"};
 
     std::filesystem::remove(fileName);
 
@@ -34,12 +32,12 @@ TEST_F(TestGeometryXMLSaving, SaveGeometryXML)
 
     inGeom.modelEnclosure = {1u, 2u, 3u, 4u};
 
-    const auto error{inGeom.saveToXML(fileName)};
+    const auto error{inGeom.saveToFile(fileName)};
     EXPECT_EQ(error, 0);
 
     GeometryLibrary::InputGeometryDataRecord inputGeometry;
 
-    inputGeometry.loadFromXMLFile(fileName);
+    inputGeometry.loadFromFile(fileName);
 
     const auto matName{inputGeometry.materials[0].Name};
     EXPECT_EQ(matName, "Test name");

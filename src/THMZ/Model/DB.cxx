@@ -11,7 +11,7 @@ namespace ThermFile
 
     std::optional<ThermModel> loadThermModelFromFile(std::string_view fileName)
     {
-        return Common::loadFromXMLFile<ThermModel>(fileName, topNodeName);
+        return Common::loadFromFile<ThermModel>(fileName, topNodeName);
     }
 
     std::optional<ThermModel> loadThermModelFromZipFile(std::string const & zipFileName)
@@ -19,14 +19,21 @@ namespace ThermFile
         return Common::loadFromZipFile<ThermModel>(zipFileName, ThermZip::ModelFileName, topNodeName);
     }
 
-    int saveToFile(const ThermModel & model, std::string_view fileName)
+    int saveToFile(const ThermModel & model, std::string_view fileName, FileParse::FileFormat format)
     {
-        return Common::saveToXMLFile(model, fileName, topNodeName);
+        switch(format)
+        {
+            case FileParse::FileFormat::JSON:
+                return Common::saveToJSONFile(model, fileName, topNodeName);
+            case FileParse::FileFormat::XML:
+            default:
+                return Common::saveToXMLFile(model, fileName, topNodeName);
+        }
     }
 
-    std::string saveToString(const ThermModel & model)
+    std::string saveToString(const ThermModel & model, FileParse::FileFormat format)
     {
-        return Common::saveToXMLString(model, topNodeName);
+        return Common::saveToString(model, topNodeName, format);
     }
 
     int saveToZipFile(const ThermModel & model, std::string_view zipFileName)
@@ -34,8 +41,8 @@ namespace ThermFile
         return Common::saveToZIPFile(model, ThermZip::ModelFileName, zipFileName, topNodeName);
     }
 
-    std::optional<ThermModel> loadThermModelFromString(const std::string & xmlString)
+    std::optional<ThermModel> loadThermModelFromString(const std::string & str, FileParse::FileFormat format)
     {
-        return Common::loadFromXMLString<ThermModel>(xmlString, topNodeName);
+        return Common::loadFromString<ThermModel>(str, topNodeName, format);
     }
 }   // namespace ThermFile

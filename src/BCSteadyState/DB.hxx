@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include <fileParse/FileFormat.hxx>
+
 #include "SteadyState.hxx"
 
 namespace BCSteadyStateLibrary
@@ -16,8 +18,8 @@ namespace BCSteadyStateLibrary
         DB() = default;
         explicit DB(const std::string & xmlFileName);
 
-        void loadFromXMLString(const std::string & xmlString);
-        [[nodiscard]] std::string saveToXMLString() const;
+        void loadFromString(const std::string & str);
+        [[nodiscard]] std::string saveToString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
         void loadFromZipFile(const std::string & zipFileName);
         int saveToZipFile(std::string_view zipFileName) const;
@@ -57,7 +59,7 @@ namespace BCSteadyStateLibrary
         [[nodiscard]] std::optional<BoundaryCondition> getDefaultRadiationSurface() const;
         [[nodiscard]] BoundaryCondition getDefaultRecord() const;
 
-        [[nodiscard]] int saveToFile() const;
+        [[nodiscard]] int saveToFile(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
     private:
         std::string m_FileName;

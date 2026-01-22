@@ -1,6 +1,6 @@
 #include "DB.hxx"
 
-#include <fileParse/XMLNodeAdapter.hxx>
+#include <fileParse/FileDataHandler.hxx>
 
 #include "Serializers.hxx"
 
@@ -56,44 +56,62 @@ namespace GeometryLibrary
         }
     }   // namespace Helper
 
-    void InputGeometryDataRecord::loadFromXMLFile(const std::string & fileName)
+    void InputGeometryDataRecord::loadFromFile(const std::string & fileName)
     {
-        const auto xInputDataNode{getXMLTopNodeFromFile(fileName, "InputGeometryData")};
+        auto nodeOpt{Common::getTopNodeFromFile(fileName, "InputGeometryData")};
 
-        if(xInputDataNode.has_value())
+        if(nodeOpt.has_value())
         {
-            const auto & node{xInputDataNode.value()};
-            Helper::loadFromNode(node, version, materials, nodes, elements, materialPolygons, modelEnclosure);
+            std::visit(
+              [this](auto & adapter) {
+                  Helper::loadFromNode(adapter, version, materials, nodes, elements, materialPolygons, modelEnclosure);
+              },
+              nodeOpt.value());
         }
     }
 
-    int InputGeometryDataRecord::saveToXML(const std::string & fileName) const
+    int InputGeometryDataRecord::saveToFile(const std::string & fileName, FileParse::FileFormat format) const
     {
-        XMLNodeAdapter node{createXMLTopNode("InputGeometryData")};
+        auto node{Common::createTopNode("InputGeometryData", format)};
 
-        Helper::saveToNode(node, version, materials, nodes, elements, materialPolygons, modelEnclosure);
+        int result = 0;
+        std::visit(
+          [this, &fileName, &result](auto & adapter) {
+              Helper::saveToNode(adapter, version, materials, nodes, elements, materialPolygons, modelEnclosure);
+              result = adapter.writeToFile(fileName);
+          },
+          node);
 
-        return node.writeToFile(fileName);
+        return result;
     }
 
-    void InputGeometryDataRecord::loadFromXMLString(const std::string & xmlString)
+    void InputGeometryDataRecord::loadFromString(const std::string & str)
     {
-        const auto xInputDataNode{getXMLTopNodeFromString(xmlString, "InputGeometryData")};
+        auto nodeOpt{Common::getTopNodeFromString(str, "InputGeometryData")};
 
-        if(xInputDataNode.has_value())
+        if(nodeOpt.has_value())
         {
-            const auto & node{xInputDataNode.value()};
-            Helper::loadFromNode(node, version, materials, nodes, elements, materialPolygons, modelEnclosure);
+            std::visit(
+              [this](auto & adapter) {
+                  Helper::loadFromNode(adapter, version, materials, nodes, elements, materialPolygons, modelEnclosure);
+              },
+              nodeOpt.value());
         }
     }
 
-    std::string InputGeometryDataRecord::saveToXMLString() const
+    std::string InputGeometryDataRecord::saveToString(FileParse::FileFormat format) const
     {
-        XMLNodeAdapter node{createXMLTopNode("InputGeometryData")};
+        auto node{Common::createTopNode("InputGeometryData", format)};
 
-        Helper::saveToNode(node, version, materials, nodes, elements, materialPolygons, modelEnclosure);
+        std::string content;
+        std::visit(
+          [this, &content](auto & adapter) {
+              Helper::saveToNode(adapter, version, materials, nodes, elements, materialPolygons, modelEnclosure);
+              content = adapter.getContent();
+          },
+          node);
 
-        return node.getContent();
+        return content;
     }
 
     void InputGeometryDataRecord::add(const size_t id, const std::string & name, const std::string & color)
@@ -103,12 +121,12 @@ namespace GeometryLibrary
 
     void InputGeometryDataRecord::addNode(const size_t id, const double x, const double y)
     {
-        nodes.push_back(Node{ id, x, y });
+        nodes.push_back(Node{id, x, y});
     }
 
     void InputGeometryDataRecord::addElement(
       size_t id, size_t node1, size_t node2, size_t node3, size_t node4, size_t materialID)
     {
-        elements.push_back(Element{ id, node1, node2, node3, node4, materialID });
+        elements.push_back(Element{id, node1, node2, node3, node4, materialID});
     }
 }   // namespace GeometryLibrary

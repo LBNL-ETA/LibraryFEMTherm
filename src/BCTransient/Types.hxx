@@ -5,6 +5,8 @@
 #include <vector>
 #include <algorithm>
 
+#include <fileParse/FileFormat.hxx>
+
 #include "Definitions.hxx"
 
 namespace BCTypesLibrary
@@ -95,11 +97,11 @@ namespace BCTypesLibrary
         //! \brief Removes record with given uuid
         void deleteWithUUID(std::string_view uuid);
 
-        //! \brief Saves current state of object to XML file (provided through object constructor)
-        [[nodiscard]] int saveToFile() const;
+        //! \brief Saves current state of object to file (provided through object constructor)
+        [[nodiscard]] int saveToFile(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
-        void loadFromXMLString(const std::string & xmlString);
-        [[nodiscard]] std::string saveToXMLString() const;
+        void loadFromString(const std::string & str);
+        [[nodiscard]] std::string saveToString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
         [[nodiscard]] TypeRecord getDefaultRecord() const;
 

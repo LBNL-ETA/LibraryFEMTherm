@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include <fileParse/FileFormat.hxx>
+
 #include "Geometry.hxx"
 
 namespace GeometryLibrary
@@ -11,11 +13,12 @@ namespace GeometryLibrary
     {
         InputGeometryDataRecord() = default;
 
-        void loadFromXMLFile(const std::string & fileName);
-        [[nodiscard]] int saveToXML(const std::string & fileName) const;
+        void loadFromFile(const std::string & fileName);
+        [[nodiscard]] int saveToFile(const std::string & fileName,
+                                     FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
-        void loadFromXMLString(const std::string & xmlString);
-        [[nodiscard]] std::string saveToXMLString() const;
+        void loadFromString(const std::string & str);
+        [[nodiscard]] std::string saveToString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
         void add(size_t id, const std::string & name, const std::string & color);
         void addNode(size_t id, double x, double y);

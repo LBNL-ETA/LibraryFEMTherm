@@ -25,7 +25,7 @@ TEST_F(TestGeometryXMLReading, ReadGeomteryXML)
     File::createFileFromString(fileName, fileContent);
 
     GeometryLibrary::InputGeometryDataRecord inputGeometry;
-    inputGeometry.loadFromXMLFile(fileName);
+    inputGeometry.loadFromFile(fileName);
 
     const auto numOfMaterials{inputGeometry.materials.size()};
     EXPECT_EQ(numOfMaterials, 1u);
