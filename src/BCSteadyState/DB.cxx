@@ -30,14 +30,7 @@ namespace BCSteadyStateLibrary
             File::createFileFromString(xmlFileName, fileContent);
         }
 
-        try
-        {
-            m_BoundaryConditions = loadBoundaryConditionsFromFile(xmlFileName);
-        }
-        catch(...)
-        {
-            throw;
-        }
+        m_BoundaryConditions = loadBoundaryConditionsFromFile(xmlFileName);
     }
 
     void DB::loadFromString(const std::string & str)
@@ -232,8 +225,12 @@ namespace BCSteadyStateLibrary
         return std::nullopt;
     }
 
-    BoundaryCondition DB::getDefaultRecord() const
+    std::optional<BoundaryCondition> DB::getDefaultRecord() const
     {
+        if(m_BoundaryConditions.empty())
+        {
+            return std::nullopt;
+        }
         return m_BoundaryConditions[0];
     }
 

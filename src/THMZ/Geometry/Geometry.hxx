@@ -15,7 +15,8 @@ namespace ThermFile
         double y{0};
     };
 
-    // TODO: Consider splitting this structure into FrameCavity and GlazingCavity
+    // NOTE: This structure serves both frame and glazing cavities. Splitting into FrameCavity and
+    // GlazingCavity would improve type safety but requires updates to serialization and dependent code.
     //! \brief Represents cavity model in THERM. Refer to ISO 15099 for more details on the procedure.
     //! @heatFlowDirection - direction of heat flow.
     //! @emissivity1 - warm side emissivity.

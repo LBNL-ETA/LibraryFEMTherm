@@ -36,14 +36,7 @@ namespace BCTypesLibrary
             File::createFileFromString(m_FileName, fileContent);
         }
 
-        try
-        {
-            m_BoundaryConditions = loadBoundaryConditionsFromFile(xmlName);
-        }
-        catch(...)
-        {
-            throw;
-        }
+        m_BoundaryConditions = loadBoundaryConditionsFromFile(xmlName);
     }
 
     std::vector<TypeRecord> & DB::getBoundaryConditions()
@@ -101,8 +94,12 @@ namespace BCTypesLibrary
                                    std::end(m_BoundaryConditions));
     }
 
-    TypeRecord DB::getDefaultRecord() const
+    std::optional<TypeRecord> DB::getDefaultRecord() const
     {
+        if(m_BoundaryConditions.empty())
+        {
+            return std::nullopt;
+        }
         return m_BoundaryConditions[0];
     }
 

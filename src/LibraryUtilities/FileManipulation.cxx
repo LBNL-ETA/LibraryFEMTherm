@@ -15,14 +15,25 @@ namespace File
 
     std::string loadToString(const std::string & fileName)
     {
-        std::ifstream in{fileName};
+        std::ifstream inFile{fileName};
         std::string result;
         std::string line;
-        while (std::getline(in, line))
+
+        inFile.seekg(0, std::ios::end);
+        const auto fileSize = inFile.tellg();
+        inFile.seekg(0, std::ios::beg);
+
+        if(fileSize > 0)
         {
-            result += line + "\n";
+            result.reserve(static_cast<size_t>(fileSize));
         }
-        in.close();
+
+        while(std::getline(inFile, line))
+        {
+            result.append(line);
+            result.push_back('\n');
+        }
+        inFile.close();
         return result;
     }
 

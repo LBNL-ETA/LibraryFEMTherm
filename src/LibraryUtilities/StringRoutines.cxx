@@ -35,9 +35,9 @@ namespace StringRoutines
     {
         std::string result{value};
 
-        for(auto & c : result)
+        for(auto & chr : result)
         {
-            c = static_cast<char>(toupper(c));
+            chr = static_cast<char>(toupper(chr));
         }
 
         return result;
@@ -47,9 +47,9 @@ namespace StringRoutines
     {
         std::string result{value};
 
-        for(auto & c : result)
+        for(auto & chr : result)
         {
-            c = static_cast<char>(tolower(c));
+            chr = static_cast<char>(tolower(chr));
         }
 
         return result;

@@ -57,7 +57,7 @@ namespace BCSteadyStateLibrary
         void deleteTemporaryRecords();
 
         [[nodiscard]] std::optional<BoundaryCondition> getDefaultRadiationSurface() const;
-        [[nodiscard]] BoundaryCondition getDefaultRecord() const;
+        [[nodiscard]] std::optional<BoundaryCondition> getDefaultRecord() const;
 
         [[nodiscard]] int saveToFile(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
@@ -80,7 +80,7 @@ namespace BCSteadyStateLibrary
                 result = *it;
             }
 
-            if(value.empty())
+            if(value.empty() && !m_BoundaryConditions.empty())
             {
                 result = m_BoundaryConditions[0];
             }

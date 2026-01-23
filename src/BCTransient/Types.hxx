@@ -103,7 +103,7 @@ namespace BCTypesLibrary
         void loadFromString(const std::string & str);
         [[nodiscard]] std::string saveToString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
-        [[nodiscard]] TypeRecord getDefaultRecord() const;
+        [[nodiscard]] std::optional<TypeRecord> getDefaultRecord() const;
 
     private:
         std::string m_FileName;

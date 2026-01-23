@@ -75,7 +75,8 @@ namespace BCSteadyStateLibrary
     NodeAdapter & operator<<(NodeAdapter & node, const ManualEnclosure &)
     {
         Tags tag;
-        // TODO: Charlie wants emissivity here. emtpyNode used to avoid compilation warning [[nodicard]]
+        // NOTE: ManualEnclosure currently has no serializable properties. If emissivity support is added
+        // in the future (per stakeholder request), serialize it here. emptyNode used to avoid [[nodiscard]] warning.
         const auto emptyNode{node.addChild(tag.manualEnclosure())};
         return node;
     }

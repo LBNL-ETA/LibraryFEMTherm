@@ -88,28 +88,14 @@ namespace GasesLibrary
             File::createFileFromString(fileName, fileContent);
         }
 
-        try
-        {
-            m_Version = loadVersionFromXMLFile(fileName);
-            m_PureGases = loadPureGasesFromXMLFile(fileName);
-            m_Gases = loadGasesFromXMLFile(fileName);
-        }
-        catch(...)
-        {
-            throw;
-        }
+        m_Version = loadVersionFromXMLFile(fileName);
+        m_PureGases = loadPureGasesFromXMLFile(fileName);
+        m_Gases = loadGasesFromXMLFile(fileName);
     }
 
     std::optional<PureGas> DB::getPureGasByUUID(std::string_view uuid) const
     {
-        for(const auto & gas : m_PureGases)
-        {
-            if(gas.UUID == uuid)
-            {
-                return gas;
-            }
-        }
-        return std::nullopt;
+        return lbnl::find_element(m_PureGases, [&uuid](const PureGas & gas) { return gas.UUID == uuid; });
     }
 
     std::vector<PureGas> & DB::getPureGases()
@@ -178,28 +164,13 @@ namespace GasesLibrary
 
     std::optional<PureGas> DB::getPureGasByName(std::string_view name) const
     {
-        for(const auto & gas : m_PureGases)
-        {
-            if(gas.Name == name)
-            {
-                return gas;
-            }
-        }
-
-        return std::nullopt;
+        return lbnl::find_element(m_PureGases, [&name](const PureGas & gas) { return gas.Name == name; });
     }
 
     std::optional<PureGas> DB::getPureGasByDisplayName(std::string_view name) const
     {
-        for(const auto & gas : m_PureGases)
-        {
-            if(LibraryCommon::DisplayName(gas) == name)
-            {
-                return gas;
-            }
-        }
-
-        return std::nullopt;
+        return lbnl::find_element(m_PureGases,
+                                  [&name](const PureGas & gas) { return LibraryCommon::DisplayName(gas) == name; });
     }
 
     std::optional<Gas> DB::getGasByUUID(std::string_view uuid) const
@@ -244,15 +215,8 @@ namespace GasesLibrary
 
     std::optional<Gas> DB::getGasByDisplayName(std::string_view name) const
     {
-        for(const auto & gas : m_Gases)
-        {
-            if(LibraryCommon::DisplayName(gas) == name)
-            {
-                return gas;
-            }
-        }
-
-        return std::nullopt;
+        return lbnl::find_element(m_Gases,
+                                  [&name](const Gas & gas) { return LibraryCommon::DisplayName(gas) == name; });
     }
 
     std::optional<GasesData> DB::getByUUID(std::string_view uuid) const
@@ -322,41 +286,17 @@ namespace GasesLibrary
 
     std::vector<std::string> DB::getNames() const
     {
-        std::vector<std::string> names;
-        names.reserve(m_Gases.size());
-
-        for(const auto & gas : m_Gases)
-        {
-            names.push_back(gas.Name);
-        }
-
-        return names;
+        return lbnl::transform_to_vector(m_Gases, [](const Gas & gas) { return gas.Name; });
     }
 
     std::vector<std::string> DB::getDisplayNames() const
     {
-        std::vector<std::string> names;
-        names.reserve(m_Gases.size());
-
-        for(const auto & gas : m_Gases)
-        {
-            names.push_back(LibraryCommon::DisplayName(gas));
-        }
-
-        return names;
+        return lbnl::transform_to_vector(m_Gases, [](const Gas & gas) { return LibraryCommon::DisplayName(gas); });
     }
 
     std::vector<std::string> DB::getPureGasNames() const
     {
-        std::vector<std::string> names;
-        names.reserve(m_PureGases.size());
-
-        for(const auto & pureGas : m_PureGases)
-        {
-            names.push_back(pureGas.Name);
-        }
-
-        return names;
+        return lbnl::transform_to_vector(m_PureGases, [](const PureGas & pureGas) { return pureGas.Name; });
     }
 
     std::string DB::getFileName() const

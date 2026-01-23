@@ -29,14 +29,7 @@ namespace MaterialsLibrary
             File::createFileFromString(xmlFileName, fileContent);
         }
 
-        try
-        {
-            m_Materials = loadMaterialsFromXMLFile(xmlFileName);
-        }
-        catch(...)
-        {
-            throw;
-        }
+        m_Materials = loadMaterialsFromXMLFile(xmlFileName);
     }
 
     void DB::loadFromString(const std::string & str)
