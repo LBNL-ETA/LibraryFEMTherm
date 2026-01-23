@@ -3,6 +3,8 @@
 #include "Results.hxx"
 #include "Serializers.hxx"
 
+#include <fileParse/FileFormat.hxx>
+
 #include "Common/DB.hxx"
 
 namespace ThermFile
@@ -19,19 +21,30 @@ namespace ThermFile
         return Common::loadFromZipFile<SteadyStateResults>(fileName, ThermZip::SteadyStateResultsName, topNodeName);
     }
 
-    std::optional<SteadyStateResults> loadSteadyStateResultsFromString(const std::string & data)
+    std::optional<SteadyStateResults> loadSteadyStateResultsFromString(const std::string & data,
+                                                                       FileParse::FileFormat format)
     {
-        return Common::loadFromXMLString<SteadyStateResults>(data, topNodeName);
+        return Common::loadFromString<SteadyStateResults>(data, topNodeName, format);
     }
 
-    int saveToFile(const SteadyStateResults & results, std::string_view fileName)
+    int saveToFile(const SteadyStateResults & results,
+                   std::string_view fileName,
+                   FileParse::FileFormat format)
     {
-        return Common::saveToXMLFile(results, fileName, topNodeName);
+        switch(format)
+        {
+            case FileParse::FileFormat::XML:
+                return Common::saveToXMLFile(results, fileName, topNodeName);
+            case FileParse::FileFormat::JSON:
+                return Common::saveToJSONFile(results, fileName, topNodeName);
+            default:
+                return -1;
+        }
     }
 
-    std::string saveToString(const SteadyStateResults & results)
+    std::string saveToString(const SteadyStateResults & results, FileParse::FileFormat format)
     {
-        return Common::saveToXMLString(results, topNodeName);
+        return Common::saveToString(results, topNodeName, format);
     }
 
     int saveToZipFile(const SteadyStateResults & results, std::string_view zipFileName)
