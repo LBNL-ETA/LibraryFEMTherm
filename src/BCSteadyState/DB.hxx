@@ -74,15 +74,17 @@ namespace BCSteadyStateLibrary
         {
             std::optional<BoundaryCondition> result;
 
-            if(auto it = std::find_if(m_BoundaryConditions.begin(), m_BoundaryConditions.end(), pred);
-               it != m_BoundaryConditions.end())
+            if(value.empty())
             {
-                result = *it;
+                // Return first record as default when search value is empty
+                return m_BoundaryConditions.empty() ? std::nullopt
+                                                    : std::optional<BoundaryCondition>{m_BoundaryConditions[0]};
             }
 
-            if(value.empty() && !m_BoundaryConditions.empty())
+            if(auto iter = std::find_if(m_BoundaryConditions.begin(), m_BoundaryConditions.end(), pred);
+               iter != m_BoundaryConditions.end())
             {
-                result = m_BoundaryConditions[0];
+                result = *iter;
             }
 
             return result;

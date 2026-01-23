@@ -78,8 +78,12 @@ namespace MaterialsLibrary
           [&materialName](const Material & mat) { return LibraryCommon::DisplayName(mat) == materialName; });
     }
 
-    Material DB::getDefaultRecord() const
+    std::optional<Material> DB::getDefaultRecord() const
     {
+        if(m_DefaultRecordIndex >= m_Materials.size())
+        {
+            return std::nullopt;
+        }
         return m_Materials[m_DefaultRecordIndex];
     }
 
@@ -184,14 +188,12 @@ namespace MaterialsLibrary
 
     void DB::setDefaultRecord(std::string_view materialName)
     {
-        size_t index = 0;
-        for(const auto & material : m_Materials)
+        auto iter = std::ranges::find_if(
+          m_Materials, [&materialName](const Material & mat) { return LibraryCommon::DisplayName(mat) == materialName; });
+
+        if(iter != m_Materials.end())
         {
-            if(LibraryCommon::DisplayName(material) == materialName)
-            {
-                m_DefaultRecordIndex = index;
-            }
-            ++index;
+            m_DefaultRecordIndex = static_cast<size_t>(std::distance(m_Materials.begin(), iter));
         }
     }
 

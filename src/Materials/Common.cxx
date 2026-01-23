@@ -47,12 +47,14 @@ namespace MaterialsLibrary
                 }
             }
 
-            if(!result.has_value())
+            if(res.size() >= 2)
             {
-                result = std::vector<point>();
+                if(!result.has_value())
+                {
+                    result = std::vector<point>();
+                }
+                result->push_back({res[0], res[1]});
             }
-
-            result->push_back({res[0], res[1]});
         }
 
         return result;

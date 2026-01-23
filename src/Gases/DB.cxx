@@ -151,11 +151,11 @@ namespace GasesLibrary
     template<typename NodeType>
     void DB::savePureGases(NodeType & gasesNode) const
     {
+        Tags tag;
         for(const auto & gas : m_PureGases)
         {
             if(!LibraryCommon::isRecordTemporary(gas))
             {
-                Tags tag;
                 auto pureGasNode = gasesNode.addChild(tag.pureGas());
                 pureGasNode << gas;
             }
@@ -306,26 +306,17 @@ namespace GasesLibrary
 
     void DB::updatePureGas(const PureGas & pure)
     {
-        for(auto & pureGas : m_PureGases)
+        if(auto iter = std::ranges::find_if(m_PureGases,
+                                             [&pure](const PureGas & gas) { return gas.Name == pure.Name; });
+           iter != m_PureGases.end())
         {
-            if(pureGas.Name == pure.Name)
-            {
-                pureGas = pure;
-                break;
-            }
+            *iter = pure;
         }
     }
 
     void DB::removePureGas(const PureGas & pure)
     {
-        for(auto it = m_PureGases.begin(); it != m_PureGases.end(); ++it)
-        {
-            if(it->Name == pure.Name)
-            {
-                m_PureGases.erase(it);
-                break;
-            }
-        }
+        std::erase_if(m_PureGases, [&pure](const PureGas & gas) { return gas.Name == pure.Name; });
     }
 
     std::vector<GasesData> DB::getGasesData() const

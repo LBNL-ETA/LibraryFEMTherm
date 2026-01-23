@@ -44,7 +44,8 @@ namespace MaterialsLibrary
         [[nodiscard]] std::optional<Material> getByUUID(std::string_view uuid) const;
 
         //! \brief Default record is needed to select something at the beginning.
-        [[nodiscard]] Material getDefaultRecord() const;
+        //! \return The default material record, or std::nullopt if no materials exist.
+        [[nodiscard]] std::optional<Material> getDefaultRecord() const;
 
         [[nodiscard]] std::vector<std::string> getNames() const;
 
