@@ -48,6 +48,8 @@ namespace GasesLibrary
 
         [[nodiscard]] std::string getFileName() const;
 
+        void loadFromString(const std::string & str);
+
         void addPureGas(const PureGas & pure);
         void updatePureGas(const PureGas & pure);
         void removePureGas(const PureGas & pure);

@@ -93,6 +93,12 @@ namespace GasesLibrary
         m_Gases = loadGasesFromXMLFile(fileName);
     }
 
+    void DB::loadFromString(const std::string & str)
+    {
+        m_PureGases = loadPureGasesFromXMLString(str);
+        m_Gases = loadGasesDataFromXMLString(str);
+    }
+
     std::optional<PureGas> DB::getPureGasByUUID(std::string_view uuid) const
     {
         return lbnl::find_element(m_PureGases, [&uuid](const PureGas & gas) { return gas.UUID == uuid; });
