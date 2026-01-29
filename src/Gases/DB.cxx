@@ -116,8 +116,6 @@ namespace GasesLibrary
 
     int DB::saveToFile(FileParse::FileFormat format)
     {
-        removeTemporaryGasRecords();
-
         Tags tag;
         auto node{Common::createTopNode(tag.gases(), format)};
 
@@ -136,8 +134,6 @@ namespace GasesLibrary
 
     std::string DB::saveToString(FileParse::FileFormat format)
     {
-        removeTemporaryGasRecords();
-
         Tags tag;
         auto node{Common::createTopNode(tag.gases(), format)};
 
@@ -197,10 +193,14 @@ namespace GasesLibrary
     template<typename NodeType>
     void DB::saveGases(NodeType & gasesNode) const
     {
-        if(!m_Gases.empty())
+        Tags tag;
+        for(const auto & gas : m_Gases)
         {
-            GasesLibrary::Tags tag;
-            gasesNode << FileParse::Child{tag.gas(), m_Gases};
+            if(!LibraryCommon::isRecordTemporary(gas))
+            {
+                auto gasNode = gasesNode.addChild(tag.gas());
+                gasNode << gas;
+            }
         }
     }
 
@@ -339,7 +339,7 @@ namespace GasesLibrary
                 return getPureGasByDisplayName(component.PureGasName);
             });
             GasesData data{
-              .gas = gas, .components = pureGases, .Name = gas.Name, .ProjectName = {}, .Protected = false};
+              .gas = gas, .components = pureGases, .Name = gas.Name, .ProjectName = gas.ProjectName, .Protected = gas.Protected};
             result.push_back(std::move(data));
         }
 
