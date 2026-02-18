@@ -3,6 +3,7 @@
 #include "GlazingSystem.hxx"
 
 #include <fileParse/Map.hxx>
+#include <fileParse/Optional.hxx>
 #include <fileParse/Vector.hxx>
 
 #include "EnumSerializers.hxx"
@@ -192,6 +193,34 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
+    const NodeAdapter & operator>>(const NodeAdapter & node, ThermFile::CavityCRProperties & crProperties)
+    {
+        node >> FileParse::Child{"CalcUnsealedCR", crProperties.calcUnsealedCR};
+        node >> FileParse::Child{"UseCustomRelativeHumidityRatio", crProperties.useCustomRelativeHumidityRatio};
+        node >> FileParse::Child{"UseUnsealedTowardInterior", crProperties.useUnsealedTowardInterior};
+        node >> FileParse::Child{"CustomRelativeHumidityRatio", crProperties.customRelativeHumidityRatio};
+        node >> FileParse::Child{"BCName", crProperties.bcName};
+        node >> FileParse::Child{"BCRelativeHumidity", crProperties.bcRelativeHumidity};
+        node >> FileParse::Child{"BCTemperature", crProperties.bcTemperature};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    NodeAdapter & operator<<(NodeAdapter & node, const ThermFile::CavityCRProperties & crProperties)
+    {
+        node << FileParse::Child{"CalcUnsealedCR", crProperties.calcUnsealedCR};
+        node << FileParse::Child{"UseCustomRelativeHumidityRatio", crProperties.useCustomRelativeHumidityRatio};
+        node << FileParse::Child{"UseUnsealedTowardInterior", crProperties.useUnsealedTowardInterior};
+        node << FileParse::Child{"CustomRelativeHumidityRatio", crProperties.customRelativeHumidityRatio};
+        node << FileParse::Child{"BCName", crProperties.bcName};
+        node << FileParse::Child{"BCRelativeHumidity", crProperties.bcRelativeHumidity};
+        node << FileParse::Child{"BCTemperature", crProperties.bcTemperature};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, ThermFile::IGUGas & iguGas)
     {
         node >> FileParse::Child{"ID", iguGas.ID};
@@ -199,6 +228,7 @@ namespace ThermFile
         node >> FileParse::Child{"Thickness", iguGas.thickness};
         node >> FileParse::Child{"Conductivity", iguGas.conductivity};
         node >> FileParse::Child{{"Components", "Component"}, iguGas.components};
+        node >> FileParse::Child{"CRProperties", iguGas.crProperties};
 
         return node;
     }
@@ -211,6 +241,7 @@ namespace ThermFile
         node << FileParse::Child{"Thickness", iguGas.thickness};
         node << FileParse::Child{"Conductivity", iguGas.conductivity};
         node << FileParse::Child{{"Components", "Component"}, iguGas.components};
+        node << FileParse::Child{"CRProperties", iguGas.crProperties};
 
         return node;
     }
