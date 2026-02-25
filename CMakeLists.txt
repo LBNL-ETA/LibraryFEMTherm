@@ -122,6 +122,8 @@ target_link_libraries(${target_name} PRIVATE FileParse LBNLCPPCommon miniz)
 set_property(TARGET ${target_name} PROPERTY FileParse_Branch ${FileParse_Branch})
 set_property(TARGET ${target_name} PROPERTY miniz_Branch ${miniz_Branch})
 
+enable_testing()
+
 if(BUILD_LibraryFEMTHERM_TESTING)
     add_subdirectory(tst)
     # Add include directories for tests if necessary

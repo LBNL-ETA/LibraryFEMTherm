@@ -64,7 +64,7 @@ endfunction()
 # Add google tests macro
 macro(ADD_GOOGLE_TESTS executable)
   foreach ( source ${ARGN} )
-    string(REGEX MATCH .*cpp|.*cc source "${source}")
+    string(REGEX MATCH ".*cpp|.*cc|.*cxx" source "${source}")
     if(source)
       file(READ "${source}" contents)
       string(REGEX MATCHALL "TEST_?F?\\(([A-Za-z_0-9 ,]+)\\)" found_tests ${contents})
