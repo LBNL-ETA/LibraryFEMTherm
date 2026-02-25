@@ -5,7 +5,7 @@ Uses sample-sill.thmz Gases.xml extracted via ThermZip bindings.
 
 import pytest
 
-import _femtherm as fem
+import pylibraryfemtherm as fem
 
 TOL = 1e-6
 

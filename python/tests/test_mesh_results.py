@@ -1,6 +1,6 @@
 """Tests for SteadyStateMeshResults bindings: load, round-trip, struct creation."""
 
-import _femtherm as fem
+import pylibraryfemtherm as fem
 
 TOL = 1e-6
 

@@ -1,6 +1,6 @@
 """Tests for enum bindings — verify all enum types are accessible and have expected values."""
 
-import _femtherm as fem
+import pylibraryfemtherm as fem
 
 
 class TestGeometryEnums:

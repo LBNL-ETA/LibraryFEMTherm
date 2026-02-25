@@ -3,7 +3,7 @@
 Verifies default constructors, field assignment, and variant setters work.
 """
 
-import _femtherm as fem
+import pylibraryfemtherm as fem
 
 TOL = 1e-6
 

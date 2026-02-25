@@ -8,7 +8,7 @@ import tempfile
 
 import pytest
 
-import _femtherm as fem
+import pylibraryfemtherm as fem
 
 
 class TestTHMZLoad:

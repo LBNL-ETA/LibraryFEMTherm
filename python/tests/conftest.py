@@ -4,7 +4,7 @@ import os
 import sys
 import pytest
 
-# Add the build output directory to sys.path so _femtherm can be imported.
+# Add the build output directory to sys.path so pylibraryfemtherm can be imported.
 # FEMTHERM_MODULE_DIR points to the python/ source dir. The .so/.pyd lives
 # either directly there (single-config: Ninja, Makefiles) or in a config
 # subdirectory (multi-config: Visual Studio → Release/ or Debug/).
@@ -22,7 +22,7 @@ for _dir in _search_dirs:
     if _abs not in sys.path:
         sys.path.insert(0, _abs)
 
-import _femtherm as fem  # noqa: E402
+import pylibraryfemtherm as fem  # noqa: E402
 
 
 @pytest.fixture()

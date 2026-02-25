@@ -1,2 +1,2 @@
-from _femtherm import *
-from _femtherm import zip
+from pylibraryfemtherm import *
+from pylibraryfemtherm import zip

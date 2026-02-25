@@ -6,7 +6,7 @@ mirroring how the C++ tests load from XML files.
 
 import pytest
 
-import _femtherm as fem
+import pylibraryfemtherm as fem
 
 TOL = 1e-6
 

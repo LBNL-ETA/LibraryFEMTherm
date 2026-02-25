@@ -1,6 +1,6 @@
 """Tests for Mesh bindings: load from THMZ, struct creation, round-trip."""
 
-import _femtherm as fem
+import pylibraryfemtherm as fem
 
 TOL = 1e-6
 

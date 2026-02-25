@@ -6,7 +6,7 @@ are correctly loaded from the sample-sill.thmz glazing system.
 
 import pytest
 
-import _femtherm as fem
+import pylibraryfemtherm as fem
 
 TOL = 1e-6
 

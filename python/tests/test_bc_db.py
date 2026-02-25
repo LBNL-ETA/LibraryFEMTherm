@@ -5,7 +5,7 @@ Uses sample-sill.thmz SteadyStateBC.xml and ID50_CS_single.thmz.
 
 import pytest
 
-import _femtherm as fem
+import pylibraryfemtherm as fem
 
 TOL = 1e-6
 

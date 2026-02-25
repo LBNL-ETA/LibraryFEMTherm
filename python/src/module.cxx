@@ -17,7 +17,7 @@ void bind_mesh(py::module_ & mod);
 void bind_mesh_results(py::module_ & mod);
 void bind_steady_state_results(py::module_ & mod);
 
-PYBIND11_MODULE(_femtherm, mod)
+PYBIND11_MODULE(pylibraryfemtherm, mod)
 {
     mod.doc() = "Python bindings for LibraryFEMTherm — THMZ load/save and library access";
 
