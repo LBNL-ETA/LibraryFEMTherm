@@ -5,13 +5,22 @@ import sys
 import pytest
 
 # Add the build output directory to sys.path so _femtherm can be imported.
-# CI sets FEMTHERM_MODULE_DIR; locally fall back to Release/ next to python/.
-_module_dir = os.environ.get(
+# FEMTHERM_MODULE_DIR points to the python/ source dir. The .so/.pyd lives
+# either directly there (single-config: Ninja, Makefiles) or in a config
+# subdirectory (multi-config: Visual Studio → Release/ or Debug/).
+_python_dir = os.environ.get(
     "FEMTHERM_MODULE_DIR",
-    os.path.join(os.path.dirname(__file__), "..", "Release"),
+    os.path.join(os.path.dirname(__file__), ".."),
 )
-if _module_dir not in sys.path:
-    sys.path.insert(0, os.path.abspath(_module_dir))
+_search_dirs = [
+    _python_dir,
+    os.path.join(_python_dir, "Release"),
+    os.path.join(_python_dir, "Debug"),
+]
+for _dir in _search_dirs:
+    _abs = os.path.abspath(_dir)
+    if _abs not in sys.path:
+        sys.path.insert(0, _abs)
 
 import _femtherm as fem  # noqa: E402
 
