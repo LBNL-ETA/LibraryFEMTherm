@@ -6,6 +6,8 @@
 #include "THMZ/Properties/GravityProperties.hxx"
 #include "THMZ/GlazingSystem/Enumerators.hxx"
 #include "THMZ/CMA/Enumerators.hxx"
+#include "THMZ/Common/Enumerators.hxx"
+#include "THMZ/SteadyStateResults/Enumerators.hxx"
 #include "Materials/Definitions.hxx"
 #include "fileParse/FileFormat.hxx"
 
@@ -190,6 +192,29 @@ void bind_enums(py::module_ & mod)
         .value("None_", ThermFile::CMACase::None)
         .value("Low", ThermFile::CMACase::Low)
         .value("High", ThermFile::CMACase::High);
+
+    // --- Common enums (Mesh / Results) ---
+    py::enum_<ThermFile::RunType>(mod, "RunType")
+        .value("Unknown", ThermFile::RunType::Unknown)
+        .value("UFactor", ThermFile::RunType::UFactor)
+        .value("CondensationResistance", ThermFile::RunType::CondensationResistance);
+
+    py::enum_<ThermFile::SegmentType>(mod, "SegmentType")
+        .value("Unknown", ThermFile::SegmentType::Unknown)
+        .value("Flux", ThermFile::SegmentType::Flux)
+        .value("Temperature", ThermFile::SegmentType::Temperature)
+        .value("Convection", ThermFile::SegmentType::Convection)
+        .value("Radiation", ThermFile::SegmentType::Radiation)
+        .value("RadiationEnclosure", ThermFile::SegmentType::RadiationEnclosure);
+
+    py::enum_<ThermFile::UValueDimensionType>(mod, "UValueDimensionType")
+        .value("Unknown", ThermFile::UValueDimensionType::Unknown)
+        .value("TotalLength", ThermFile::UValueDimensionType::TotalLength)
+        .value("XProjected", ThermFile::UValueDimensionType::XProjected)
+        .value("YProjected", ThermFile::UValueDimensionType::YProjected)
+        .value("Custom", ThermFile::UValueDimensionType::Custom)
+        .value("GlassRotationProjected", ThermFile::UValueDimensionType::GlassRotationProjected)
+        .value("CustomRotationProjected", ThermFile::UValueDimensionType::CustomRotationProjected);
 
     // --- Materials enums ---
     py::enum_<MaterialsLibrary::MaterialType>(mod, "MaterialType")

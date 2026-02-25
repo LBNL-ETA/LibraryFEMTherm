@@ -13,6 +13,9 @@ void bind_zip(py::module_ & mod);
 void bind_materials(py::module_ & mod);
 void bind_bc(py::module_ & mod);
 void bind_gases(py::module_ & mod);
+void bind_mesh(py::module_ & mod);
+void bind_mesh_results(py::module_ & mod);
+void bind_steady_state_results(py::module_ & mod);
 
 PYBIND11_MODULE(_femtherm, mod)
 {
@@ -29,4 +32,7 @@ PYBIND11_MODULE(_femtherm, mod)
     bind_materials(mod);
     bind_bc(mod);
     bind_gases(mod);
+    bind_mesh(mod);
+    bind_mesh_results(mod);
+    bind_steady_state_results(mod);
 }
