@@ -6,7 +6,6 @@
 #include <vector>
 #include <array>
 #include <algorithm>
-#include <span>
 
 namespace LibraryCommon
 {
@@ -26,7 +25,7 @@ namespace LibraryCommon
     template<typename EnumType, std::size_t N>
     std::string enumToString(EnumType value, const std::array<std::string, N> & values)
     {
-        std::size_t index = static_cast<std::size_t>(value);
+        auto index = static_cast<std::size_t>(value);
         if(index < values.size())
         {
             return values[index];
@@ -106,7 +105,7 @@ namespace LibraryCommon
         return false;
     }
 
-    template<typename T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
+    template<typename T, std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
     bool isEqual(const std::optional<T> & value1, const std::optional<T> & value2, const double tolerance = 1e-9)
     {
         if(value1 && value2)
