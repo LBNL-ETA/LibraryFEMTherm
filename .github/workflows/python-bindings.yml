@@ -1,0 +1,61 @@
+name: Python bindings
+
+on: [push, pull_request]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  python-bindings:
+    name: ${{ matrix.os }} Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-24.04, macos-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Upgrade gcc (Linux only)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y gcc g++
+
+      - name: Configure CMake
+        run: >
+          cmake -B ${{github.workspace}}/build-python
+          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+          -DBUILD_PYTHON_BINDINGS=ON
+          -DBUILD_LibraryFEMTHERM_TESTING=OFF
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build-python --config ${{env.BUILD_TYPE}}
+
+      - name: Find module and run tests (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $module = Get-ChildItem -Path "${{github.workspace}}/build-python" -Recurse -Filter "_femtherm*.pyd" | Select-Object -First 1
+          $moduleDir = $module.DirectoryName
+          Write-Host "Module found at: $moduleDir"
+          $env:FEMTHERM_MODULE_DIR = $moduleDir
+          pytest python/tests -v
+        shell: pwsh
+
+      - name: Find module and run tests (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          MODULE_PATH=$(find ${{github.workspace}}/build-python -name "_femtherm*.so" -print -quit)
+          MODULE_DIR=$(dirname "$MODULE_PATH")
+          echo "Module found at: $MODULE_DIR"
+          export FEMTHERM_MODULE_DIR="$MODULE_DIR"
+          pytest python/tests -v

@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 3.8)
 
-# Force all targets to use the dynamic runtime library on MSVC
+option(BUILD_PYTHON_BINDINGS "Build Python bindings via pybind11" OFF)
+
+# Python extensions require /MD (dynamic CRT); static library uses /MT
 if (MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    if(BUILD_PYTHON_BINDINGS)
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+    else()
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    endif()
 endif()
 
 project(LibraryFEMTHERM VERSION 0.15.0 LANGUAGES CXX)
@@ -70,6 +76,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(miniz)
 
+if(BUILD_PYTHON_BINDINGS)
+    find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
+    FetchContent_Declare(pybind11
+        GIT_REPOSITORY https://github.com/pybind/pybind11.git
+        GIT_TAG v2.13.6)
+    FetchContent_MakeAvailable(pybind11)
+endif()
+
 if(DOWNLOAD_GTEST)
     if(MSVC)
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -113,6 +127,10 @@ if(BUILD_LibraryFEMTHERM_TESTING)
     # Add include directories for tests if necessary
     set(TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tst")
     target_compile_definitions(LibraryFEMTHERM_tests PRIVATE TEST_DATA_DIR="${TEST_DATA_DIR}")
+endif()
+
+if(BUILD_PYTHON_BINDINGS)
+    add_subdirectory(python)
 endif()
 
 config_compiler_and_linker_LibraryFEMTHERM()
