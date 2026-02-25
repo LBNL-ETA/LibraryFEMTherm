@@ -44,7 +44,7 @@ jobs:
       - name: Find module and run tests (Windows)
         if: runner.os == 'Windows'
         run: |
-          $module = Get-ChildItem -Path "${{github.workspace}}/build-python" -Recurse -Filter "_femtherm*.pyd" | Select-Object -First 1
+          $module = Get-ChildItem -Path "${{github.workspace}}/python" -Recurse -Filter "_femtherm*.pyd" | Select-Object -First 1
           $moduleDir = $module.DirectoryName
           Write-Host "Module found at: $moduleDir"
           $env:FEMTHERM_MODULE_DIR = $moduleDir
@@ -54,7 +54,7 @@ jobs:
       - name: Find module and run tests (Unix)
         if: runner.os != 'Windows'
         run: |
-          MODULE_PATH=$(find ${{github.workspace}}/build-python -name "_femtherm*.so" -print -quit)
+          MODULE_PATH=$(find ${{github.workspace}}/python -name "_femtherm*.so" -print -quit)
           MODULE_DIR=$(dirname "$MODULE_PATH")
           echo "Module found at: $MODULE_DIR"
           export FEMTHERM_MODULE_DIR="$MODULE_DIR"
