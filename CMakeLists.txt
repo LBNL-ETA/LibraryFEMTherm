@@ -3,6 +3,10 @@ cmake_minimum_required(VERSION 3.8)
 option(BUILD_PYTHON_BINDINGS "Build Python bindings via pybind11" OFF)
 
 # Python extensions require /MD (dynamic CRT); static library uses /MT
+if(BUILD_PYTHON_BINDINGS)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
+
 if (MSVC)
     if(BUILD_PYTHON_BINDINGS)
         set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
