@@ -51,7 +51,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(LBNLCPPCommon)
 
-set(FileParse_Branch "Version_1.1.0")
+set(FileParse_Branch "feature/xmlparser-no-wide-char")
 
 FetchContent_Declare(
     FileParse
