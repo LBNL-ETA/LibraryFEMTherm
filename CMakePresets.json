@@ -4,7 +4,6 @@
     {
       "name": "default",
       "displayName": "C++ only",
-      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
@@ -13,7 +12,6 @@
     {
       "name": "python",
       "displayName": "C++ with Python bindings",
-      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
