@@ -97,6 +97,17 @@
 			<xs:element name="Component" type="IGUPureGas" minOccurs="1" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
+	<xs:complexType name="CavityCRProperties">
+		<xs:all>
+			<xs:element name="CalcUnsealedCR" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="UseCustomRelativeHumidityRatio" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="UseUnsealedTowardInterior" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="CustomRelativeHumidityRatio" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="BCName" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="BCRelativeHumidity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="BCTemperature" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
 	<xs:complexType name="IGUGas">
 		<xs:sequence>
 			<xs:element name="ID" type="xs:integer" minOccurs="1" maxOccurs="1"/>
@@ -104,6 +115,7 @@
 			<xs:element name="Thickness" type="xs:double" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="Conductivity" type="xs:double" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="Components" type="IGUPureGases" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="CRProperties" type="CavityCRProperties" minOccurs="0" maxOccurs="1"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="IGUGases">

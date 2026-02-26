@@ -63,6 +63,17 @@ namespace ThermFile
         IGUGasProperties properties;
     };
 
+    struct CavityCRProperties
+    {
+        bool calcUnsealedCR{false};
+        bool useCustomRelativeHumidityRatio{false};
+        bool useUnsealedTowardInterior{true};
+        double customRelativeHumidityRatio{0.0};
+        std::string bcName;
+        double bcRelativeHumidity{0.5};
+        double bcTemperature{10.3};
+    };
+
     struct IGUGas
     {
         size_t ID{0u};
@@ -70,6 +81,7 @@ namespace ThermFile
         double thickness{0.0};
         double conductivity{0.0};
         std::vector<IGUPureGas> components;
+        std::optional<CavityCRProperties> crProperties;
     };
 
     struct ShadeProperties
