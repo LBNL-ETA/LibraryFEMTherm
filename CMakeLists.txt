@@ -53,32 +53,36 @@ include(FetchContent)
 
 set(LBNLCPPCommon_Branch "v0.14")
 
-FetchContent_Declare(
-        LBNLCPPCommon
-        GIT_REPOSITORY https://github.com/LBNL-ETA/LBNLCPPCommon.git
-        GIT_TAG ${LBNLCPPCommon_Branch}
-)
-
-FetchContent_MakeAvailable(LBNLCPPCommon)
+if(NOT TARGET LBNLCPPCommon)
+    FetchContent_Declare(
+            LBNLCPPCommon
+            GIT_REPOSITORY https://github.com/LBNL-ETA/LBNLCPPCommon.git
+            GIT_TAG ${LBNLCPPCommon_Branch}
+    )
+    FetchContent_MakeAvailable(LBNLCPPCommon)
+endif()
 
 set(FileParse_Branch "feature/xmlparser-no-wide-char")
 
-FetchContent_Declare(
-    FileParse
-    GIT_REPOSITORY https://github.com/LBNL-ETA/FileParse.git
-    GIT_TAG ${FileParse_Branch}
-)
-
-FetchContent_MakeAvailable(FileParse)
+if(NOT TARGET FileParse)
+    FetchContent_Declare(
+        FileParse
+        GIT_REPOSITORY https://github.com/LBNL-ETA/FileParse.git
+        GIT_TAG ${FileParse_Branch}
+    )
+    FetchContent_MakeAvailable(FileParse)
+endif()
 
 set(miniz_Branch "89d7a5f6c3ce8893ea042b0a9d2a2d9975589ac9")
 
-FetchContent_Declare(
-    miniz
-    GIT_REPOSITORY https://github.com/richgel999/miniz
-    GIT_TAG ${miniz_Branch}
-)
-FetchContent_MakeAvailable(miniz)
+if(NOT TARGET miniz)
+    FetchContent_Declare(
+        miniz
+        GIT_REPOSITORY https://github.com/richgel999/miniz
+        GIT_TAG ${miniz_Branch}
+    )
+    FetchContent_MakeAvailable(miniz)
+endif()
 
 if(BUILD_PYTHON_BINDINGS)
     find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
