@@ -61,6 +61,7 @@ if(NOT TARGET LBNLCPPCommon)
     )
     FetchContent_MakeAvailable(LBNLCPPCommon)
 endif()
+FetchContent_GetProperties(LBNLCPPCommon)
 
 set(FileParse_Branch "feature/xmlparser-no-wide-char")
 
@@ -72,6 +73,7 @@ if(NOT TARGET FileParse)
     )
     FetchContent_MakeAvailable(FileParse)
 endif()
+FetchContent_GetProperties(FileParse)
 
 set(miniz_Branch "89d7a5f6c3ce8893ea042b0a9d2a2d9975589ac9")
 
