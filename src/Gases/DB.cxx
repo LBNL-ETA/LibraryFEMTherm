@@ -22,29 +22,27 @@ namespace GasesLibrary
     template<typename T>
     T processGasesNodeFromFile(const std::string_view & fileName, const std::string & tag)
     {
-        using lbnl::operator|;
-        using lbnl::operator||;
-
         Tags fileTags;
-        return getXMLTopNodeFromFile(fileName.data(), fileTags.gases()) | [&](auto & node) {
-            T result{};
-            node >> FileParse::Child{tag, result};
-            return result;
-        } || [] { return T{}; };
+        return lbnl::extend(getXMLTopNodeFromFile(fileName.data(), fileTags.gases()))
+          .and_then([&](auto & node) {
+              T result{};
+              node >> FileParse::Child{tag, result};
+              return std::optional<T>{result};
+          })
+          .value_or(T{});
     }
 
     template<typename T>
     T processGasesNodeFromString(const std::string_view & xmlString, const std::string & tag)
     {
-        using lbnl::operator|;
-        using lbnl::operator||;
-
         Tags fileTags;
-        return getXMLTopNodeFromString(xmlString.data(), fileTags.gases()) | [&](auto & node) {
-            T result{};
-            node >> FileParse::Child{tag, result};
-            return result;
-        } || [] { return T{}; };   // Return default `T{}` when no value exists
+        return lbnl::extend(getXMLTopNodeFromString(xmlString.data(), fileTags.gases()))
+          .and_then([&](auto & node) {
+              T result{};
+              node >> FileParse::Child{tag, result};
+              return std::optional<T>{result};
+          })
+          .value_or(T{});
     }
 
     std::string loadVersionFromXMLFile(std::string_view fileName)

@@ -51,7 +51,7 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
-set(LBNLCPPCommon_Branch "v0.14")
+set(LBNLCPPCommon_Branch "fix/code-review-fixes")
 
 if(NOT TARGET LBNLCPPCommon)
     FetchContent_Declare(
