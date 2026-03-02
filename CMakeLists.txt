@@ -7,15 +7,7 @@ if(BUILD_PYTHON_BINDINGS)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-if (MSVC)
-    if(BUILD_PYTHON_BINDINGS)
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-    else()
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-    endif()
-endif()
-
-project(LibraryFEMTHERM VERSION 0.15.0 LANGUAGES CXX)
+project(LibraryFEMTHERM VERSION 0.16.0 LANGUAGES CXX)
 set(target_name LibraryFEMTHERM)
 
 include(cmake/LibraryFEMTHERMProjectMacros.cmake)
@@ -51,7 +43,7 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
-set(LBNLCPPCommon_Branch "fix/code-review-fixes")
+set(LBNLCPPCommon_Branch "v0.15")
 
 if(NOT TARGET LBNLCPPCommon)
     FetchContent_Declare(
@@ -63,7 +55,7 @@ if(NOT TARGET LBNLCPPCommon)
 endif()
 FetchContent_GetProperties(LBNLCPPCommon)
 
-set(FileParse_Branch "feature/xmlparser-no-wide-char")
+set(FileParse_Branch "Version_1.1.1")
 
 if(NOT TARGET FileParse)
     FetchContent_Declare(
