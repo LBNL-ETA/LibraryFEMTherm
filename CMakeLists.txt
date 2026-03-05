@@ -7,7 +7,7 @@ if(BUILD_PYTHON_BINDINGS)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-project(LibraryFEMTHERM VERSION 0.16.0 LANGUAGES CXX)
+project(LibraryFEMTHERM VERSION 0.17.0 LANGUAGES CXX)
 set(target_name LibraryFEMTHERM)
 
 include(cmake/LibraryFEMTHERMProjectMacros.cmake)
@@ -55,7 +55,7 @@ if(NOT TARGET LBNLCPPCommon)
 endif()
 FetchContent_GetProperties(LBNLCPPCommon)
 
-set(FileParse_Branch "Version_1.1.1")
+set(FileParse_Branch "Version_1.1.2")
 
 if(NOT TARGET FileParse)
     FetchContent_Declare(
@@ -101,6 +101,12 @@ if(DOWNLOAD_GTEST)
         include_directories(${gtest_SOURCE_DIR}/include)
     endif()
 endif()
+
+# Generate dependency diagram from template
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/doc/LibraryFEMTHERM.md.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/doc/LibraryFEMTHERM.md
+)
 
 file(GLOB_RECURSE SOURCES_HXX "src/*.hxx")
 file(GLOB_RECURSE SOURCES_CXX "src/*.cxx")
