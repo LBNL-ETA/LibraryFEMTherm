@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "libraryfemtherm"
-version = "0.17.0"
+version = "0.18.0"
 description = "Python bindings for LibraryFEMTherm – THMZ file parsing and thermal simulation data"
 readme = "README.md"
 license = {file = "LICENSE"}
