@@ -272,6 +272,6 @@ namespace ThermZip
 
     std::string addTimestepDirectoryToFileName(const std::string & fileName)
     {
-        return (TimestepFilesDir / fileName).string();
+        return TimestepFilesDir + "/" + fileName;
     }
 }   // namespace ThermZip

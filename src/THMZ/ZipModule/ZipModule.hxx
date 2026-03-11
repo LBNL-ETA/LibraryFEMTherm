@@ -1,6 +1,5 @@
 #pragma once
 
-#include <filesystem>
 #include <optional>
 #include <string>
 #include <map>
@@ -16,28 +15,28 @@ namespace ThermZip
 
     // Transient results directory
 
-    const std::filesystem::path ResultsDirPath = "transient results";
+    const std::string ResultsDirPath = "transient results";
 
-    const std::filesystem::path GeometryFilePath = ResultsDirPath / "Geometry.xml";
-    const std::filesystem::path HeatFluxFilePath = ResultsDirPath / "HeatFlux.csv";
-    const std::filesystem::path HeatFluxEdgesFilePath = ResultsDirPath / "HeatFluxEdges.csv";
-    const std::filesystem::path HumidityFilePath = ResultsDirPath / "Humidities.csv";
-    const std::filesystem::path TemperatureFilePath = ResultsDirPath / "Temperatures.csv";
-    const std::filesystem::path WaterContentFilePath = ResultsDirPath / "WaterContent.csv";
-    const std::filesystem::path WaterFluxFilePath = ResultsDirPath / "WaterFlux.csv";
-    const std::filesystem::path WaterFluxEdgesFilePath = ResultsDirPath / "WaterFluxEdges.csv";
+    const std::string GeometryFilePath = ResultsDirPath + "/Geometry.xml";
+    const std::string HeatFluxFilePath = ResultsDirPath + "/HeatFlux.csv";
+    const std::string HeatFluxEdgesFilePath = ResultsDirPath + "/HeatFluxEdges.csv";
+    const std::string HumidityFilePath = ResultsDirPath + "/Humidities.csv";
+    const std::string TemperatureFilePath = ResultsDirPath + "/Temperatures.csv";
+    const std::string WaterContentFilePath = ResultsDirPath + "/WaterContent.csv";
+    const std::string WaterFluxFilePath = ResultsDirPath + "/WaterFlux.csv";
+    const std::string WaterFluxEdgesFilePath = ResultsDirPath + "/WaterFluxEdges.csv";
 
-    inline std::string getGeometryFileName() { return GeometryFilePath.string(); }
-    inline std::string getHeatFluxFileName() { return HeatFluxFilePath.string(); }
-    inline std::string getHeatFluxEdgesFileName() { return HeatFluxEdgesFilePath.string(); }
-    inline std::string getHumidityFileName() { return HumidityFilePath.string(); }
-    inline std::string getTemperatureFileName() { return TemperatureFilePath.string(); }
-    inline std::string getWaterContentFileName() { return WaterContentFilePath.string(); }
-    inline std::string getWaterFluxFileName() { return WaterFluxFilePath.string(); }
-    inline std::string getWaterFluxEdgesFileName() { return WaterFluxEdgesFilePath.string(); }
+    inline std::string getGeometryFileName() { return GeometryFilePath; }
+    inline std::string getHeatFluxFileName() { return HeatFluxFilePath; }
+    inline std::string getHeatFluxEdgesFileName() { return HeatFluxEdgesFilePath; }
+    inline std::string getHumidityFileName() { return HumidityFilePath; }
+    inline std::string getTemperatureFileName() { return TemperatureFilePath; }
+    inline std::string getWaterContentFileName() { return WaterContentFilePath; }
+    inline std::string getWaterFluxFileName() { return WaterFluxFilePath; }
+    inline std::string getWaterFluxEdgesFileName() { return WaterFluxEdgesFilePath; }
 
     // Timestep boundary conditions directory
-    const std::filesystem::path TimestepFilesDir = "timestep input files";
+    const std::string TimestepFilesDir = "timestep input files";
 
     const std::string SteadyStateResultsName = "SteadyStateResults.xml";
     const std::string SteadyStateMeshResultsName = "SteadyStateMeshResults.xml";
