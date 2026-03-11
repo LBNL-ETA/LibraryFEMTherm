@@ -1,3 +1,5 @@
+#include <filesystem>
+
 #include <gtest/gtest.h>
 
 #include "THMZ/ZipModule/ZipModule.hxx"

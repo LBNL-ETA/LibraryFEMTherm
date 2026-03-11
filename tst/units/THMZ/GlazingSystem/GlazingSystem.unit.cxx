@@ -175,7 +175,7 @@ TEST_F(TestGlazingSystem, IGUGasDeserializer)
 
     std::vector<ThermFile::IGUPureGas> correctComponents{{0.2, airCorrect}, {0.8, argonCorrect}};
 
-    ThermFile::IGUGas correct{1, "Name", 2.0, 3.0, correctComponents};
+    ThermFile::IGUGas correct{1, "Name", 2.0, 3.0, correctComponents, std::nullopt};
 
     Helper::expect_near(correct, iguGas, 1e-6);
 }
@@ -186,7 +186,7 @@ TEST_F(TestGlazingSystem, IGUGasSerializer)
     ThermFile::IGUGasProperties xenonCorrect{"Xenon", 0.0004538, {11, 12, 13}, {14, 15, 16}, {17, 18, 19}};
 
     std::vector<ThermFile::IGUPureGas> correctComponents{{0.2, airCorrect}, {0.8, xenonCorrect}};
-    ThermFile::IGUGas iguGas{1, "Name", 2.0, 3.0, correctComponents};
+    ThermFile::IGUGas iguGas{1, "Name", 2.0, 3.0, correctComponents, std::nullopt};
 
     Helper::MockNode elementNode("IGUGas");
     Helper::MockNodeAdapter adapter{&elementNode};
@@ -276,7 +276,7 @@ TEST_F(TestGlazingSystem, GlazingSystemSerializer)
     ThermFile::IGUGasProperties airCorrect{"Air", 0.002873, {1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
 
     std::vector<ThermFile::IGUPureGas> correctComponents{{1.0, airCorrect}};
-    ThermFile::IGUGas iguGas{1, "Air", 0.2, 1.2, correctComponents};
+    ThermFile::IGUGas iguGas{1, "Air", 0.2, 1.2, correctComponents, std::nullopt};
     std::vector<ThermFile::IGUGas> testGases{{iguGas}};
     ThermFile::IGUShadeLayer testShade{
       ThermFile::Position::Interior, 0.5, 0.6, 0.7, 0.8, 0.9, {1.0, 2.0, 3.0, 4.0, 5.0}};
@@ -431,7 +431,7 @@ TEST_F(TestGlazingSystem, GlazingSystemDeserializer)
          {ThermFile::Position::Exterior, {7.55, 7.53, 4.2254, 8.64}}},
         5.0}},
       {{102, "Layer1", 0.5, 1.5, {3.16, 0.83}, {4.16, 0.87}}, {103, "Layer2", 0.6, 1.6, {3.26, 0.93}, {4.26, 0.97}}},
-      {{1, "Air", 0.2, 1.2, {{1.0, {"Air", 0.002873, {1, 2, 3}, {4, 5, 6}, {7, 8, 9}}}}}},
+      {{1, "Air", 0.2, 1.2, {{1.0, {"Air", 0.002873, {1, 2, 3}, {4, 5, 6}, {7, 8, 9}}}}, std::nullopt}},
       ThermFile::IGUShadeLayer{ThermFile::Position::Interior, 0.5, 0.6, 0.7, 0.8, 0.9, {1.0, 2.0, 3.0, 4.0, 5.0}},
       2.5,
       1,

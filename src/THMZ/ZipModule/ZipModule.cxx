@@ -1,12 +1,13 @@
-#include "ZipModule.hxx"
-
+#include <algorithm>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <map>
+#include <sstream>
 
 #include <miniz.h>
-#include <sstream>
-#include <iterator>
-#include <fstream>
-#include <algorithm>
+
+#include "ZipModule.hxx"
 
 namespace ThermZip
 {
