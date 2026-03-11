@@ -60,16 +60,21 @@ This runs both C++ Google Tests and Python pytest tests (when built with the `py
 
 ## Python bindings
 
-When built with `BUILD_PYTHON_BINDINGS=ON`, a `_femtherm` Python extension module is produced in the `python/` directory.
+Install from PyPI:
+
+```bash
+pip install libraryfemtherm
+```
+
+Or build from source with `BUILD_PYTHON_BINDINGS=ON` (see above).
 
 ```python
-import sys
-sys.path.insert(0, "python")  # or python/Release on Windows with MSVC
-import _femtherm as fem
+import pylibraryfemtherm as fem
 
 # Load a THMZ file
-model = fem.load_model_from_zip_file("tst/products/sample-sill.thmz")
-print(f"Polygons: {len(model.polygons)}, Boundaries: {len(model.boundaries)}")
+model = fem.load_model_from_zip_file("sample-sill.thmz")
+print(f"Polygons:   {len(model.polygons)}")
+print(f"Boundaries: {len(model.boundary_conditions)}")
 
 # Save to XML string
 xml = fem.save_model_to_string(model)
@@ -78,10 +83,12 @@ xml = fem.save_model_to_string(model)
 fem.save_model_to_zip_file(model, "output.thmz")
 
 # Work with ZIP contents directly
-contents = fem.zip.unzip_files("sample.thmz", ["Materials.xml"])
+contents = fem.zip.unzip_files("sample.thmz", [fem.zip.MATERIALS_FILE_NAME])
 db = fem.MaterialsDB()
-db.load_from_string(contents["Materials.xml"])
+db.load_from_string(contents[fem.zip.MATERIALS_FILE_NAME])
 ```
+
+For comprehensive Python API documentation with examples, see [doc/python.md](doc/python.md).
 
 ## Project structure
 

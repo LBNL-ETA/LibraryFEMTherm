@@ -12,6 +12,8 @@ target_include_directories(pylibraryfemtherm PRIVATE
 set_target_properties(pylibraryfemtherm PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
+install(TARGETS pylibraryfemtherm LIBRARY DESTINATION .)
+
 # Register pytest as a CTest test so CLion / ctest runs both C++ and Python tests
 add_test(NAME python_bindings
     COMMAND ${Python3_EXECUTABLE} -m pytest "${CMAKE_CURRENT_SOURCE_DIR}/tests" -v
