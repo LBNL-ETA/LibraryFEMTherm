@@ -152,6 +152,24 @@ namespace MaterialsLibrary
     };
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///   Database source information
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /// @brief Source information from a WINDOW database record.
+    struct WINDOW
+    {
+        std::string Path;
+        std::string Name;
+        int ID{0};
+    };
+
+    /// @brief Tracks the external database origin of a material's data.
+    struct Database
+    {
+        std::optional<WINDOW> Window;
+    };
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
     ///   Material
     /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -168,6 +186,8 @@ namespace MaterialsLibrary
         bool Protected{false};
 
         std::string Color{"0xFFFFFF"};
+
+        std::optional<Database> database;
 
         MaterialVariant data;
     };

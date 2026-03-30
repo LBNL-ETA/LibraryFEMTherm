@@ -7,7 +7,7 @@ if(BUILD_PYTHON_BINDINGS)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-project(LibraryFEMTHERM VERSION 0.18.0 LANGUAGES CXX)
+project(LibraryFEMTHERM VERSION 0.19.0 LANGUAGES CXX)
 set(target_name LibraryFEMTHERM)
 
 include(cmake/LibraryFEMTHERMProjectMacros.cmake)

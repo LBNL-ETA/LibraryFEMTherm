@@ -20,6 +20,7 @@ namespace TestMaterial
         fileContent += enclosure1();
         fileContent += cavity1();
         fileContent += cavity2();
+        fileContent += shadeWithDatabase();
         fileContent += "</Materials>";
         return fileContent;
     }
@@ -329,6 +330,36 @@ namespace TestMaterial
                 "\t\t\t\t\t<Infrared>\n"
                 "\t\t\t\t\t\t<Emissivity-Front>0.9</Emissivity-Front>\n"
                 "\t\t\t\t\t\t<Emissivity-Back>0.9</Emissivity-Back>\n"
+                "\t\t\t\t\t</Infrared>\n"
+                "\t\t\t\t</Integrated>\n"
+                "\t\t\t</Optical>\n"
+                "\t\t</Solid>\n"
+                "\t</Material>\n"};
+    }
+    std::string shadeWithDatabase()
+    {
+        return {"\t<Material>\n"
+                "\t\t<UUID>d1e2f3a4-b5c6-7890-abcd-ef1234567890</UUID>\n"
+                "\t\t<Name>Shade With DB Source</Name>\n"
+                "\t\t<Protected>false</Protected>\n"
+                "\t\t<Color>0xABCDEF</Color>\n"
+                "\t\t<Database>\n"
+                "\t\t\t<WINDOW>\n"
+                "\t\t\t\t<Path>C:\\WINDOWdb\\ShadeDB.mdb</Path>\n"
+                "\t\t\t\t<Name>Roller Shade Dark</Name>\n"
+                "\t\t\t\t<ID>42</ID>\n"
+                "\t\t\t</WINDOW>\n"
+                "\t\t</Database>\n"
+                "\t\t<Solid>\n"
+                "\t\t\t<HygroThermal>\n"
+                "\t\t\t\t<ThermalConductivityDry>0.5</ThermalConductivityDry>\n"
+                "\t\t\t</HygroThermal>\n"
+                "\t\t\t<Optical>\n"
+                "\t\t\t\t<Integrated>\n"
+                "\t\t\t\t\t<Infrared>\n"
+                "\t\t\t\t\t\t<Transmittance>0</Transmittance>\n"
+                "\t\t\t\t\t\t<Emissivity-Front>0.84</Emissivity-Front>\n"
+                "\t\t\t\t\t\t<Emissivity-Back>0.84</Emissivity-Back>\n"
                 "\t\t\t\t\t</Infrared>\n"
                 "\t\t\t\t</Integrated>\n"
                 "\t\t\t</Optical>\n"

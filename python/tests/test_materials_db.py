@@ -76,6 +76,63 @@ class TestMaterialsDBLoading:
         pytest.skip("No cavity material in this DB")
 
 
+class TestMaterialDatabaseSource:
+
+    def test_material_with_database_round_trip(self):
+        """Create a material with Database/WINDOW source, save and reload."""
+        mdb = fem.MaterialsDB()
+
+        mat = fem.Material()
+        mat.uuid = "d1e2f3a4-b5c6-7890-abcd-ef1234567890"
+        mat.name = "Shade With DB Source"
+        mat.color = "0xABCDEF"
+        mat.data = fem.Solid()
+
+        window = fem.WINDOW()
+        window.path = r"C:\WINDOWdb\ShadeDB.mdb"
+        window.name = "Roller Shade Dark"
+        window.id = 42
+
+        database = fem.Database()
+        database.window = window
+        mat.database = database
+
+        mdb.add(mat)
+
+        xml_str = mdb.save_to_string(fem.FileFormat.XML)
+
+        reloaded = fem.MaterialsDB()
+        reloaded.load_from_string(xml_str)
+
+        found = reloaded.get_by_uuid("d1e2f3a4-b5c6-7890-abcd-ef1234567890")
+        assert found is not None
+        assert found.name == "Shade With DB Source"
+        assert found.database is not None
+        assert found.database.window is not None
+        assert found.database.window.path == r"C:\WINDOWdb\ShadeDB.mdb"
+        assert found.database.window.name == "Roller Shade Dark"
+        assert found.database.window.id == 42
+
+    def test_material_without_database_has_none(self):
+        """Regular material should have no database source."""
+        mdb = fem.MaterialsDB()
+
+        mat = fem.Material()
+        mat.uuid = "test-no-db-uuid"
+        mat.name = "Plain Material"
+        mat.data = fem.Solid()
+
+        mdb.add(mat)
+
+        xml_str = mdb.save_to_string(fem.FileFormat.XML)
+        reloaded = fem.MaterialsDB()
+        reloaded.load_from_string(xml_str)
+
+        found = reloaded.get_by_uuid("test-no-db-uuid")
+        assert found is not None
+        assert found.database is None
+
+
 class TestMaterialsDBSaveLoad:
 
     def test_save_and_reload_xml(self, materials_db):

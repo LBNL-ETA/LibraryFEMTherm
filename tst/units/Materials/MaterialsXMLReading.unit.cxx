@@ -204,6 +204,41 @@ TEST_F(TestMaterialsXMLReading, GasNames) {
     EXPECT_TRUE(Helper::areSetsEqual(gasNames, expectedGasNames));
 }
 
+TEST_F(TestMaterialsXMLReading, ReadShadeWithDatabaseSource) {
+    const std::string fileContent{TestMaterial::testDatabase()};
+
+    File::createFileFromString(getFileName(), fileContent);
+
+    MaterialsLibrary::DB materialDB{getFileName()};
+    auto aMaterial{materialDB.getByUUID("d1e2f3a4-b5c6-7890-abcd-ef1234567890")};
+
+    ASSERT_TRUE(aMaterial.has_value());
+
+    const auto & material{aMaterial.value()};
+
+    EXPECT_EQ(material.Name, "Shade With DB Source");
+
+    ASSERT_TRUE(material.database.has_value());
+    ASSERT_TRUE(material.database->Window.has_value());
+
+    const auto & window{material.database->Window.value()};
+    EXPECT_EQ(window.Path, "C:\\WINDOWdb\\ShadeDB.mdb");
+    EXPECT_EQ(window.Name, "Roller Shade Dark");
+    EXPECT_EQ(window.ID, 42);
+}
+
+TEST_F(TestMaterialsXMLReading, ReadMaterialWithoutDatabaseHasNoDatabase) {
+    const std::string fileContent{TestMaterial::testDatabase()};
+
+    File::createFileFromString(getFileName(), fileContent);
+
+    MaterialsLibrary::DB materialDB{getFileName()};
+    auto aMaterial{materialDB.getByUUID("08eeb0cc-bb61-4a45-8746-27d450868de6")};
+
+    ASSERT_TRUE(aMaterial.has_value());
+    EXPECT_FALSE(aMaterial->database.has_value());
+}
+
 TEST_F(TestMaterialsXMLReading, ReadMaterialEmptyMoistureByName) {
     const std::string fileContent{TestMaterial::testDatabaseEmptyMoisture()};
 

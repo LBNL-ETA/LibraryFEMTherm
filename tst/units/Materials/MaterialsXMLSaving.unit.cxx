@@ -140,6 +140,38 @@ TEST_F(TestMaterialsXMLSaving, AddMoistureStorageFunction)
     std::filesystem::remove(fileName);
 }
 
+TEST_F(TestMaterialsXMLSaving, SaveMaterialWithDatabaseSource)
+{
+    const std::string fileName{"TestSaveDatabase.xm"};
+
+    MaterialsLibrary::DB materialDB{fileName};
+
+    const std::string uuid{"f1a2b3c4-d5e6-7890-abcd-ef1234567890"};
+
+    MaterialsLibrary::Material record = MaterialsLibrary::generate(uuid, MaterialsLibrary::MaterialType::Solid);
+    record.database = MaterialsLibrary::Database{
+        MaterialsLibrary::WINDOW{"C:\\WINDOWdb\\ShadeDB.mdb", "Roller Shade Dark", 42}
+    };
+
+    materialDB.add(record);
+    const auto error{materialDB.saveToFile()};
+    EXPECT_EQ(error, 0);
+
+    MaterialsLibrary::DB testDB{fileName};
+    const auto testRecord{testDB.getByUUID(uuid)};
+
+    ASSERT_TRUE(testRecord.has_value());
+    ASSERT_TRUE(testRecord->database.has_value());
+    ASSERT_TRUE(testRecord->database->Window.has_value());
+
+    const auto & window{testRecord->database->Window.value()};
+    EXPECT_EQ(window.Path, "C:\\WINDOWdb\\ShadeDB.mdb");
+    EXPECT_EQ(window.Name, "Roller Shade Dark");
+    EXPECT_EQ(window.ID, 42);
+
+    std::filesystem::remove(fileName);
+}
+
 TEST_F(TestMaterialsXMLSaving, DeleteMaterialXML)
 {
     const std::string fileContent{TestMaterial::testDatabase()};

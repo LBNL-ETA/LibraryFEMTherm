@@ -13,4 +13,5 @@ namespace TestMaterial
     std::string cavity1();
     std::string cavity2();
     std::string emptyMoisture1();
+    std::string shadeWithDatabase();
 }

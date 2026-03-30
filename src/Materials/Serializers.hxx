@@ -286,6 +286,42 @@ namespace MaterialsLibrary
     }
 
     template<typename NodeAdapter>
+    const NodeAdapter & operator>>(const NodeAdapter & node, MaterialsLibrary::WINDOW & window)
+    {
+        node >> FileParse::Child{"Path", window.Path};
+        node >> FileParse::Child{"Name", window.Name};
+        node >> FileParse::Child{"ID", window.ID};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    NodeAdapter & operator<<(NodeAdapter & node, const MaterialsLibrary::WINDOW & window)
+    {
+        node << FileParse::Child{"Path", window.Path};
+        node << FileParse::Child{"Name", window.Name};
+        node << FileParse::Child{"ID", window.ID};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    const NodeAdapter & operator>>(const NodeAdapter & node, MaterialsLibrary::Database & database)
+    {
+        node >> FileParse::Child{"WINDOW", database.Window};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    NodeAdapter & operator<<(NodeAdapter & node, const MaterialsLibrary::Database & database)
+    {
+        node << FileParse::Child{"WINDOW", database.Window};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, MaterialsLibrary::Material & material)
     {
         using FileParse::operator>>;
@@ -295,6 +331,7 @@ namespace MaterialsLibrary
         node >> FileParse::Child{"ProjectName", material.ProjectName};
         node >> FileParse::Child{"Protected", material.Protected};
         node >> FileParse::Child{"Color", material.Color};
+        node >> FileParse::Child{"Database", material.database};
 
         FileParse::deserializeVariant(node, {"Solid", "Cavity", "RadiationEnclosure"}, material.data);
 
@@ -311,6 +348,7 @@ namespace MaterialsLibrary
         node << FileParse::Child{"ProjectName", material.ProjectName};
         node << FileParse::Child{"Protected", material.Protected};
         node << FileParse::Child{"Color", material.Color};
+        node << FileParse::Child{"Database", material.database};
 
         FileParse::serializeVariant(node, {"Solid", "Cavity", "RadiationEnclosure"}, material.data);
 

@@ -77,6 +77,17 @@ void bind_materials(py::module_ & mod)
         .def(py::init<>())
         .def_readwrite("emissivity_default", &MaterialsLibrary::RadiationEnclosure::emissivityDefault);
 
+    // --- Database source ---
+    py::class_<MaterialsLibrary::WINDOW>(mod, "WINDOW")
+        .def(py::init<>())
+        .def_readwrite("path", &MaterialsLibrary::WINDOW::Path)
+        .def_readwrite("name", &MaterialsLibrary::WINDOW::Name)
+        .def_readwrite("id", &MaterialsLibrary::WINDOW::ID);
+
+    py::class_<MaterialsLibrary::Database>(mod, "Database")
+        .def(py::init<>())
+        .def_readwrite("window", &MaterialsLibrary::Database::Window);
+
     // --- Material ---
     py::class_<MaterialsLibrary::Material>(mod, "Material")
         .def(py::init<>())
@@ -85,6 +96,7 @@ void bind_materials(py::module_ & mod)
         .def_readwrite("project_name", &MaterialsLibrary::Material::ProjectName)
         .def_readwrite("protected_", &MaterialsLibrary::Material::Protected)
         .def_readwrite("color", &MaterialsLibrary::Material::Color)
+        .def_readwrite("database", &MaterialsLibrary::Material::database)
         .def_property("data",
             [](const MaterialsLibrary::Material & mat) -> py::object {
                 return std::visit([](const auto & val) -> py::object {
