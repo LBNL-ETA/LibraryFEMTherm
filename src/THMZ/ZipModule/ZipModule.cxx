@@ -13,6 +13,14 @@ namespace ThermZip
 {
     namespace Helper
     {
+        // Normalize path separators to forward slashes for consistent zip entry names
+        std::string normalizeSlashes(const std::string & path)
+        {
+            std::string result = path;
+            std::replace(result.begin(), result.end(), '\\', '/');
+            return result;
+        }
+
         // Utility function for creating a relative path
         std::string createRelativePath(const std::string & fullPath, const std::string & basePath)
         {
@@ -53,7 +61,7 @@ namespace ThermZip
             }
 
             std::string fullPath = entry.path().string();
-            std::string relativePath = Helper::createRelativePath(fullPath, sourceDirectory);
+            std::string relativePath = Helper::normalizeSlashes(Helper::createRelativePath(fullPath, sourceDirectory));
 
             // Add the file to the zip archive
             if(!mz_zip_writer_add_file(
@@ -168,7 +176,7 @@ namespace ThermZip
                     extractedContent = extractedContent.substr(0, end + 1);
                 }
 
-                fileContents[fileStat.m_filename] = extractedContent;
+                fileContents[Helper::normalizeSlashes(fileStat.m_filename)] = extractedContent;
             }
         }
 
