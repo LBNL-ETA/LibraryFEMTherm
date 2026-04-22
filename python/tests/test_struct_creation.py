@@ -113,6 +113,12 @@ class TestThermModelCreation:
         assert len(model.boundary_conditions) == 0
         assert len(model.cavities) == 0
         assert model.cma_data is None
+        assert model.gasket_materials is None
+
+    def test_gasket_materials_assignment(self):
+        model = fem.ThermModel()
+        model.gasket_materials = {"Butyl rubber", "EPDM", "Silicone rubber"}
+        assert model.gasket_materials == {"Butyl rubber", "EPDM", "Silicone rubber"}
 
     def test_build_model_from_scratch(self):
         model = fem.ThermModel()

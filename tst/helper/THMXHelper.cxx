@@ -33,5 +33,11 @@ namespace Helper
         {
             expect_near(expected.boundaryConditions[i], result.boundaryConditions[i], tolerance);
         }
+
+        ASSERT_EQ(expected.gasketMaterials.has_value(), result.gasketMaterials.has_value());
+        if(expected.gasketMaterials.has_value())
+        {
+            ASSERT_EQ(expected.gasketMaterials.value(), result.gasketMaterials.value());
+        }
     }
 }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <optional>
+#include <set>
+#include <string>
 
 #include "THMZ/Preferences/Preferences.hxx"
 #include "THMZ/Properties/Properties.hxx"
@@ -21,7 +23,7 @@ namespace ThermFile
 
     struct ThermModel
     {
-        std::string version{"1"};
+        std::string version{"2"};
         bool calculationReady{false};
         Preferences preferences;
         Properties properties;
@@ -32,5 +34,6 @@ namespace ThermFile
         std::vector<Boundary> boundaryConditions;
         std::vector<GlazingSystem> glazingSystems;
         std::optional<CMAData> cmaData;
+        std::optional<std::set<std::string>> gasketMaterials;
     };
 }

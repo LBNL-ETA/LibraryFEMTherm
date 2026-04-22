@@ -86,6 +86,15 @@ class TestZipRoundTrip:
                 assert abs(orig.points[jdx].x - copy.points[jdx].x) < 1e-6
                 assert abs(orig.points[jdx].y - copy.points[jdx].y) < 1e-6
 
+    def test_gasket_materials_survive_round_trip(self, sample_model):
+        """Verify optional gasket_materials set is preserved through save/load."""
+        sample_model.gasket_materials = {"Butyl rubber", "EPDM", "Silicone rubber"}
+
+        xml = fem.save_model_to_string(sample_model)
+        reloaded = fem.load_model_from_string(xml)
+
+        assert reloaded.gasket_materials == {"Butyl rubber", "EPDM", "Silicone rubber"}
+
 
 class TestModelFields:
     """Verify model struct fields are accessible."""

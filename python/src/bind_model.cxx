@@ -26,7 +26,8 @@ void bind_model(py::module_ & mod)
         .def_readwrite("polygons", &ThermFile::ThermModel::polygons)
         .def_readwrite("boundary_conditions", &ThermFile::ThermModel::boundaryConditions)
         .def_readwrite("glazing_systems", &ThermFile::ThermModel::glazingSystems)
-        .def_readwrite("cma_data", &ThermFile::ThermModel::cmaData);
+        .def_readwrite("cma_data", &ThermFile::ThermModel::cmaData)
+        .def_readwrite("gasket_materials", &ThermFile::ThermModel::gasketMaterials);
 
     // Free functions for load/save
     mod.def("load_model_from_file", &ThermFile::loadThermModelFromFile,

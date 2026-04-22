@@ -1,5 +1,7 @@
 #pragma once
 
+#include <fileParse/Set.hxx>
+
 #include "THMX.hxx"
 
 #include "THMZ/Preferences/Serializers.hxx"
@@ -46,6 +48,7 @@ namespace ThermFile
         node >> FileParse::Child{{"Boundaries", "Boundary"}, model.boundaryConditions};
         node >> FileParse::Child{{"GlazingSystems", "GlazingSystem"}, model.glazingSystems};
         node >> FileParse::Child{"CMAData", model.cmaData};
+        node >> FileParse::Child{{"GasketMaterials", "Name"}, model.gasketMaterials};
 
         return node;
     }
@@ -64,6 +67,7 @@ namespace ThermFile
         node << FileParse::Child{{"Boundaries", "Boundary"}, model.boundaryConditions};
         node << FileParse::Child{{"GlazingSystems", "GlazingSystem"}, model.glazingSystems};
         node << FileParse::Child{"CMAData", model.cmaData};
+        node << FileParse::Child{{"GasketMaterials", "Name"}, model.gasketMaterials};
 
         return node;
     }
