@@ -109,10 +109,17 @@ TEST_F(TestBCSteadyStateLibraryXMLSaving, Comprehensive)
 
     const std::string uuid{"7a863ad6-c537-11ea-87d0-0242ac130003"};
 
+    // Populate every optional field with non-default content so the round-trip
+    // is non-trivial. FileParse 1.1.3+ collapses empty wrappers (<X/>) to
+    // nullopt -- a legitimate behavior change -- so a default-constructed
+    // Radiation with no inner variant would no longer round-trip as a value.
+    BCSteadyStateLibrary::Radiation radiation;
+    radiation.radiation = BCSteadyStateLibrary::AutomaticEnclosure{295.15, 0.85};
+
     BCSteadyStateLibrary::Comprehensive comprehensive{0.5,
                                                       BCSteadyStateLibrary::Convection{0.0, 0.0},
                                                       BCSteadyStateLibrary::ConstantFlux{0.0},
-                                                      BCSteadyStateLibrary::Radiation{}};
+                                                      radiation};
 
     BCSteadyStateLibrary::BoundaryCondition record{uuid, "Test Name", false, "0xFAB2A6", comprehensive, "", false};
 
@@ -157,6 +164,13 @@ TEST_F(TestBCSteadyStateLibraryXMLSaving, Comprehensive)
         }
 
         EXPECT_EQ(data.radiation.has_value(), true);
+        if(data.radiation.has_value() && data.radiation->radiation.has_value())
+        {
+            ASSERT_TRUE(std::holds_alternative<BCSteadyStateLibrary::AutomaticEnclosure>(*data.radiation->radiation));
+            const auto & autoEnc = std::get<BCSteadyStateLibrary::AutomaticEnclosure>(*data.radiation->radiation);
+            EXPECT_NEAR(autoEnc.temperature, 295.15, tolerance);
+            EXPECT_NEAR(autoEnc.emissivity, 0.85, tolerance);
+        }
     }
 
     std::filesystem::remove(fileName);
