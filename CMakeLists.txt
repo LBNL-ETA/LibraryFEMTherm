@@ -57,7 +57,7 @@ if(NOT TARGET LBNLCPPCommon)
 endif()
 FetchContent_GetProperties(LBNLCPPCommon)
 
-set(FileParse_Branch "fix-empty-element-optional")
+set(FileParse_Branch "Version_1.1.3")
 
 if(NOT TARGET FileParse)
     FetchContent_Declare(
