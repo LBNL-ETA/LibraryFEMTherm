@@ -104,7 +104,6 @@ namespace Helper
                     0.45,
                     0.55,
                     0.25,
-                    true,
                     101325.0,
                     {2.3, 2.6},
                     {3.8, 4.12}};
@@ -123,7 +122,6 @@ namespace Helper
                                                                "0.45",
                                                                "0.55",
                                                                "0.25",
-                                                               "true",
                                                                "1.01325e+05",
                                                                {"2.3", "2.6"},
                                                                {"3.8", "4.12"}});
@@ -131,18 +129,18 @@ namespace Helper
 
         ThermFile::Cavity cavity2()
         {
+            // No local emissivity overrides => optionals are nullopt and the XML element is absent.
             return {"7a863ad6-c537-11ea-87d0-0242ac130004",
                     std::nullopt,
                     ThermFile::Direction::Up,
-                    0.8,
-                    0.7,
+                    std::nullopt,
+                    std::nullopt,
                     25.0,
                     30.0,
                     0.6,
                     0.55,
                     0.65,
                     0.35,
-                    false,
                     101325.0,
                     {2.6, 2.9},
                     {4.12, 4.44}};
@@ -153,15 +151,14 @@ namespace Helper
             return Helper::generateCavityWithoutDirectionNode({"7a863ad6-c537-11ea-87d0-0242ac130004",
                                                                "nul",
                                                                "Up",
-                                                               "0.8",
-                                                               "0.7",
+                                                               "",
+                                                               "",
                                                                "25",
                                                                "30",
                                                                "0.6",
                                                                "0.55",
                                                                "0.65",
                                                                "0.35",
-                                                               "false",
                                                                "1.01325e+05",
                                                                {"2.6", "2.9"},
                                                                {"4.12", "4.44"}});

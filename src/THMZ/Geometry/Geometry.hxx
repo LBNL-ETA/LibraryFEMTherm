@@ -19,30 +19,27 @@ namespace ThermFile
     // GlazingCavity would improve type safety but requires updates to serialization and dependent code.
     //! \brief Represents cavity model in THERM. Refer to ISO 15099 for more details on the procedure.
     //! @heatFlowDirection - direction of heat flow.
-    //! @emissivity1 - warm side emissivity.
-    //! @emissivity2 - cold side emissivity.
+    //! @emissivity1 - warm side emissivity. nullopt means "use the material's library value".
+    //! @emissivity2 - cold side emissivity. nullopt means "use the material's library value".
     //! @temperature1 - warm side temperature.
     //! @temperature2 - cold side temperature.
     //! @maxXDimension - maximum x dimension of the cavity.
     //! @maxYDimension - maximum y dimension of the cavity.
     //! @actualHeight - actual height of the cavity.
     //! @area - area of the cavity.
-    //! @localEmissivities - flag indicating if THERM should be using emissivities presented here rather than picking
-    //! them from the material.
     struct Cavity
     {
         std::string uuid;
         std::optional<Direction> direction;
         Direction heatFlowDirection;
-        double emissivity1{0};
-        double emissivity2{0};
+        std::optional<double> emissivity1;
+        std::optional<double> emissivity2;
         double temperature1{0};
         double temperature2{0};
         double maxXDimension{0};
         double maxYDimension{0};
         double actualHeight{0};
         double area{0};
-        bool localEmissivities{false};
         double pressure{0};
         Point warmLocator{0, 0};
         Point coldLocator{0, 0};

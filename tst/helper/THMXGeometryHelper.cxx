@@ -23,15 +23,22 @@ namespace Helper
     {
         EXPECT_EQ(expected.uuid, actual.uuid);
         EXPECT_EQ(expected.heatFlowDirection, actual.heatFlowDirection);
-        EXPECT_NEAR(expected.emissivity1, actual.emissivity1, tolerance);
-        EXPECT_NEAR(expected.emissivity2, actual.emissivity2, tolerance);
+        ASSERT_EQ(expected.emissivity1.has_value(), actual.emissivity1.has_value());
+        if(expected.emissivity1.has_value())
+        {
+            EXPECT_NEAR(*expected.emissivity1, *actual.emissivity1, tolerance);
+        }
+        ASSERT_EQ(expected.emissivity2.has_value(), actual.emissivity2.has_value());
+        if(expected.emissivity2.has_value())
+        {
+            EXPECT_NEAR(*expected.emissivity2, *actual.emissivity2, tolerance);
+        }
         EXPECT_NEAR(expected.temperature1, actual.temperature1, tolerance);
         EXPECT_NEAR(expected.temperature2, actual.temperature2, tolerance);
         EXPECT_NEAR(expected.maxXDimension, actual.maxXDimension, tolerance);
         EXPECT_NEAR(expected.maxYDimension, actual.maxYDimension, tolerance);
         EXPECT_NEAR(expected.actualHeight, actual.actualHeight, tolerance);
         EXPECT_NEAR(expected.area, actual.area, tolerance);
-        EXPECT_EQ(expected.localEmissivities, actual.localEmissivities);
         EXPECT_NEAR(expected.pressure, actual.pressure, tolerance);
     }
 
@@ -185,7 +192,6 @@ namespace Helper
                            std::string maxYDimension,
                            std::string actualHeight,
                            std::string area,
-                           std::string localEmissivities,
                            std::string pressure,
                            MockPointNode warmLocator,
                            MockPointNode coldLocator) :
@@ -200,7 +206,6 @@ namespace Helper
         maxYDimension(std::move(maxYDimension)),
         actualHeight(std::move(actualHeight)),
         area(std::move(area)),
-        localEmissivities(std::move(localEmissivities)),
         pressure(std::move(pressure)),
         warmLocator(std::move(warmLocator)),
         coldLocator(std::move(coldLocator))
@@ -211,15 +216,20 @@ namespace Helper
         Helper::MockNode node{"Cavity"};
         addChildNode(node, "UUID", cavity.uuid);
         addChildNode(node, "HeatFlowDirection", cavity.heatFlowDirection);
-        addChildNode(node, "Emissivity1", cavity.emissivity1);
-        addChildNode(node, "Emissivity2", cavity.emissivity2);
+        if(!cavity.emissivity1.empty())   // emulates optional
+        {
+            addChildNode(node, "Emissivity1", cavity.emissivity1);
+        }
+        if(!cavity.emissivity2.empty())   // emulates optional
+        {
+            addChildNode(node, "Emissivity2", cavity.emissivity2);
+        }
         addChildNode(node, "Temperature1", cavity.temperature1);
         addChildNode(node, "Temperature2", cavity.temperature2);
         addChildNode(node, "MaxXDimension", cavity.maxXDimension);
         addChildNode(node, "MaxYDimension", cavity.maxYDimension);
         addChildNode(node, "ActualHeight", cavity.actualHeight);
         addChildNode(node, "Area", cavity.area);
-        addChildNode(node, "LocalEmissivities", cavity.localEmissivities);
         addChildNode(node, "Pressure", cavity.pressure);
         auto warmLocatorNode = generatePointNode(cavity.warmLocator);
         warmLocatorNode.tag = "WarmLocator";
@@ -237,15 +247,20 @@ namespace Helper
         addChildNode(node, "UUID", cavity.uuid);
         addChildNode(node, "Direction", cavity.direction);
         addChildNode(node, "HeatFlowDirection", cavity.heatFlowDirection);
-        addChildNode(node, "Emissivity1", cavity.emissivity1);
-        addChildNode(node, "Emissivity2", cavity.emissivity2);
+        if(!cavity.emissivity1.empty())   // emulates optional
+        {
+            addChildNode(node, "Emissivity1", cavity.emissivity1);
+        }
+        if(!cavity.emissivity2.empty())   // emulates optional
+        {
+            addChildNode(node, "Emissivity2", cavity.emissivity2);
+        }
         addChildNode(node, "Temperature1", cavity.temperature1);
         addChildNode(node, "Temperature2", cavity.temperature2);
         addChildNode(node, "MaxXDimension", cavity.maxXDimension);
         addChildNode(node, "MaxYDimension", cavity.maxYDimension);
         addChildNode(node, "ActualHeight", cavity.actualHeight);
         addChildNode(node, "Area", cavity.area);
-        addChildNode(node, "LocalEmissivities", cavity.localEmissivities);
         addChildNode(node, "Pressure", cavity.pressure);
         auto warmLocatorNode = generatePointNode(cavity.warmLocator);
         warmLocatorNode.tag = "WarmLocator";

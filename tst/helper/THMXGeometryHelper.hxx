@@ -62,7 +62,6 @@ namespace Helper
         std::string maxYDimension;
         std::string actualHeight;
         std::string area;
-        std::string localEmissivities;
         std::string pressure;
         MockPointNode warmLocator;
         MockPointNode coldLocator;
@@ -78,7 +77,6 @@ namespace Helper
                                     std::string maxYDimension,
                                     std::string actualHeight,
                                     std::string area,
-                                    std::string localEmissivities,
                                     std::string pressure,
                                     MockPointNode warmLocator,
                                     MockPointNode coldLocator);
@@ -87,15 +85,14 @@ namespace Helper
     //! \brief Generation of a cavity node for testing
     //! \param uuid The UUID of the cavity
     //! \param heatFlowDirection The heat flow direction of the cavity
-    //! \param emissivity1 The emissivity of the first surface
-    //! \param emissivity2 The emissivity of the second surface
+    //! \param emissivity1 The emissivity of the first surface (empty string => element omitted)
+    //! \param emissivity2 The emissivity of the second surface (empty string => element omitted)
     //! \param temperature1 The temperature of the first surface
     //! \param temperature2 The temperature of the second surface
     //! \param maxXDimension The maximum x dimension of the cavity
     //! \param maxYDimension The maximum y dimension of the cavity
     //! \param actualHeight The actual height of the cavity
     //! \param area The area of the cavity
-    //! \param localEmissivities The local emissivities of the cavity
     //! \param pressure The pressure of the cavity
     Helper::MockNode generateCavityWithoutDirectionNode(const MockCavity & cavity);
 
