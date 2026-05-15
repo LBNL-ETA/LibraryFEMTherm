@@ -40,7 +40,6 @@ namespace ThermFile
         node >> FileParse::Child{"MaxYDimension", cavity.maxYDimension};
         node >> FileParse::Child{"ActualHeight", cavity.actualHeight};
         node >> FileParse::Child{"Area", cavity.area};
-        node >> FileParse::Child{"LocalEmissivities", cavity.localEmissivities};
         node >> FileParse::Child{"Pressure", cavity.pressure};
         node >> FileParse::Child{"WarmLocator", cavity.warmLocator};
         node >> FileParse::Child{"ColdLocator", cavity.coldLocator};
@@ -62,7 +61,6 @@ namespace ThermFile
         node << FileParse::Child{"MaxYDimension", cavity.maxYDimension};
         node << FileParse::Child{"ActualHeight", cavity.actualHeight};
         node << FileParse::Child{"Area", cavity.area};
-        node << FileParse::Child{"LocalEmissivities", cavity.localEmissivities};
         node << FileParse::Child{"Pressure", cavity.pressure};
         node << FileParse::Child{"WarmLocator", cavity.warmLocator};
         node << FileParse::Child{"ColdLocator", cavity.coldLocator};

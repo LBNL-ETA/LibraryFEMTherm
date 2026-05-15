@@ -6,6 +6,9 @@
 #include <vector>
 #include <array>
 #include <algorithm>
+#include <iterator>
+#include <ranges>
+#include <string_view>
 
 namespace LibraryCommon
 {
@@ -83,6 +86,19 @@ namespace LibraryCommon
     void removeTemporaryRecords(Container & container)
     {
         std::erase_if(container, [](const auto & record) { return isRecordTemporary(record); });
+    }
+
+    //! \brief Returns the subset of records visible to a given project: permanent records
+    //! (no ProjectName) plus the project's own temporary records. Used by THERM library
+    //! list dialogs so a doc only sees its own project-temp entries, not other open docs'.
+    template<typename T>
+    std::vector<T> visibleForProject(const std::vector<T> & records, std::string_view projectName)
+    {
+        std::vector<T> result;
+        std::ranges::copy_if(records, std::back_inserter(result), [&](const T & rec) {
+            return !isRecordTemporary(rec) || rec.ProjectName == projectName;
+        });
+        return result;
     }
 
 

@@ -48,7 +48,6 @@ TEST_F(TestTHMXGeometry, CavityDeserialization)
                                                           "0.45",
                                                           "0.55",
                                                           "0.25",
-                                                          "true",
                                                           "101325",
                                                           {"2.3", "2.6"},
                                                           {"3.8", "4.12"}})};
@@ -68,7 +67,47 @@ TEST_F(TestTHMXGeometry, CavityDeserialization)
                                     0.45,
                                     0.55,
                                     0.25,
-                                    true,
+                                    101325.0,
+                                    {2.3, 2.6},
+                                    {3.8, 4.12}};
+
+    Helper::expect_near(correctCavity, cavity, 1e-6);
+}
+
+TEST_F(TestTHMXGeometry, CavityDeserializationNoEmissivities)
+{
+    // When the cavity has no local emissivity overrides, the <Emissivity1>/<Emissivity2>
+    // elements are absent from the XML and the optionals stay nullopt.
+    auto node{Helper::generateCavityWithoutDirectionNode({"7a863ad6-c537-11ea-87d0-0242ac130003",
+                                                          "Up",
+                                                          "Down",
+                                                          "",
+                                                          "",
+                                                          "20",
+                                                          "25",
+                                                          "0.5",
+                                                          "0.45",
+                                                          "0.55",
+                                                          "0.25",
+                                                          "101325",
+                                                          {"2.3", "2.6"},
+                                                          {"3.8", "4.12"}})};
+    const Helper::MockNodeAdapter adapter{&node};
+
+    ThermFile::Cavity cavity;
+    adapter >> cavity;
+
+    ThermFile::Cavity correctCavity{"7a863ad6-c537-11ea-87d0-0242ac130003",
+                                    std::nullopt,
+                                    ThermFile::Direction::Down,
+                                    std::nullopt,
+                                    std::nullopt,
+                                    20.0,
+                                    25.0,
+                                    0.5,
+                                    0.45,
+                                    0.55,
+                                    0.25,
                                     101325.0,
                                     {2.3, 2.6},
                                     {3.8, 4.12}};
@@ -89,7 +128,6 @@ TEST_F(TestTHMXGeometry, CavitySerialization)
                              0.45,
                              0.55,
                              0.25,
-                             true,
                              101325.0,
                              {1.1, 1.2},
                              {1.3, 1.4}};
@@ -110,7 +148,47 @@ TEST_F(TestTHMXGeometry, CavitySerialization)
                                                                  "0.45",
                                                                  "0.55",
                                                                  "0.25",
-                                                                 "true",
+                                                                 "1.01325e+05",
+                                                                 {"1.1", "1.2"},
+                                                                 {"1.3", "1.4"}})};
+
+    EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNode));
+}
+
+TEST_F(TestTHMXGeometry, CavitySerializationNoEmissivities)
+{
+    // nullopt emissivities should produce XML with no <Emissivity1>/<Emissivity2> elements.
+    ThermFile::Cavity cavity{"7a863ad6-c537-11ea-87d0-0242ac130003",
+                             std::nullopt,
+                             ThermFile::Direction::Down,
+                             std::nullopt,
+                             std::nullopt,
+                             20.0,
+                             25.0,
+                             0.5,
+                             0.45,
+                             0.55,
+                             0.25,
+                             101325.0,
+                             {1.1, 1.2},
+                             {1.3, 1.4}};
+
+    Helper::MockNode node{"Cavity"};
+    Helper::MockNodeAdapter adapter{&node};
+
+    adapter << cavity;
+
+    auto correctNode{Helper::generateCavityWithoutDirectionNode({"7a863ad6-c537-11ea-87d0-0242ac130003",
+                                                                 "Up",
+                                                                 "Down",
+                                                                 "",
+                                                                 "",
+                                                                 "20",
+                                                                 "25",
+                                                                 "0.5",
+                                                                 "0.45",
+                                                                 "0.55",
+                                                                 "0.25",
                                                                  "1.01325e+05",
                                                                  {"1.1", "1.2"},
                                                                  {"1.3", "1.4"}})};
@@ -131,7 +209,6 @@ TEST_F(TestTHMXGeometry, CavityWithDirectionDeserialization)
                                                        "0.45",
                                                        "0.55",
                                                        "0.25",
-                                                       "true",
                                                        "101325",
                                                        {"0.1", "0.2"},
                                                        {"0.3", "0.4"}})};
@@ -151,7 +228,6 @@ TEST_F(TestTHMXGeometry, CavityWithDirectionDeserialization)
                                     0.45,
                                     0.55,
                                     0.25,
-                                    true,
                                     101325.0,
                                     {0.1, 0.2},
                                     {0.3, 0.4}};
@@ -172,7 +248,6 @@ TEST_F(TestTHMXGeometry, CavityWithDirectionSerialization)
                              0.45,
                              0.55,
                              0.25,
-                             true,
                              101325.0,
                              {0.1, 0.2},
                              {0.3, 0.4}};
@@ -193,7 +268,6 @@ TEST_F(TestTHMXGeometry, CavityWithDirectionSerialization)
                                                               "0.45",
                                                               "0.55",
                                                               "0.25",
-                                                              "true",
                                                               "1.01325e+05",
                                                               {"0.1", "0.2"},
                                                               {"0.3", "0.4"}})};

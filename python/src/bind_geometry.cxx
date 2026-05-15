@@ -29,7 +29,6 @@ void bind_geometry(py::module_ & mod)
         .def_readwrite("max_y_dimension", &ThermFile::Cavity::maxYDimension)
         .def_readwrite("actual_height", &ThermFile::Cavity::actualHeight)
         .def_readwrite("area", &ThermFile::Cavity::area)
-        .def_readwrite("local_emissivities", &ThermFile::Cavity::localEmissivities)
         .def_readwrite("pressure", &ThermFile::Cavity::pressure)
         .def_readwrite("warm_locator", &ThermFile::Cavity::warmLocator)
         .def_readwrite("cold_locator", &ThermFile::Cavity::coldLocator);
