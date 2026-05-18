@@ -46,7 +46,9 @@ void bind_enums(py::module_ & mod)
         .value("Spacer", ThermFile::PolygonType::Spacer)
         .value("GlassIn", ThermFile::PolygonType::GlassIn)
         .value("GlassOut", ThermFile::PolygonType::GlassOut)
-        .value("ShadeGap", ThermFile::PolygonType::ShadeGap);
+        .value("ShadeGap", ThermFile::PolygonType::ShadeGap)
+        .value("FrameCavity", ThermFile::PolygonType::FrameCavity)
+        .value("RadiationEnclosure", ThermFile::PolygonType::RadiationEnclosure);
 
     py::enum_<ThermFile::MaterialSide>(mod, "MaterialSide")
         .value("Unknown", ThermFile::MaterialSide::Unknown)
@@ -147,6 +149,18 @@ void bind_enums(py::module_ & mod)
         .value("Unknown", ThermFile::OtherCrossSectionType::Unknown)
         .value("CommonThermalBridge", ThermFile::OtherCrossSectionType::CommonThermalBridge)
         .value("GeneralCrossSection", ThermFile::OtherCrossSectionType::GeneralCrossSection);
+
+    // Project-level cavity policy enums on CalculationOptions.
+    // Exposed under temporary names while MaterialsLibrary::CavityStandard (legacy)
+    // still occupies the Python "CavityStandard" symbol. Renamed in stage 2c when
+    // the legacy enum is removed.
+    py::enum_<ThermFile::CavityStandard>(mod, "ProjectCavityStandard")
+        .value("ISO15099", ThermFile::CavityStandard::ISO15099)
+        .value("CEN", ThermFile::CavityStandard::CEN);
+
+    py::enum_<ThermFile::RadiationCalculation>(mod, "RadiationCalculation")
+        .value("Detailed", ThermFile::RadiationCalculation::Detailed)
+        .value("Simplified", ThermFile::RadiationCalculation::Simplified);
 
     // --- Gravity orientation ---
     py::enum_<ThermFile::Gravity::Orientation>(mod, "GravityOrientation")

@@ -87,6 +87,24 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
+    const NodeAdapter & operator>>(const NodeAdapter & node, CavityData & cavityData)
+    {
+        node >> FileParse::Child{"Gas", cavityData.gas};
+        node >> FileParse::Child{"Ventilated", cavityData.ventilated};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    NodeAdapter & operator<<(NodeAdapter & node, const CavityData & cavityData)
+    {
+        node << FileParse::Child{"Gas", cavityData.gas};
+        node << FileParse::Child{"Ventilated", cavityData.ventilated};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, Polygon & polygon)
     {
         node >> FileParse::Child{"UUID", polygon.uuid};
@@ -100,6 +118,7 @@ namespace ThermFile
         node >> FileParse::Child{{"Attributes", "Attribute"}, polygon.attributes};
         node >> FileParse::Child{"Type", polygon.polygonType};
         node >> FileParse::Child{"LinkID", polygon.linkID};
+        node >> FileParse::Child{"Cavity", polygon.cavity};
 
         return node;
     }
@@ -118,6 +137,7 @@ namespace ThermFile
         node << FileParse::Child{{"Attributes", "Attribute"}, polygon.attributes};
         node << FileParse::Child{"Type", polygon.polygonType};
         node << FileParse::Child{"LinkID", polygon.linkID};
+        node << FileParse::Child{"Cavity", polygon.cavity};
 
         return node;
     }

@@ -38,6 +38,11 @@ void bind_geometry(py::module_ & mod)
         .def_readwrite("id", &ThermFile::GlazingSystemData::ID)
         .def_readwrite("index", &ThermFile::GlazingSystemData::index);
 
+    py::class_<ThermFile::CavityData>(mod, "CavityData")
+        .def(py::init<>())
+        .def_readwrite("gas", &ThermFile::CavityData::gas)
+        .def_readwrite("ventilated", &ThermFile::CavityData::ventilated);
+
     py::class_<ThermFile::Polygon>(mod, "Polygon")
         .def(py::init<>())
         .def_readwrite("uuid", &ThermFile::Polygon::uuid)
@@ -50,7 +55,8 @@ void bind_geometry(py::module_ & mod)
         .def_readwrite("cavity_uuid", &ThermFile::Polygon::cavityUUID)
         .def_readwrite("attributes", &ThermFile::Polygon::attributes)
         .def_readwrite("polygon_type", &ThermFile::Polygon::polygonType)
-        .def_readwrite("link_id", &ThermFile::Polygon::linkID);
+        .def_readwrite("link_id", &ThermFile::Polygon::linkID)
+        .def_readwrite("cavity", &ThermFile::Polygon::cavity);
 
     py::class_<ThermFile::SurfaceData>(mod, "SurfaceData")
         .def(py::init<>())

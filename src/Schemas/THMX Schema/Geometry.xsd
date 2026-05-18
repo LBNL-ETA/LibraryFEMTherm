@@ -46,8 +46,16 @@
 			<xs:enumeration value="Glass In"/>
 			<xs:enumeration value="Glass Out"/>
 			<xs:enumeration value="Shade Gap"/>
+			<xs:enumeration value="Frame Cavity"/>
+			<xs:enumeration value="Radiation Enclosure"/>
 		</xs:restriction>
 	</xs:simpleType>
+	<xs:complexType name="CavityData">
+		<xs:all>
+			<xs:element name="Gas" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Ventilated" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
 	<xs:complexType name="Point">
 		<xs:all>
 			<xs:element name="x" type="xs:double" minOccurs="1" maxOccurs="1"/>
@@ -96,6 +104,7 @@
 			<xs:element name="Attributes" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="Type" type="PolygonType" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="LinkID" type="xs:integer" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="Cavity" type="CavityData" minOccurs="0" maxOccurs="1"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="GeometrySpecification">

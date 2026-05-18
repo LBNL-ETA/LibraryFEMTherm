@@ -341,6 +341,28 @@ namespace Helper
         return node;
     }
 
+    MockFrameCavityProperties::MockFrameCavityProperties(std::string standard,
+                                                         std::string radiationCalculation,
+                                                         std::string defaultGas,
+                                                         std::string defaultVentilated) :
+        standard(std::move(standard)),
+        radiationCalculation(std::move(radiationCalculation)),
+        defaultGas(std::move(defaultGas)),
+        defaultVentilated(std::move(defaultVentilated))
+    {}
+
+    Helper::MockNode frameCavityPropertiesNode(const MockFrameCavityProperties & properties)
+    {
+        Helper::MockNode node{"FrameCavityProperties"};
+        addChildNode(node, "CavityStandard", properties.standard);
+        addChildNode(node, "RadiationCalculation", properties.radiationCalculation);
+        addChildNode(node, "DefaultGas", properties.defaultGas);
+        addChildNode(node, "DefaultVentilated", properties.defaultVentilated);
+        addChildNode(node, Helper::MockNode{"RadiationModelParameters"});
+
+        return node;
+    }
+
     MockCalculationOptions::MockCalculationOptions(std::string simulationEngine,
                                                    std::string calculationMode,
                                                    std::string simulateMoisture,
@@ -353,7 +375,8 @@ namespace Helper
                                                    MockEngineParameters engineParameters,
                                                    MockMeshControl meshControl,
                                                    MockHeatTransferModelingOptions heatTransferModelingOptions,
-                                                   MockMiscProperties miscProperties) :
+                                                   MockMiscProperties miscProperties,
+                                                   MockFrameCavityProperties frameCavityProperties) :
         simulationEngine(std::move(simulationEngine)),
         calculationMode(std::move(calculationMode)),
         simulateMoisture(std::move(simulateMoisture)),
@@ -366,7 +389,8 @@ namespace Helper
         engineParameters(std::move(engineParameters)),
         meshControl(std::move(meshControl)),
         heatTransferModelingOptions(std::move(heatTransferModelingOptions)),
-        miscProperties(std::move(miscProperties))
+        miscProperties(std::move(miscProperties)),
+        frameCavityProperties(std::move(frameCavityProperties))
     {}
 
     Helper::MockNode calculationOptionsNode(const MockCalculationOptions & options)
@@ -385,6 +409,7 @@ namespace Helper
         addChildNode(node, meshControlNode(options.meshControl));
         addChildNode(node, heatTransferModelingOptionsNode(options.heatTransferModelingOptions));
         addChildNode(node, miscPropertiesNode(options.miscProperties));
+        addChildNode(node, frameCavityPropertiesNode(options.frameCavityProperties));
 
         return node;
     }

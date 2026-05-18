@@ -73,7 +73,9 @@ namespace ThermFile
         Spacer,
         GlassIn,
         GlassOut,
-        ShadeGap
+        ShadeGap,
+        FrameCavity,
+        RadiationEnclosure
     };
 
     //! \brief Converts a string to a polygon type.

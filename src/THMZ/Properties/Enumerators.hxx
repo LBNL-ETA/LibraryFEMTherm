@@ -240,4 +240,32 @@ namespace ThermFile
     //! \param otherCrossSectionType Other cross section type
     //! \return String representation of other cross section type
     std::string otherCrossSectionTypeToString(OtherCrossSectionType otherCrossSectionType);
+
+    //! \brief Cavity calculation standard. Project-wide policy on CalculationOptions.
+    //! Replaces the per-cavity-material standard from the legacy cavity-as-material design.
+    enum class CavityStandard
+    {
+        ISO15099,
+        CEN
+    };
+
+    //! \brief Converts a string to a cavity standard.
+    CavityStandard cavityStandardFromString(std::string_view standard);
+
+    //! \brief Converts a cavity standard to a string.
+    std::string cavityStandardToString(CavityStandard standard);
+
+    //! \brief Radiation calculation mode. Project-wide policy on CalculationOptions.
+    //! Detailed: per-segment view-factor enclosure solve. Simplified: cavity-level approximation.
+    enum class RadiationCalculation
+    {
+        Detailed,
+        Simplified
+    };
+
+    //! \brief Converts a string to a radiation calculation mode.
+    RadiationCalculation radiationCalculationFromString(std::string_view radiationCalculation);
+
+    //! \brief Converts a radiation calculation mode to a string.
+    std::string radiationCalculationToString(RadiationCalculation radiationCalculation);
 }   // namespace ThermFile

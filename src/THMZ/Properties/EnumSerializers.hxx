@@ -183,4 +183,32 @@ namespace ThermFile
         return FileParse::serializeEnum<NodeAdapter, ThermFile::OtherCrossSectionType>(
           node, otherCrossSectionType, ThermFile::otherCrossSectionTypeToString);
     }
+
+    template<typename NodeAdapter>
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, ThermFile::CavityStandard & standard)
+    {
+        return FileParse::deserializeEnum<NodeAdapter, ThermFile::CavityStandard>(
+          node, standard, ThermFile::cavityStandardFromString);
+    }
+
+    template<typename NodeAdapter>
+    inline NodeAdapter & operator<<(NodeAdapter & node, const ThermFile::CavityStandard & standard)
+    {
+        return FileParse::serializeEnum<NodeAdapter, ThermFile::CavityStandard>(
+          node, standard, ThermFile::cavityStandardToString);
+    }
+
+    template<typename NodeAdapter>
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, ThermFile::RadiationCalculation & radiationCalculation)
+    {
+        return FileParse::deserializeEnum<NodeAdapter, ThermFile::RadiationCalculation>(
+          node, radiationCalculation, ThermFile::radiationCalculationFromString);
+    }
+
+    template<typename NodeAdapter>
+    inline NodeAdapter & operator<<(NodeAdapter & node, const ThermFile::RadiationCalculation & radiationCalculation)
+    {
+        return FileParse::serializeEnum<NodeAdapter, ThermFile::RadiationCalculation>(
+          node, radiationCalculation, ThermFile::radiationCalculationToString);
+    }
 }   // namespace ThermFile

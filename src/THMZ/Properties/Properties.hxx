@@ -156,6 +156,34 @@ namespace ThermFile
     };
 
     ////////////////////////////////////////////////////////////////////////////////////
+    /// RadiationModelParameters
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    //! \brief Parameters for the detailed radiation model. Active only when
+    //! FrameCavityProperties::radiationCalculation == RadiationCalculation::Detailed.
+    //! Reserved as a slot; concrete fields (view-factor segment count, convergence
+    //! tolerance, enclosure-detection threshold) are pending design decisions.
+    struct RadiationModelParameters
+    {
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    /// FrameCavityProperties
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    //! \brief Project-wide frame-cavity policy. Holds the cavity standard, radiation
+    //! calculation mode, and the defaults applied when converting a polygon to a frame
+    //! cavity. Per-polygon overrides (gas, ventilated) live on Polygon::cavity.
+    struct FrameCavityProperties
+    {
+        CavityStandard standard{CavityStandard::ISO15099};
+        RadiationCalculation radiationCalculation{RadiationCalculation::Detailed};
+        std::string defaultGas{"Air"};
+        bool defaultVentilated{false};
+        RadiationModelParameters radiationModelParameters;
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////
     /// CalculationOptions
     ////////////////////////////////////////////////////////////////////////////////////
 
@@ -174,6 +202,7 @@ namespace ThermFile
         MeshControl meshControl;
         HeatTransferModelingOptions heatTransferModelingOptions;
         MiscProperties miscProperties;
+        FrameCavityProperties frameCavityProperties;
     };
 
     using CrossSectionType = std::variant<WindowCrossSectionType, OpaqueCrossSectionType, OtherCrossSectionType>;

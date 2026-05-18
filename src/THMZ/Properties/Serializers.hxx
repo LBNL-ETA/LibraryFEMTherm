@@ -205,6 +205,44 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, RadiationModelParameters & /*radiationModelParameters*/)
+    {
+        // Reserved slot; no fields enumerated yet.
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline NodeAdapter & operator<<(NodeAdapter & node, const RadiationModelParameters & /*radiationModelParameters*/)
+    {
+        // Reserved slot; no fields enumerated yet.
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, FrameCavityProperties & properties)
+    {
+        node >> FileParse::Child{"CavityStandard", properties.standard};
+        node >> FileParse::Child{"RadiationCalculation", properties.radiationCalculation};
+        node >> FileParse::Child{"DefaultGas", properties.defaultGas};
+        node >> FileParse::Child{"DefaultVentilated", properties.defaultVentilated};
+        node >> FileParse::Child{"RadiationModelParameters", properties.radiationModelParameters};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline NodeAdapter & operator<<(NodeAdapter & node, const FrameCavityProperties & properties)
+    {
+        node << FileParse::Child{"CavityStandard", properties.standard};
+        node << FileParse::Child{"RadiationCalculation", properties.radiationCalculation};
+        node << FileParse::Child{"DefaultGas", properties.defaultGas};
+        node << FileParse::Child{"DefaultVentilated", properties.defaultVentilated};
+        node << FileParse::Child{"RadiationModelParameters", properties.radiationModelParameters};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
     inline const NodeAdapter & operator>>(const NodeAdapter & node, CalculationOptions & options)
     {
         node >> FileParse::Child{"SimulationEngine", options.simulationEngine};
@@ -220,6 +258,7 @@ namespace ThermFile
         node >> FileParse::Child{"MeshControl", options.meshControl};
         node >> FileParse::Child{"HeatTransferModelingOptions", options.heatTransferModelingOptions};
         node >> FileParse::Child{"MiscellaneousProperties", options.miscProperties};
+        node >> FileParse::Child{"FrameCavityProperties", options.frameCavityProperties};
 
         return node;
     }
@@ -240,6 +279,7 @@ namespace ThermFile
         node << FileParse::Child{"MeshControl", options.meshControl};
         node << FileParse::Child{"HeatTransferModelingOptions", options.heatTransferModelingOptions};
         node << FileParse::Child{"MiscellaneousProperties", options.miscProperties};
+        node << FileParse::Child{"FrameCavityProperties", options.frameCavityProperties};
 
         return node;
     }

@@ -56,7 +56,9 @@ namespace ThermFile
                                                                {PolygonType::Spacer, "Spacer"},
                                                                {PolygonType::GlassIn, "Glass In"},
                                                                {PolygonType::GlassOut, "Glass Out"},
-                                                               {PolygonType::ShadeGap, "Shade Gap"}};
+                                                               {PolygonType::ShadeGap, "Shade Gap"},
+                                                               {PolygonType::FrameCavity, "Frame Cavity"},
+                                                               {PolygonType::RadiationEnclosure, "Radiation Enclosure"}};
 
     PolygonType polygonTypeFromString(std::string_view polygonType)
     {

@@ -54,6 +54,17 @@ namespace ThermFile
         size_t index{0u};
     };
 
+    //! \brief Per-polygon cavity attributes for polygons of PolygonType::FrameCavity.
+    //! Present only when the polygon is a frame cavity. The gas string is a name (resolved
+    //! against the project's gas library at runtime); the schema treats it as opaque text.
+    //! @gas - cavity fill gas name (default "Air").
+    //! @ventilated - whether this cavity is treated as ventilated by the chosen standard.
+    struct CavityData
+    {
+        std::string gas{"Air"};
+        bool ventilated{false};
+    };
+
     //! \brief Represents a polygon in THERM model.
     //! @uuid - unique identifier of the polygon.
     //! @materialName - name of the material used in the polygon.
@@ -78,6 +89,7 @@ namespace ThermFile
         std::vector<std::string> attributes;
         PolygonType polygonType{PolygonType::None};
         std::optional<int> linkID;
+        std::optional<CavityData> cavity;
     };
 
     //! \brief Represents geometry data that are used in certain boundary condition types

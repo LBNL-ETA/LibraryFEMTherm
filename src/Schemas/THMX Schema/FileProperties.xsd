@@ -215,6 +215,32 @@
 			<xs:element name="MeshControl" type="MeshControlType"/>
 			<xs:element name="HeatTransferModelingOptions" type="HeatTransferModelingOptionsType" minOccurs="0"/>
 			<xs:element name="MiscellaneousProperties" type="MiscellaneousPropertiesType" minOccurs="0"/>
+			<xs:element name="FrameCavityProperties" type="FrameCavityPropertiesType" minOccurs="0"/>
+		</xs:all>
+	</xs:complexType>
+	<xs:simpleType name="CavityStandardType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="ISO15099"/>
+			<xs:enumeration value="CEN"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="RadiationCalculationType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Detailed"/>
+			<xs:enumeration value="Simplified"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="RadiationModelParametersType">
+		<!-- Reserved slot; field list pending design decisions -->
+		<xs:sequence/>
+	</xs:complexType>
+	<xs:complexType name="FrameCavityPropertiesType">
+		<xs:all>
+			<xs:element name="CavityStandard" type="CavityStandardType" default="ISO15099" minOccurs="0"/>
+			<xs:element name="RadiationCalculation" type="RadiationCalculationType" default="Detailed" minOccurs="0"/>
+			<xs:element name="DefaultGas" type="xs:string" default="Air" minOccurs="0"/>
+			<xs:element name="DefaultVentilated" type="xs:boolean" default="false" minOccurs="0"/>
+			<xs:element name="RadiationModelParameters" type="RadiationModelParametersType" minOccurs="0"/>
 		</xs:all>
 	</xs:complexType>
 	<xs:complexType name="ExposureType">

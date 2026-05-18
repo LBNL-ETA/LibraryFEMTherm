@@ -75,4 +75,5 @@ namespace ThermFile
         return FileParse::serializeEnum<NodeAdapter, ThermFile::MaterialSide>(
           node, materialSide, ThermFile::materialSideToString);
     }
+
 }   // namespace ThermFile

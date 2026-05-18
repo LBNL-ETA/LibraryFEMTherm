@@ -190,6 +190,23 @@ namespace Helper
     //! \brief Creates general node.
     Helper::MockNode generalNode(const MockGeneral & general);
 
+    struct MockFrameCavityProperties
+    {
+        std::string standard{"ISO15099"};
+        std::string radiationCalculation{"Detailed"};
+        std::string defaultGas{"Air"};
+        std::string defaultVentilated{"false"};
+
+        MockFrameCavityProperties() = default;
+        MockFrameCavityProperties(std::string standard,
+                                  std::string radiationCalculation,
+                                  std::string defaultGas,
+                                  std::string defaultVentilated);
+    };
+
+    //! \brief Inserts a FrameCavityProperties node into the given mock node.
+    Helper::MockNode frameCavityPropertiesNode(const MockFrameCavityProperties & properties);
+
     struct MockCalculationOptions
     {
         std::string simulationEngine;
@@ -205,6 +222,7 @@ namespace Helper
         MockMeshControl meshControl;
         MockHeatTransferModelingOptions heatTransferModelingOptions;
         MockMiscProperties miscProperties;
+        MockFrameCavityProperties frameCavityProperties{};
 
         MockCalculationOptions(std::string simulationEngine,
                                std::string calculationMode,
@@ -218,7 +236,8 @@ namespace Helper
                                MockEngineParameters engineParameters,
                                MockMeshControl meshControl,
                                MockHeatTransferModelingOptions heatTransferModelingOptions,
-                               MockMiscProperties miscProperties);
+                               MockMiscProperties miscProperties,
+                               MockFrameCavityProperties frameCavityProperties = {});
     };
 
     Helper::MockNode calculationOptionsNode(const MockCalculationOptions & options);

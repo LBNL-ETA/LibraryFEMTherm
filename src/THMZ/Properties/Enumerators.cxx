@@ -238,4 +238,31 @@ namespace ThermFile
     {
         return LibraryCommon::enumToString(otherCrossSectionType, otherCrossSectionTypeString);
     }
+
+    std::map<CavityStandard, std::string> cavityStandardStringMap{{CavityStandard::ISO15099, "ISO15099"},
+                                                                  {CavityStandard::CEN, "CEN"}};
+
+    CavityStandard cavityStandardFromString(std::string_view standard)
+    {
+        return LibraryCommon::enumFromString(standard, cavityStandardStringMap);
+    }
+
+    std::string cavityStandardToString(CavityStandard standard)
+    {
+        return LibraryCommon::enumToString(standard, cavityStandardStringMap);
+    }
+
+    std::map<RadiationCalculation, std::string> radiationCalculationStringMap{
+      {RadiationCalculation::Detailed, "Detailed"},
+      {RadiationCalculation::Simplified, "Simplified"}};
+
+    RadiationCalculation radiationCalculationFromString(std::string_view radiationCalculation)
+    {
+        return LibraryCommon::enumFromString(radiationCalculation, radiationCalculationStringMap);
+    }
+
+    std::string radiationCalculationToString(RadiationCalculation radiationCalculation)
+    {
+        return LibraryCommon::enumToString(radiationCalculation, radiationCalculationStringMap);
+    }
 }   // namespace ThermFile
