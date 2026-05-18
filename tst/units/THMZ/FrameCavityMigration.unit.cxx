@@ -11,31 +11,6 @@ namespace
         MaterialsLibrary::Material material;
         material.UUID = std::move(uuid);
         material.Name = std::move(name);
-        material.data = MaterialsLibrary::Solid{};
-        return material;
-    }
-
-    MaterialsLibrary::Material makeCavityMaterial(std::string uuid,
-                                                  std::string name,
-                                                  MaterialsLibrary::CavityStandard standard,
-                                                  std::string gas)
-    {
-        MaterialsLibrary::Material material;
-        material.UUID = std::move(uuid);
-        material.Name = std::move(name);
-        MaterialsLibrary::Cavity cavity;
-        cavity.cavityStandard = standard;
-        cavity.GasName = std::move(gas);
-        material.data = cavity;
-        return material;
-    }
-
-    MaterialsLibrary::Material makeRadiationEnclosureMaterial(std::string uuid, std::string name)
-    {
-        MaterialsLibrary::Material material;
-        material.UUID = std::move(uuid);
-        material.Name = std::move(name);
-        material.data = MaterialsLibrary::RadiationEnclosure{};
         return material;
     }
 
@@ -48,60 +23,59 @@ namespace
         return polygon;
     }
 
-    MaterialsLibrary::DB makeDBWith(std::initializer_list<MaterialsLibrary::Material> materials)
+    ThermFile::LegacyMaterialsCapture captureWithCavity(std::string uuid,
+                                                       std::string standard,
+                                                       std::string gas)
     {
-        MaterialsLibrary::DB db;
-        for(const auto & material : materials)
-        {
-            db.add(material);
-        }
-        return db;
+        ThermFile::LegacyMaterialsCapture capture;
+        capture.cavities[std::move(uuid)] = ThermFile::LegacyCavityEntry{std::move(standard), std::move(gas)};
+        return capture;
     }
 }   // namespace
 
 class TestFrameCavityMigration : public testing::Test
 {};
 
-TEST_F(TestFrameCavityMigration, NoLegacyMaterialsIsNoOp)
+TEST_F(TestFrameCavityMigration, EmptyCaptureIsNoOp)
 {
-    auto materials = makeDBWith({makeSolidMaterial("solid-1", "Steel")});
+    MaterialsLibrary::DB materials;
+    materials.add(makeSolidMaterial("solid-1", "Steel"));
 
     ThermFile::ThermModel model;
     model.polygons.push_back(makePolygon("poly-1", "solid-1"));
 
-    ThermFile::applyFrameCavityMigration(materials, model);
+    ThermFile::LegacyMaterialsCapture empty;
+    ThermFile::applyFrameCavityMigration(empty, materials, model);
 
     EXPECT_EQ(materials.getMaterials().size(), 1u);
     EXPECT_EQ(model.polygons[0].polygonType, ThermFile::PolygonType::Material);
     EXPECT_EQ(model.polygons[0].materialUUID, "solid-1");
     EXPECT_FALSE(model.polygons[0].cavity.has_value());
 
-    // Project-level defaults stay at their constructed values when nothing to promote.
     const auto & properties = model.properties.calculationOptions.frameCavityProperties;
     EXPECT_EQ(properties.standard, ThermFile::CavityStandard::ISO15099);
     EXPECT_EQ(properties.defaultGas, "Air");
     EXPECT_FALSE(properties.defaultVentilated);
 }
 
-TEST_F(TestFrameCavityMigration, CavityMaterialBecomesPerPolygonCavity)
+TEST_F(TestFrameCavityMigration, CavityCaptureBecomesPerPolygonCavity)
 {
-    auto materials = makeDBWith({
-      makeSolidMaterial("solid-1", "Steel"),
-      makeCavityMaterial("cavity-1", "Frame Cavity NFRC 100",
-                         MaterialsLibrary::CavityStandard::ISO15099, "Air"),
-    });
+    MaterialsLibrary::DB materials;
+    materials.add(makeSolidMaterial("solid-1", "Steel"));
+    materials.add(makeSolidMaterial("cavity-1", "Frame Cavity NFRC 100"));  // empty Solid stand-in
 
     ThermFile::ThermModel model;
     model.polygons.push_back(makePolygon("poly-1", "cavity-1"));
     model.polygons.push_back(makePolygon("poly-2", "solid-1"));
 
-    ThermFile::applyFrameCavityMigration(materials, model);
+    auto capture = captureWithCavity("cavity-1", "ISO15099", "Air");
 
-    // Cavity material is gone from the library; solid stays.
+    ThermFile::applyFrameCavityMigration(capture, materials, model);
+
+    // Stub cavity material gone from DB; solid stays.
     ASSERT_EQ(materials.getMaterials().size(), 1u);
     EXPECT_EQ(materials.getMaterials()[0].UUID, "solid-1");
 
-    // Cavity polygon: rewritten to FrameCavity with per-polygon CavityData.
     const auto & cavityPolygon = model.polygons[0];
     EXPECT_EQ(cavityPolygon.polygonType, ThermFile::PolygonType::FrameCavity);
     ASSERT_TRUE(cavityPolygon.cavity.has_value());
@@ -109,28 +83,28 @@ TEST_F(TestFrameCavityMigration, CavityMaterialBecomesPerPolygonCavity)
     EXPECT_FALSE(cavityPolygon.cavity->ventilated);
     EXPECT_TRUE(cavityPolygon.materialUUID.empty());
 
-    // Solid polygon: untouched.
     EXPECT_EQ(model.polygons[1].polygonType, ThermFile::PolygonType::Material);
     EXPECT_EQ(model.polygons[1].materialUUID, "solid-1");
     EXPECT_FALSE(model.polygons[1].cavity.has_value());
 
-    // Project defaults promoted from the only cavity polygon.
     const auto & properties = model.properties.calculationOptions.frameCavityProperties;
     EXPECT_EQ(properties.standard, ThermFile::CavityStandard::ISO15099);
     EXPECT_EQ(properties.defaultGas, "Air");
     EXPECT_FALSE(properties.defaultVentilated);
 }
 
-TEST_F(TestFrameCavityMigration, RadiationEnclosureMaterialBecomesRadiationEnclosurePolygon)
+TEST_F(TestFrameCavityMigration, RadiationEnclosureCaptureBecomesRadiationEnclosurePolygon)
 {
-    auto materials = makeDBWith({
-      makeRadiationEnclosureMaterial("enclosure-1", "Radiation Enclosure"),
-    });
+    MaterialsLibrary::DB materials;
+    materials.add(makeSolidMaterial("enclosure-1", "Radiation Enclosure"));
 
     ThermFile::ThermModel model;
     model.polygons.push_back(makePolygon("poly-1", "enclosure-1"));
 
-    ThermFile::applyFrameCavityMigration(materials, model);
+    ThermFile::LegacyMaterialsCapture capture;
+    capture.radiationEnclosures.insert("enclosure-1");
+
+    ThermFile::applyFrameCavityMigration(capture, materials, model);
 
     EXPECT_TRUE(materials.getMaterials().empty());
 
@@ -142,15 +116,15 @@ TEST_F(TestFrameCavityMigration, RadiationEnclosureMaterialBecomesRadiationEnclo
 
 TEST_F(TestFrameCavityMigration, VentilatedVariantStandardIsNormalizedAndVentilationFlagSet)
 {
-    auto materials = makeDBWith({
-      makeCavityMaterial("cavity-vent", "Frame Cavity ISO Ventilated",
-                         MaterialsLibrary::CavityStandard::ISO15099Ventilated, "Argon"),
-    });
+    MaterialsLibrary::DB materials;
+    materials.add(makeSolidMaterial("cavity-vent", "Frame Cavity ISO Ventilated"));
 
     ThermFile::ThermModel model;
     model.polygons.push_back(makePolygon("poly-1", "cavity-vent"));
 
-    ThermFile::applyFrameCavityMigration(materials, model);
+    auto capture = captureWithCavity("cavity-vent", "ISO15099Ventilated", "Argon");
+
+    ThermFile::applyFrameCavityMigration(capture, materials, model);
 
     const auto & cavity = model.polygons[0].cavity;
     ASSERT_TRUE(cavity.has_value());
@@ -166,15 +140,15 @@ TEST_F(TestFrameCavityMigration, VentilatedVariantStandardIsNormalizedAndVentila
 
 TEST_F(TestFrameCavityMigration, NFRCAliasesNormalizeToISO15099)
 {
-    auto materials = makeDBWith({
-      makeCavityMaterial("cavity-nfrc", "Frame Cavity NFRC",
-                         MaterialsLibrary::CavityStandard::NFRC, "Air"),
-    });
+    MaterialsLibrary::DB materials;
+    materials.add(makeSolidMaterial("cavity-nfrc", "Frame Cavity NFRC"));
 
     ThermFile::ThermModel model;
     model.polygons.push_back(makePolygon("poly-1", "cavity-nfrc"));
 
-    ThermFile::applyFrameCavityMigration(materials, model);
+    auto capture = captureWithCavity("cavity-nfrc", "NFRC", "Air");
+
+    ThermFile::applyFrameCavityMigration(capture, materials, model);
 
     const auto & properties = model.properties.calculationOptions.frameCavityProperties;
     EXPECT_EQ(properties.standard, ThermFile::CavityStandard::ISO15099);
@@ -182,20 +156,18 @@ TEST_F(TestFrameCavityMigration, NFRCAliasesNormalizeToISO15099)
 
 TEST_F(TestFrameCavityMigration, MajorityVoteAcrossMultipleCavities)
 {
-    auto materials = makeDBWith({
-      makeCavityMaterial("cavity-iso", "Frame Cavity ISO",
-                         MaterialsLibrary::CavityStandard::ISO15099, "Air"),
-      makeCavityMaterial("cavity-cen", "Frame Cavity CEN",
-                         MaterialsLibrary::CavityStandard::CEN, "Argon"),
-    });
+    MaterialsLibrary::DB materials;
 
     ThermFile::ThermModel model;
-    // Two cavity polygons reference ISO/Air, one references CEN/Argon.
     model.polygons.push_back(makePolygon("poly-1", "cavity-iso"));
     model.polygons.push_back(makePolygon("poly-2", "cavity-iso"));
     model.polygons.push_back(makePolygon("poly-3", "cavity-cen"));
 
-    ThermFile::applyFrameCavityMigration(materials, model);
+    ThermFile::LegacyMaterialsCapture capture;
+    capture.cavities["cavity-iso"] = ThermFile::LegacyCavityEntry{"ISO15099", "Air"};
+    capture.cavities["cavity-cen"] = ThermFile::LegacyCavityEntry{"CEN", "Argon"};
+
+    ThermFile::applyFrameCavityMigration(capture, materials, model);
 
     const auto & properties = model.properties.calculationOptions.frameCavityProperties;
     EXPECT_EQ(properties.standard, ThermFile::CavityStandard::ISO15099);
@@ -204,22 +176,94 @@ TEST_F(TestFrameCavityMigration, MajorityVoteAcrossMultipleCavities)
 
 TEST_F(TestFrameCavityMigration, TiePrefersISO15099AndAirAndFalse)
 {
-    auto materials = makeDBWith({
-      makeCavityMaterial("cavity-iso", "Frame Cavity ISO",
-                         MaterialsLibrary::CavityStandard::ISO15099, "Air"),
-      makeCavityMaterial("cavity-cen", "Frame Cavity CEN Vent",
-                         MaterialsLibrary::CavityStandard::CENVentilated, "Argon"),
-    });
+    MaterialsLibrary::DB materials;
 
     ThermFile::ThermModel model;
-    // 1:1 across every dimension (ISO vs CEN, Air vs Argon, false vs true)
     model.polygons.push_back(makePolygon("poly-1", "cavity-iso"));
     model.polygons.push_back(makePolygon("poly-2", "cavity-cen"));
 
-    ThermFile::applyFrameCavityMigration(materials, model);
+    ThermFile::LegacyMaterialsCapture capture;
+    capture.cavities["cavity-iso"] = ThermFile::LegacyCavityEntry{"ISO15099", "Air"};
+    capture.cavities["cavity-cen"] = ThermFile::LegacyCavityEntry{"CENVentilated", "Argon"};
+
+    ThermFile::applyFrameCavityMigration(capture, materials, model);
 
     const auto & properties = model.properties.calculationOptions.frameCavityProperties;
     EXPECT_EQ(properties.standard, ThermFile::CavityStandard::ISO15099);
     EXPECT_EQ(properties.defaultGas, "Air");
     EXPECT_FALSE(properties.defaultVentilated);
+}
+
+TEST_F(TestFrameCavityMigration, CaptureLegacyMaterialsParsesCavityAndRadiationEnclosure)
+{
+    const std::string materialsXml = R"(<Materials>
+<Version>1</Version>
+<Material>
+    <UUID>solid-uuid</UUID>
+    <Name>Steel</Name>
+    <Protected>false</Protected>
+    <Color>0x808080</Color>
+    <Solid>
+        <HygroThermal>
+            <ThermalConductivityDry>50</ThermalConductivityDry>
+        </HygroThermal>
+    </Solid>
+</Material>
+<Material>
+    <UUID>cavity-uuid</UUID>
+    <Name>Frame Cavity NFRC 100</Name>
+    <Protected>false</Protected>
+    <Color>0x00FF00</Color>
+    <Cavity>
+        <CavityStandard>ISO15099Ventilated</CavityStandard>
+        <Gas>Argon</Gas>
+        <EmissivitySide1>0.84</EmissivitySide1>
+        <EmissivitySide2>0.84</EmissivitySide2>
+    </Cavity>
+</Material>
+<Material>
+    <UUID>enclosure-uuid</UUID>
+    <Name>Radiation Enclosure</Name>
+    <Protected>false</Protected>
+    <Color>0xFFFF00</Color>
+    <RadiationEnclosure>
+        <EmissivityDefault>0.9</EmissivityDefault>
+    </RadiationEnclosure>
+</Material>
+</Materials>
+)";
+
+    const auto capture = ThermFile::captureLegacyMaterials(materialsXml);
+
+    ASSERT_EQ(capture.cavities.size(), 1u);
+    ASSERT_TRUE(capture.cavities.contains("cavity-uuid"));
+    EXPECT_EQ(capture.cavities.at("cavity-uuid").cavityStandard, "ISO15099Ventilated");
+    EXPECT_EQ(capture.cavities.at("cavity-uuid").gas, "Argon");
+
+    ASSERT_EQ(capture.radiationEnclosures.size(), 1u);
+    EXPECT_TRUE(capture.radiationEnclosures.contains("enclosure-uuid"));
+}
+
+TEST_F(TestFrameCavityMigration, CaptureLegacyMaterialsReturnsEmptyForCleanXml)
+{
+    const std::string materialsXml = R"(<Materials>
+<Version>1</Version>
+<Material>
+    <UUID>solid-only</UUID>
+    <Name>Steel</Name>
+    <Protected>false</Protected>
+    <Color>0x808080</Color>
+    <Solid>
+        <HygroThermal>
+            <ThermalConductivityDry>50</ThermalConductivityDry>
+        </HygroThermal>
+    </Solid>
+</Material>
+</Materials>
+)";
+
+    const auto capture = ThermFile::captureLegacyMaterials(materialsXml);
+
+    EXPECT_TRUE(capture.cavities.empty());
+    EXPECT_TRUE(capture.radiationEnclosures.empty());
 }

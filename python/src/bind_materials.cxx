@@ -66,17 +66,6 @@ void bind_materials(py::module_ & mod)
         .def_readwrite("hygro_thermal", &MaterialsLibrary::Solid::hygroThermal)
         .def_readwrite("optical", &MaterialsLibrary::Solid::optical);
 
-    py::class_<MaterialsLibrary::Cavity>(mod, "MaterialCavity")
-        .def(py::init<>())
-        .def_readwrite("emissivity_side1", &MaterialsLibrary::Cavity::EmissivitySide1)
-        .def_readwrite("emissivity_side2", &MaterialsLibrary::Cavity::EmissivitySide2)
-        .def_readwrite("cavity_standard", &MaterialsLibrary::Cavity::cavityStandard)
-        .def_readwrite("gas_name", &MaterialsLibrary::Cavity::GasName);
-
-    py::class_<MaterialsLibrary::RadiationEnclosure>(mod, "RadiationEnclosure")
-        .def(py::init<>())
-        .def_readwrite("emissivity_default", &MaterialsLibrary::RadiationEnclosure::emissivityDefault);
-
     // --- Database source ---
     py::class_<MaterialsLibrary::WINDOW>(mod, "WINDOW")
         .def(py::init<>())
@@ -97,23 +86,7 @@ void bind_materials(py::module_ & mod)
         .def_readwrite("protected_", &MaterialsLibrary::Material::Protected)
         .def_readwrite("color", &MaterialsLibrary::Material::Color)
         .def_readwrite("database", &MaterialsLibrary::Material::database)
-        .def_property("data",
-            [](const MaterialsLibrary::Material & mat) -> py::object {
-                return std::visit([](const auto & val) -> py::object {
-                    return py::cast(val);
-                }, mat.data);
-            },
-            [](MaterialsLibrary::Material & mat, py::object val) {
-                try { mat.data = val.cast<MaterialsLibrary::Solid>(); return; } catch(py::cast_error &) {}
-                try { mat.data = val.cast<MaterialsLibrary::Cavity>(); return; } catch(py::cast_error &) {}
-                try { mat.data = val.cast<MaterialsLibrary::RadiationEnclosure>(); return; } catch(py::cast_error &) {}
-                throw py::type_error("Expected Solid, MaterialCavity, or RadiationEnclosure");
-            });
-
-    // Helper functions
-    mod.def("is_solid", &MaterialsLibrary::isSolid, py::arg("material"));
-    mod.def("is_cavity", &MaterialsLibrary::isCavity, py::arg("material"));
-    mod.def("is_radiation_enclosure", &MaterialsLibrary::isRadiationEnclosure, py::arg("material"));
+        .def_readwrite("data", &MaterialsLibrary::Material::data);
 
     // --- DB ---
     py::class_<MaterialsLibrary::DB>(mod, "MaterialsDB")

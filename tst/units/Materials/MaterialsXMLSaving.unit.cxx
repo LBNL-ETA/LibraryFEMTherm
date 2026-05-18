@@ -24,7 +24,7 @@ TEST_F(TestMaterialsXMLSaving, SaveMaterialXML)
 
     const std::string uuid{"7a863ad6-c537-11ea-87d0-0242ac130003"};
 
-    MaterialsLibrary::Material record = MaterialsLibrary::generate(uuid, MaterialsLibrary::MaterialType::Solid);
+    MaterialsLibrary::Material record = MaterialsLibrary::generate(uuid);
 
     materialDB.add(record);
     const auto error{materialDB.saveToFile()};
@@ -51,13 +51,13 @@ TEST_F(TestMaterialsXMLSaving, updateXMLProperties)
 
     const std::string uuid{"7a863ad6-c537-11ea-87d0-0242ac130004"};
 
-    MaterialsLibrary::Material record = MaterialsLibrary::generate(uuid, MaterialsLibrary::MaterialType::Solid);
+    MaterialsLibrary::Material record = MaterialsLibrary::generate(uuid);
 
     materialDB.add(record);
 
     record.Name = "Test Name";
 
-    auto solid{MaterialsLibrary::getSolid(record)};
+    auto * solid{&record.data};
 
     ASSERT_TRUE(solid->hygroThermal.has_value());
 
@@ -73,9 +73,7 @@ TEST_F(TestMaterialsXMLSaving, updateXMLProperties)
     const auto testRecord{testDB.getByUUID(uuid)};
     ASSERT_TRUE(testRecord.has_value());
 
-    ASSERT_TRUE(MaterialsLibrary::isSolid(testRecord.value()));
-
-    const auto testSolid{MaterialsLibrary::getSolid(testRecord.value())};
+    const auto * testSolid{&testRecord->data};
 
     EXPECT_EQ(testRecord->Name, "Test Name");
     EXPECT_EQ(testRecord->Protected, false);
@@ -94,13 +92,11 @@ TEST_F(TestMaterialsXMLSaving, AddMoistureStorageFunction)
 
     const std::string uuid{"7a863ad6-c537-11ea-87d0-0242ac130004"};
 
-    MaterialsLibrary::Material record = MaterialsLibrary::generate(uuid, MaterialsLibrary::MaterialType::Solid);
+    MaterialsLibrary::Material record = MaterialsLibrary::generate(uuid);
 
     std::vector<MaterialsLibrary::point> moistureStorageFunction{{0, 0}, {1, 1}};
 
-    ASSERT_TRUE(MaterialsLibrary::isSolid(record));
-
-    auto solid{MaterialsLibrary::getSolid(record)};
+    auto * solid{&record.data};
 
     ASSERT_TRUE(solid->hygroThermal.has_value());
 
@@ -116,13 +112,12 @@ TEST_F(TestMaterialsXMLSaving, AddMoistureStorageFunction)
     const auto testRecord{testDB.getByUUID(uuid)};
 
     ASSERT_TRUE(testRecord.has_value());
-    ASSERT_TRUE(MaterialsLibrary::isSolid(testRecord.value()));
 
     EXPECT_EQ(testRecord->Name, "Default Name");
     EXPECT_EQ(testRecord->Protected, false);
     EXPECT_EQ(testRecord->Color, "0xFFFFFF");
 
-    const auto msfSolid{MaterialsLibrary::getSolid(testRecord.value())};
+    const auto * msfSolid{&testRecord->data};
 
     const auto loadedMSF{msfSolid->hygroThermal->MoistureStorageFunction};
     EXPECT_EQ(loadedMSF.has_value(), true);
@@ -148,7 +143,7 @@ TEST_F(TestMaterialsXMLSaving, SaveMaterialWithDatabaseSource)
 
     const std::string uuid{"f1a2b3c4-d5e6-7890-abcd-ef1234567890"};
 
-    MaterialsLibrary::Material record = MaterialsLibrary::generate(uuid, MaterialsLibrary::MaterialType::Solid);
+    MaterialsLibrary::Material record = MaterialsLibrary::generate(uuid);
     record.database = MaterialsLibrary::Database{
         MaterialsLibrary::WINDOW{"C:\\WINDOWdb\\ShadeDB.mdb", "Roller Shade Dark", 42}
     };

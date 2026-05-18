@@ -83,19 +83,17 @@ class TestPropertiesEnums:
 
 class TestMaterialsEnums:
 
-    def test_material_type(self):
-        assert fem.MaterialType.Solid is not None
-        assert fem.MaterialType.Cavity is not None
-        assert fem.MaterialType.RadiationEnclosure is not None
-
     def test_material_roughness(self):
         assert fem.MaterialRoughness.VeryRough is not None
         assert fem.MaterialRoughness.VerySmooth is not None
 
     def test_cavity_standard(self):
-        assert fem.CavityStandard.NFRC is not None
-        assert fem.CavityStandard.CEN is not None
         assert fem.CavityStandard.ISO15099 is not None
+        assert fem.CavityStandard.CEN is not None
+
+    def test_radiation_calculation(self):
+        assert fem.RadiationCalculation.Detailed is not None
+        assert fem.RadiationCalculation.Simplified is not None
 
 
 class TestFileFormat:

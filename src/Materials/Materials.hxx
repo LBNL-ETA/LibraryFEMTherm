@@ -3,9 +3,6 @@
 #include <string>
 #include <vector>
 #include <optional>
-#include <variant>
-#include <map>
-#include <utility>
 
 #include "Definitions.hxx"
 
@@ -137,20 +134,6 @@ namespace MaterialsLibrary
         std::optional<Optical> optical{Optical()};
     };
 
-    struct Cavity
-    {
-        std::optional<double> EmissivitySide1;
-        std::optional<double> EmissivitySide2;
-
-        CavityStandard cavityStandard{CavityStandard::NFRC};
-        std::string GasName;
-    };
-
-    struct RadiationEnclosure
-    {
-        double emissivityDefault{0.9};
-    };
-
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     ///   Database source information
     /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -173,9 +156,11 @@ namespace MaterialsLibrary
     ///   Material
     /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    using MaterialVariant = std::variant<Solid, Cavity, RadiationEnclosure>;
-
     //! \brief Material record is kept for displaying it in screen lists.
+    //! After the frame-cavity refactor every material is a solid; the data member is
+    //! a plain Solid (no variant). Cavity-typed and radiation-enclosure-typed
+    //! materials from legacy files are intercepted and rewritten by the migration
+    //! step before this record is constructed.
     struct Material
     {
         std::string UUID{};
@@ -189,28 +174,14 @@ namespace MaterialsLibrary
 
         std::optional<Database> database;
 
-        MaterialVariant data;
+        Solid data;
     };
 
-    Material generate(std::string uuid, MaterialType type);
-    Material generate(MaterialType type);
+    Material generate(std::string uuid);
+    Material generate();
 
-
-    /// These functions will create child elements only if material is already solid.
+    /// These functions ensure the sub-trees on the material's solid data exist.
     void ensureHygroThermal(Material & material);
     void ensureIntegrated(Material & material);
     void ensureIntegratedSolarAndVisible(Material & material);
-
-    bool isSolid(const Material&  material);
-    bool isCavity(const Material&  material);
-    bool isRadiationEnclosure(const Material&  material);
-
-    std::string getMaterialType(const Material&  material);
-
-    Solid * getSolid(Material&  material);
-    const Solid * getSolid(const Material&  material);
-    Cavity * getCavity(Material&  material);
-    const Cavity * getCavity(const Material&  material);
-    RadiationEnclosure * getRadiationEnclosure(Material&  material);
-    const RadiationEnclosure * getRadiationEnclosure(const Material&  material);
 }   // namespace MaterialsLibrary

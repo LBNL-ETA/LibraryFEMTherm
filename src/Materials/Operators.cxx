@@ -39,19 +39,6 @@ namespace MaterialsLibrary
         return !(lhs == rhs);
     }
 
-    bool operator==(const Cavity & lhs, const Cavity & rhs)
-    {
-        constexpr auto tolerance{1e-6};
-        return LibraryCommon::isEqual(lhs.EmissivitySide1, rhs.EmissivitySide1, tolerance)
-               && LibraryCommon::isEqual(lhs.EmissivitySide2, rhs.EmissivitySide2, tolerance)
-               && lhs.cavityStandard == rhs.cavityStandard && lhs.GasName == rhs.GasName;
-    }
-
-    bool operator!=(const Cavity & lhs, const Cavity & rhs)
-    {
-        return !(lhs == rhs);
-    }
-
     bool operator==(const OpticalProperties & lhs, const OpticalProperties & rhs)
     {
         return lhs.Transmittance == rhs.Transmittance && lhs.Reflectance == rhs.Reflectance;
@@ -137,17 +124,6 @@ namespace MaterialsLibrary
     }
 
     bool operator!=(const Solid & lhs, const Solid & rhs)
-    {
-        return !(lhs == rhs);
-    }
-
-    bool operator==(const RadiationEnclosure & lhs, const RadiationEnclosure & rhs)
-    {
-        constexpr auto tolerance{1e-6};
-        return LibraryCommon::isEqual(lhs.emissivityDefault, rhs.emissivityDefault, tolerance);
-    }
-
-    bool operator!=(const RadiationEnclosure & lhs, const RadiationEnclosure & rhs)
     {
         return !(lhs == rhs);
     }

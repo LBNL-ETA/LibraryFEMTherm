@@ -1,10 +1,36 @@
 #pragma once
 
+#include <map>
+#include <set>
+#include <string>
+
 #include "THMX.hxx"
 #include "Materials/DB.hxx"
 
 namespace ThermFile
 {
+    //! \brief One per legacy frame-cavity-typed material entry: the cavity standard
+    //! string (raw, e.g. "ISO15099Ventilated") and the gas name.
+    //! The standard is kept opaque here; normalization happens inside the migration.
+    struct LegacyCavityEntry
+    {
+        std::string cavityStandard;
+        std::string gas;
+    };
+
+    //! \brief Side-channel capture of legacy non-solid material entries that the
+    //! current flat Material parser silently drops.
+    struct LegacyMaterialsCapture
+    {
+        std::map<std::string, LegacyCavityEntry> cavities;          // material UUID -> cavity data
+        std::set<std::string> radiationEnclosures;                  // material UUIDs
+    };
+
+    //! \brief Scan a Materials.xml document for legacy cavity-typed and
+    //! radiation-enclosure-typed material entries. Returns empty if no legacy
+    //! data is present.
+    LegacyMaterialsCapture captureLegacyMaterials(const std::string & materialsXml);
+
     //! \brief One-shot migration for the legacy frame-cavity representation.
     //!
     //! Specific to this refactor; not a general migration framework. If a future
@@ -13,15 +39,16 @@ namespace ThermFile
     //! to abstract over).
     //!
     //! Three passes:
-    //! 1. *Materials*: capture cavity-typed and radiation-enclosure-typed materials by UUID
-    //!    along with their CavityStandard/Gas/ventilation, then drop them from the library.
+    //! 1. *Materials*: delete legacy non-solid material UUIDs from the loaded DB
+    //!    (they may have been parsed as empty Solid records by the flat parser).
     //! 2. *Polygons*: for each polygon referencing a captured legacy material, set its
     //!    PolygonType (FrameCavity or RadiationEnclosure), populate per-polygon CavityData,
     //!    and clear materialUUID. Tally per-cavity (standard, gas, ventilated) usage.
     //! 3. *Project defaults*: majority-vote the tally and apply to
     //!    CalculationOptions::frameCavityProperties. Ties prefer ISO15099 / "Air" / false.
     //!
-    //! Idempotent: safe to call on already-migrated data (no captured materials means no
-    //! polygon rewrites and no project-default promotion).
-    void applyFrameCavityMigration(MaterialsLibrary::DB & materials, ThermFile::ThermModel & model);
+    //! Idempotent: passing an empty capture is a safe no-op.
+    void applyFrameCavityMigration(const LegacyMaterialsCapture & legacy,
+                                   MaterialsLibrary::DB & materials,
+                                   ThermFile::ThermModel & model);
 }   // namespace ThermFile

@@ -96,6 +96,4 @@ namespace MaterialsLibrary
         std::vector<Material> loadMaterialsFromXMLFile(const std::string & materialXMLFileName);
     };
 
-    //! \brief Returns all the gas names used by cavities in the library.
-    [[nodiscard]] std::set<std::string, std::less<>> getNames(const std::vector<Material> & materials);
 }   // namespace MaterialsLibrary

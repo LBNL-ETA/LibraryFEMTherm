@@ -56,26 +56,14 @@ class TestMaterialCreation:
         mat.uuid = "my-uuid"
         mat.name = "My Solid"
         mat.data = fem.Solid()
-        assert fem.is_solid(mat)
-        assert not fem.is_cavity(mat)
+        assert isinstance(mat.data, fem.Solid)
 
-    def test_create_cavity_material(self):
-        mat = fem.Material()
-        mat.data = fem.MaterialCavity()
-        assert fem.is_cavity(mat)
-        assert not fem.is_solid(mat)
-
-    def test_create_radiation_enclosure_material(self):
-        mat = fem.Material()
-        mat.data = fem.RadiationEnclosure()
-        assert fem.is_radiation_enclosure(mat)
-
-    def test_switch_variant_type(self):
+    def test_material_data_can_be_replaced(self):
         mat = fem.Material()
         mat.data = fem.Solid()
-        assert fem.is_solid(mat)
-        mat.data = fem.MaterialCavity()
-        assert fem.is_cavity(mat)
+        mat.data.hygro_thermal = fem.HygroThermal()
+        mat.data.hygro_thermal.bulk_density = 800.0
+        assert mat.data.hygro_thermal.bulk_density == 800.0
 
 
 class TestBCCreation:

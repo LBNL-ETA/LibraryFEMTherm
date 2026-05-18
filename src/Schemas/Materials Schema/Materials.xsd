@@ -51,26 +51,6 @@
 		</xs:all>
 	</xs:complexType>
 	<xs:element name="HygroThermal" type="HygroThermal"/>
-	<xs:simpleType name="CavityStandard" final="restriction">
-		<xs:restriction base="xs:string">
-			<xs:enumeration value="NFRC"/>
-			<xs:enumeration value="CEN"/>
-			<xs:enumeration value="CENVentilated"/>
-			<xs:enumeration value="NFRCWithUserDimensions"/>
-			<xs:enumeration value="ISO15099"/>
-			<xs:enumeration value="ISO15099Ventilated"/>
-		</xs:restriction>
-	</xs:simpleType>
-	<xs:element name="CavityStandard" type="CavityStandard"/>
-	<xs:complexType name="Cavity">
-		<xs:all>
-			<xs:element ref="CavityStandard"/>
-			<xs:element name="Gas" type="xs:string"/>
-			<xs:element name="EmissivitySide1" type="xs:double" minOccurs="0" maxOccurs="1"/>
-			<xs:element name="EmissivitySide2" type="xs:double" minOccurs="0" maxOccurs="1"/>
-		</xs:all>
-	</xs:complexType>
-	<xs:element name="Cavity" type="Cavity"/>
 	<xs:complexType name="OpticalProperties">
 		<xs:all>
 			<xs:element name="Transmittance" type="xs:double"/>
@@ -119,12 +99,6 @@
 			<xs:element name="Optical" type="Optical" minOccurs="0" maxOccurs="1"/>
 		</xs:all>
 	</xs:complexType>
-	<xs:complexType name="RadiationEnclosure">
-		<xs:all>
-			<xs:element name="EmissivityDefault" type="xs:double"/>
-		</xs:all>
-	</xs:complexType>
-	<xs:element name="RadiationEnclosure" type="RadiationEnclosure"/>
 	<xs:complexType name="WINDOW">
 		<xs:all>
 			<xs:element name="Path" type="xs:string"/>
@@ -146,11 +120,7 @@
 				<xs:element name="Protected" type="xs:boolean"/>
 				<xs:element name="Color" type="xs:string"/>
 				<xs:element name="Database" type="Database" minOccurs="0" maxOccurs="1"/>
-				<xs:choice>
-					<xs:element name="Solid" type="Solid"/>
-					<xs:element name="Cavity" type="Cavity"/>
-					<xs:element name="RadiationEnclosure" type="RadiationEnclosure"/>
-				</xs:choice>
+				<xs:element name="Solid" type="Solid"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>

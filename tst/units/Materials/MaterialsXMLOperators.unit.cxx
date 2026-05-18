@@ -15,17 +15,14 @@ protected:
 TEST_F(TestMaterialsXMLOperators, EqualityOperator1)
 {
     MaterialsLibrary::Material material1 =
-      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003", MaterialsLibrary::MaterialType::Solid);
+      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003");
     MaterialsLibrary::Material material2 =
-      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003", MaterialsLibrary::MaterialType::Solid);
+      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003");
 
     const auto bulkDensity{800.0};
 
-    ASSERT_TRUE(MaterialsLibrary::isSolid(material1));
-    ASSERT_TRUE(MaterialsLibrary::isSolid(material2));
-
-    auto solid1 = MaterialsLibrary::getSolid(material1);
-    auto solid2 = MaterialsLibrary::getSolid(material2);
+    auto * solid1 = &material1.data;
+    auto * solid2 = &material2.data;
 
     ASSERT_TRUE(solid1->hygroThermal.has_value());
     ASSERT_TRUE(solid2->hygroThermal.has_value());
@@ -40,17 +37,14 @@ TEST_F(TestMaterialsXMLOperators, EqualityOperator1)
 TEST_F(TestMaterialsXMLOperators, EqualityOperator2)
 {
     MaterialsLibrary::Material material1 =
-      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003", MaterialsLibrary::MaterialType::Solid);
+      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003");
     MaterialsLibrary::Material material2 =
-      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003", MaterialsLibrary::MaterialType::Solid);
+      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003");
 
     const auto bulkDensity{800.0};
 
-    ASSERT_TRUE(MaterialsLibrary::isSolid(material1));
-    ASSERT_TRUE(MaterialsLibrary::isSolid(material2));
-
-    auto solid1 = MaterialsLibrary::getSolid(material1);
-    auto solid2 = MaterialsLibrary::getSolid(material2);
+    auto * solid1 = &material1.data;
+    auto * solid2 = &material2.data;
 
     ASSERT_TRUE(solid1->hygroThermal.has_value());
 
@@ -63,17 +57,14 @@ TEST_F(TestMaterialsXMLOperators, EqualityOperator2)
 TEST_F(TestMaterialsXMLOperators, EqualityOperator3)
 {
     MaterialsLibrary::Material material1 =
-      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003", MaterialsLibrary::MaterialType::Solid);
+      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003");
     MaterialsLibrary::Material material2 =
-      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003", MaterialsLibrary::MaterialType::Solid);
+      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003");
 
     const std::vector<MaterialsLibrary::point> someVectorPoints{{0, 0}, {1, 1}};
 
-    ASSERT_TRUE(MaterialsLibrary::isSolid(material1));
-    ASSERT_TRUE(MaterialsLibrary::isSolid(material2));
-
-    auto solid1 = MaterialsLibrary::getSolid(material1);
-    auto solid2 = MaterialsLibrary::getSolid(material2);
+    auto * solid1 = &material1.data;
+    auto * solid2 = &material2.data;
 
     ASSERT_TRUE(solid1->hygroThermal.has_value());
     ASSERT_TRUE(solid2->hygroThermal.has_value());
@@ -88,17 +79,14 @@ TEST_F(TestMaterialsXMLOperators, EqualityOperator3)
 TEST_F(TestMaterialsXMLOperators, EqualityOperator4)
 {
     MaterialsLibrary::Material material1 =
-      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003", MaterialsLibrary::MaterialType::Solid);
+      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003");
     MaterialsLibrary::Material material2 =
-      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003", MaterialsLibrary::MaterialType::Solid);
+      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003");
 
     const std::vector<MaterialsLibrary::point> someVectorPoints{{0, 0}, {1, 1}};
 
-    ASSERT_TRUE(MaterialsLibrary::isSolid(material1));
-    ASSERT_TRUE(MaterialsLibrary::isSolid(material2));
-
-    auto solid1 = MaterialsLibrary::getSolid(material1);
-    auto solid2 = MaterialsLibrary::getSolid(material2);
+    auto * solid1 = &material1.data;
+    auto * solid2 = &material2.data;
 
     ASSERT_TRUE(solid1->hygroThermal.has_value());
     ASSERT_TRUE(solid2->hygroThermal.has_value());
@@ -112,18 +100,15 @@ TEST_F(TestMaterialsXMLOperators, EqualityOperator4)
 TEST_F(TestMaterialsXMLOperators, EqualityOperator5)
 {
     MaterialsLibrary::Material material1 =
-      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003", MaterialsLibrary::MaterialType::Solid);
+      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003");
     MaterialsLibrary::Material material2 =
-      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003", MaterialsLibrary::MaterialType::Solid);
+      MaterialsLibrary::generate("7a863ad6-c537-11ea-87d0-0242ac130003");
 
     const std::vector<MaterialsLibrary::point> someVectorPoints1{{0, 0}, {1, 1}};
     const std::vector<MaterialsLibrary::point> someVectorPoints2{{0, 0}, {2, 2}};
 
-    ASSERT_TRUE(MaterialsLibrary::isSolid(material1));
-    ASSERT_TRUE(MaterialsLibrary::isSolid(material2));
-
-    auto solid1 = MaterialsLibrary::getSolid(material1);
-    auto solid2 = MaterialsLibrary::getSolid(material2);
+    auto * solid1 = &material1.data;
+    auto * solid2 = &material2.data;
 
     ASSERT_TRUE(solid1->hygroThermal.has_value());
     ASSERT_TRUE(solid2->hygroThermal.has_value());

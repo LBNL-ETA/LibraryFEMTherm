@@ -1,7 +1,5 @@
 #include "gtest/gtest.h"
 
-#include <variant>
-
 #include "Materials/Materials.hxx"
 #include "Materials/Serializers.hxx"
 
@@ -35,8 +33,7 @@ TEST_F(TestMaterials, SolidMaterial1Deserialization)
     EXPECT_EQ(true, material.Protected);
     EXPECT_EQ("0xFF8080", material.Color);
 
-    ASSERT_TRUE(std::holds_alternative<MaterialsLibrary::Solid>(material.data));
-    const auto & solid{std::get<MaterialsLibrary::Solid>(material.data)};
+    const auto & solid{material.data};
     ASSERT_TRUE(solid.hygroThermal.has_value());
     const auto & hygroThermal{solid.hygroThermal.value()};
     Helper::assertOptionalNear(0.1, hygroThermal.DefaultThickness, tolerance);
@@ -141,171 +138,6 @@ TEST_F(TestMaterials, SolidMaterial1Serialization)
 
         // The same function is used in deserialization test
         Helper::fillSolidMaterialTest1(node);
-
-        return node;
-    };
-
-    auto expected{expectedMockData()};
-    EXPECT_TRUE(Helper::compareNodes(elementNode, expected));
-}
-
-TEST_F(TestMaterials, RadiationEnclosureDeserialization)
-{
-    // Mock data setup
-    auto mockData = []() {
-        Helper::MockNode node{"Materials"};
-
-        auto & materialNode{addChildNode(node, "Material")};
-        addChildNode(materialNode, "UUID", "RadiationEnclosureUUID");
-        addChildNode(materialNode, "Name", "SomeRadiationEnclosure");
-        addChildNode(materialNode, "Protected", "true");
-        addChildNode(materialNode, "Color", "0x8080FF");
-
-        auto & radiationEnclosureNode{addChildNode(materialNode, "RadiationEnclosure")};
-        addChildNode(radiationEnclosureNode, "EmissivityDefault", "0.8");
-
-        return node;
-    };
-
-    auto elementNode(mockData());
-    const Helper::MockNodeAdapter adapter{&elementNode};
-
-    MaterialsLibrary::Material material;
-    adapter >> FileParse::Child{"Material", material};
-
-    constexpr auto tolerance{1e-6};
-    EXPECT_EQ("SomeRadiationEnclosure", material.Name);
-    EXPECT_EQ("RadiationEnclosureUUID", material.UUID);
-    EXPECT_EQ(true, material.Protected);
-    EXPECT_EQ("0x8080FF", material.Color);
-
-    ASSERT_TRUE(std::holds_alternative<MaterialsLibrary::RadiationEnclosure>(material.data));
-    const auto & radiationEnclosure{std::get<MaterialsLibrary::RadiationEnclosure>(material.data)};
-    Helper::assertOptionalNear(0.8, radiationEnclosure.emissivityDefault, tolerance);
-}
-
-TEST_F(TestMaterials, RadiationEnclosureSerialization)
-{
-    // Set up the material object with all properties
-    MaterialsLibrary::Material material;
-    material.Name = "SomeRadiationEnclosure";
-    material.UUID = "RadiationEnclosureUUID";
-    material.Protected = true;
-    material.Color = "8080FF";
-
-    // Set up the radiation enclosure properties
-    MaterialsLibrary::RadiationEnclosure radiationEnclosure;
-    radiationEnclosure.emissivityDefault = 0.8;
-
-    material.data = radiationEnclosure;
-
-    // Serialize
-    Helper::MockNode elementNode("Materials");
-    const Helper::MockNodeAdapter adapter{&elementNode};
-
-    adapter << FileParse::Child{"Material", material};
-
-    // Expected mock node structure setup
-    auto expectedMockData = []() {
-        Helper::MockNode node{"Materials"};
-
-        auto & materialNode{addChildNode(node, "Material")};
-        addChildNode(materialNode, "UUID", "RadiationEnclosureUUID");
-        addChildNode(materialNode, "Name", "SomeRadiationEnclosure");
-        addChildNode(materialNode, "Protected", "true");
-        addChildNode(materialNode, "Color", "8080FF");
-
-        auto & radiationEnclosureNode{addChildNode(materialNode, "RadiationEnclosure")};
-        addChildNode(radiationEnclosureNode, "EmissivityDefault", "0.8");
-
-        return node;
-    };
-
-    auto expected{expectedMockData()};
-    EXPECT_TRUE(Helper::compareNodes(elementNode, expected));
-}
-
-TEST_F(TestMaterials, FrameCavityDeserialization)
-{
-    // Mock data setup
-    auto mockData = []() {
-        Helper::MockNode node{"Materials"};
-
-        auto & materialNode{addChildNode(node, "Material")};
-        addChildNode(materialNode, "UUID", "FrameCavityUUID");
-        addChildNode(materialNode, "Name", "SomeFrameCavity");
-        addChildNode(materialNode, "Protected", "true");
-        addChildNode(materialNode, "Color", "0x80FF80");
-
-        auto & frameCavityNode{addChildNode(materialNode, "Cavity")};
-        addChildNode(frameCavityNode, "CavityStandard", "ISO15099");
-        addChildNode(frameCavityNode, "Gas", "Air");
-        addChildNode(frameCavityNode, "EmissivitySide1", "0.74");
-        addChildNode(frameCavityNode, "EmissivitySide2", "0.85");
-
-        return node;
-    };
-
-    auto elementNode(mockData());
-    const Helper::MockNodeAdapter adapter{&elementNode};
-
-    MaterialsLibrary::Material material;
-    adapter >> FileParse::Child{"Material", material};
-
-    constexpr auto tolerance{1e-6};
-    EXPECT_EQ("SomeFrameCavity", material.Name);
-    EXPECT_EQ("FrameCavityUUID", material.UUID);
-    EXPECT_EQ(true, material.Protected);
-    EXPECT_EQ("0x80FF80", material.Color);
-
-    ASSERT_TRUE(std::holds_alternative<MaterialsLibrary::Cavity>(material.data));
-    const auto & frameCavity{std::get<MaterialsLibrary::Cavity>(material.data)};
-    EXPECT_EQ(static_cast<int>(MaterialsLibrary::CavityStandard::ISO15099),
-              static_cast<int>(frameCavity.cavityStandard));
-    EXPECT_EQ("Air", frameCavity.GasName);
-    Helper::assertOptionalNear(0.74, frameCavity.EmissivitySide1, tolerance);
-    Helper::assertOptionalNear(0.85, frameCavity.EmissivitySide2, tolerance);
-}
-
-TEST_F(TestMaterials, FrameCavitySerialization)
-{
-    // Set up the material object with all properties
-    MaterialsLibrary::Material material;
-    material.Name = "SomeFrameCavity";
-    material.UUID = "FrameCavityUUID";
-    material.Protected = true;
-    material.Color = "80FF80";
-
-    // Set up the frame cavity properties
-    MaterialsLibrary::Cavity frameCavity;
-    frameCavity.cavityStandard = MaterialsLibrary::CavityStandard::ISO15099;
-    frameCavity.GasName = "Air";
-    frameCavity.EmissivitySide1 = 0.74;
-    frameCavity.EmissivitySide2 = 0.85;
-
-    material.data = frameCavity;
-
-    // Serialize
-    Helper::MockNode elementNode("Materials");
-    const Helper::MockNodeAdapter adapter{&elementNode};
-
-    adapter << FileParse::Child{"Material", material};
-
-    // Expected mock node structure setup
-    auto expectedMockData = []() {
-        Helper::MockNode node{"Materials"};
-
-        auto & materialNode{addChildNode(node, "Material")};
-        addChildNode(materialNode, "UUID", "FrameCavityUUID");
-        addChildNode(materialNode, "Name", "SomeFrameCavity");
-        addChildNode(materialNode, "Protected", "true");
-        addChildNode(materialNode, "Color", "80FF80");
-
-        auto & frameCavityNode{addChildNode(materialNode, "Cavity")};
-        addChildNode(frameCavityNode, "CavityStandard", "ISO15099");
-        addChildNode(frameCavityNode, "Gas", "Air");
-        addChildNode(frameCavityNode, "EmissivitySide1", "0.74");
-        addChildNode(frameCavityNode, "EmissivitySide2", "0.85");
 
         return node;
     };

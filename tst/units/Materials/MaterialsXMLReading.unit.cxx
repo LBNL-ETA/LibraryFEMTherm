@@ -44,9 +44,7 @@ TEST_F(TestMaterialsXMLReading, ReadMaterial1ByUUID) {
 
     EXPECT_EQ(true, material.Protected);
 
-    ASSERT_TRUE(MaterialsLibrary::isSolid(material));
-
-    const auto solid{MaterialsLibrary::getSolid(material)};
+    const auto * solid{&material.data};
 
     ASSERT_TRUE(solid->hygroThermal.has_value());
 
@@ -87,9 +85,7 @@ TEST_F(TestMaterialsXMLReading, ReadShade1ByUUID) {
 
     EXPECT_EQ(true, material.Protected);
 
-    ASSERT_TRUE(MaterialsLibrary::isSolid(material));
-
-    const auto solid{MaterialsLibrary::getSolid(material)};
+    const auto * solid{&material.data};
 
     ASSERT_TRUE(solid->hygroThermal->ThermalConductivityDry.has_value());
     EXPECT_NEAR(1.2, solid->hygroThermal->ThermalConductivityDry.value(), tolerance);
@@ -129,29 +125,6 @@ TEST_F(TestMaterialsXMLReading, ReadShade1ByUUID) {
     EXPECT_NEAR(0.55, visible.Diffuse.Back.Reflectance, tolerance);
 }
 
-TEST_F(TestMaterialsXMLReading, Enclosure1ByUUID) {
-    const std::string fileContent{TestMaterial::testDatabase()};
-
-    File::createFileFromString(getFileName(), fileContent);
-
-    MaterialsLibrary::DB materialDB{getFileName()};
-    auto aMaterial{materialDB.getByUUID("c28a0554-3148-4a57-bb22-d93852b1604e")};
-
-    EXPECT_EQ(aMaterial.has_value(), true);
-
-    auto material{aMaterial.value()};
-
-    const std::string correctName{"Radiation Enclosure"};
-    EXPECT_EQ(material.Name, correctName);
-
-    EXPECT_EQ(true, material.Protected);
-
-    ASSERT_TRUE(MaterialsLibrary::isRadiationEnclosure(material));
-
-    constexpr auto correct{1.0};
-    EXPECT_EQ(correct, MaterialsLibrary::getRadiationEnclosure(material)->emissivityDefault);
-}
-
 TEST_F(TestMaterialsXMLReading, ReadMaterial1ByName) {
     const std::string fileContent{TestMaterial::testDatabase()};
 
@@ -169,9 +142,7 @@ TEST_F(TestMaterialsXMLReading, ReadMaterial1ByName) {
 
     EXPECT_EQ(true, material.Protected);
 
-    ASSERT_TRUE(MaterialsLibrary::isSolid(material));
-
-    const auto solid{MaterialsLibrary::getSolid(material)};
+    const auto * solid{&material.data};
 
     ASSERT_TRUE(solid->hygroThermal.has_value());
 
@@ -188,20 +159,6 @@ TEST_F(TestMaterialsXMLReading, ReadMaterial1ByName) {
     const double specificHeatCapacityDryCorrect{850};
     EXPECT_EQ(solid->hygroThermal->SpecificHeatCapacityDry.has_value(), true);
     EXPECT_NEAR(solid->hygroThermal->SpecificHeatCapacityDry.value(), specificHeatCapacityDryCorrect, 1e-6);
-}
-
-TEST_F(TestMaterialsXMLReading, GasNames) {
-    const std::string fileContent{TestMaterial::testDatabase()};
-
-    File::createFileFromString(getFileName(), fileContent);
-
-    MaterialsLibrary::DB materialsDB{getFileName()};
-    const auto & materials{materialsDB.getMaterials()};
-    const auto gasNames{MaterialsLibrary::getNames(materials)};
-
-    const std::set<std::string, std::less<>> expectedGasNames{"Air", "Argon"};
-
-    EXPECT_TRUE(Helper::areSetsEqual(gasNames, expectedGasNames));
 }
 
 TEST_F(TestMaterialsXMLReading, ReadShadeWithDatabaseSource) {
@@ -256,9 +213,7 @@ TEST_F(TestMaterialsXMLReading, ReadMaterialEmptyMoistureByName) {
 
     EXPECT_EQ(true, material.Protected);
 
-    ASSERT_TRUE(MaterialsLibrary::isSolid(material));
-
-    const auto solid{MaterialsLibrary::getSolid(material)};
+    const auto * solid{&material.data};
 
     ASSERT_TRUE(solid->hygroThermal.has_value());
 

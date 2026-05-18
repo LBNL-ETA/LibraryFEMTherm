@@ -19,26 +19,10 @@ TEST_F(TestMaterialXMLTags, SolidTag)
     EXPECT_EQ(expected, result);
 }
 
-TEST_F(TestMaterialXMLTags, CavityTag)
-{
-    const auto result{MaterialsLibrary::cavityString()};
-    const auto expected{"Cavity"};
-
-    EXPECT_EQ(expected, result);
-}
-
 TEST_F(TestMaterialXMLTags, OpticalTag)
 {
     const auto result{MaterialsLibrary::opticalString()};
     const auto expected{"Optical"};
-
-    EXPECT_EQ(expected, result);
-}
-
-TEST_F(TestMaterialXMLTags, EnclosureRadiationTag)
-{
-    const auto result{MaterialsLibrary::enclosureString()};
-    const auto expected{"RadiationEnclosure"};
 
     EXPECT_EQ(expected, result);
 }
@@ -66,33 +50,6 @@ TEST_F(TestMaterialXMLTags, MaterialRougnessFromTagDoNotExists)
     const auto result{MaterialsLibrary::materialRoughnessFromString("Some random text")};
 
     const auto expected{MaterialsLibrary::MaterialRoughness::VeryRough};
-
-    EXPECT_EQ(expected, result);
-}
-
-TEST_F(TestMaterialXMLTags, CavityStandardToTag)
-{
-    const auto result{MaterialsLibrary::cavityStandardToString(MaterialsLibrary::CavityStandard::NFRCWithUserDimensions)};
-
-    const auto expected{"NFRCWithUserDimensions"};
-
-    EXPECT_EQ(expected, result);
-}
-
-TEST_F(TestMaterialXMLTags, CavityStandardFromTagExists)
-{
-    const auto result{MaterialsLibrary::cavityStandardFromString("ISO15099Ventilated")};
-
-    const auto expected{MaterialsLibrary::CavityStandard::ISO15099Ventilated};
-
-    EXPECT_EQ(expected, result);
-}
-
-TEST_F(TestMaterialXMLTags, CavityStandardFromTagDoNotExists)
-{
-    const auto result{MaterialsLibrary::cavityStandardFromString("Some random text")};
-
-    const auto expected{MaterialsLibrary::CavityStandard::NFRC};
 
     EXPECT_EQ(expected, result);
 }

@@ -47,33 +47,16 @@ class TestMaterialsDBLoading:
     def test_solid_material_has_hygro_thermal(self, materials_db):
         """Ported from ReadMaterial1ByUUID — verify solid material fields."""
         materials = materials_db.get_materials()
-        solid_found = False
-        for mat in materials:
-            if fem.is_solid(mat):
-                solid_found = True
-                data = mat.data
-                assert isinstance(data, fem.Solid)
-                assert data.hygro_thermal is not None
-                break
-        assert solid_found, "No solid material found in DB"
+        assert materials, "No materials found in DB"
+        mat = materials[0]
+        assert isinstance(mat.data, fem.Solid)
+        assert mat.data.hygro_thermal is not None
 
-    def test_material_variant_types(self, materials_db):
-        """Verify variant data field returns correct types."""
+    def test_material_data_is_solid(self, materials_db):
+        """After the frame-cavity refactor every material's data is a flat Solid."""
         materials = materials_db.get_materials()
         for mat in materials:
-            data = mat.data
-            assert isinstance(data, (fem.Solid, fem.MaterialCavity, fem.RadiationEnclosure))
-
-    def test_cavity_material_fields(self, materials_db):
-        """Check cavity materials have expected fields."""
-        materials = materials_db.get_materials()
-        for mat in materials:
-            if fem.is_cavity(mat):
-                data = mat.data
-                assert isinstance(data, fem.MaterialCavity)
-                assert isinstance(data.cavity_standard, fem.CavityStandard)
-                return
-        pytest.skip("No cavity material in this DB")
+            assert isinstance(mat.data, fem.Solid)
 
 
 class TestMaterialDatabaseSource:

@@ -31,12 +31,6 @@ namespace MaterialsLibrary
     bool operator==(const Solid & lhs, const Solid & rhs);
     bool operator!=(const Solid & lhs, const Solid & rhs);
 
-    bool operator==(const Cavity & lhs, const Cavity & rhs);
-    bool operator!=(const Cavity & lhs, const Cavity & rhs);
-
-    bool operator==(const RadiationEnclosure & lhs, const RadiationEnclosure & rhs);
-    bool operator!=(const RadiationEnclosure & lhs, const RadiationEnclosure & rhs);
-
     bool operator==(const Material & lhs, const Material & rhs);
     bool operator!=(const Material & lhs, const Material & rhs);
 

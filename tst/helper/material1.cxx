@@ -17,9 +17,6 @@ namespace TestMaterial
         fileContent += material1();
         fileContent += material2();
         fileContent += shade1();
-        fileContent += enclosure1();
-        fileContent += cavity1();
-        fileContent += cavity2();
         fileContent += shadeWithDatabase();
         fileContent += "</Materials>";
         return fileContent;
@@ -262,50 +259,6 @@ namespace TestMaterial
                 "\t\t\t\t</Integrated>\n"
                 "\t\t\t</Optical>\n"
                 "\t\t</Solid>\n"
-                "\t</Material>\n"};
-    }
-
-    std::string enclosure1()
-    {
-        return {"\t<Material>\n"
-                "\t\t<UUID>c28a0554-3148-4a57-bb22-d93852b1604e</UUID>\n"
-                "\t\t<Name>Radiation Enclosure</Name>\n"
-                "\t\t<Protected>true</Protected>\n"
-                "\t\t<Color>0xFFFF00</Color>\n"
-                "\t\t<RadiationEnclosure>\n"
-                "\t\t\t<EmissivityDefault>1.0</EmissivityDefault>\n"
-                "\t\t</RadiationEnclosure>\n"
-                "\t</Material>\n"};
-    }
-
-    std::string cavity1()
-    {
-        return {"\t<Material>\n"
-                "\t\t<UUID>6519c230-388d-11ea-a137-2e728ce88125</UUID>\n"
-                "\t\t<Name>Frame Cavity 1</Name>\n"
-                "\t\t<Protected>false</Protected>\n"
-                "\t\t<Color>0x00FF00</Color>\n"
-                "\t\t<Cavity>\n"
-                "\t\t\t<CavityStandard>CEN</CavityStandard>\n"
-                "\t\t\t<Gas>Air</Gas>\n"
-                "\t\t\t<EmissivitySide1>0.9</EmissivitySide1>\n"
-                "\t\t\t<EmissivitySide2>0.84</EmissivitySide2>\n"
-                "\t\t</Cavity>\n"
-                "\t</Material>\n"};
-    }
-    std::string cavity2()
-    {
-        return {"\t<Material>\n"
-                "\t\t<UUID>ac9cd31e-6419-4704-b659-7ec5a05bd998</UUID>\n"
-                "\t\t<Name>Frame Cavity 2</Name>\n"
-                "\t\t<Protected>false</Protected>\n"
-                "\t\t<Color>0x00FF00</Color>\n"
-                "\t\t<Cavity>\n"
-                "\t\t\t<CavityStandard>CEN</CavityStandard>\n"
-                "\t\t\t<Gas>Argon</Gas>\n"
-                "\t\t\t<EmissivitySide1>0.84</EmissivitySide1>\n"
-                "\t\t\t<EmissivitySide2>0.84</EmissivitySide2>\n"
-                "\t\t</Cavity>\n"
                 "\t</Material>\n"};
     }
 

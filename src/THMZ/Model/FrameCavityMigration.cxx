@@ -2,11 +2,16 @@
 
 #include <iterator>
 #include <map>
+#include <optional>
 #include <string>
+#include <string_view>
+#include <variant>
 #include <vector>
 
-#include "Materials/Materials.hxx"
-#include "Materials/Definitions.hxx"
+#include <fileParse/FileDataHandler.hxx>
+#include <fileParse/Optional.hxx>
+#include <fileParse/Vector.hxx>
+
 #include "THMZ/Geometry/Geometry.hxx"
 #include "THMZ/Geometry/Enumerators.hxx"
 #include "THMZ/Properties/Enumerators.hxx"
@@ -16,75 +21,69 @@ namespace ThermFile
 {
     namespace
     {
-        enum class LegacyKind
-        {
-            Cavity,
-            RadiationEnclosure
-        };
+        // --- Internal types for parsing the legacy bits of Materials.xml -------------------
 
-        struct LegacyEntry
+        struct LegacyCavityBlock
         {
-            LegacyKind kind{LegacyKind::Cavity};
-            MaterialsLibrary::CavityStandard cavityStandard{MaterialsLibrary::CavityStandard::ISO15099};
+            std::string cavityStandard;
             std::string gas;
-            bool ventilated{false};
         };
 
-        using LegacyMap = std::map<std::string, LegacyEntry>;
-
-        bool isVentilatedVariant(MaterialsLibrary::CavityStandard standard)
+        struct LegacyRadiationEnclosureBlock
         {
-            return standard == MaterialsLibrary::CavityStandard::CENVentilated
-                   || standard == MaterialsLibrary::CavityStandard::ISO15099Ventilated;
+            // The <EmissivityDefault> field is dropped on migration -- FEM aggregation of the
+            // surrounding BCs supersedes it. We only need to know the element was present.
+        };
+
+        struct LegacyMaterialEntry
+        {
+            std::string uuid;
+            std::optional<LegacyCavityBlock> cavity;
+            std::optional<LegacyRadiationEnclosureBlock> radiationEnclosure;
+        };
+
+        template<typename NodeAdapter>
+        const NodeAdapter & operator>>(const NodeAdapter & node, LegacyCavityBlock & cavity)
+        {
+            node >> FileParse::Child{"CavityStandard", cavity.cavityStandard};
+            node >> FileParse::Child{"Gas", cavity.gas};
+            return node;
         }
 
-        ThermFile::CavityStandard normalizeStandard(MaterialsLibrary::CavityStandard legacy)
+        template<typename NodeAdapter>
+        const NodeAdapter & operator>>(const NodeAdapter & node, LegacyRadiationEnclosureBlock & /*block*/)
         {
-            switch(legacy)
-            {
-                case MaterialsLibrary::CavityStandard::CEN:
-                case MaterialsLibrary::CavityStandard::CENVentilated:
-                    return ThermFile::CavityStandard::CEN;
-                case MaterialsLibrary::CavityStandard::NFRC:
-                case MaterialsLibrary::CavityStandard::NFRCWithUserDimensions:
-                case MaterialsLibrary::CavityStandard::ISO15099:
-                case MaterialsLibrary::CavityStandard::ISO15099Ventilated:
-                default:
-                    return ThermFile::CavityStandard::ISO15099;
-            }
+            return node;
         }
 
-        LegacyMap captureLegacyMaterials(MaterialsLibrary::DB & materials)
+        template<typename NodeAdapter>
+        const NodeAdapter & operator>>(const NodeAdapter & node, LegacyMaterialEntry & entry)
         {
-            LegacyMap capture;
-
-            for(const auto & material : materials.getMaterials())
-            {
-                if(MaterialsLibrary::isCavity(material))
-                {
-                    const auto * cavity = MaterialsLibrary::getCavity(material);
-                    LegacyEntry entry;
-                    entry.kind = LegacyKind::Cavity;
-                    entry.cavityStandard = cavity->cavityStandard;
-                    entry.gas = cavity->GasName.empty() ? std::string{"Air"} : cavity->GasName;
-                    entry.ventilated = isVentilatedVariant(cavity->cavityStandard);
-                    capture.emplace(material.UUID, std::move(entry));
-                }
-                else if(MaterialsLibrary::isRadiationEnclosure(material))
-                {
-                    LegacyEntry entry;
-                    entry.kind = LegacyKind::RadiationEnclosure;
-                    capture.emplace(material.UUID, std::move(entry));
-                }
-            }
-
-            for(const auto & [uuid, _] : capture)
-            {
-                materials.deleteWithUUID(uuid);
-            }
-
-            return capture;
+            node >> FileParse::Child{"UUID", entry.uuid};
+            node >> FileParse::Child{"Cavity", entry.cavity};
+            node >> FileParse::Child{"RadiationEnclosure", entry.radiationEnclosure};
+            return node;
         }
+
+        // --- Normalization helpers ---------------------------------------------------------
+
+        bool isVentilatedStandard(std::string_view legacyStandard)
+        {
+            return legacyStandard == "CENVentilated" || legacyStandard == "ISO15099Ventilated";
+        }
+
+        ThermFile::CavityStandard normalizeStandard(std::string_view legacyStandard)
+        {
+            if(legacyStandard == "CEN" || legacyStandard == "CENVentilated")
+            {
+                return ThermFile::CavityStandard::CEN;
+            }
+            // Everything else (ISO15099, ISO15099Ventilated, NFRC, NFRCWithUserDimensions,
+            // empty/unknown) maps to ISO15099.
+            return ThermFile::CavityStandard::ISO15099;
+        }
+
+        // --- Polygon tally and majority vote -----------------------------------------------
 
         struct PolygonTally
         {
@@ -98,37 +97,6 @@ namespace ThermFile
             }
         };
 
-        PolygonTally rewritePolygons(std::vector<ThermFile::Polygon> & polygons, const LegacyMap & capture)
-        {
-            PolygonTally tally;
-
-            for(auto & polygon : polygons)
-            {
-                const auto match = capture.find(polygon.materialUUID);
-                if(match != capture.end())
-                {
-                    const auto & entry = match->second;
-                    if(entry.kind == LegacyKind::Cavity)
-                    {
-                        polygon.polygonType = ThermFile::PolygonType::FrameCavity;
-                        polygon.cavity = ThermFile::CavityData{entry.gas, entry.ventilated};
-
-                        const auto normalized = normalizeStandard(entry.cavityStandard);
-                        ++tally.standardCounts[normalized];
-                        ++tally.gasCounts[entry.gas];
-                        ++tally.ventilatedCounts[entry.ventilated];
-                    }
-                    else
-                    {
-                        polygon.polygonType = ThermFile::PolygonType::RadiationEnclosure;
-                    }
-                    polygon.materialUUID.clear();
-                }
-            }
-
-            return tally;
-        }
-
         template<typename T>
         T pickWinner(const std::map<T, int> & counts, T fallback)
         {
@@ -140,10 +108,9 @@ namespace ThermFile
             auto best = counts.begin();
             for(auto it = std::next(counts.begin()); it != counts.end(); ++it)
             {
-                // Strictly-greater so ties leave the existing best (which is the
-                // smallest key encountered) — for the enums and bool this means
-                // ISO15099 / false win ties; for the gas-name string map, "Air"
-                // wins ties alphabetically.
+                // Strictly-greater so ties leave the existing best (which is the smallest
+                // key encountered) -- for the enums and bool this means ISO15099 / false
+                // win ties; for the gas-name string map, "Air" wins ties alphabetically.
                 if(it->second > best->second)
                 {
                     best = it;
@@ -165,10 +132,80 @@ namespace ThermFile
         }
     }   // namespace
 
-    void applyFrameCavityMigration(MaterialsLibrary::DB & materials, ThermFile::ThermModel & model)
+    LegacyMaterialsCapture captureLegacyMaterials(const std::string & materialsXml)
     {
-        const auto capture = captureLegacyMaterials(materials);
-        const auto tally = rewritePolygons(model.polygons, capture);
+        LegacyMaterialsCapture out;
+
+        auto node{Common::getTopNodeFromString(materialsXml, "Materials")};
+        if(!node.has_value())
+        {
+            return out;
+        }
+
+        std::visit(
+          [&out](auto & adapter) {
+              std::vector<LegacyMaterialEntry> entries;
+              adapter >> FileParse::Child{"Material", entries};
+              for(const auto & entry : entries)
+              {
+                  if(entry.cavity.has_value())
+                  {
+                      out.cavities[entry.uuid] = LegacyCavityEntry{entry.cavity->cavityStandard, entry.cavity->gas};
+                  }
+                  else if(entry.radiationEnclosure.has_value())
+                  {
+                      out.radiationEnclosures.insert(entry.uuid);
+                  }
+              }
+          },
+          node.value());
+
+        return out;
+    }
+
+    void applyFrameCavityMigration(const LegacyMaterialsCapture & legacy,
+                                   MaterialsLibrary::DB & materials,
+                                   ThermFile::ThermModel & model)
+    {
+        // Pass 1: strip legacy material UUIDs from the loaded DB. The flat Material
+        // parser dropped their cavity/radiation-enclosure sub-elements silently,
+        // leaving empty Solid records behind -- those records reference UUIDs the
+        // shim is repurposing, so they must go.
+        for(const auto & [uuid, _] : legacy.cavities)
+        {
+            materials.deleteWithUUID(uuid);
+        }
+        for(const auto & uuid : legacy.radiationEnclosures)
+        {
+            materials.deleteWithUUID(uuid);
+        }
+
+        // Pass 2: rewrite polygons and tally per-cavity usage.
+        PolygonTally tally;
+        for(auto & polygon : model.polygons)
+        {
+            if(const auto match = legacy.cavities.find(polygon.materialUUID); match != legacy.cavities.end())
+            {
+                const auto & entry = match->second;
+                const bool ventilated = isVentilatedStandard(entry.cavityStandard);
+                polygon.polygonType = ThermFile::PolygonType::FrameCavity;
+                polygon.cavity = ThermFile::CavityData{entry.gas, ventilated};
+
+                const auto normalized = normalizeStandard(entry.cavityStandard);
+                ++tally.standardCounts[normalized];
+                ++tally.gasCounts[entry.gas];
+                ++tally.ventilatedCounts[ventilated];
+
+                polygon.materialUUID.clear();
+            }
+            else if(legacy.radiationEnclosures.contains(polygon.materialUUID))
+            {
+                polygon.polygonType = ThermFile::PolygonType::RadiationEnclosure;
+                polygon.materialUUID.clear();
+            }
+        }
+
+        // Pass 3: promote the tally onto project-level FrameCavityProperties.
         promoteProjectDefaults(tally, model.properties.calculationOptions.frameCavityProperties);
     }
 }   // namespace ThermFile

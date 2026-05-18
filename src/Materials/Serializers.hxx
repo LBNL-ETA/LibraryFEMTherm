@@ -5,7 +5,6 @@
 
 #include <fileParse/Optional.hxx>
 #include <fileParse/Vector.hxx>
-#include <fileParse/Variant.hxx>
 #include <fileParse/Enum.hxx>
 
 #include "Materials.hxx"
@@ -230,62 +229,6 @@ namespace MaterialsLibrary
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, MaterialsLibrary::CavityStandard & standard)
-    {
-        FileParse::deserializeEnum<NodeAdapter, MaterialsLibrary::CavityStandard>(
-          node, standard, MaterialsLibrary::cavityStandardFromString);
-
-        return node;
-    }
-
-    template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const MaterialsLibrary::CavityStandard & standard)
-    {
-        FileParse::serializeEnum<NodeAdapter, MaterialsLibrary::CavityStandard>(
-          node, standard, MaterialsLibrary::cavityStandardToString);
-
-        return node;
-    }
-
-    template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, MaterialsLibrary::Cavity & cavity)
-    {
-        node >> FileParse::Child{"CavityStandard", cavity.cavityStandard};
-        node >> FileParse::Child{"Gas", cavity.GasName};
-        node >> FileParse::Child{"EmissivitySide1", cavity.EmissivitySide1};
-        node >> FileParse::Child{"EmissivitySide2", cavity.EmissivitySide2};
-
-        return node;
-    }
-
-    template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const MaterialsLibrary::Cavity & cavity)
-    {
-        node << FileParse::Child{"CavityStandard", cavity.cavityStandard};
-        node << FileParse::Child{"Gas", cavity.GasName};
-        node << FileParse::Child{"EmissivitySide1", cavity.EmissivitySide1};
-        node << FileParse::Child{"EmissivitySide2", cavity.EmissivitySide2};
-
-        return node;
-    }
-
-    template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, MaterialsLibrary::RadiationEnclosure & enclosure)
-    {
-        node >> FileParse::Child{"EmissivityDefault", enclosure.emissivityDefault};
-
-        return node;
-    }
-
-    template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const MaterialsLibrary::RadiationEnclosure & enclosure)
-    {
-        node << FileParse::Child{"EmissivityDefault", enclosure.emissivityDefault};
-
-        return node;
-    }
-
-    template<typename NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, MaterialsLibrary::WINDOW & window)
     {
         node >> FileParse::Child{"Path", window.Path};
@@ -332,8 +275,7 @@ namespace MaterialsLibrary
         node >> FileParse::Child{"Protected", material.Protected};
         node >> FileParse::Child{"Color", material.Color};
         node >> FileParse::Child{"Database", material.database};
-
-        FileParse::deserializeVariant(node, {"Solid", "Cavity", "RadiationEnclosure"}, material.data);
+        node >> FileParse::Child{"Solid", material.data};
 
         return node;
     }
@@ -349,8 +291,7 @@ namespace MaterialsLibrary
         node << FileParse::Child{"Protected", material.Protected};
         node << FileParse::Child{"Color", material.Color};
         node << FileParse::Child{"Database", material.database};
-
-        FileParse::serializeVariant(node, {"Solid", "Cavity", "RadiationEnclosure"}, material.data);
+        node << FileParse::Child{"Solid", material.data};
 
         return node;
     }

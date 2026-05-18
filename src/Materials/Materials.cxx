@@ -1,7 +1,5 @@
 #include "Materials.hxx"
 
-#include <map>
-#include <functional>
 #include <utility>
 
 #include "LibraryUtilities/FileManipulation.hxx"
@@ -9,133 +7,50 @@
 
 namespace MaterialsLibrary
 {
-    Material generate(std::string uuid, MaterialType type)
+    Material generate(std::string uuid)
     {
-        std::map<MaterialType, std::function<void(Material &)>> materialActions = {
-          {MaterialType::Solid, [](Material & record) { record.data = Solid(); }},
-          {MaterialType::Cavity, [](Material & record) { record.data = Cavity(); }},
-          {MaterialType::RadiationEnclosure, [](Material & record) { record.data = RadiationEnclosure(); }}};
-
         Material record;
         record.UUID = std::move(uuid);
-
-        if(materialActions.find(type) != materialActions.end())
-        {
-            materialActions[type](record);
-        }
-
+        record.data = Solid();
         return record;
     }
 
-    Material generate(MaterialType type)
+    Material generate()
     {
-        std::string uuid;
-        return generate(uuid, type);
+        return generate(std::string{});
     }
 
     void ensureHygroThermal(Material & material)
     {
-        if(MaterialsLibrary::isSolid(material))
+        if(!material.data.hygroThermal.has_value())
         {
-            auto solid{MaterialsLibrary::getSolid(material)};
-            if(!solid->hygroThermal.has_value())
-            {
-                solid->hygroThermal = MaterialsLibrary::HygroThermal();
-            }
+            material.data.hygroThermal = HygroThermal();
         }
     }
 
     void ensureIntegrated(Material & material)
     {
-        if(MaterialsLibrary::isSolid(material))
+        if(!material.data.optical.has_value())
         {
-            auto solid{MaterialsLibrary::getSolid(material)};
-            if(!solid->optical.has_value())
-            {
-                solid->optical = MaterialsLibrary::Optical();
-                if(!solid->optical->integrated.has_value())
-                {
-                    solid->optical->integrated = MaterialsLibrary::Integrated();
-                }
-            }
+            material.data.optical = Optical();
+        }
+        if(!material.data.optical->integrated.has_value())
+        {
+            material.data.optical->integrated = Integrated();
         }
     }
 
     void ensureIntegratedSolarAndVisible(Material & material)
     {
         ensureIntegrated(material);
-        if(MaterialsLibrary::isSolid(material))
+        if(!material.data.optical->integrated->Solar.has_value())
         {
-            auto solid{MaterialsLibrary::getSolid(material)};
-            if(!solid->optical->integrated->Solar.has_value())
-            {
-                solid->optical->integrated->Solar = MaterialsLibrary::OpticalType();
-            }
-
-            if(!solid->optical->integrated->Visible.has_value())
-            {
-                solid->optical->integrated->Visible = MaterialsLibrary::OpticalType();
-            }
-        }
-    }
-
-    bool isSolid(const Material & material)
-    {
-        return std::holds_alternative<Solid>(material.data);
-    }
-
-    bool isCavity(const Material & material)
-    {
-        return std::holds_alternative<Cavity>(material.data);
-    }
-
-    bool isRadiationEnclosure(const Material & material)
-    {
-        return std::holds_alternative<RadiationEnclosure>(material.data);
-    }
-
-    std::string getMaterialType(const Material & material)
-    {
-        if(isSolid(material))
-        {
-            return "Solid";
+            material.data.optical->integrated->Solar = OpticalType();
         }
 
-        if(isCavity(material))
+        if(!material.data.optical->integrated->Visible.has_value())
         {
-            return "Frame Cavity";
+            material.data.optical->integrated->Visible = OpticalType();
         }
-
-        return "Radiation Enclosure";
-    }
-
-    Solid * getSolid(Material & material)
-    {
-        return std::get_if<Solid>(&material.data);
-    }
-
-    const Solid * getSolid(const Material & material)
-    {
-        return std::get_if<Solid>(&material.data);
-    }
-
-    Cavity * getCavity(Material & material)
-    {
-        return std::get_if<Cavity>(&material.data);
-    }
-
-    const Cavity * getCavity(const Material & material)
-    {
-        return std::get_if<Cavity>(&material.data);
-    }
-
-    RadiationEnclosure * getRadiationEnclosure(Material & material)
-    {
-        return std::get_if<RadiationEnclosure>(&material.data);
-    }
-
-    const RadiationEnclosure * getRadiationEnclosure(const Material & material)
-    {
-        return std::get_if<RadiationEnclosure>(&material.data);
     }
 }   // namespace MaterialsLibrary

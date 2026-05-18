@@ -151,10 +151,7 @@ void bind_enums(py::module_ & mod)
         .value("GeneralCrossSection", ThermFile::OtherCrossSectionType::GeneralCrossSection);
 
     // Project-level cavity policy enums on CalculationOptions.
-    // Exposed under temporary names while MaterialsLibrary::CavityStandard (legacy)
-    // still occupies the Python "CavityStandard" symbol. Renamed in stage 2c when
-    // the legacy enum is removed.
-    py::enum_<ThermFile::CavityStandard>(mod, "ProjectCavityStandard")
+    py::enum_<ThermFile::CavityStandard>(mod, "CavityStandard")
         .value("ISO15099", ThermFile::CavityStandard::ISO15099)
         .value("CEN", ThermFile::CavityStandard::CEN);
 
@@ -231,11 +228,6 @@ void bind_enums(py::module_ & mod)
         .value("CustomRotationProjected", ThermFile::UValueDimensionType::CustomRotationProjected);
 
     // --- Materials enums ---
-    py::enum_<MaterialsLibrary::MaterialType>(mod, "MaterialType")
-        .value("Solid", MaterialsLibrary::MaterialType::Solid)
-        .value("Cavity", MaterialsLibrary::MaterialType::Cavity)
-        .value("RadiationEnclosure", MaterialsLibrary::MaterialType::RadiationEnclosure);
-
     py::enum_<MaterialsLibrary::MaterialRoughness>(mod, "MaterialRoughness")
         .value("VeryRough", MaterialsLibrary::MaterialRoughness::VeryRough)
         .value("Rough", MaterialsLibrary::MaterialRoughness::Rough)
@@ -243,14 +235,6 @@ void bind_enums(py::module_ & mod)
         .value("MediumSmooth", MaterialsLibrary::MaterialRoughness::MediumSmooth)
         .value("Smooth", MaterialsLibrary::MaterialRoughness::Smooth)
         .value("VerySmooth", MaterialsLibrary::MaterialRoughness::VerySmooth);
-
-    py::enum_<MaterialsLibrary::CavityStandard>(mod, "CavityStandard")
-        .value("NFRC", MaterialsLibrary::CavityStandard::NFRC)
-        .value("CEN", MaterialsLibrary::CavityStandard::CEN)
-        .value("CENVentilated", MaterialsLibrary::CavityStandard::CENVentilated)
-        .value("NFRCWithUserDimensions", MaterialsLibrary::CavityStandard::NFRCWithUserDimensions)
-        .value("ISO15099", MaterialsLibrary::CavityStandard::ISO15099)
-        .value("ISO15099Ventilated", MaterialsLibrary::CavityStandard::ISO15099Ventilated);
 
     // --- FileParse enums ---
     py::enum_<FileParse::FileFormat>(mod, "FileFormat")

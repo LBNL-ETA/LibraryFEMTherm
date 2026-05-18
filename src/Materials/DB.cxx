@@ -209,17 +209,4 @@ namespace MaterialsLibrary
         return std::nullopt;
     }
 
-    std::set<std::string, std::less<>> getNames(const std::vector<Material> & materials)
-    {
-        std::set<std::string, std::less<>> gasNames;
-        for(const auto & material : materials)
-        {
-            if(MaterialsLibrary::isCavity(material))
-            {
-                gasNames.insert(MaterialsLibrary::getCavity(material)->GasName);
-            }
-        }
-
-        return gasNames;
-    }
 }   // namespace MaterialsLibrary
