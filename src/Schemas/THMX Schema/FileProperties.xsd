@@ -218,10 +218,10 @@
 			<xs:element name="FrameCavityProperties" type="FrameCavityPropertiesType" minOccurs="0"/>
 		</xs:all>
 	</xs:complexType>
-	<xs:simpleType name="CavityStandardType">
+	<xs:simpleType name="ConvectionModelType">
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="ISO15099"/>
-			<xs:enumeration value="CEN"/>
+			<xs:enumeration value="EN10077"/>
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:simpleType name="RadiationCalculationType">
@@ -236,10 +236,8 @@
 	</xs:complexType>
 	<xs:complexType name="FrameCavityPropertiesType">
 		<xs:all>
-			<xs:element name="CavityStandard" type="CavityStandardType" default="ISO15099" minOccurs="0"/>
+			<xs:element name="ConvectionModel" type="ConvectionModelType" default="ISO15099" minOccurs="0"/>
 			<xs:element name="RadiationCalculation" type="RadiationCalculationType" default="Detailed" minOccurs="0"/>
-			<xs:element name="DefaultGas" type="xs:string" default="Air" minOccurs="0"/>
-			<xs:element name="DefaultVentilated" type="xs:boolean" default="false" minOccurs="0"/>
 			<xs:element name="RadiationModelParameters" type="RadiationModelParametersType" minOccurs="0"/>
 		</xs:all>
 	</xs:complexType>

@@ -241,19 +241,19 @@ namespace ThermFile
     //! \return String representation of other cross section type
     std::string otherCrossSectionTypeToString(OtherCrossSectionType otherCrossSectionType);
 
-    //! \brief Cavity calculation standard. Project-wide policy on CalculationOptions.
-    //! Replaces the per-cavity-material standard from the legacy cavity-as-material design.
-    enum class CavityStandard
+    //! \brief Convection model used for frame cavities. Project-wide policy on
+    //! CalculationOptions::frameCavityProperties.
+    enum class ConvectionModel
     {
         ISO15099,
-        CEN
+        EN10077
     };
 
-    //! \brief Converts a string to a cavity standard.
-    CavityStandard cavityStandardFromString(std::string_view standard);
+    //! \brief Converts a string to a convection model.
+    ConvectionModel convectionModelFromString(std::string_view value);
 
-    //! \brief Converts a cavity standard to a string.
-    std::string cavityStandardToString(CavityStandard standard);
+    //! \brief Converts a convection model to a string.
+    std::string convectionModelToString(ConvectionModel value);
 
     //! \brief Radiation calculation mode. Project-wide policy on CalculationOptions.
     //! Detailed: per-segment view-factor enclosure solve. Simplified: cavity-level approximation.

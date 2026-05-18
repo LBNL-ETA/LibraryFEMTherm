@@ -341,23 +341,17 @@ namespace Helper
         return node;
     }
 
-    MockFrameCavityProperties::MockFrameCavityProperties(std::string standard,
-                                                         std::string radiationCalculation,
-                                                         std::string defaultGas,
-                                                         std::string defaultVentilated) :
-        standard(std::move(standard)),
-        radiationCalculation(std::move(radiationCalculation)),
-        defaultGas(std::move(defaultGas)),
-        defaultVentilated(std::move(defaultVentilated))
+    MockFrameCavityProperties::MockFrameCavityProperties(std::string convectionModel,
+                                                         std::string radiationCalculation) :
+        convectionModel(std::move(convectionModel)),
+        radiationCalculation(std::move(radiationCalculation))
     {}
 
     Helper::MockNode frameCavityPropertiesNode(const MockFrameCavityProperties & properties)
     {
         Helper::MockNode node{"FrameCavityProperties"};
-        addChildNode(node, "CavityStandard", properties.standard);
+        addChildNode(node, "ConvectionModel", properties.convectionModel);
         addChildNode(node, "RadiationCalculation", properties.radiationCalculation);
-        addChildNode(node, "DefaultGas", properties.defaultGas);
-        addChildNode(node, "DefaultVentilated", properties.defaultVentilated);
         addChildNode(node, Helper::MockNode{"RadiationModelParameters"});
 
         return node;

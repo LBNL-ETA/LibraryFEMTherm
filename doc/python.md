@@ -138,22 +138,14 @@ print(db.get_names())
 mat = db.get_by_name("PVC/Vinyl")
 mat = db.get_by_uuid("some-uuid-string")
 
-# Check material type
-if fem.is_solid(mat):
-    solid = mat.data  # Solid object
-    print(f"Conductivity: {solid.hygro_thermal.thermal_conductivity_dry}")
-    print(f"Density:      {solid.hygro_thermal.bulk_density}")
-elif fem.is_cavity(mat):
-    cav = mat.data  # MaterialCavity object
-    print(f"Standard:     {cav.cavity_standard}")
-    print(f"Emissivity 1: {cav.emissivity_side1}")
-elif fem.is_radiation_enclosure(mat):
-    enc = mat.data  # RadiationEnclosure object
-    print(f"Emissivity:   {enc.emissivity_default}")
+# Every material is a solid; data is a Solid object with hygro-thermal and optical sub-trees.
+solid = mat.data
+print(f"Conductivity: {solid.hygro_thermal.thermal_conductivity_dry}")
+print(f"Density:      {solid.hygro_thermal.bulk_density}")
 
 # Iterate all materials
 for mat in db.get_materials():
-    print(f"{mat.name} (uuid={mat.uuid}, solid={fem.is_solid(mat)})")
+    print(f"{mat.name} (uuid={mat.uuid})")
 ```
 
 ### Creating and modifying materials
@@ -535,11 +527,11 @@ print(xml)
 
 ### Materials
 
-| Enum               | Values |
-|--------------------|--------|
-| `MaterialType`     | `Solid`, `Cavity`, `RadiationEnclosure` |
-| `MaterialRoughness`| `VeryRough`, `Rough`, `MediumRough`, `MediumSmooth`, `Smooth`, `VerySmooth` |
-| `CavityStandard`   | `NFRC`, `CEN`, `CENVentilated`, `NFRCWithUserDimensions`, `ISO15099`, `ISO15099Ventilated` |
+| Enum                  | Values |
+|-----------------------|--------|
+| `MaterialRoughness`   | `VeryRough`, `Rough`, `MediumRough`, `MediumSmooth`, `Smooth`, `VerySmooth` |
+| `ConvectionModel`     | `ISO15099`, `EN10077` |
+| `RadiationCalculation`| `Detailed`, `Simplified` |
 
 ### Glazing Systems
 

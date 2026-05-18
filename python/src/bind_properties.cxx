@@ -75,10 +75,8 @@ void bind_properties(py::module_ & mod)
 
     py::class_<ThermFile::FrameCavityProperties>(mod, "FrameCavityProperties")
         .def(py::init<>())
-        .def_readwrite("standard", &ThermFile::FrameCavityProperties::standard)
+        .def_readwrite("convection_model", &ThermFile::FrameCavityProperties::convectionModel)
         .def_readwrite("radiation_calculation", &ThermFile::FrameCavityProperties::radiationCalculation)
-        .def_readwrite("default_gas", &ThermFile::FrameCavityProperties::defaultGas)
-        .def_readwrite("default_ventilated", &ThermFile::FrameCavityProperties::defaultVentilated)
         .def_readwrite("radiation_model_parameters", &ThermFile::FrameCavityProperties::radiationModelParameters);
 
     py::class_<ThermFile::CalculationOptions>(mod, "CalculationOptions")

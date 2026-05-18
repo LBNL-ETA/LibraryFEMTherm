@@ -53,9 +53,7 @@ TEST_F(TestFrameCavityMigration, EmptyCaptureIsNoOp)
     EXPECT_FALSE(model.polygons[0].cavity.has_value());
 
     const auto & properties = model.properties.calculationOptions.frameCavityProperties;
-    EXPECT_EQ(properties.standard, ThermFile::CavityStandard::ISO15099);
-    EXPECT_EQ(properties.defaultGas, "Air");
-    EXPECT_FALSE(properties.defaultVentilated);
+    EXPECT_EQ(properties.convectionModel, ThermFile::ConvectionModel::ISO15099);
 }
 
 TEST_F(TestFrameCavityMigration, CavityCaptureBecomesPerPolygonCavity)
@@ -88,9 +86,7 @@ TEST_F(TestFrameCavityMigration, CavityCaptureBecomesPerPolygonCavity)
     EXPECT_FALSE(model.polygons[1].cavity.has_value());
 
     const auto & properties = model.properties.calculationOptions.frameCavityProperties;
-    EXPECT_EQ(properties.standard, ThermFile::CavityStandard::ISO15099);
-    EXPECT_EQ(properties.defaultGas, "Air");
-    EXPECT_FALSE(properties.defaultVentilated);
+    EXPECT_EQ(properties.convectionModel, ThermFile::ConvectionModel::ISO15099);
 }
 
 TEST_F(TestFrameCavityMigration, RadiationEnclosureCaptureBecomesRadiationEnclosurePolygon)
@@ -133,9 +129,7 @@ TEST_F(TestFrameCavityMigration, VentilatedVariantStandardIsNormalizedAndVentila
 
     const auto & properties = model.properties.calculationOptions.frameCavityProperties;
     // ISO15099Ventilated -> ISO15099 at the project level (ventilation is on the polygon).
-    EXPECT_EQ(properties.standard, ThermFile::CavityStandard::ISO15099);
-    EXPECT_EQ(properties.defaultGas, "Argon");
-    EXPECT_TRUE(properties.defaultVentilated);
+    EXPECT_EQ(properties.convectionModel, ThermFile::ConvectionModel::ISO15099);
 }
 
 TEST_F(TestFrameCavityMigration, NFRCAliasesNormalizeToISO15099)
@@ -151,7 +145,7 @@ TEST_F(TestFrameCavityMigration, NFRCAliasesNormalizeToISO15099)
     ThermFile::applyFrameCavityMigration(capture, materials, model);
 
     const auto & properties = model.properties.calculationOptions.frameCavityProperties;
-    EXPECT_EQ(properties.standard, ThermFile::CavityStandard::ISO15099);
+    EXPECT_EQ(properties.convectionModel, ThermFile::ConvectionModel::ISO15099);
 }
 
 TEST_F(TestFrameCavityMigration, MajorityVoteAcrossMultipleCavities)
@@ -170,11 +164,10 @@ TEST_F(TestFrameCavityMigration, MajorityVoteAcrossMultipleCavities)
     ThermFile::applyFrameCavityMigration(capture, materials, model);
 
     const auto & properties = model.properties.calculationOptions.frameCavityProperties;
-    EXPECT_EQ(properties.standard, ThermFile::CavityStandard::ISO15099);
-    EXPECT_EQ(properties.defaultGas, "Air");
+    EXPECT_EQ(properties.convectionModel, ThermFile::ConvectionModel::ISO15099);
 }
 
-TEST_F(TestFrameCavityMigration, TiePrefersISO15099AndAirAndFalse)
+TEST_F(TestFrameCavityMigration, TiePrefersISO15099)
 {
     MaterialsLibrary::DB materials;
 
@@ -189,9 +182,7 @@ TEST_F(TestFrameCavityMigration, TiePrefersISO15099AndAirAndFalse)
     ThermFile::applyFrameCavityMigration(capture, materials, model);
 
     const auto & properties = model.properties.calculationOptions.frameCavityProperties;
-    EXPECT_EQ(properties.standard, ThermFile::CavityStandard::ISO15099);
-    EXPECT_EQ(properties.defaultGas, "Air");
-    EXPECT_FALSE(properties.defaultVentilated);
+    EXPECT_EQ(properties.convectionModel, ThermFile::ConvectionModel::ISO15099);
 }
 
 TEST_F(TestFrameCavityMigration, CaptureLegacyMaterialsParsesCavityAndRadiationEnclosure)

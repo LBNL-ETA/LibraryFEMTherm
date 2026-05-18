@@ -185,17 +185,17 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
-    inline const NodeAdapter & operator>>(const NodeAdapter & node, ThermFile::CavityStandard & standard)
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, ThermFile::ConvectionModel & value)
     {
-        return FileParse::deserializeEnum<NodeAdapter, ThermFile::CavityStandard>(
-          node, standard, ThermFile::cavityStandardFromString);
+        return FileParse::deserializeEnum<NodeAdapter, ThermFile::ConvectionModel>(
+          node, value, ThermFile::convectionModelFromString);
     }
 
     template<typename NodeAdapter>
-    inline NodeAdapter & operator<<(NodeAdapter & node, const ThermFile::CavityStandard & standard)
+    inline NodeAdapter & operator<<(NodeAdapter & node, const ThermFile::ConvectionModel & value)
     {
-        return FileParse::serializeEnum<NodeAdapter, ThermFile::CavityStandard>(
-          node, standard, ThermFile::cavityStandardToString);
+        return FileParse::serializeEnum<NodeAdapter, ThermFile::ConvectionModel>(
+          node, value, ThermFile::convectionModelToString);
     }
 
     template<typename NodeAdapter>

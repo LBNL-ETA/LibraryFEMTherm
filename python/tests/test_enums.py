@@ -87,9 +87,9 @@ class TestMaterialsEnums:
         assert fem.MaterialRoughness.VeryRough is not None
         assert fem.MaterialRoughness.VerySmooth is not None
 
-    def test_cavity_standard(self):
-        assert fem.CavityStandard.ISO15099 is not None
-        assert fem.CavityStandard.CEN is not None
+    def test_convection_model(self):
+        assert fem.ConvectionModel.ISO15099 is not None
+        assert fem.ConvectionModel.EN10077 is not None
 
     def test_radiation_calculation(self):
         assert fem.RadiationCalculation.Detailed is not None

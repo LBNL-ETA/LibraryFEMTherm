@@ -72,33 +72,31 @@ namespace ThermFile
             return legacyStandard == "CENVentilated" || legacyStandard == "ISO15099Ventilated";
         }
 
-        ThermFile::CavityStandard normalizeStandard(std::string_view legacyStandard)
+        ThermFile::ConvectionModel normalizeConvectionModel(std::string_view legacyStandard)
         {
             if(legacyStandard == "CEN" || legacyStandard == "CENVentilated")
             {
-                return ThermFile::CavityStandard::CEN;
+                return ThermFile::ConvectionModel::EN10077;
             }
             // Everything else (ISO15099, ISO15099Ventilated, NFRC, NFRCWithUserDimensions,
             // empty/unknown) maps to ISO15099.
-            return ThermFile::CavityStandard::ISO15099;
+            return ThermFile::ConvectionModel::ISO15099;
         }
 
         // --- Polygon tally and majority vote -----------------------------------------------
 
-        struct PolygonTally
+        struct ConvectionModelTally
         {
-            std::map<ThermFile::CavityStandard, int> standardCounts;
-            std::map<std::string, int> gasCounts;
-            std::map<bool, int> ventilatedCounts;
+            std::map<ThermFile::ConvectionModel, int> counts;
 
             bool empty() const
             {
-                return standardCounts.empty() && gasCounts.empty() && ventilatedCounts.empty();
+                return counts.empty();
             }
         };
 
-        template<typename T>
-        T pickWinner(const std::map<T, int> & counts, T fallback)
+        ThermFile::ConvectionModel pickWinner(const std::map<ThermFile::ConvectionModel, int> & counts,
+                                              ThermFile::ConvectionModel fallback)
         {
             if(counts.empty())
             {
@@ -109,8 +107,7 @@ namespace ThermFile
             for(auto it = std::next(counts.begin()); it != counts.end(); ++it)
             {
                 // Strictly-greater so ties leave the existing best (which is the smallest
-                // key encountered) -- for the enums and bool this means ISO15099 / false
-                // win ties; for the gas-name string map, "Air" wins ties alphabetically.
+                // key encountered) -- for the enum this means ISO15099 wins ties.
                 if(it->second > best->second)
                 {
                     best = it;
@@ -119,16 +116,15 @@ namespace ThermFile
             return best->first;
         }
 
-        void promoteProjectDefaults(const PolygonTally & tally, ThermFile::FrameCavityProperties & properties)
+        void promoteProjectConvectionModel(const ConvectionModelTally & tally,
+                                           ThermFile::FrameCavityProperties & properties)
         {
             if(tally.empty())
             {
                 return;
             }
 
-            properties.standard = pickWinner(tally.standardCounts, ThermFile::CavityStandard::ISO15099);
-            properties.defaultGas = pickWinner(tally.gasCounts, std::string{"Air"});
-            properties.defaultVentilated = pickWinner(tally.ventilatedCounts, false);
+            properties.convectionModel = pickWinner(tally.counts, ThermFile::ConvectionModel::ISO15099);
         }
     }   // namespace
 
@@ -180,8 +176,8 @@ namespace ThermFile
             materials.deleteWithUUID(uuid);
         }
 
-        // Pass 2: rewrite polygons and tally per-cavity usage.
-        PolygonTally tally;
+        // Pass 2: rewrite polygons and tally per-cavity convection-model usage.
+        ConvectionModelTally tally;
         for(auto & polygon : model.polygons)
         {
             if(const auto match = legacy.cavities.find(polygon.materialUUID); match != legacy.cavities.end())
@@ -191,10 +187,7 @@ namespace ThermFile
                 polygon.polygonType = ThermFile::PolygonType::FrameCavity;
                 polygon.cavity = ThermFile::CavityData{entry.gas, ventilated};
 
-                const auto normalized = normalizeStandard(entry.cavityStandard);
-                ++tally.standardCounts[normalized];
-                ++tally.gasCounts[entry.gas];
-                ++tally.ventilatedCounts[ventilated];
+                ++tally.counts[normalizeConvectionModel(entry.cavityStandard)];
 
                 polygon.materialUUID.clear();
             }
@@ -205,7 +198,7 @@ namespace ThermFile
             }
         }
 
-        // Pass 3: promote the tally onto project-level FrameCavityProperties.
-        promoteProjectDefaults(tally, model.properties.calculationOptions.frameCavityProperties);
+        // Pass 3: promote the tally onto the project-level convection model.
+        promoteProjectConvectionModel(tally, model.properties.calculationOptions.frameCavityProperties);
     }
 }   // namespace ThermFile

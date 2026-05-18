@@ -221,10 +221,8 @@ namespace ThermFile
     template<typename NodeAdapter>
     inline const NodeAdapter & operator>>(const NodeAdapter & node, FrameCavityProperties & properties)
     {
-        node >> FileParse::Child{"CavityStandard", properties.standard};
+        node >> FileParse::Child{"ConvectionModel", properties.convectionModel};
         node >> FileParse::Child{"RadiationCalculation", properties.radiationCalculation};
-        node >> FileParse::Child{"DefaultGas", properties.defaultGas};
-        node >> FileParse::Child{"DefaultVentilated", properties.defaultVentilated};
         node >> FileParse::Child{"RadiationModelParameters", properties.radiationModelParameters};
 
         return node;
@@ -233,10 +231,8 @@ namespace ThermFile
     template<typename NodeAdapter>
     inline NodeAdapter & operator<<(NodeAdapter & node, const FrameCavityProperties & properties)
     {
-        node << FileParse::Child{"CavityStandard", properties.standard};
+        node << FileParse::Child{"ConvectionModel", properties.convectionModel};
         node << FileParse::Child{"RadiationCalculation", properties.radiationCalculation};
-        node << FileParse::Child{"DefaultGas", properties.defaultGas};
-        node << FileParse::Child{"DefaultVentilated", properties.defaultVentilated};
         node << FileParse::Child{"RadiationModelParameters", properties.radiationModelParameters};
 
         return node;

@@ -42,10 +42,11 @@ namespace ThermFile
     //! 1. *Materials*: delete legacy non-solid material UUIDs from the loaded DB
     //!    (they may have been parsed as empty Solid records by the flat parser).
     //! 2. *Polygons*: for each polygon referencing a captured legacy material, set its
-    //!    PolygonType (FrameCavity or RadiationEnclosure), populate per-polygon CavityData,
-    //!    and clear materialUUID. Tally per-cavity (standard, gas, ventilated) usage.
-    //! 3. *Project defaults*: majority-vote the tally and apply to
-    //!    CalculationOptions::frameCavityProperties. Ties prefer ISO15099 / "Air" / false.
+    //!    PolygonType (FrameCavity or RadiationEnclosure), populate per-polygon CavityData
+    //!    (gas + ventilated bit derived from the legacy standard variant), and clear
+    //!    materialUUID. Tally per-cavity convection-model usage along the way.
+    //! 3. *Project convection model*: majority-vote the tally and apply to
+    //!    CalculationOptions::frameCavityProperties.convectionModel. Ties prefer ISO15099.
     //!
     //! Idempotent: passing an empty capture is a safe no-op.
     void applyFrameCavityMigration(const LegacyMaterialsCapture & legacy,

@@ -192,16 +192,11 @@ namespace Helper
 
     struct MockFrameCavityProperties
     {
-        std::string standard{"ISO15099"};
+        std::string convectionModel{"ISO15099"};
         std::string radiationCalculation{"Detailed"};
-        std::string defaultGas{"Air"};
-        std::string defaultVentilated{"false"};
 
         MockFrameCavityProperties() = default;
-        MockFrameCavityProperties(std::string standard,
-                                  std::string radiationCalculation,
-                                  std::string defaultGas,
-                                  std::string defaultVentilated);
+        MockFrameCavityProperties(std::string convectionModel, std::string radiationCalculation);
     };
 
     //! \brief Inserts a FrameCavityProperties node into the given mock node.

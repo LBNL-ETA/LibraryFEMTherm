@@ -171,15 +171,14 @@ namespace ThermFile
     /// FrameCavityProperties
     ////////////////////////////////////////////////////////////////////////////////////
 
-    //! \brief Project-wide frame-cavity policy. Holds the cavity standard, radiation
-    //! calculation mode, and the defaults applied when converting a polygon to a frame
-    //! cavity. Per-polygon overrides (gas, ventilated) live on Polygon::cavity.
+    //! \brief Project-wide frame-cavity policy: convection model + radiation
+    //! calculation mode. Per-polygon attributes (gas, ventilated) live on
+    //! Polygon::cavity; new cavities are initialised with hardcoded defaults
+    //! ("Air", non-ventilated) at the conversion site.
     struct FrameCavityProperties
     {
-        CavityStandard standard{CavityStandard::ISO15099};
+        ConvectionModel convectionModel{ConvectionModel::ISO15099};
         RadiationCalculation radiationCalculation{RadiationCalculation::Detailed};
-        std::string defaultGas{"Air"};
-        bool defaultVentilated{false};
         RadiationModelParameters radiationModelParameters;
     };
 

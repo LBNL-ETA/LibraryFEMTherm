@@ -150,10 +150,10 @@ void bind_enums(py::module_ & mod)
         .value("CommonThermalBridge", ThermFile::OtherCrossSectionType::CommonThermalBridge)
         .value("GeneralCrossSection", ThermFile::OtherCrossSectionType::GeneralCrossSection);
 
-    // Project-level cavity policy enums on CalculationOptions.
-    py::enum_<ThermFile::CavityStandard>(mod, "CavityStandard")
-        .value("ISO15099", ThermFile::CavityStandard::ISO15099)
-        .value("CEN", ThermFile::CavityStandard::CEN);
+    // Project-level frame-cavity policy enums on CalculationOptions::frameCavityProperties.
+    py::enum_<ThermFile::ConvectionModel>(mod, "ConvectionModel")
+        .value("ISO15099", ThermFile::ConvectionModel::ISO15099)
+        .value("EN10077", ThermFile::ConvectionModel::EN10077);
 
     py::enum_<ThermFile::RadiationCalculation>(mod, "RadiationCalculation")
         .value("Detailed", ThermFile::RadiationCalculation::Detailed)
