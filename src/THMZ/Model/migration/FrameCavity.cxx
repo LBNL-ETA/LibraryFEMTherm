@@ -1,4 +1,4 @@
-#include "FrameCavityMigration.hxx"
+#include "FrameCavity.hxx"
 
 #include <iterator>
 #include <map>

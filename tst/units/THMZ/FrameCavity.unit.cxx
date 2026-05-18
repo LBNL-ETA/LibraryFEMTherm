@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "THMZ/Model/FrameCavityMigration.hxx"
+#include "THMZ/Model/migration/FrameCavity.hxx"
 #include "THMZ/Model/THMX.hxx"
 #include "Materials/DB.hxx"
 

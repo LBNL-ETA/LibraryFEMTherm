@@ -4,7 +4,7 @@
 #include <set>
 #include <string>
 
-#include "THMX.hxx"
+#include "THMZ/Model/THMX.hxx"
 #include "Materials/DB.hxx"
 
 namespace ThermFile
