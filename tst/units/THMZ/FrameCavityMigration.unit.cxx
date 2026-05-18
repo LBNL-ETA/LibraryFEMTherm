@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "THMZ/Model/MigrationShim.hxx"
+#include "THMZ/Model/FrameCavityMigration.hxx"
 #include "THMZ/Model/THMX.hxx"
 #include "Materials/DB.hxx"
 
@@ -59,17 +59,17 @@ namespace
     }
 }   // namespace
 
-class TestMigrationShim : public testing::Test
+class TestFrameCavityMigration : public testing::Test
 {};
 
-TEST_F(TestMigrationShim, NoLegacyMaterialsIsNoOp)
+TEST_F(TestFrameCavityMigration, NoLegacyMaterialsIsNoOp)
 {
     auto materials = makeDBWith({makeSolidMaterial("solid-1", "Steel")});
 
     ThermFile::ThermModel model;
     model.polygons.push_back(makePolygon("poly-1", "solid-1"));
 
-    ThermFile::applyMigrationShim(materials, model);
+    ThermFile::applyFrameCavityMigration(materials, model);
 
     EXPECT_EQ(materials.getMaterials().size(), 1u);
     EXPECT_EQ(model.polygons[0].polygonType, ThermFile::PolygonType::Material);
@@ -83,7 +83,7 @@ TEST_F(TestMigrationShim, NoLegacyMaterialsIsNoOp)
     EXPECT_FALSE(properties.defaultVentilated);
 }
 
-TEST_F(TestMigrationShim, CavityMaterialBecomesPerPolygonCavity)
+TEST_F(TestFrameCavityMigration, CavityMaterialBecomesPerPolygonCavity)
 {
     auto materials = makeDBWith({
       makeSolidMaterial("solid-1", "Steel"),
@@ -95,7 +95,7 @@ TEST_F(TestMigrationShim, CavityMaterialBecomesPerPolygonCavity)
     model.polygons.push_back(makePolygon("poly-1", "cavity-1"));
     model.polygons.push_back(makePolygon("poly-2", "solid-1"));
 
-    ThermFile::applyMigrationShim(materials, model);
+    ThermFile::applyFrameCavityMigration(materials, model);
 
     // Cavity material is gone from the library; solid stays.
     ASSERT_EQ(materials.getMaterials().size(), 1u);
@@ -121,7 +121,7 @@ TEST_F(TestMigrationShim, CavityMaterialBecomesPerPolygonCavity)
     EXPECT_FALSE(properties.defaultVentilated);
 }
 
-TEST_F(TestMigrationShim, RadiationEnclosureMaterialBecomesRadiationEnclosurePolygon)
+TEST_F(TestFrameCavityMigration, RadiationEnclosureMaterialBecomesRadiationEnclosurePolygon)
 {
     auto materials = makeDBWith({
       makeRadiationEnclosureMaterial("enclosure-1", "Radiation Enclosure"),
@@ -130,7 +130,7 @@ TEST_F(TestMigrationShim, RadiationEnclosureMaterialBecomesRadiationEnclosurePol
     ThermFile::ThermModel model;
     model.polygons.push_back(makePolygon("poly-1", "enclosure-1"));
 
-    ThermFile::applyMigrationShim(materials, model);
+    ThermFile::applyFrameCavityMigration(materials, model);
 
     EXPECT_TRUE(materials.getMaterials().empty());
 
@@ -140,7 +140,7 @@ TEST_F(TestMigrationShim, RadiationEnclosureMaterialBecomesRadiationEnclosurePol
     EXPECT_FALSE(polygon.cavity.has_value());
 }
 
-TEST_F(TestMigrationShim, VentilatedVariantStandardIsNormalizedAndVentilationFlagSet)
+TEST_F(TestFrameCavityMigration, VentilatedVariantStandardIsNormalizedAndVentilationFlagSet)
 {
     auto materials = makeDBWith({
       makeCavityMaterial("cavity-vent", "Frame Cavity ISO Ventilated",
@@ -150,7 +150,7 @@ TEST_F(TestMigrationShim, VentilatedVariantStandardIsNormalizedAndVentilationFla
     ThermFile::ThermModel model;
     model.polygons.push_back(makePolygon("poly-1", "cavity-vent"));
 
-    ThermFile::applyMigrationShim(materials, model);
+    ThermFile::applyFrameCavityMigration(materials, model);
 
     const auto & cavity = model.polygons[0].cavity;
     ASSERT_TRUE(cavity.has_value());
@@ -164,7 +164,7 @@ TEST_F(TestMigrationShim, VentilatedVariantStandardIsNormalizedAndVentilationFla
     EXPECT_TRUE(properties.defaultVentilated);
 }
 
-TEST_F(TestMigrationShim, NFRCAliasesNormalizeToISO15099)
+TEST_F(TestFrameCavityMigration, NFRCAliasesNormalizeToISO15099)
 {
     auto materials = makeDBWith({
       makeCavityMaterial("cavity-nfrc", "Frame Cavity NFRC",
@@ -174,13 +174,13 @@ TEST_F(TestMigrationShim, NFRCAliasesNormalizeToISO15099)
     ThermFile::ThermModel model;
     model.polygons.push_back(makePolygon("poly-1", "cavity-nfrc"));
 
-    ThermFile::applyMigrationShim(materials, model);
+    ThermFile::applyFrameCavityMigration(materials, model);
 
     const auto & properties = model.properties.calculationOptions.frameCavityProperties;
     EXPECT_EQ(properties.standard, ThermFile::CavityStandard::ISO15099);
 }
 
-TEST_F(TestMigrationShim, MajorityVoteAcrossMultipleCavities)
+TEST_F(TestFrameCavityMigration, MajorityVoteAcrossMultipleCavities)
 {
     auto materials = makeDBWith({
       makeCavityMaterial("cavity-iso", "Frame Cavity ISO",
@@ -195,14 +195,14 @@ TEST_F(TestMigrationShim, MajorityVoteAcrossMultipleCavities)
     model.polygons.push_back(makePolygon("poly-2", "cavity-iso"));
     model.polygons.push_back(makePolygon("poly-3", "cavity-cen"));
 
-    ThermFile::applyMigrationShim(materials, model);
+    ThermFile::applyFrameCavityMigration(materials, model);
 
     const auto & properties = model.properties.calculationOptions.frameCavityProperties;
     EXPECT_EQ(properties.standard, ThermFile::CavityStandard::ISO15099);
     EXPECT_EQ(properties.defaultGas, "Air");
 }
 
-TEST_F(TestMigrationShim, TiePrefersISO15099AndAirAndFalse)
+TEST_F(TestFrameCavityMigration, TiePrefersISO15099AndAirAndFalse)
 {
     auto materials = makeDBWith({
       makeCavityMaterial("cavity-iso", "Frame Cavity ISO",
@@ -216,7 +216,7 @@ TEST_F(TestMigrationShim, TiePrefersISO15099AndAirAndFalse)
     model.polygons.push_back(makePolygon("poly-1", "cavity-iso"));
     model.polygons.push_back(makePolygon("poly-2", "cavity-cen"));
 
-    ThermFile::applyMigrationShim(materials, model);
+    ThermFile::applyFrameCavityMigration(materials, model);
 
     const auto & properties = model.properties.calculationOptions.frameCavityProperties;
     EXPECT_EQ(properties.standard, ThermFile::CavityStandard::ISO15099);

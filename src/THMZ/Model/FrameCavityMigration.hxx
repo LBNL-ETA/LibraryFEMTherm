@@ -5,7 +5,12 @@
 
 namespace ThermFile
 {
-    //! \brief Migrates a legacy-shape THMZ (Model + Materials) to the new shape in place.
+    //! \brief One-shot migration for the legacy frame-cavity representation.
+    //!
+    //! Specific to this refactor; not a general migration framework. If a future
+    //! schema change needs migrating, add a sibling function alongside this one
+    //! (and consider a versioned dispatcher once there are two-plus migrations
+    //! to abstract over).
     //!
     //! Three passes:
     //! 1. *Materials*: capture cavity-typed and radiation-enclosure-typed materials by UUID
@@ -16,7 +21,7 @@ namespace ThermFile
     //! 3. *Project defaults*: majority-vote the tally and apply to
     //!    CalculationOptions::frameCavityProperties. Ties prefer ISO15099 / "Air" / false.
     //!
-    //! Safe to call on already-migrated data -- no captured materials means no polygon
-    //! rewrites and no project-default promotion.
-    void applyMigrationShim(MaterialsLibrary::DB & materials, ThermFile::ThermModel & model);
+    //! Idempotent: safe to call on already-migrated data (no captured materials means no
+    //! polygon rewrites and no project-default promotion).
+    void applyFrameCavityMigration(MaterialsLibrary::DB & materials, ThermFile::ThermModel & model);
 }   // namespace ThermFile

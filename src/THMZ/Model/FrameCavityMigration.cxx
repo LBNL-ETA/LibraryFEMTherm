@@ -1,4 +1,4 @@
-#include "MigrationShim.hxx"
+#include "FrameCavityMigration.hxx"
 
 #include <iterator>
 #include <map>
@@ -165,7 +165,7 @@ namespace ThermFile
         }
     }   // namespace
 
-    void applyMigrationShim(MaterialsLibrary::DB & materials, ThermFile::ThermModel & model)
+    void applyFrameCavityMigration(MaterialsLibrary::DB & materials, ThermFile::ThermModel & model)
     {
         const auto capture = captureLegacyMaterials(materials);
         const auto tally = rewritePolygons(model.polygons, capture);
