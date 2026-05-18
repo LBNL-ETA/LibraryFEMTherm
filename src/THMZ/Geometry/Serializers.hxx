@@ -27,48 +27,6 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, Cavity & cavity)
-    {
-        node >> FileParse::Child{"UUID", cavity.uuid};
-        node >> FileParse::Child{"Direction", cavity.direction};
-        node >> FileParse::Child{"HeatFlowDirection", cavity.heatFlowDirection};
-        node >> FileParse::Child{"Emissivity1", cavity.emissivity1};
-        node >> FileParse::Child{"Emissivity2", cavity.emissivity2};
-        node >> FileParse::Child{"Temperature1", cavity.temperature1};
-        node >> FileParse::Child{"Temperature2", cavity.temperature2};
-        node >> FileParse::Child{"MaxXDimension", cavity.maxXDimension};
-        node >> FileParse::Child{"MaxYDimension", cavity.maxYDimension};
-        node >> FileParse::Child{"ActualHeight", cavity.actualHeight};
-        node >> FileParse::Child{"Area", cavity.area};
-        node >> FileParse::Child{"Pressure", cavity.pressure};
-        node >> FileParse::Child{"WarmLocator", cavity.warmLocator};
-        node >> FileParse::Child{"ColdLocator", cavity.coldLocator};
-
-        return node;
-    }
-
-    template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const Cavity & cavity)
-    {
-        node << FileParse::Child{"UUID", cavity.uuid};
-        node << FileParse::Child{"Direction", cavity.direction};
-        node << FileParse::Child{"HeatFlowDirection", cavity.heatFlowDirection};
-        node << FileParse::Child{"Emissivity1", cavity.emissivity1};
-        node << FileParse::Child{"Emissivity2", cavity.emissivity2};
-        node << FileParse::Child{"Temperature1", cavity.temperature1};
-        node << FileParse::Child{"Temperature2", cavity.temperature2};
-        node << FileParse::Child{"MaxXDimension", cavity.maxXDimension};
-        node << FileParse::Child{"MaxYDimension", cavity.maxYDimension};
-        node << FileParse::Child{"ActualHeight", cavity.actualHeight};
-        node << FileParse::Child{"Area", cavity.area};
-        node << FileParse::Child{"Pressure", cavity.pressure};
-        node << FileParse::Child{"WarmLocator", cavity.warmLocator};
-        node << FileParse::Child{"ColdLocator", cavity.coldLocator};
-
-        return node;
-    }
-
-    template<typename NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, GlazingSystemData & glazingSystem)
     {
         node >> FileParse::Child{"ID", glazingSystem.ID};
@@ -114,7 +72,6 @@ namespace ThermFile
         node >> FileParse::Child{"GlazingSystem", polygon.glazingSystem};
         node >> FileParse::Child{"Origin", polygon.origin};
         node >> FileParse::Child{{"Points", "Point"}, polygon.points};
-        node >> FileParse::Child{"CavityUUID", polygon.cavityUUID};
         node >> FileParse::Child{{"Attributes", "Attribute"}, polygon.attributes};
         node >> FileParse::Child{"Type", polygon.polygonType};
         node >> FileParse::Child{"LinkID", polygon.linkID};
@@ -133,7 +90,6 @@ namespace ThermFile
         node << FileParse::Child{"GlazingSystem", polygon.glazingSystem};
         node << FileParse::Child{"Origin", polygon.origin};
         node << FileParse::Child{{"Points", "Point"}, polygon.points};
-        node << FileParse::Child{"CavityUUID", polygon.cavityUUID};
         node << FileParse::Child{{"Attributes", "Attribute"}, polygon.attributes};
         node << FileParse::Child{"Type", polygon.polygonType};
         node << FileParse::Child{"LinkID", polygon.linkID};

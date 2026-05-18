@@ -111,7 +111,6 @@ class TestThermModelCreation:
         assert model.calculation_ready is False
         assert len(model.polygons) == 0
         assert len(model.boundary_conditions) == 0
-        assert len(model.cavities) == 0
         assert model.cma_data is None
         assert model.gasket_materials is None
 

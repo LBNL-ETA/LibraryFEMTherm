@@ -140,20 +140,6 @@ TEST_F(TestMigrationShim, RadiationEnclosureMaterialBecomesRadiationEnclosurePol
     EXPECT_FALSE(polygon.cavity.has_value());
 }
 
-TEST_F(TestMigrationShim, LegacyCavityUUIDLinkageIsDropped)
-{
-    auto materials = makeDBWith({makeSolidMaterial("solid-1", "Steel")});
-
-    ThermFile::ThermModel model;
-    auto polygon = makePolygon("poly-1", "solid-1");
-    polygon.cavityUUID = "some-legacy-cavity-uuid";
-    model.polygons.push_back(polygon);
-
-    ThermFile::applyMigrationShim(materials, model);
-
-    EXPECT_FALSE(model.polygons[0].cavityUUID.has_value());
-}
-
 TEST_F(TestMigrationShim, VentilatedVariantStandardIsNormalizedAndVentilationFlagSet)
 {
     auto materials = makeDBWith({

@@ -22,12 +22,6 @@ namespace Helper
             expect_near(expected.polygons[i], result.polygons[i], tolerance);
         }
 
-        ASSERT_EQ(expected.cavities.size(), result.cavities.size());
-        for(size_t i = 0; i < expected.cavities.size(); ++i)
-        {
-            expect_near(expected.cavities[i], result.cavities[i], tolerance);
-        }
-
         ASSERT_EQ(expected.boundaryConditions.size(), result.boundaryConditions.size());
         for(size_t i = 0; i < expected.boundaryConditions.size(); ++i)
         {

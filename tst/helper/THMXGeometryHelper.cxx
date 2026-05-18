@@ -19,29 +19,6 @@ namespace Helper
         EXPECT_NEAR(expected.y, actual.y, tolerance);
     }
 
-    void expect_near(const ThermFile::Cavity & expected, const ThermFile::Cavity & actual, const double tolerance)
-    {
-        EXPECT_EQ(expected.uuid, actual.uuid);
-        EXPECT_EQ(expected.heatFlowDirection, actual.heatFlowDirection);
-        ASSERT_EQ(expected.emissivity1.has_value(), actual.emissivity1.has_value());
-        if(expected.emissivity1.has_value())
-        {
-            EXPECT_NEAR(*expected.emissivity1, *actual.emissivity1, tolerance);
-        }
-        ASSERT_EQ(expected.emissivity2.has_value(), actual.emissivity2.has_value());
-        if(expected.emissivity2.has_value())
-        {
-            EXPECT_NEAR(*expected.emissivity2, *actual.emissivity2, tolerance);
-        }
-        EXPECT_NEAR(expected.temperature1, actual.temperature1, tolerance);
-        EXPECT_NEAR(expected.temperature2, actual.temperature2, tolerance);
-        EXPECT_NEAR(expected.maxXDimension, actual.maxXDimension, tolerance);
-        EXPECT_NEAR(expected.maxYDimension, actual.maxYDimension, tolerance);
-        EXPECT_NEAR(expected.actualHeight, actual.actualHeight, tolerance);
-        EXPECT_NEAR(expected.area, actual.area, tolerance);
-        EXPECT_NEAR(expected.pressure, actual.pressure, tolerance);
-    }
-
     void expect_eq(const ThermFile::GlazingSystemData & expected, const ThermFile::GlazingSystemData & actual)
     {
         EXPECT_EQ(expected.ID, actual.ID);
@@ -63,7 +40,6 @@ namespace Helper
         {
             expect_near(expected.points[i], actual.points[i], tolerance);
         }
-        EXPECT_EQ(expected.cavityUUID, actual.cavityUUID);
         ASSERT_EQ(expected.attributes.size(), actual.attributes.size());
         for(size_t i = 0; i < expected.attributes.size(); ++i)
         {
@@ -181,97 +157,6 @@ namespace Helper
         return node;
     }
 
-    MockCavity::MockCavity(std::string uuid,
-                           std::string direction,
-                           std::string heatFlowDirection,
-                           std::string emissivity1,
-                           std::string emissivity2,
-                           std::string temperature1,
-                           std::string temperature2,
-                           std::string maxXDimension,
-                           std::string maxYDimension,
-                           std::string actualHeight,
-                           std::string area,
-                           std::string pressure,
-                           MockPointNode warmLocator,
-                           MockPointNode coldLocator) :
-        uuid(std::move(uuid)),
-        direction(std::move(direction)),
-        heatFlowDirection(std::move(heatFlowDirection)),
-        emissivity1(std::move(emissivity1)),
-        emissivity2(std::move(emissivity2)),
-        temperature1(std::move(temperature1)),
-        temperature2(std::move(temperature2)),
-        maxXDimension(std::move(maxXDimension)),
-        maxYDimension(std::move(maxYDimension)),
-        actualHeight(std::move(actualHeight)),
-        area(std::move(area)),
-        pressure(std::move(pressure)),
-        warmLocator(std::move(warmLocator)),
-        coldLocator(std::move(coldLocator))
-    {}
-
-    Helper::MockNode generateCavityWithoutDirectionNode(const MockCavity & cavity)
-    {
-        Helper::MockNode node{"Cavity"};
-        addChildNode(node, "UUID", cavity.uuid);
-        addChildNode(node, "HeatFlowDirection", cavity.heatFlowDirection);
-        if(!cavity.emissivity1.empty())   // emulates optional
-        {
-            addChildNode(node, "Emissivity1", cavity.emissivity1);
-        }
-        if(!cavity.emissivity2.empty())   // emulates optional
-        {
-            addChildNode(node, "Emissivity2", cavity.emissivity2);
-        }
-        addChildNode(node, "Temperature1", cavity.temperature1);
-        addChildNode(node, "Temperature2", cavity.temperature2);
-        addChildNode(node, "MaxXDimension", cavity.maxXDimension);
-        addChildNode(node, "MaxYDimension", cavity.maxYDimension);
-        addChildNode(node, "ActualHeight", cavity.actualHeight);
-        addChildNode(node, "Area", cavity.area);
-        addChildNode(node, "Pressure", cavity.pressure);
-        auto warmLocatorNode = generatePointNode(cavity.warmLocator);
-        warmLocatorNode.tag = "WarmLocator";
-        addChildNode(node, warmLocatorNode);
-        auto coldLocatorNode = generatePointNode(cavity.coldLocator);
-        coldLocatorNode.tag = "ColdLocator";
-        addChildNode(node, coldLocatorNode);
-
-        return node;
-    }
-
-    Helper::MockNode generateCavityNodeWithDirection(const MockCavity & cavity)
-    {
-        Helper::MockNode node{"Cavity"};
-        addChildNode(node, "UUID", cavity.uuid);
-        addChildNode(node, "Direction", cavity.direction);
-        addChildNode(node, "HeatFlowDirection", cavity.heatFlowDirection);
-        if(!cavity.emissivity1.empty())   // emulates optional
-        {
-            addChildNode(node, "Emissivity1", cavity.emissivity1);
-        }
-        if(!cavity.emissivity2.empty())   // emulates optional
-        {
-            addChildNode(node, "Emissivity2", cavity.emissivity2);
-        }
-        addChildNode(node, "Temperature1", cavity.temperature1);
-        addChildNode(node, "Temperature2", cavity.temperature2);
-        addChildNode(node, "MaxXDimension", cavity.maxXDimension);
-        addChildNode(node, "MaxYDimension", cavity.maxYDimension);
-        addChildNode(node, "ActualHeight", cavity.actualHeight);
-        addChildNode(node, "Area", cavity.area);
-        addChildNode(node, "Pressure", cavity.pressure);
-        auto warmLocatorNode = generatePointNode(cavity.warmLocator);
-        warmLocatorNode.tag = "WarmLocator";
-        addChildNode(node, warmLocatorNode);
-        auto coldLocatorNode = generatePointNode(cavity.coldLocator);
-        coldLocatorNode.tag = "ColdLocator";
-        addChildNode(node, coldLocatorNode);
-
-        return node;
-    }
-
     MockGlazingSystemData::MockGlazingSystemData(std::string ID, std::string index) :
         ID(std::move(ID)), index(std::move(index))
     {}
@@ -292,7 +177,6 @@ namespace Helper
                              MockGlazingSystemData glazingSystem,
                              MockPointNode origin,
                              MockPoints points,
-                             std::string cavityUUID,
                              MockAttributes attributes,
                              std::string polygonType) :
         uuid(std::move(uuid)),
@@ -302,7 +186,6 @@ namespace Helper
         glazingSystem(std::move(glazingSystem)),
         origin(std::move(origin)),
         points(std::move(points)),
-        cavityUUID(std::move(cavityUUID)),
         attributes(std::move(attributes)),
         polygonType(std::move(polygonType))
     {}
@@ -326,7 +209,6 @@ namespace Helper
             auto pointNode = generatePointNode(point);
             addChildNode(pointsNode, pointNode);
         }
-        addChildNode(node, "CavityUUID", polygon.cavityUUID);
         auto & attributesNode{addChildNode(node, "Attributes")};
         for(const auto & attribute : polygon.attributes)
         {

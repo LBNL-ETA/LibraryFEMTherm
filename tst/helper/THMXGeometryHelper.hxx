@@ -13,8 +13,6 @@ namespace Helper
 
     void expect_near(const ThermFile::Point & expected, const ThermFile::Point & actual, double tolerance);
 
-    void expect_near(const ThermFile::Cavity & expected, const ThermFile::Cavity & actual, double tolerance);
-
     void expect_eq(const ThermFile::GlazingSystemData & expected, const ThermFile::GlazingSystemData & actual);
 
     void expect_near(const ThermFile::Polygon & expected, const ThermFile::Polygon & actual, double tolerance);
@@ -49,56 +47,6 @@ namespace Helper
     //! \param geometryNode The node to generate
     Helper::MockNode generatePointNode(const MockPointNode & geometryNode);
 
-    struct MockCavity
-    {
-        std::string uuid;
-        std::string direction;
-        std::string heatFlowDirection;
-        std::string emissivity1;
-        std::string emissivity2;
-        std::string temperature1;
-        std::string temperature2;
-        std::string maxXDimension;
-        std::string maxYDimension;
-        std::string actualHeight;
-        std::string area;
-        std::string pressure;
-        MockPointNode warmLocator;
-        MockPointNode coldLocator;
-
-        [[maybe_unused]] MockCavity(std::string uuid,
-                                    std::string direction,
-                                    std::string heatFlowDirection,
-                                    std::string emissivity1,
-                                    std::string emissivity2,
-                                    std::string temperature1,
-                                    std::string temperature2,
-                                    std::string maxXDimension,
-                                    std::string maxYDimension,
-                                    std::string actualHeight,
-                                    std::string area,
-                                    std::string pressure,
-                                    MockPointNode warmLocator,
-                                    MockPointNode coldLocator);
-    };
-
-    //! \brief Generation of a cavity node for testing
-    //! \param uuid The UUID of the cavity
-    //! \param heatFlowDirection The heat flow direction of the cavity
-    //! \param emissivity1 The emissivity of the first surface (empty string => element omitted)
-    //! \param emissivity2 The emissivity of the second surface (empty string => element omitted)
-    //! \param temperature1 The temperature of the first surface
-    //! \param temperature2 The temperature of the second surface
-    //! \param maxXDimension The maximum x dimension of the cavity
-    //! \param maxYDimension The maximum y dimension of the cavity
-    //! \param actualHeight The actual height of the cavity
-    //! \param area The area of the cavity
-    //! \param pressure The pressure of the cavity
-    Helper::MockNode generateCavityWithoutDirectionNode(const MockCavity & cavity);
-
-    // Generates the same object as generateCavityNode, but with a direction
-    Helper::MockNode generateCavityNodeWithDirection(const MockCavity & cavity);
-
     //! \brief Mock glazing system data
     //! \param ID The ID of the glazing system
     //! \param index The index of the glazing system
@@ -126,7 +74,6 @@ namespace Helper
         MockGlazingSystemData glazingSystem;
         MockPointNode origin;
         MockPoints points;
-        std::string cavityUUID;
         MockAttributes attributes;
         std::string polygonType;
 
@@ -137,7 +84,6 @@ namespace Helper
                                      MockGlazingSystemData glazingSystem,
                                      MockPointNode origin,
                                      MockPoints points,
-                                     std::string cavityUUID,
                                      MockAttributes attributes,
                                      std::string polygonType);
     };

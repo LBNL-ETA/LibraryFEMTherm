@@ -91,79 +91,6 @@ namespace Helper
 
     namespace THMXFile1
     {
-        ThermFile::Cavity cavity1()
-        {
-            return {"7a863ad6-c537-11ea-87d0-0242ac130003",
-                    std::nullopt,
-                    ThermFile::Direction::Down,
-                    0.9,
-                    0.8,
-                    20.0,
-                    25.0,
-                    0.5,
-                    0.45,
-                    0.55,
-                    0.25,
-                    101325.0,
-                    {2.3, 2.6},
-                    {3.8, 4.12}};
-        }
-
-        Helper::MockNode mockCavity1()
-        {
-            return Helper::generateCavityWithoutDirectionNode({"7a863ad6-c537-11ea-87d0-0242ac130003",
-                                                               "nul",
-                                                               "Down",
-                                                               "0.9",
-                                                               "0.8",
-                                                               "20",
-                                                               "25",
-                                                               "0.5",
-                                                               "0.45",
-                                                               "0.55",
-                                                               "0.25",
-                                                               "1.01325e+05",
-                                                               {"2.3", "2.6"},
-                                                               {"3.8", "4.12"}});
-        }
-
-        ThermFile::Cavity cavity2()
-        {
-            // No local emissivity overrides => optionals are nullopt and the XML element is absent.
-            return {"7a863ad6-c537-11ea-87d0-0242ac130004",
-                    std::nullopt,
-                    ThermFile::Direction::Up,
-                    std::nullopt,
-                    std::nullopt,
-                    25.0,
-                    30.0,
-                    0.6,
-                    0.55,
-                    0.65,
-                    0.35,
-                    101325.0,
-                    {2.6, 2.9},
-                    {4.12, 4.44}};
-        }
-
-        Helper::MockNode mockCavity2()
-        {
-            return Helper::generateCavityWithoutDirectionNode({"7a863ad6-c537-11ea-87d0-0242ac130004",
-                                                               "nul",
-                                                               "Up",
-                                                               "",
-                                                               "",
-                                                               "25",
-                                                               "30",
-                                                               "0.6",
-                                                               "0.55",
-                                                               "0.65",
-                                                               "0.35",
-                                                               "1.01325e+05",
-                                                               {"2.6", "2.9"},
-                                                               {"4.12", "4.44"}});
-        }
-
         ThermFile::Polygon polygon1()
         {
             return {"Some uuid",
@@ -173,9 +100,9 @@ namespace Helper
                     ThermFile::GlazingSystemData{1, 0},
                     {0.2, 0.4},
                     {{20.0, 0.5}, {25.0, 0.6}, {30.0, 0.7}},
-                    "Some Cavity uuid",
                     {"Attribute1", "Attribute2"},
                     ThermFile::PolygonType::Material,
+                    std::nullopt,
                     std::nullopt};
         }
 
@@ -188,7 +115,6 @@ namespace Helper
                                                 {"1", "0"},
                                                 {"0.2", "0.4"},
                                                 {{"20", "0.5"}, {"25", "0.6"}, {"30", "0.7"}},
-                                                "Some Cavity uuid",
                                                 {"Attribute1", "Attribute2"},
                                                 "Material"});
         }
@@ -202,9 +128,9 @@ namespace Helper
                     ThermFile::GlazingSystemData{2, 1},
                     {0.3, 0.5},
                     {{25.0, 0.6}, {30.0, 0.7}, {35.0, 0.8}},
-                    "Some other Cavity uuid",
                     {"Attribute3", "Attribute4"},
                     ThermFile::PolygonType::Glass,
+                    std::nullopt,
                     std::nullopt};
         }
 
@@ -217,7 +143,6 @@ namespace Helper
                                                 {"2", "1"},
                                                 {"0.3", "0.5"},
                                                 {{"25", "0.6"}, {"30", "0.7"}, {"35", "0.8"}},
-                                                "Some other Cavity uuid",
                                                 {"Attribute3", "Attribute4"},
                                                 "Glass"});
         }
@@ -343,7 +268,6 @@ namespace Helper
               {}};
             const auto properties{FileProperties1::testObject()};
             const auto glazingOrigin{ThermFile::Point{0.3, 1.8}};
-            std::vector<ThermFile::Cavity> cavities{cavity1(), cavity2()};
             std::vector<ThermFile::Polygon> polygons{polygon1(), polygon2()};
             std::vector<ThermFile::Boundary> bcs{bc1(), bc2()};
 
@@ -355,7 +279,6 @@ namespace Helper
                     properties,
                     glazingOrigin,
                     std::nullopt,
-                    cavities,
                     polygons,
                     bcs,
                     {},
@@ -381,10 +304,6 @@ namespace Helper
             auto glazingOrigin{Helper::generatePointNode({"0.3", "1.8"})};
             glazingOrigin.tag = "GlazingOrigin";
             addChildNode(node, glazingOrigin);
-
-            auto & cavitiesNode{addChildNode(node, "Cavities")};
-            addChildNode(cavitiesNode, mockCavity1());
-            addChildNode(cavitiesNode, mockCavity2());
 
             auto & polygonsNode{addChildNode(node, "Polygons")};
             addChildNode(polygonsNode, mockPolygon1());

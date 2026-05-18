@@ -15,36 +15,6 @@ namespace ThermFile
         double y{0};
     };
 
-    // NOTE: This structure serves both frame and glazing cavities. Splitting into FrameCavity and
-    // GlazingCavity would improve type safety but requires updates to serialization and dependent code.
-    //! \brief Represents cavity model in THERM. Refer to ISO 15099 for more details on the procedure.
-    //! @heatFlowDirection - direction of heat flow.
-    //! @emissivity1 - warm side emissivity. nullopt means "use the material's library value".
-    //! @emissivity2 - cold side emissivity. nullopt means "use the material's library value".
-    //! @temperature1 - warm side temperature.
-    //! @temperature2 - cold side temperature.
-    //! @maxXDimension - maximum x dimension of the cavity.
-    //! @maxYDimension - maximum y dimension of the cavity.
-    //! @actualHeight - actual height of the cavity.
-    //! @area - area of the cavity.
-    struct Cavity
-    {
-        std::string uuid;
-        std::optional<Direction> direction;
-        Direction heatFlowDirection;
-        std::optional<double> emissivity1;
-        std::optional<double> emissivity2;
-        double temperature1{0};
-        double temperature2{0};
-        double maxXDimension{0};
-        double maxYDimension{0};
-        double actualHeight{0};
-        double area{0};
-        double pressure{0};
-        Point warmLocator{0, 0};
-        Point coldLocator{0, 0};
-    };
-
     //! \brief Represents glazing system in THERM model.
     //! @ID - unique identifier of the glazing system.
     //! @index - index of the glazing system.
@@ -72,10 +42,10 @@ namespace ThermFile
     //! @glazingSystemID - unique identifier of the glazing system used in the polygon.
     //! @origin - origin of the polygon.
     //! @points - points that is polygon made of.
-    //! @cavityUUID - unique identifier of the cavity if the polygon represents the cavity.
     //! @attributes - attributes of the polygon.
     //! @polygonType - type of the polygon.
     //! @linkID - used to link material type to another polyshape
+    //! @cavity - per-polygon frame-cavity attributes (present iff polygonType == FrameCavity).
     struct Polygon
     {
         std::string uuid;
@@ -85,7 +55,6 @@ namespace ThermFile
         std::optional<GlazingSystemData> glazingSystem;
         Point origin;
         std::vector<Point> points;
-        std::optional<std::string> cavityUUID;
         std::vector<std::string> attributes;
         PolygonType polygonType{PolygonType::None};
         std::optional<int> linkID;

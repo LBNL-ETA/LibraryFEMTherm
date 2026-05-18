@@ -29,7 +29,6 @@ namespace ThermFile
         Properties properties;
         Point glazingOrigin;
         std::optional<RadianceModeTags> radianceTags;
-        std::vector<Cavity> cavities;
         std::vector<Polygon> polygons;
         std::vector<Boundary> boundaryConditions;
         std::vector<GlazingSystem> glazingSystems;

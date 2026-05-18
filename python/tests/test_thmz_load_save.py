@@ -18,7 +18,6 @@ class TestTHMZLoad:
         assert sample_model.calculation_ready is True
         assert len(sample_model.polygons) == 18
         assert len(sample_model.boundary_conditions) == 64
-        assert len(sample_model.cavities) == 5
 
     def test_load_id50(self, id50_path):
         model = fem.load_model_from_zip_file(id50_path)
@@ -42,7 +41,6 @@ class TestXMLRoundTrip:
         assert reloaded is not None
         assert len(reloaded.polygons) == len(sample_model.polygons)
         assert len(reloaded.boundary_conditions) == len(sample_model.boundary_conditions)
-        assert len(reloaded.cavities) == len(sample_model.cavities)
         assert reloaded.calculation_ready == sample_model.calculation_ready
 
     def test_save_to_string_json_format(self, sample_model):

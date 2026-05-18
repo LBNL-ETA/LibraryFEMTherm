@@ -124,10 +124,6 @@ namespace ThermFile
                     }
                     polygon.materialUUID.clear();
                 }
-
-                // Legacy <CavityUUID> linkage is vestigial under the new design; the
-                // PolygonType + per-polygon Cavity sub-element is the sole marker.
-                polygon.cavityUUID.reset();
             }
 
             return tally;

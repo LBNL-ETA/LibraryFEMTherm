@@ -35,246 +35,6 @@ TEST_F(TestTHMXGeometry, PointSerialization)
     EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), Helper::generatePointNode({"32.7", "0.65"})));
 }
 
-TEST_F(TestTHMXGeometry, CavityDeserialization)
-{
-    auto node{Helper::generateCavityWithoutDirectionNode({"7a863ad6-c537-11ea-87d0-0242ac130003",
-                                                          "Up",
-                                                          "Down",
-                                                          "0.9",
-                                                          "0.8",
-                                                          "20",
-                                                          "25",
-                                                          "0.5",
-                                                          "0.45",
-                                                          "0.55",
-                                                          "0.25",
-                                                          "101325",
-                                                          {"2.3", "2.6"},
-                                                          {"3.8", "4.12"}})};
-    const Helper::MockNodeAdapter adapter{&node};
-
-    ThermFile::Cavity cavity;
-    adapter >> cavity;
-
-    ThermFile::Cavity correctCavity{"7a863ad6-c537-11ea-87d0-0242ac130003",
-                                    std::nullopt,
-                                    ThermFile::Direction::Down,
-                                    0.9,
-                                    0.8,
-                                    20.0,
-                                    25.0,
-                                    0.5,
-                                    0.45,
-                                    0.55,
-                                    0.25,
-                                    101325.0,
-                                    {2.3, 2.6},
-                                    {3.8, 4.12}};
-
-    Helper::expect_near(correctCavity, cavity, 1e-6);
-}
-
-TEST_F(TestTHMXGeometry, CavityDeserializationNoEmissivities)
-{
-    // When the cavity has no local emissivity overrides, the <Emissivity1>/<Emissivity2>
-    // elements are absent from the XML and the optionals stay nullopt.
-    auto node{Helper::generateCavityWithoutDirectionNode({"7a863ad6-c537-11ea-87d0-0242ac130003",
-                                                          "Up",
-                                                          "Down",
-                                                          "",
-                                                          "",
-                                                          "20",
-                                                          "25",
-                                                          "0.5",
-                                                          "0.45",
-                                                          "0.55",
-                                                          "0.25",
-                                                          "101325",
-                                                          {"2.3", "2.6"},
-                                                          {"3.8", "4.12"}})};
-    const Helper::MockNodeAdapter adapter{&node};
-
-    ThermFile::Cavity cavity;
-    adapter >> cavity;
-
-    ThermFile::Cavity correctCavity{"7a863ad6-c537-11ea-87d0-0242ac130003",
-                                    std::nullopt,
-                                    ThermFile::Direction::Down,
-                                    std::nullopt,
-                                    std::nullopt,
-                                    20.0,
-                                    25.0,
-                                    0.5,
-                                    0.45,
-                                    0.55,
-                                    0.25,
-                                    101325.0,
-                                    {2.3, 2.6},
-                                    {3.8, 4.12}};
-
-    Helper::expect_near(correctCavity, cavity, 1e-6);
-}
-
-TEST_F(TestTHMXGeometry, CavitySerialization)
-{
-    ThermFile::Cavity cavity{"7a863ad6-c537-11ea-87d0-0242ac130003",
-                             std::nullopt,
-                             ThermFile::Direction::Down,
-                             0.9,
-                             0.8,
-                             20.0,
-                             25.0,
-                             0.5,
-                             0.45,
-                             0.55,
-                             0.25,
-                             101325.0,
-                             {1.1, 1.2},
-                             {1.3, 1.4}};
-
-    Helper::MockNode node{"Cavity"};
-    Helper::MockNodeAdapter adapter{&node};
-
-    adapter << cavity;
-
-    auto correctNode{Helper::generateCavityWithoutDirectionNode({"7a863ad6-c537-11ea-87d0-0242ac130003",
-                                                                 "Up",
-                                                                 "Down",
-                                                                 "0.9",
-                                                                 "0.8",
-                                                                 "20",
-                                                                 "25",
-                                                                 "0.5",
-                                                                 "0.45",
-                                                                 "0.55",
-                                                                 "0.25",
-                                                                 "1.01325e+05",
-                                                                 {"1.1", "1.2"},
-                                                                 {"1.3", "1.4"}})};
-
-    EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNode));
-}
-
-TEST_F(TestTHMXGeometry, CavitySerializationNoEmissivities)
-{
-    // nullopt emissivities should produce XML with no <Emissivity1>/<Emissivity2> elements.
-    ThermFile::Cavity cavity{"7a863ad6-c537-11ea-87d0-0242ac130003",
-                             std::nullopt,
-                             ThermFile::Direction::Down,
-                             std::nullopt,
-                             std::nullopt,
-                             20.0,
-                             25.0,
-                             0.5,
-                             0.45,
-                             0.55,
-                             0.25,
-                             101325.0,
-                             {1.1, 1.2},
-                             {1.3, 1.4}};
-
-    Helper::MockNode node{"Cavity"};
-    Helper::MockNodeAdapter adapter{&node};
-
-    adapter << cavity;
-
-    auto correctNode{Helper::generateCavityWithoutDirectionNode({"7a863ad6-c537-11ea-87d0-0242ac130003",
-                                                                 "Up",
-                                                                 "Down",
-                                                                 "",
-                                                                 "",
-                                                                 "20",
-                                                                 "25",
-                                                                 "0.5",
-                                                                 "0.45",
-                                                                 "0.55",
-                                                                 "0.25",
-                                                                 "1.01325e+05",
-                                                                 {"1.1", "1.2"},
-                                                                 {"1.3", "1.4"}})};
-
-    EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNode));
-}
-
-TEST_F(TestTHMXGeometry, CavityWithDirectionDeserialization)
-{
-    auto node{Helper::generateCavityNodeWithDirection({"7a863ad6-c537-11ea-87d0-0242ac130003",
-                                                       "Up",
-                                                       "Down",
-                                                       "0.9",
-                                                       "0.8",
-                                                       "20",
-                                                       "25",
-                                                       "0.5",
-                                                       "0.45",
-                                                       "0.55",
-                                                       "0.25",
-                                                       "101325",
-                                                       {"0.1", "0.2"},
-                                                       {"0.3", "0.4"}})};
-    const Helper::MockNodeAdapter adapter{&node};
-
-    ThermFile::Cavity cavity;
-    adapter >> cavity;
-
-    ThermFile::Cavity correctCavity{"7a863ad6-c537-11ea-87d0-0242ac130003",
-                                    ThermFile::Direction::Up,
-                                    ThermFile::Direction::Down,
-                                    0.9,
-                                    0.8,
-                                    20.0,
-                                    25.0,
-                                    0.5,
-                                    0.45,
-                                    0.55,
-                                    0.25,
-                                    101325.0,
-                                    {0.1, 0.2},
-                                    {0.3, 0.4}};
-
-    Helper::expect_near(correctCavity, cavity, 1e-6);
-}
-
-TEST_F(TestTHMXGeometry, CavityWithDirectionSerialization)
-{
-    ThermFile::Cavity cavity{"7a863ad6-c537-11ea-87d0-0242ac130003",
-                             ThermFile::Direction::Left,
-                             ThermFile::Direction::Up,
-                             0.9,
-                             0.8,
-                             20.0,
-                             25.0,
-                             0.5,
-                             0.45,
-                             0.55,
-                             0.25,
-                             101325.0,
-                             {0.1, 0.2},
-                             {0.3, 0.4}};
-
-    Helper::MockNode node{"Cavity"};
-    Helper::MockNodeAdapter adapter{&node};
-
-    adapter << cavity;
-
-    auto correctNode{Helper::generateCavityNodeWithDirection({"7a863ad6-c537-11ea-87d0-0242ac130003",
-                                                              "Left",
-                                                              "Up",
-                                                              "0.9",
-                                                              "0.8",
-                                                              "20",
-                                                              "25",
-                                                              "0.5",
-                                                              "0.45",
-                                                              "0.55",
-                                                              "0.25",
-                                                              "1.01325e+05",
-                                                              {"0.1", "0.2"},
-                                                              {"0.3", "0.4"}})};
-
-    EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNode));
-}
-
 TEST_F(TestTHMXGeometry, PolygonDeserialization)
 {
     auto node{Helper::generatePolygonNode({"Some uuid",
@@ -284,7 +44,6 @@ TEST_F(TestTHMXGeometry, PolygonDeserialization)
                                            {"2", "1"},
                                            {"0.2", "0.4"},
                                            {{"20", "0.5"}, {"25", "0.6"}, {"30", "0.7"}},
-                                           "Some Cavity uuid",
                                            {"Attribute1", "Attribute2"},
                                            "Glass"})};
     const Helper::MockNodeAdapter adapter{&node};
@@ -299,9 +58,9 @@ TEST_F(TestTHMXGeometry, PolygonDeserialization)
                                       ThermFile::GlazingSystemData{2, 1},
                                       {0.2, 0.4},
                                       {{20.0, 0.5}, {25.0, 0.6}, {30.0, 0.7}},
-                                      "Some Cavity uuid",
                                       {"Attribute1", "Attribute2"},
                                       ThermFile::PolygonType::Glass,
+                                      std::nullopt,
                                       std::nullopt};
 
     Helper::expect_near(correctPolygon, polygon, 1e-6);
@@ -316,9 +75,10 @@ TEST_F(TestTHMXGeometry, PolygonSerialization)
                                ThermFile::GlazingSystemData{2, 2},
                                {0.2, 0.4},
                                {{20.0, 0.5}, {25.0, 0.6}, {30.0, 0.7}},
-                               "Some Cavity uuid",
                                {"Attribute1", "Attribute2"},
-                               ThermFile::PolygonType::Material, std::nullopt};
+                               ThermFile::PolygonType::Material,
+                               std::nullopt,
+                               std::nullopt};
 
     Helper::MockNode node{"Polygon"};
     Helper::MockNodeAdapter adapter{&node};
@@ -332,7 +92,6 @@ TEST_F(TestTHMXGeometry, PolygonSerialization)
                                                   {"2", "2"},
                                                   {"0.2", "0.4"},
                                                   {{"20", "0.5"}, {"25", "0.6"}, {"30", "0.7"}},
-                                                  "Some Cavity uuid",
                                                   {"Attribute1", "Attribute2"},
                                                   "Material"})};
 

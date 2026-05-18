@@ -35,7 +35,6 @@ model = fem.load_model_from_zip_file("sample-sill.thmz")
 print(f"Version:    {model.version}")
 print(f"Polygons:   {len(model.polygons)}")
 print(f"Boundaries: {len(model.boundary_conditions)}")
-print(f"Cavities:   {len(model.cavities)}")
 print(f"Glazing:    {len(model.glazing_systems)}")
 
 # Access model properties
