@@ -279,19 +279,23 @@ TEST_F(TestFileProperties, CalculationOptionsDeserialization)
     ThermFile::CalculationOptions calculationOptions;
     adapter >> calculationOptions;
 
-    ThermFile::CalculationOptions correctOptions{ThermFile::SimulationEngine::HygroThermFEM,
-                                                 ThermFile::CalculationMode::cmSteadyState,
-                                                 true,
-                                                 true,
-                                                 {false, true, false, true, false, true, false},
-                                                 ThermFile::TransientCalculationMethodology::icConstantEverywhere,
-                                                 ThermFile::SteadyStateCalculationMethodology::ssNoTimeVariable,
-                                                 {20.0, 0.5},
-                                                 {25.0, 0.75},
-                                                 {1e-6, 0.84, 3600, 1803},
-                                                 {ThermFile::MesherType::QuadTreeMesher, 7u, true, 1e-6, 100},
-                                                 {false, -0.01, 28u, true},
-                                                 {false, true, true}};
+    ThermFile::CalculationOptions correctOptions{
+      .simulationEngine = ThermFile::SimulationEngine::HygroThermFEM,
+      .calculationMode = ThermFile::CalculationMode::cmSteadyState,
+      .simulateMoisture = true,
+      .simulateThermal = true,
+      .modelingOptions = {false, true, false, true, false, true, false},
+      .transientCalculationMethodology =
+        ThermFile::TransientCalculationMethodology::icConstantEverywhere,
+      .steadyStateCalculationMethodology =
+        ThermFile::SteadyStateCalculationMethodology::ssNoTimeVariable,
+      .constantInitialConditionsTransient = {20.0, 0.5},
+      .constantInitialConditionsSteadyState = {25.0, 0.75},
+      .engineParameters = {1e-6, 0.84, 3600, 1803},
+      .meshControl = {ThermFile::MesherType::QuadTreeMesher, 7u, true, 1e-6, 100},
+      .heatTransferModelingOptions = {false, -0.01, 28u, true},
+      .miscProperties = {false, true, true},
+      .frameCavityProperties = {}};
 
     constexpr auto tolerance{1e-6};
     Helper::expect_near(correctOptions, calculationOptions, tolerance);
@@ -299,19 +303,23 @@ TEST_F(TestFileProperties, CalculationOptionsDeserialization)
 
 TEST_F(TestFileProperties, CalculationOptionsSerialization)
 {
-    ThermFile::CalculationOptions calculationOptions{ThermFile::SimulationEngine::HygroThermFEM,
-                                                     ThermFile::CalculationMode::cmSteadyState,
-                                                     true,
-                                                     true,
-                                                     {false, true, false, true, false, true, false},
-                                                     ThermFile::TransientCalculationMethodology::icConstantEverywhere,
-                                                     ThermFile::SteadyStateCalculationMethodology::ssNoTimeVariable,
-                                                     {20.0, 0.5},
-                                                     {25.0, 0.75},
-                                                     {1e-6, 0.84, 3600, 1803},
-                                                     {ThermFile::MesherType::QuadTreeMesher, 7u, true, 1e-6, 100},
-                                                     {false, -0.01, 28u, true},
-                                                     {false, true, true}};
+    ThermFile::CalculationOptions calculationOptions{
+      .simulationEngine = ThermFile::SimulationEngine::HygroThermFEM,
+      .calculationMode = ThermFile::CalculationMode::cmSteadyState,
+      .simulateMoisture = true,
+      .simulateThermal = true,
+      .modelingOptions = {false, true, false, true, false, true, false},
+      .transientCalculationMethodology =
+        ThermFile::TransientCalculationMethodology::icConstantEverywhere,
+      .steadyStateCalculationMethodology =
+        ThermFile::SteadyStateCalculationMethodology::ssNoTimeVariable,
+      .constantInitialConditionsTransient = {20.0, 0.5},
+      .constantInitialConditionsSteadyState = {25.0, 0.75},
+      .engineParameters = {1e-6, 0.84, 3600, 1803},
+      .meshControl = {ThermFile::MesherType::QuadTreeMesher, 7u, true, 1e-6, 100},
+      .heatTransferModelingOptions = {false, -0.01, 28u, true},
+      .miscProperties = {false, true, true},
+      .frameCavityProperties = {}};
 
     Helper::MockNode node{"CalculationOptions"};
     Helper::MockNodeAdapter adapter{&node};
