@@ -174,6 +174,11 @@ namespace MaterialsLibrary
         return m_Materials;
     }
 
+    const std::vector<Material> & DB::getMaterials() const
+    {
+        return m_Materials;
+    }
+
     void DB::deleteRecordsWithProjectName(std::string_view projectName)
     {
         m_Materials.erase(

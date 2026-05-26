@@ -4,6 +4,7 @@
 #include "Serializers.hxx"
 
 #include "Common/DB.hxx"
+#include "THMZ/Model/migration/Pipeline.hxx"
 
 namespace ThermFile
 {
@@ -16,7 +17,12 @@ namespace ThermFile
 
     std::optional<ThermModel> loadThermModelFromZipFile(std::string const & zipFileName)
     {
-        return Common::loadFromZipFile<ThermModel>(zipFileName, ThermZip::ModelFileName, topNodeName);
+        auto model = Common::loadFromZipFile<ThermModel>(zipFileName, ThermZip::ModelFileName, topNodeName);
+        if(model.has_value())
+        {
+            model = Migration::applyAllToModel(zipFileName, std::move(*model));
+        }
+        return model;
     }
 
     int saveToFile(const ThermModel & model, std::string_view fileName, FileParse::FileFormat format)

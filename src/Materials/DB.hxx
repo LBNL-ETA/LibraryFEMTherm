@@ -28,6 +28,7 @@ namespace MaterialsLibrary
         //! \return Reference to all material records is needed in case an update to material happens and changes need
         //! to be saved.
         std::vector<Material> & getMaterials();
+        [[nodiscard]] const std::vector<Material> & getMaterials() const;
 
         //! \brief Searches and returns material by name.
         //!

@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -17,7 +18,9 @@
 #include "THMZ/Properties/Enumerators.hxx"
 #include "THMZ/Properties/Properties.hxx"
 
-namespace ThermFile
+#include <ranges>
+
+namespace ThermFile::Migration::FrameCavity
 {
     namespace
     {
@@ -116,19 +119,19 @@ namespace ThermFile
             return best->first;
         }
 
-        void promoteProjectConvectionModel(const ConvectionModelTally & tally,
-                                           ThermFile::FrameCavityProperties & properties)
+        ThermFile::FrameCavityProperties promoteProjectConvectionModel(
+          const ConvectionModelTally & tally, ThermFile::FrameCavityProperties properties)
         {
             if(tally.empty())
             {
-                return;
+                return properties;
             }
-
             properties.convectionModel = pickWinner(tally.counts, ThermFile::ConvectionModel::ISO15099);
+            return properties;
         }
     }   // namespace
 
-    LegacyMaterialsCapture captureLegacyMaterials(const std::string & materialsXml)
+    LegacyMaterialsCapture capture(const std::string & materialsXml)
     {
         LegacyMaterialsCapture out;
 
@@ -159,15 +162,13 @@ namespace ThermFile
         return out;
     }
 
-    void applyFrameCavityMigration(const LegacyMaterialsCapture & legacy,
-                                   MaterialsLibrary::DB & materials,
-                                   ThermFile::ThermModel & model)
+    MaterialsLibrary::DB applyToMaterials(const LegacyMaterialsCapture & legacy, MaterialsLibrary::DB materials)
     {
-        // Pass 1: strip legacy material UUIDs from the loaded DB. The flat Material
-        // parser dropped their cavity/radiation-enclosure sub-elements silently,
-        // leaving empty Solid records behind -- those records reference UUIDs the
-        // shim is repurposing, so they must go.
-        for(const auto & [uuid, _] : legacy.cavities)
+        // Strip legacy material UUIDs from the DB. The flat Material parser
+        // dropped their cavity/radiation-enclosure sub-elements silently, leaving
+        // empty Solid records behind -- those records reference UUIDs the shim is
+        // repurposing, so they must go.
+        for(const auto & uuid : legacy.cavities | std::views::keys)
         {
             materials.deleteWithUUID(uuid);
         }
@@ -175,8 +176,12 @@ namespace ThermFile
         {
             materials.deleteWithUUID(uuid);
         }
+        return materials;
+    }
 
-        // Pass 2: rewrite polygons and tally per-cavity convection-model usage.
+    ThermFile::ThermModel applyToModel(const LegacyMaterialsCapture & legacy, ThermFile::ThermModel model)
+    {
+        // Pass A: rewrite polygons and tally per-cavity convection-model usage.
         ConvectionModelTally tally;
         for(auto & polygon : model.polygons)
         {
@@ -198,7 +203,18 @@ namespace ThermFile
             }
         }
 
-        // Pass 3: promote the tally onto the project-level convection model.
-        promoteProjectConvectionModel(tally, model.properties.calculationOptions.frameCavityProperties);
+        // Pass B: promote the tally onto the project-level convection model.
+        model.properties.calculationOptions.frameCavityProperties = promoteProjectConvectionModel(
+          tally, std::move(model.properties.calculationOptions.frameCavityProperties));
+
+        return model;
     }
-}   // namespace ThermFile
+
+    MigrationResult applyAll(const LegacyMaterialsCapture & legacy,
+                             MaterialsLibrary::DB materials,
+                             ThermFile::ThermModel model)
+    {
+        return MigrationResult{.materials = applyToMaterials(legacy, std::move(materials)),
+                               .model = applyToModel(legacy, std::move(model))};
+    }
+}   // namespace ThermFile::Migration::FrameCavity
