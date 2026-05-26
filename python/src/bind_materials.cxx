@@ -95,7 +95,8 @@ void bind_materials(py::module_ & mod)
         .def("load_from_string", &MaterialsLibrary::DB::loadFromString, py::arg("str"))
         .def("save_to_string", &MaterialsLibrary::DB::saveToString,
              py::arg("format") = FileParse::FileFormat::XML)
-        .def("get_materials", &MaterialsLibrary::DB::getMaterials,
+        .def("get_materials",
+             py::overload_cast<>(&MaterialsLibrary::DB::getMaterials, py::const_),
              py::return_value_policy::reference_internal)
         .def("get_by_name", &MaterialsLibrary::DB::getByName, py::arg("name"))
         .def("get_by_uuid", &MaterialsLibrary::DB::getByUUID, py::arg("uuid"))
