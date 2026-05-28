@@ -1,0 +1,31 @@
+# CMake build directories
+build/
+out/
+
+# Personal CMake presets (per-developer toolchain overrides)
+CMakeUserPresets.json
+
+# IDE / editor metadata
+.idea/
+.vs/
+.vscode/
+
+# Python build artifacts
+*.pyc
+__pycache__/
+*.egg-info/
+*.so
+*.pyd
+python/Release/
+python/Debug/
+
+# OS detritus
+.DS_Store
+Thumbs.db
+
+# Coverage / profiling
+*.gcda
+*.gcno
+*.gcov
+*.profraw
+*.profdata

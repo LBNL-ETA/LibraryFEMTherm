@@ -11,21 +11,66 @@ C++20 static library for reading, writing, and manipulating THERM (.thmz) files.
 
 ## Building
 
-### C++ only (default)
+### CMake presets
+
+`CMakePresets.json` ships six visible configure presets plus three hidden inheritance bases. Use the `default-*` presets for normal builds, `local-*` to consume sibling working copies of LBNL deps, and `python-*` to also build the Python bindings:
+
+| Preset | Description | Python bindings | C++ tests |
+|---|---|---|---|
+| `default-debug` / `default-release` | C++ only. Fetches all dependencies from declared remotes. | OFF | ON |
+| `local-debug` / `local-release` | C++ only, but consume sibling `../LBNLCPPCommon` and `../FileParse` working copies when present. | OFF | ON |
+| `python-debug` / `python-release` | C++ with Python bindings. Fetches all dependencies from declared remotes. | ON | ON |
+
+Missing siblings under `local-*` fall back to the declared remote automatically, so `local-*` is safe to invoke even if you don't have the LBNL siblings checked out.
 
 ```bash
-cmake --preset default
-cmake --build build/default --config Release
+cmake --preset default-release
+cmake --build build/default-release --config Release --parallel
+ctest --test-dir build/default-release -C Release --output-on-failure
 ```
 
-### C++ with Python bindings
+For Python bindings:
 
 ```bash
-cmake --preset python
-cmake --build build/python --config Release
+cmake --preset python-release
+cmake --build build/python-release --config Release --parallel
+ctest --test-dir build/python-release -C Release -V
 ```
 
-### Manual configuration (Visual Studio generator)
+CLion and VS Code automatically detect these presets.
+
+### Per-machine compiler presets (`CMakeUserPresets.json`)
+
+To use a specific compiler (`vs2022-release`, `gcc-13-debug`, `clang-18-release`, etc.), each developer maintains their own `CMakeUserPresets.json` next to `CMakePresets.json`. It is gitignored, read automatically by CMake (and CLion, VS Code, etc.), and stays on the developer's machine.
+
+Personal presets `inherit` from one of the shipped presets (usually `local`, which gives you sibling-repo overrides for free, or `python` if you want bindings) and override whatever they want. A complete realistic example -- building with WSL Clang on a Windows machine, with CLion 2023.2+ routed through the WSL toolchain automatically:
+
+```json
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "clang-release",
+            "displayName": "clang (Release)",
+            "inherits": "local",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/clang-release",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER":   "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_BUILD_TYPE":   "Release"
+            },
+            "vendor": {
+                "jetbrains.com/clion": {
+                    "toolchain": "WSL"
+                }
+            }
+        }
+    ]
+}
+```
+
+### Manual configuration (without presets)
 
 ```bash
 cmake -G "Visual Studio 17 2022" -A x64 -B build -DCMAKE_BUILD_TYPE=Release
@@ -34,29 +79,12 @@ cmake --build build --config Release
 
 Add `-DBUILD_PYTHON_BINDINGS=ON` to include Python bindings.
 
-## CMake presets
-
-| Preset    | Description                  | Python bindings | C++ tests |
-|-----------|------------------------------|-----------------|-----------|
-| `default` | C++ only                     | OFF             | ON        |
-| `python`  | C++ with Python bindings     | ON              | ON        |
-
-CLion and VS Code automatically detect these presets.
-
-## Running tests
-
-```bash
-ctest --test-dir build/python -C Release -V
-```
-
-This runs both C++ Google Tests and Python pytest tests (when built with the `python` preset).
-
 ## CMake options
 
-| Option                        | Default | Description                          |
-|-------------------------------|---------|--------------------------------------|
-| `BUILD_PYTHON_BINDINGS`       | OFF     | Build Python bindings via pybind11   |
-| `BUILD_LibraryFEMTHERM_TESTING` | ON   | Build C++ test targets               |
+| Option                          | Default | Description                          |
+|---------------------------------|---------|--------------------------------------|
+| `BUILD_PYTHON_BINDINGS`         | OFF     | Build Python bindings via pybind11   |
+| `BUILD_LibraryFEMTHERM_TESTING` | ON      | Build C++ test targets               |
 
 ## Python bindings
 

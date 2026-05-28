@@ -1,23 +1,85 @@
 {
-  "version": 6,
-  "configurePresets": [
-    {
-      "name": "default",
-      "displayName": "C++ only",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
-      "name": "python",
-      "displayName": "C++ with Python bindings",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "BUILD_PYTHON_BINDINGS": "ON",
-        "BUILD_LibraryFEMTHERM_TESTING": "ON"
-      }
-    }
-  ]
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "default",
+            "hidden": true,
+            "description": "Base: fetches all dependencies (LBNLCPPCommon, FileParse, miniz, googletest) from their declared remotes via FetchContent. Inherited by default-debug and default-release.",
+            "binaryDir": "${sourceDir}/build/default"
+        },
+        {
+            "name": "default-debug",
+            "displayName": "Default (Debug)",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build/default-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "default-release",
+            "displayName": "Default (Release)",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build/default-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "local",
+            "hidden": true,
+            "description": "Base: prefers sibling working copies of LBNL dependencies (../LBNLCPPCommon, ../FileParse); falls back to remote per-dep when missing. Inherited by local-debug, local-release, and personal compiler presets.",
+            "inherits": "default",
+            "cacheVariables": {
+                "FETCHCONTENT_SOURCE_DIR_LBNLCPPCOMMON": "${sourceDir}/../LBNLCPPCommon",
+                "FETCHCONTENT_SOURCE_DIR_FILEPARSE": "${sourceDir}/../FileParse"
+            }
+        },
+        {
+            "name": "local-debug",
+            "displayName": "Local (Debug)",
+            "inherits": "local",
+            "binaryDir": "${sourceDir}/build/local-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "local-release",
+            "displayName": "Local (Release)",
+            "inherits": "local",
+            "binaryDir": "${sourceDir}/build/local-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "python",
+            "hidden": true,
+            "description": "Base: enables Python bindings (BUILD_PYTHON_BINDINGS=ON) and C++ tests on top of `default`. Inherited by python-debug and python-release.",
+            "inherits": "default",
+            "cacheVariables": {
+                "BUILD_PYTHON_BINDINGS": "ON",
+                "BUILD_LibraryFEMTHERM_TESTING": "ON"
+            }
+        },
+        {
+            "name": "python-debug",
+            "displayName": "Python bindings (Debug)",
+            "inherits": "python",
+            "binaryDir": "${sourceDir}/build/python-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "python-release",
+            "displayName": "Python bindings (Release)",
+            "inherits": "python",
+            "binaryDir": "${sourceDir}/build/python-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ]
 }

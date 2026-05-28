@@ -45,7 +45,22 @@ option(BUILD_FileParse_tests "Build the FileParse tests" OFF)
 
 include(FetchContent)
 
-set(LBNLCPPCommon_Branch "v0.15")
+# Graceful local-sibling fallback: the `local` CMake preset sets
+# FETCHCONTENT_SOURCE_DIR_<NAME> to ${sourceDir}/../<DepName> for each declared
+# dependency. If a sibling working copy is missing, unset that variable here so
+# FetchContent falls back to the declared remote instead of erroring out.
+foreach(_dep LBNLCPPCOMMON FILEPARSE)
+    if(DEFINED FETCHCONTENT_SOURCE_DIR_${_dep})
+        if(NOT EXISTS "${FETCHCONTENT_SOURCE_DIR_${_dep}}/CMakeLists.txt")
+            message(STATUS
+                "Local sibling for ${_dep} not found at "
+                "${FETCHCONTENT_SOURCE_DIR_${_dep}}; falling back to remote.")
+            unset(FETCHCONTENT_SOURCE_DIR_${_dep} CACHE)
+        endif()
+    endif()
+endforeach()
+
+set(LBNLCPPCommon_Branch "v0.16")
 
 if(NOT TARGET LBNLCPPCommon)
     FetchContent_Declare(
@@ -57,7 +72,7 @@ if(NOT TARGET LBNLCPPCommon)
 endif()
 FetchContent_GetProperties(LBNLCPPCommon)
 
-set(FileParse_Branch "Version_1.1.3")
+set(FileParse_Branch "Version_1.1.4")
 
 if(NOT TARGET FileParse)
     FetchContent_Declare(
