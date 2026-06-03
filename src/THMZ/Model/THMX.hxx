@@ -33,6 +33,5 @@ namespace ThermFile
         std::vector<Boundary> boundaryConditions;
         std::vector<GlazingSystem> glazingSystems;
         std::optional<CMAData> cmaData;
-        std::optional<std::set<std::string>> gasketMaterials;
     };
 }

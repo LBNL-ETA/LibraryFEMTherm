@@ -274,8 +274,6 @@ namespace Helper
             std::vector<ThermFile::Polygon> polygons{polygon1(), polygon2()};
             std::vector<ThermFile::Boundary> bcs{bc1(), bc2()};
 
-            std::set<std::string> gaskets{"Butyl rubber", "EPDM", "Silicone rubber"};
-
             return {"2",
                     false,
                     preferences,
@@ -285,8 +283,7 @@ namespace Helper
                     polygons,
                     bcs,
                     {},
-                    std::nullopt,
-                    gaskets};
+                    std::nullopt};
         }
 
         Helper::MockNode equivalentNodeStructure()
@@ -315,11 +312,6 @@ namespace Helper
             auto & bcsNode{addChildNode(node, "Boundaries")};
             addChildNode(bcsNode, mockBC1());
             addChildNode(bcsNode, mockBC2());
-
-            auto & gasketMaterialsNode{addChildNode(node, "GasketMaterials")};
-            addChildNode(gasketMaterialsNode, "Name", "Butyl rubber");
-            addChildNode(gasketMaterialsNode, "Name", "EPDM");
-            addChildNode(gasketMaterialsNode, "Name", "Silicone rubber");
 
             return node;
         }
