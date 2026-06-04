@@ -28,11 +28,13 @@
         {
             "name": "local",
             "hidden": true,
-            "description": "Base: prefers sibling working copies of LBNL dependencies (../LBNLCPPCommon, ../FileParse); falls back to remote per-dep when missing. Inherited by local-debug, local-release, and personal compiler presets.",
+            "description": "Base: prefers sibling working copies of dependencies (../LBNLCPPCommon, ../FileParse, ../miniz, ../googletest); falls back to remote per-dep when missing. Inherited by local-debug, local-release, local-test-*, and personal compiler presets.",
             "inherits": "default",
             "cacheVariables": {
                 "FETCHCONTENT_SOURCE_DIR_LBNLCPPCOMMON": "${sourceDir}/../LBNLCPPCommon",
-                "FETCHCONTENT_SOURCE_DIR_FILEPARSE": "${sourceDir}/../FileParse"
+                "FETCHCONTENT_SOURCE_DIR_FILEPARSE": "${sourceDir}/../FileParse",
+                "FETCHCONTENT_SOURCE_DIR_MINIZ": "${sourceDir}/../miniz",
+                "FETCHCONTENT_SOURCE_DIR_GOOGLETEST": "${sourceDir}/../googletest"
             }
         },
         {

@@ -6,7 +6,7 @@ graph TD
     FileParse[FileParse<br/><font color='red'>Version_1.1.4</font>]
     LBNLCPPCommon[LBNLCPPCommon<br/><font color='red'>v0.16</font>]
     miniz[miniz<br/><font color='red'>89d7a5f6c3ce8893ea042b0a9d2a2d9975589ac9</font>]
-    LibraryFEMTHERM[LibraryFEMTHERM<br/><font color='red'>Version_0.21.3</font>]
+    LibraryFEMTHERM[LibraryFEMTHERM<br/><font color='red'>Version_0.22.0</font>]
 
     %% Package relations
     LibraryFEMTHERM --> FileParse

@@ -49,7 +49,7 @@ include(FetchContent)
 # FETCHCONTENT_SOURCE_DIR_<NAME> to ${sourceDir}/../<DepName> for each declared
 # dependency. If a sibling working copy is missing, unset that variable here so
 # FetchContent falls back to the declared remote instead of erroring out.
-foreach(_dep LBNLCPPCOMMON FILEPARSE)
+foreach(_dep LBNLCPPCOMMON FILEPARSE MINIZ GOOGLETEST)
     if(FETCHCONTENT_SOURCE_DIR_${_dep})
         if(NOT EXISTS "${FETCHCONTENT_SOURCE_DIR_${_dep}}/CMakeLists.txt")
             message(STATUS
