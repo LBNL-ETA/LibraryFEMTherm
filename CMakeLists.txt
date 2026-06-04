@@ -19,6 +19,13 @@ include(cmake/LibraryFEMTHERMCompilerFlags.cmake)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Enable MSVC parallel (multi-processor) compilation for all targets and
+# dependencies defined below. Placed before add_subdirectory/FetchContent so
+# every later target inherits it (add_compile_options only affects later targets).
+if(MSVC)
+    add_compile_options(/MP)
+endif()
+
 set(GLOBAL_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 # Sets global output directory for single configuration
