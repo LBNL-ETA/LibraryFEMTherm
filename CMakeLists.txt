@@ -74,7 +74,7 @@ if(LBNL_LOCAL_SIBLINGS)
     endforeach()
 endif()
 
-set(LBNLCPPCommon_Branch "v0.16")
+set(LBNLCPPCommon_Branch "v0.17")
 
 if(NOT TARGET LBNLCPPCommon)
     FetchContent_Declare(
@@ -86,7 +86,7 @@ if(NOT TARGET LBNLCPPCommon)
 endif()
 FetchContent_GetProperties(LBNLCPPCommon)
 
-set(FileParse_Branch "Version_1.1.4")
+set(FileParse_Branch "Version_1.1.5")
 
 if(NOT TARGET FileParse)
     FetchContent_Declare(
@@ -125,7 +125,7 @@ if(DOWNLOAD_GTEST)
         FetchContent_Declare(
             googletest
             GIT_REPOSITORY https://github.com/google/googletest.git
-            GIT_TAG v1.13.0
+            GIT_TAG v1.17.0
         )
         FetchContent_MakeAvailable(googletest)
 
