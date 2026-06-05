@@ -2,7 +2,7 @@
 graph TD
     %% Package definitions
     xmlParser[xmlParser<br/><font color='red'>v1.0.5</font>]
-    nlohmann_json[nlohmann_json<br/><font color='red'>v3.11.3</font>]
+    nlohmann_json[nlohmann_json<br/><font color='red'>v3.12.0</font>]
     FileParse[FileParse<br/><font color='red'>${FileParse_Branch}</font>]
     LBNLCPPCommon[LBNLCPPCommon<br/><font color='red'>${LBNLCPPCommon_Branch}</font>]
     miniz[miniz<br/><font color='red'>${miniz_Branch}</font>]
