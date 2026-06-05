@@ -280,6 +280,11 @@ namespace GasesLibrary
     void DB::deleteWithProjectName(const std::string & projectName)
     {
         std::erase_if(m_Gases, [&projectName](const Gas & gas) { return gas.ProjectName == projectName; });
+        // Also drop the project's pure-gas records. Leaving them behind lets a stale
+        // project pure gas (e.g. "doc:SF6") collide with the same gas freshly loaded
+        // from a THMZ in the same session, corrupting the mixture's component link.
+        std::erase_if(m_PureGases,
+                      [&projectName](const PureGas & gas) { return gas.ProjectName == projectName; });
     }
 
     void DB::deleteTemporaryRecords()
