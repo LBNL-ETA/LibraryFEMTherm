@@ -60139,6 +60139,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60158,6 +60159,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60177,6 +60179,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60196,6 +60199,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60215,6 +60219,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60234,6 +60239,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60253,6 +60259,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60272,6 +60279,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.2</Emissivity-Front>
                         <Emissivity-Back>0.2</Emissivity-Back>
                     </Infrared>
@@ -60291,6 +60299,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.8</Emissivity-Front>
                         <Emissivity-Back>0.8</Emissivity-Back>
                     </Infrared>
@@ -60310,6 +60319,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.84</Emissivity-Front>
                         <Emissivity-Back>0.84</Emissivity-Back>
                     </Infrared>
@@ -60329,6 +60339,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60348,6 +60359,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60367,6 +60379,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60386,6 +60399,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60405,6 +60419,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60424,6 +60439,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60443,6 +60459,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60462,6 +60479,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60481,6 +60499,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60500,6 +60519,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60519,6 +60539,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60538,6 +60559,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60557,6 +60579,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60576,6 +60599,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60595,6 +60619,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60614,6 +60639,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60633,6 +60659,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60652,6 +60679,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60671,6 +60699,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60690,6 +60719,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60709,6 +60739,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60728,6 +60759,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60747,6 +60779,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60766,6 +60799,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60785,6 +60819,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60804,6 +60839,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60823,6 +60859,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60842,6 +60879,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60861,6 +60899,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60880,6 +60919,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60899,6 +60939,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60918,6 +60959,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60937,6 +60979,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -60956,6 +60999,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.2</Emissivity-Front>
                         <Emissivity-Back>0.2</Emissivity-Back>
                     </Infrared>
@@ -60975,6 +61019,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.6</Emissivity-Front>
                         <Emissivity-Back>0.6</Emissivity-Back>
                     </Infrared>
@@ -60994,6 +61039,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.8</Emissivity-Front>
                         <Emissivity-Back>0.8</Emissivity-Back>
                     </Infrared>
@@ -61013,6 +61059,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.2</Emissivity-Front>
                         <Emissivity-Back>0.2</Emissivity-Back>
                     </Infrared>
@@ -61032,6 +61079,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.2</Emissivity-Front>
                         <Emissivity-Back>0.2</Emissivity-Back>
                     </Infrared>
@@ -61051,6 +61099,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.84</Emissivity-Front>
                         <Emissivity-Back>0.84</Emissivity-Back>
                     </Infrared>
@@ -61070,6 +61119,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.84</Emissivity-Front>
                         <Emissivity-Back>0.84</Emissivity-Back>
                     </Infrared>
@@ -61089,6 +61139,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61108,6 +61159,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61127,6 +61179,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61146,6 +61199,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61165,6 +61219,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61184,6 +61239,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61203,6 +61259,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61222,6 +61279,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61241,6 +61299,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61260,6 +61319,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61279,6 +61339,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61298,6 +61359,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61317,6 +61379,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61336,6 +61399,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61355,6 +61419,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61374,6 +61439,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61393,6 +61459,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61412,6 +61479,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61431,6 +61499,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61450,6 +61519,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61469,6 +61539,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61488,6 +61559,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61507,6 +61579,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61526,6 +61599,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61545,6 +61619,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61564,6 +61639,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.9</Emissivity-Front>
                         <Emissivity-Back>0.9</Emissivity-Back>
                     </Infrared>
@@ -61583,6 +61659,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.8</Emissivity-Front>
                         <Emissivity-Back>0.8</Emissivity-Back>
                     </Infrared>
@@ -61602,6 +61679,7 @@ Default value for thermal-dependent thermal conductivity supplement</MaterialInf
             <Optical>
                 <Integrated>
                     <Infrared>
+                        <Transmittance>0</Transmittance>
                         <Emissivity-Front>0.8</Emissivity-Front>
                         <Emissivity-Back>0.8</Emissivity-Back>
                     </Infrared>
