@@ -133,6 +133,11 @@ namespace GasesLibrary
     {
         std::vector<PropertyDifference> diffs;
         const std::size_t count{std::min(lhs.components.size(), rhs.components.size())};
+        // A single-component (pure) gas repeats the gas name already shown in the
+        // diff header (e.g. "Gas: Air" -> "Air-Specific heat ratio"). Drop the
+        // per-component prefix there; mixtures keep it to tell components apart.
+        const bool singleComponent{lhs.components.size() == 1 && rhs.components.size() == 1};
+        const auto prefixFor = [&](const std::string & comp) { return singleComponent ? std::string{} : comp; };
         for(std::size_t idx = 0; idx < count; ++idx)
         {
             const std::string component{idx < rhs.gas.Components.size() ? rhs.gas.Components[idx].PureGasName
@@ -140,7 +145,7 @@ namespace GasesLibrary
             if(idx < lhs.gas.Components.size() && idx < rhs.gas.Components.size())
             {
                 LibraryCommon::DifferenceCollector fraction;
-                fraction.prefix = component;
+                fraction.prefix = prefixFor(component);
                 fraction("Fraction", lhs.gas.Components[idx].Fraction, rhs.gas.Components[idx].Fraction, 1e-6);
                 diffs.insert(diffs.end(), fraction.diffs.begin(), fraction.diffs.end());
             }
@@ -149,14 +154,14 @@ namespace GasesLibrary
             if(libComponent.has_value() && fileComponent.has_value())
             {
                 LibraryCommon::DifferenceCollector collector;
-                collector.prefix = component;
+                collector.prefix = prefixFor(component);
                 visitFields(libComponent->Properties, fileComponent->Properties, collector);
                 diffs.insert(diffs.end(), collector.diffs.begin(), collector.diffs.end());
             }
             else if(libComponent.has_value() != fileComponent.has_value())
             {
                 LibraryCommon::DifferenceCollector collector;
-                collector.prefix = component;
+                collector.prefix = prefixFor(component);
                 collector.absentSide = libComponent.has_value() ? 1 : -1;
                 const auto & present = libComponent.has_value() ? libComponent.value() : fileComponent.value();
                 visitFields(present.Properties, present.Properties, collector);

@@ -24,6 +24,22 @@ namespace
         data.gas.Components.push_back({.Fraction = 1.0, .PureGasName = "Air"});
         return data;
     }
+
+    GasesLibrary::GasesData twoComponentMixture()
+    {
+        GasesLibrary::GasesData data;
+        GasesLibrary::PureGas air;
+        air.Name = "Air";
+        air.Properties.MolecularWeight = 28.97;
+        GasesLibrary::PureGas argon;
+        argon.Name = "Argon";
+        argon.Properties.MolecularWeight = 39.948;
+        data.components.push_back(air);
+        data.components.push_back(argon);
+        data.gas.Components.push_back({.Fraction = 0.9, .PureGasName = "Air"});
+        data.gas.Components.push_back({.Fraction = 0.1, .PureGasName = "Argon"});
+        return data;
+    }
 }   // namespace
 
 class TestGasDifferences : public testing::Test
@@ -46,7 +62,9 @@ TEST_F(TestGasDifferences, ComponentPropertyDifferenceIsItemized)
 
     const auto diffs = GasesLibrary::physicalDifferences(lib, file);
     EXPECT_FALSE(diffs.empty());
-    EXPECT_TRUE(hasField(diffs, "Air-Molecular weight"));
+    // A single-component gas drops the redundant component prefix (the gas name
+    // is already shown in the diff header), so the field is unqualified.
+    EXPECT_TRUE(hasField(diffs, "Molecular weight"));
 }
 
 // Coefficients are nested sub-records; the diff must reach into them (and respect the tighter
@@ -58,7 +76,18 @@ TEST_F(TestGasDifferences, ConductivityCoefficientDifferenceIsItemized)
     file.components[0]->Properties.Conductivity.A = 0.0241;
 
     const auto diffs = GasesLibrary::physicalDifferences(lib, file);
-    EXPECT_TRUE(hasField(diffs, "Air-Conductivity-A"));
+    EXPECT_TRUE(hasField(diffs, "Conductivity-A"));
+}
+
+// Mixtures keep the per-component prefix so the differing component is identified.
+TEST_F(TestGasDifferences, MixtureComponentPrefixIsRetained)
+{
+    auto lib = twoComponentMixture();
+    auto file = twoComponentMixture();
+    file.components[1]->Properties.MolecularWeight = 40.0;
+
+    const auto diffs = GasesLibrary::physicalDifferences(lib, file);
+    EXPECT_TRUE(hasField(diffs, "Argon-Molecular weight"));
 }
 
 TEST_F(TestGasDifferences, InvariantNonEmptyWhenPhysicallyDifferent)
