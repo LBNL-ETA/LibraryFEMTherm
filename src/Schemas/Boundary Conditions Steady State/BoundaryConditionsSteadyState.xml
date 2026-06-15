@@ -3,7 +3,7 @@
 	<Version>1</Version>
 	<BoundaryCondition>
 		<UUID>4c179ded-3f34-4102-b8d6-46d8e6d1c6d9</UUID>
-		<Name>Inerior (20 tilt) Aluminum Frame (convection only)</Name>
+		<Name>Interior (20 tilt) Aluminum Frame (convection only)</Name>
 		<Protected>true</Protected>
 		<Color>0xFF8040</Color>
 		<Comprehensive>
@@ -41,7 +41,7 @@
 	</BoundaryCondition>
 	<BoundaryCondition>
 		<UUID>4a87d7c7-7aa7-4775-96a0-487e1b43fd40</UUID>
-		<Name>Inerior (20 tilt) Thermally Broken Frame (convection only)</Name>
+		<Name>Interior (20 tilt) Thermally Broken Frame (convection only)</Name>
 		<Protected>true</Protected>
 		<Color>0xFF8040</Color>
 		<Comprehensive>
@@ -60,7 +60,7 @@
 	</BoundaryCondition>
 	<BoundaryCondition>
 		<UUID>e3afebb0-66ea-4a1d-a799-fb0b0709b846</UUID>
-		<Name>Inerior (20 tilt) Thermally Improved Frame (convection only)</Name>
+		<Name>Interior (20 tilt) Thermally Improved Frame (convection only)</Name>
 		<Protected>true</Protected>
 		<Color>0xFF8040</Color>
 		<Comprehensive>
@@ -79,7 +79,7 @@
 	</BoundaryCondition>
 	<BoundaryCondition>
 		<UUID>51ecd33a-79d8-4288-b581-47b7365abd9f</UUID>
-		<Name>Inerior Aluminum Frame (convection only)</Name>
+		<Name>Interior Aluminum Frame (convection only)</Name>
 		<Protected>true</Protected>
 		<Color>0xFF8040</Color>
 		<Comprehensive>
@@ -98,7 +98,7 @@
 	</BoundaryCondition>
 	<BoundaryCondition>
 		<UUID>4efda3be-62bf-4fbe-b596-4e41b564fafb</UUID>
-		<Name>Inerior Thermally Broken Frame (convection only)</Name>
+		<Name>Interior Thermally Broken Frame (convection only)</Name>
 		<Protected>true</Protected>
 		<Color>0xFF8040</Color>
 		<Comprehensive>
@@ -117,7 +117,7 @@
 	</BoundaryCondition>
 	<BoundaryCondition>
 		<UUID>e78f7996-e426-4d3f-9461-05d9dc7b6457</UUID>
-		<Name>Inerior Thermally Improved Frame (convection only)</Name>
+		<Name>Interior Thermally Improved Frame (convection only)</Name>
 		<Protected>true</Protected>
 		<Color>0xFF8040</Color>
 		<Comprehensive>
@@ -136,7 +136,7 @@
 	</BoundaryCondition>
 	<BoundaryCondition>
 		<UUID>2459e81c-1a1b-4733-bab8-412771ac7bff</UUID>
-		<Name>Inerior Wood/Vinyl Frame (convection only)</Name>
+		<Name>Interior Wood/Vinyl Frame (convection only)</Name>
 		<Protected>true</Protected>
 		<Color>0xFF8040</Color>
 		<Comprehensive>
