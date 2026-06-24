@@ -3018,4 +3018,104 @@
             </Optical>
         </Solid>
     </Material>
+	<Material>
+		<UUID>1ebb850d-a705-3160-60e3b9ce8bce</UUID>
+		<Name>Steel - ANSI 304 Stainless</Name>
+		<Protected>false</Protected>
+		<Color>0x8080FF</Color>
+		<Solid>
+			<HygroThermal>
+				<ThermalConductivityDry>14.3</ThermalConductivityDry>
+			</HygroThermal>
+			<Optical>
+				<Integrated>
+					<Infrared>
+						<Transmittance>0</Transmittance>
+						<Emissivity-Front>0.2</Emissivity-Front>
+						<Emissivity-Back>0.9</Emissivity-Back>
+					</Infrared>
+				</Integrated>
+			</Optical>
+		</Solid>
+	</Material>
+	<Material>
+		<UUID>733a2072-7590-0efa-3e7e650bab82</UUID>
+		<Name>Wood (Pine, Spruce, Fir)</Name>
+		<Protected>false</Protected>
+		<Color>0xFF8000</Color>
+		<Solid>
+			<HygroThermal>
+				<ThermalConductivityDry>0.14</ThermalConductivityDry>
+			</HygroThermal>
+			<Optical>
+				<Integrated>
+					<Infrared>
+						<Transmittance>0</Transmittance>
+						<Emissivity-Front>0.9</Emissivity-Front>
+						<Emissivity-Back>0.9</Emissivity-Back>
+					</Infrared>
+				</Integrated>
+			</Optical>
+		</Solid>
+	</Material>
+	<Material>
+		<UUID>8c96235c-15e1-af4b-a25b84b25872</UUID>
+		<Name>Silica Gel (dessicant)</Name>
+		<Protected>false</Protected>
+		<Color>0xFF8080</Color>
+		<Solid>
+			<HygroThermal>
+				<ThermalConductivityDry>0.03</ThermalConductivityDry>
+			</HygroThermal>
+			<Optical>
+				<Integrated>
+					<Infrared>
+						<Transmittance>0</Transmittance>
+						<Emissivity-Front>0.9</Emissivity-Front>
+						<Emissivity-Back>0.9</Emissivity-Back>
+					</Infrared>
+				</Integrated>
+			</Optical>
+		</Solid>
+	</Material>
+	<Material>
+		<UUID>9a9904e1-23f4-cc4e-55dd4a79321b</UUID>
+		<Name>Vinyl (flexible)</Name>
+		<Protected>false</Protected>
+		<Color>0x808040</Color>
+		<Solid>
+			<HygroThermal>
+				<ThermalConductivityDry>0.12</ThermalConductivityDry>
+			</HygroThermal>
+			<Optical>
+				<Integrated>
+					<Infrared>
+						<Transmittance>0</Transmittance>
+						<Emissivity-Front>0.9</Emissivity-Front>
+						<Emissivity-Back>0.9</Emissivity-Back>
+					</Infrared>
+				</Integrated>
+			</Optical>
+		</Solid>
+	</Material>
+	<Material>
+		<UUID>b31bed8e-e35a-e5c0-ac3801765650</UUID>
+		<Name>Butyl Rubber</Name>
+		<Protected>false</Protected>
+		<Color>0x808080</Color>
+		<Solid>
+			<HygroThermal>
+				<ThermalConductivityDry>0.24</ThermalConductivityDry>
+			</HygroThermal>
+			<Optical>
+				<Integrated>
+					<Infrared>
+						<Transmittance>0</Transmittance>
+						<Emissivity-Front>0.9</Emissivity-Front>
+						<Emissivity-Back>0.9</Emissivity-Back>
+					</Infrared>
+				</Integrated>
+			</Optical>
+		</Solid>
+	</Material>
 </Materials>
