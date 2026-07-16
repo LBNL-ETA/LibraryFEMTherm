@@ -14,6 +14,12 @@ namespace ThermFile
         double temperature{0.0};
         double xFlux{0.0};
         double yFlux{0.0};
+
+        //! Moisture results of a coupled steady-state HygroThermFEM solve (humidity as a
+        //! fraction, water content in engine units). Absent for thermal-only runs and for
+        //! archives written before moisture support.
+        std::optional<double> humidity;
+        std::optional<double> waterContent;
     };
 
     struct EdgeResults

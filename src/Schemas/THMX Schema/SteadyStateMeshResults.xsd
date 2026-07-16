@@ -8,6 +8,10 @@
 			<xs:element name="Temperature" type="xs:double" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="X-flux" type="xs:double" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="Y-flux" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<!-- Moisture results of a coupled steady-state HygroThermFEM solve; absent for
+			     thermal-only runs and for archives written before moisture support. -->
+			<xs:element name="Humidity" type="xs:double" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="WaterContent" type="xs:double" minOccurs="0" maxOccurs="1"/>
 		</xs:all>
 	</xs:complexType>
 
