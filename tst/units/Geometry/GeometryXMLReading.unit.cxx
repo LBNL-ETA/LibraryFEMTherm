@@ -44,3 +44,37 @@ TEST_F(TestGeometryXMLReading, ReadGeomteryXML)
 
     std::filesystem::remove(fileName);
 }
+
+TEST_F(TestGeometryXMLReading, ElementConnectivityIsPreserved)
+{
+    // Regression: the four repeated <NodeID> tags of an element must read back as four distinct
+    // corners. They used to collapse onto the first tag (FileParse's scalar Child read ignores
+    // the occurrence index), which produced zero-area elements in the THERM transient display.
+    const std::string fileContent{TestGeometry::testGeometry1()};
+    const std::string fileName{"TestConnectivity.xml"};
+
+    std::filesystem::remove(fileName);
+
+    File::createFileFromString(fileName, fileContent);
+
+    GeometryLibrary::InputGeometryDataRecord inputGeometry;
+    inputGeometry.loadFromFile(fileName);
+
+    ASSERT_GE(inputGeometry.elements.size(), 4u);
+
+    const auto & elementThree{inputGeometry.elements[2]};
+    EXPECT_EQ(elementThree.id, 3u);
+    EXPECT_EQ(elementThree.nodeID1, 6u);
+    EXPECT_EQ(elementThree.nodeID2, 3u);
+    EXPECT_EQ(elementThree.nodeID3, 5u);
+    EXPECT_EQ(elementThree.nodeID4, 9u);
+
+    const auto & elementFour{inputGeometry.elements[3]};
+    EXPECT_EQ(elementFour.id, 4u);
+    EXPECT_EQ(elementFour.nodeID1, 4u);
+    EXPECT_EQ(elementFour.nodeID2, 7u);
+    EXPECT_EQ(elementFour.nodeID3, 11u);
+    EXPECT_EQ(elementFour.nodeID4, 8u);
+
+    std::filesystem::remove(fileName);
+}

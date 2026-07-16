@@ -85,10 +85,21 @@ namespace GeometryLibrary
     const NodeAdapter & operator>>(const NodeAdapter & node, GeometryLibrary::Element & element)
     {
         node >> FileParse::Child{"ID", element.id};
-        node >> FileParse::Child{"NodeID", element.nodeID1, 0u};
-        node >> FileParse::Child{"NodeID", element.nodeID2, 1u};
-        node >> FileParse::Child{"NodeID", element.nodeID3, 2u};
-        node >> FileParse::Child{"NodeID", element.nodeID4, 3u};
+
+        // FileParse's scalar Child read ignores the occurrence index (every indexed read returns
+        // the first <NodeID>), which collapsed all four corners onto one node when this record was
+        // read back from a THMZ. Read the repeated tags as a vector instead -- the same pattern
+        // MaterialPolygon uses below -- and assign the corners from it.
+        std::vector<size_t> cornerNodes;
+        node >> FileParse::Child{"NodeID", cornerNodes};
+        if(cornerNodes.size() >= 4u)
+        {
+            element.nodeID1 = cornerNodes[0];
+            element.nodeID2 = cornerNodes[1];
+            element.nodeID3 = cornerNodes[2];
+            element.nodeID4 = cornerNodes[3];
+        }
+
         node >> FileParse::Child{"MaterialID", element.materialID};
 
         return node;
