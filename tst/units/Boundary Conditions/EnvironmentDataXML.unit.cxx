@@ -1,0 +1,103 @@
+#include <gtest/gtest.h>
+
+#include "EnvironmentData/ContentHash.hxx"
+#include "EnvironmentData/DB.hxx"
+#include "EnvironmentData/Serializers.hxx"
+#include "EnvironmentData/Tags.hxx"
+
+using EnvironmentDataLibrary::Channel;
+using EnvironmentDataLibrary::ChannelRole;
+using EnvironmentDataLibrary::EnvironmentData;
+
+namespace
+{
+    EnvironmentData makeSample()
+    {
+        EnvironmentData data;
+        data.UUID = "11111111-2222-3333-4444-555555555555";
+        data.Name = "Sample exterior";
+        data.Protected = true;
+        data.channels = {Channel{ChannelRole::AirTemperature, {21.3, 21.1, 20.8}},
+                         Channel{ChannelRole::RelativeHumidity, {0.52, 0.55, 0.57}},
+                         Channel{ChannelRole::WindSpeed, {1.4, 1.7, 2.1}}};
+        return data;
+    }
+}   // namespace
+
+TEST(TestEnvironmentData, StepsAndRoleQueries)
+{
+    const auto data{makeSample()};
+
+    EXPECT_EQ(EnvironmentDataLibrary::steps(data), 3U);
+    EXPECT_TRUE(EnvironmentDataLibrary::hasRole(data, ChannelRole::AirTemperature));
+    EXPECT_FALSE(EnvironmentDataLibrary::hasRole(data, ChannelRole::SolarIrradiance));
+
+    const auto values{EnvironmentDataLibrary::valuesForRole(data, ChannelRole::WindSpeed)};
+    ASSERT_TRUE(values.has_value());
+    EXPECT_NEAR(values->at(1), 1.7, 1e-9);
+
+    const auto roles{EnvironmentDataLibrary::providedRoles(data)};
+    EXPECT_EQ(roles.size(), 3U);
+}
+
+TEST(TestEnvironmentData, ChannelRoleStringsRoundTrip)
+{
+    const auto names{EnvironmentDataLibrary::channelRoleStrings()};
+    EXPECT_EQ(names.size(), 12U);
+
+    for(const auto & name : names)
+    {
+        const auto role{EnvironmentDataLibrary::channelRoleFromString(name)};
+        EXPECT_EQ(EnvironmentDataLibrary::channelRoleToString(role), name);
+    }
+}
+
+TEST(TestEnvironmentData, DBSaveLoadRoundTrip)
+{
+    EnvironmentDataLibrary::DB source;
+    source.add(makeSample());
+
+    const auto content{source.saveToString()};
+
+    EnvironmentDataLibrary::DB loaded;
+    loaded.loadFromString(content);
+
+    const auto record{loaded.getByUUID("11111111-2222-3333-4444-555555555555")};
+    ASSERT_TRUE(record.has_value());
+    EXPECT_EQ(record->Name, "Sample exterior");
+    EXPECT_TRUE(record->Protected);
+    ASSERT_EQ(record->channels.size(), 3U);
+    EXPECT_EQ(record->channels[0].role, ChannelRole::AirTemperature);
+    ASSERT_EQ(record->channels[0].values.size(), 3U);
+    EXPECT_NEAR(record->channels[0].values[2], 20.8, 1e-9);
+}
+
+TEST(TestEnvironmentData, ContentUuidIsDeterministic)
+{
+    const auto first{EnvironmentDataLibrary::contentUuid(makeSample())};
+    const auto second{EnvironmentDataLibrary::contentUuid(makeSample())};
+    EXPECT_EQ(first, second);
+    EXPECT_EQ(first.size(), 36U);
+}
+
+TEST(TestEnvironmentData, ContentUuidIgnoresEnvelopeAndChannelOrder)
+{
+    auto data{makeSample()};
+    const auto baseline{EnvironmentDataLibrary::contentUuid(data)};
+
+    data.Name = "Renamed";
+    data.Protected = false;
+    EXPECT_EQ(EnvironmentDataLibrary::contentUuid(data), baseline);
+
+    std::swap(data.channels[0], data.channels[2]);
+    EXPECT_EQ(EnvironmentDataLibrary::contentUuid(data), baseline);
+}
+
+TEST(TestEnvironmentData, ContentUuidChangesWithValues)
+{
+    auto data{makeSample()};
+    const auto baseline{EnvironmentDataLibrary::contentUuid(data)};
+
+    data.channels[0].values[0] += 0.1;
+    EXPECT_NE(EnvironmentDataLibrary::contentUuid(data), baseline);
+}
