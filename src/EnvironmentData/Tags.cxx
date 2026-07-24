@@ -30,6 +30,11 @@ namespace EnvironmentDataLibrary
         return environmentData_;
     }
 
+    std::string Tags::environment() const
+    {
+        return environment_;
+    }
+
     std::string Tags::version() const
     {
         return version_;

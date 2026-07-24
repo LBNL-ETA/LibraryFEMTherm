@@ -13,6 +13,7 @@ namespace EnvironmentDataLibrary
     {
     public:
         [[nodiscard]] std::string environmentData() const;
+        [[nodiscard]] std::string environment() const;
         [[nodiscard]] std::string version() const;
         [[nodiscard]] std::string uuid() const;
         [[nodiscard]] std::string name() const;
@@ -24,6 +25,7 @@ namespace EnvironmentDataLibrary
 
     private:
         const std::string environmentData_{"EnvironmentData"};
+        const std::string environment_{"Environment"};
         const std::string version_{"Version"};
         const std::string uuid_{"UUID"};
         const std::string name_{"Name"};

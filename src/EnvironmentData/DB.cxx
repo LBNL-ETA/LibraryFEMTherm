@@ -38,7 +38,7 @@ namespace EnvironmentDataLibrary
             std::visit(
               [this, &tags](auto & adapter) {
                   adapter >> FileParse::Child{tags.version(), m_Version};
-                  adapter >> FileParse::Child{tags.environmentData(), m_EnvironmentData};
+                  adapter >> FileParse::Child{tags.environment(), m_EnvironmentData};
               },
               node.value());
         }
@@ -53,7 +53,7 @@ namespace EnvironmentDataLibrary
         std::visit(
           [this, &tags, &content](auto & adapter) {
               adapter << FileParse::Child{tags.version(), m_Version};
-              adapter << FileParse::Child{tags.environmentData(), m_EnvironmentData};
+              adapter << FileParse::Child{tags.environment(), m_EnvironmentData};
               content = adapter.getContent();
           },
           node);
@@ -70,7 +70,7 @@ namespace EnvironmentDataLibrary
         std::visit(
           [this, &tags, &result](auto & adapter) {
               adapter << FileParse::Child{tags.version(), m_Version};
-              adapter << FileParse::Child{tags.environmentData(), m_EnvironmentData};
+              adapter << FileParse::Child{tags.environment(), m_EnvironmentData};
               result = adapter.writeToFile(m_FileName);
           },
           node);
@@ -87,7 +87,7 @@ namespace EnvironmentDataLibrary
         if(topNode.has_value())
         {
             topNode.value() >> FileParse::Child{tags.version(), m_Version};
-            topNode.value() >> FileParse::Child{tags.environmentData(), environments};
+            topNode.value() >> FileParse::Child{tags.environment(), environments};
         }
 
         return environments;

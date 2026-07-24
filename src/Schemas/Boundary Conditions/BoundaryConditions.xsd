@@ -1,0 +1,152 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+	<!-- A scalar input: either a constant value or a reference to an environment
+	     channel role (see EnvironmentData.xsd). A record whose inputs are all
+	     constants is a steady-state boundary condition and is also usable in
+	     transient runs, where its constants apply at every timestep. -->
+	<xs:simpleType name="ChannelRole" final="restriction">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="AirTemperature"/>
+			<xs:enumeration value="RelativeHumidity"/>
+			<xs:enumeration value="WindSpeed"/>
+			<xs:enumeration value="WindDirection"/>
+			<xs:enumeration value="SolarIrradiance"/>
+			<xs:enumeration value="HeatFlux"/>
+			<xs:enumeration value="ConvectiveCoefficient"/>
+			<xs:enumeration value="RadiantTemperature"/>
+			<xs:enumeration value="RadiativeCoefficient"/>
+			<xs:enumeration value="Emissivity"/>
+			<xs:enumeration value="PrescribedTemperature"/>
+			<xs:enumeration value="PrescribedHumidity"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:complexType name="Source">
+		<xs:choice>
+			<xs:element name="Constant" type="xs:double"/>
+			<xs:element name="FromEnvironment" type="ChannelRole"/>
+		</xs:choice>
+	</xs:complexType>
+
+	<xs:simpleType name="ConvectionModel" final="restriction">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Fixed Convection Coefficient"/>
+			<xs:enumeration value="ASHRAE/NFRC Inside"/>
+			<xs:enumeration value="ASHRAE/NFRC Outside"/>
+			<xs:enumeration value="TARP"/>
+			<xs:enumeration value="Yazdanian Klems"/>
+			<xs:enumeration value="Kimura"/>
+			<xs:enumeration value="Montazeri"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- Which inputs are meaningful depends on the model: the fixed model uses air
+	     temperature and film coefficient; correlation models use air temperature
+	     plus wind speed and direction as the correlation requires. -->
+	<xs:complexType name="Convection">
+		<xs:sequence>
+			<xs:element name="Model" type="ConvectionModel"/>
+			<xs:element name="AirTemperature" type="Source" minOccurs="0"/>
+			<xs:element name="FilmCoefficient" type="Source" minOccurs="0"/>
+			<xs:element name="WindSpeed" type="Source" minOccurs="0"/>
+			<xs:element name="WindDirection" type="Source" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="AutomaticEnclosure">
+		<xs:sequence>
+			<xs:element name="Emissivity" type="Source"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="ManualEnclosure">
+		<xs:sequence/>
+	</xs:complexType>
+
+	<xs:complexType name="BlackBody">
+		<xs:sequence>
+			<xs:element name="Temperature" type="Source"/>
+			<xs:element name="Emissivity" type="Source"/>
+			<xs:element name="ViewFactor" type="xs:double"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<!-- Merges the legacy steady-state Linearized radiation and the legacy transient
+	     Fixed radiation coefficient; they are the same physics. -->
+	<xs:complexType name="FixedCoefficient">
+		<xs:sequence>
+			<xs:element name="Temperature" type="Source"/>
+			<xs:element name="Coefficient" type="Source"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="Solar">
+		<xs:sequence>
+			<xs:element name="Irradiance" type="Source"/>
+			<xs:element name="Absorptance" type="xs:double"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<!-- Neumann surface exchange: subsumes the legacy steady Comprehensive and
+	     Simplified records and the legacy transient Neumann type record. -->
+	<xs:complexType name="SurfaceExchange">
+		<xs:sequence>
+			<xs:element name="RelativeHumidity" type="Source"/>
+			<xs:element name="Convection" type="Convection" minOccurs="0"/>
+			<xs:choice minOccurs="0">
+				<xs:element name="AutomaticEnclosure" type="AutomaticEnclosure"/>
+				<xs:element name="ManualEnclosure" type="ManualEnclosure"/>
+				<xs:element name="BlackBody" type="BlackBody"/>
+				<xs:element name="FixedCoefficient" type="FixedCoefficient"/>
+			</xs:choice>
+			<xs:element name="Solar" type="Solar" minOccurs="0"/>
+			<xs:element name="Flux" type="Source" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<!-- Dirichlet: the surface state itself is imposed. At least one child is
+	     expected; enforced by the loader. -->
+	<xs:complexType name="PrescribedState">
+		<xs:sequence>
+			<xs:element name="Temperature" type="Source" minOccurs="0"/>
+			<xs:element name="RelativeHumidity" type="Source" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:complexType name="RadiationSurface">
+		<xs:sequence>
+			<xs:element name="Default" type="xs:boolean" minOccurs="0"/>
+			<xs:element name="Temperature" type="xs:double"/>
+			<xs:element name="Emissivity" type="xs:double"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:element name="BoundaryCondition">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="UUID" type="xs:string"/>
+				<xs:element name="Name" type="xs:string"/>
+				<xs:element name="ProjectName" type="xs:string" minOccurs="0"/>
+				<xs:element name="Protected" type="xs:boolean"/>
+				<xs:element name="Color" type="xs:string"/>
+				<xs:element name="IGUSurface" type="xs:boolean" minOccurs="0"/>
+				<xs:choice>
+					<xs:element name="SurfaceExchange" type="SurfaceExchange"/>
+					<xs:element name="PrescribedState" type="PrescribedState"/>
+					<xs:element name="RadiationSurface" type="RadiationSurface"/>
+				</xs:choice>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="BoundaryConditions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Version" type="xs:string"/>
+				<xs:element ref="BoundaryCondition" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+</xs:schema>
