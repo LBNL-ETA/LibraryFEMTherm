@@ -30,7 +30,9 @@ namespace
         exchange.relativeHumidity = FromEnvironment{ChannelRole::RelativeHumidity};
         exchange.convection = Convection{.model = ConvectionModel::ASHRAE_NFRC_Outside,
                                          .airTemperature = FromEnvironment{ChannelRole::AirTemperature},
-                                         .windSpeed = FromEnvironment{ChannelRole::WindSpeed}};
+                                         .filmCoefficient = std::nullopt,
+                                         .windSpeed = FromEnvironment{ChannelRole::WindSpeed},
+                                         .windDirection = std::nullopt};
         exchange.radiation = BlackBodyRadiation{.temperature = Constant{-18.0},
                                                 .emissivity = Constant{0.9},
                                                 .viewFactor = 1.0};
@@ -48,7 +50,9 @@ namespace
         exchange.relativeHumidity = Constant{0.5};
         exchange.convection = Convection{.model = ConvectionModel::Fixed_Convection_Coefficient,
                                          .airTemperature = Constant{21.0},
-                                         .filmCoefficient = Constant{3.29}};
+                                         .filmCoefficient = Constant{3.29},
+                                         .windSpeed = std::nullopt,
+                                         .windDirection = std::nullopt};
         exchange.radiation = AutomaticEnclosure{Constant{0.9}};
         record.data = exchange;
         return record;

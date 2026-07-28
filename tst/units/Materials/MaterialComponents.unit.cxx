@@ -406,6 +406,6 @@ TEST_F(TestMaterialComponents, DeserializeIntegrated)
     // Assertions
     constexpr double tolerance = 1e-6;
     Helper::assertInfraredSection({0.5, 0.3, 0.1}, integrated.IR, tolerance);
-    Helper::assertOpticalRange({{0.6, 0.35, 0.76, 0.16}, {0.58, 0.36, 0.78, 0.18}}, integrated.Solar, tolerance);
-    Helper::assertOpticalRange({{0.65, 0.4, 0.8, 0.2}, {0.6, 0.38, 0.75, 0.25}}, integrated.Visible, tolerance);
+    Helper::assertOpticalRange({{{0.6, 0.35}, {0.76, 0.16}}, {{0.58, 0.36}, {0.78, 0.18}}}, integrated.Solar, tolerance);
+    Helper::assertOpticalRange({{{0.65, 0.4}, {0.8, 0.2}}, {{0.6, 0.38}, {0.75, 0.25}}}, integrated.Visible, tolerance);
 }

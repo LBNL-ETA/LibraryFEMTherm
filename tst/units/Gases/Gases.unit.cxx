@@ -176,10 +176,9 @@ TEST_F(TestGases, DeserializePureGas)
     adapter >> element;
 
     GasesLibrary::PureGas correct{
-      "8d33196f-f052-46e6-8353-bccb9a779f9c",
-      "Air",
-      true,
-      {28.97, 1.4, {0.0022873, 0.0000776, 0}, {0.000003723, 4.94E-08, 0}, {1002.737, 0.012324, 0}}, {}};
+      {"8d33196f-f052-46e6-8353-bccb9a779f9c", "Air", true},
+      {28.97, 1.4, {0.0022873, 0.0000776, 0}, {0.000003723, 4.94E-08, 0}, {1002.737, 0.012324, 0}},
+      {}};
 
     constexpr auto tolerance{1e-6};
     EXPECT_EQ(correct.UUID, element.UUID);
@@ -205,10 +204,9 @@ TEST_F(TestGases, DeserializePureGas)
 TEST_F(TestGases, SerializePureGas)
 {
     GasesLibrary::PureGas element{
-      "8d33196f-f052-46e6-8353-bccb9a779f9c",
-      "Air",
-      true,
-      {28.97, 1.4, {0.0022873, 0.0000776, 0}, {0.000003723, 4.94E-08, 0}, {1002.737, 0.012324, 0}}, {}};
+      {"8d33196f-f052-46e6-8353-bccb9a779f9c", "Air", true},
+      {28.97, 1.4, {0.0022873, 0.0000776, 0}, {0.000003723, 4.94E-08, 0}, {1002.737, 0.012324, 0}},
+      {}};
 
     Helper::MockNode elementNode("PureGas");
     Helper::MockNodeAdapter adapter{&elementNode};
@@ -266,7 +264,7 @@ TEST_F(TestGases, DeserializeGasMixture)
     adapter >> element;
 
     GasesLibrary::Gas correct{
-      "37881919-7cdf-4428-bf5c-10702bc78415", "Air 10%/Argon 90%", true, {{0.1, "Air"}, {0.9, "Argon"}}, {}};
+      {"37881919-7cdf-4428-bf5c-10702bc78415", "Air 10%/Argon 90%", true}, {{0.1, "Air"}, {0.9, "Argon"}}, {}};
 
     constexpr auto tolerance{1e-6};
     EXPECT_EQ(correct.UUID, element.UUID);
@@ -282,7 +280,7 @@ TEST_F(TestGases, DeserializeGasMixture)
 TEST_F(TestGases, SerializeGasMixture)
 {
     GasesLibrary::Gas element{
-      "37881919-7cdf-4428-bf5c-10702bc78415", "Air 10%/Argon 90%", true, {{0.1, "Air"}, {0.9, "Argon"}}, {}};
+      {"37881919-7cdf-4428-bf5c-10702bc78415", "Air 10%/Argon 90%", true}, {{0.1, "Air"}, {0.9, "Argon"}}, {}};
 
     Helper::MockNode elementNode("Gas");
     Helper::MockNodeAdapter adapter{&elementNode};

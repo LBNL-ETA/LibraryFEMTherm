@@ -6,9 +6,6 @@
 
 namespace ThermFile
 {
-    //! Section name in ini file that all properties will be read from and saved to.
-    const std::string FilePropertiesSectionName{"File Properties"};
-
     void General::setModifiedIsEqualToCreate()
     {
         lastModified = creationDate;

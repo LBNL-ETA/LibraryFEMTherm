@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
 
 option(BUILD_PYTHON_BINDINGS "Build Python bindings via pybind11" OFF)
 
@@ -109,6 +109,26 @@ if(NOT TARGET miniz)
     FetchContent_MakeAvailable(miniz)
 endif()
 
+# Dependency targets compile with their upstream warning baggage (miniz static helpers,
+# XMLParser legacy code); their sources are not this project's to fix. On GCC/Clang their
+# warnings are silenced outright with -w. On MSVC only miniz is noisy (C4505), and a
+# targeted /wd avoids the D9025 override noise a blanket /w would trigger against the
+# /W levels those targets already carry. Headers become system includes for consumers.
+foreach(_dep_target miniz xmlParser FileParse)
+    if(TARGET ${_dep_target})
+        get_target_property(_dep_type ${_dep_target} TYPE)
+        if(NOT _dep_type STREQUAL "INTERFACE_LIBRARY" AND NOT MSVC)
+            set_property(TARGET ${_dep_target} APPEND PROPERTY COMPILE_OPTIONS -w)
+        endif()
+        if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.25")
+            set_property(TARGET ${_dep_target} PROPERTY SYSTEM ON)
+        endif()
+    endif()
+endforeach()
+if(MSVC AND TARGET miniz)
+    set_property(TARGET miniz APPEND PROPERTY COMPILE_OPTIONS /wd4505)
+endif()
+
 if(BUILD_PYTHON_BINDINGS)
     find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
     FetchContent_Declare(pybind11
@@ -152,6 +172,12 @@ set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(${target_name}
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# Dependency headers are third-party from this project's point of view: bring them in
+# as system includes so warnings inside them never surface in this project's builds.
+target_include_directories(${target_name}
+        SYSTEM PUBLIC
         ${fileparse_SOURCE_DIR}/include
         ${LBNLCPPCommon_SOURCE_DIR}/include
 )

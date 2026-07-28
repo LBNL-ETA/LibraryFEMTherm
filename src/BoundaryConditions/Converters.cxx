@@ -50,7 +50,9 @@ namespace BCLibrary
         {
             return Convection{.model = ConvectionModel::Fixed_Convection_Coefficient,
                               .airTemperature = Constant{temperature},
-                              .filmCoefficient = Constant{filmCoefficient}};
+                              .filmCoefficient = Constant{filmCoefficient},
+                              .windSpeed = std::nullopt,
+                              .windDirection = std::nullopt};
         }
 
         struct SteadyDataVisitor

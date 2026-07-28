@@ -10,6 +10,21 @@
 class TestMesh : public testing::Test
 {};
 
+namespace
+{
+    //! Thermal-only node result: the moisture fields stay empty, stated explicitly so the
+    //! aggregate initialization is complete on every compiler.
+    ThermFile::NodeResults makeNode(size_t index, double temperature, double xFlux, double yFlux)
+    {
+        return ThermFile::NodeResults{.index = index,
+                                      .temperature = temperature,
+                                      .xFlux = xFlux,
+                                      .yFlux = yFlux,
+                                      .humidity = std::nullopt,
+                                      .waterContent = std::nullopt};
+    }
+}   // namespace
+
 TEST_F(TestMesh, NodeResultsDeserialization)
 {
     auto elementNode(Helper::generateMockMeshResultsNode({"1", "12.38", "1.29", "0.12"}));
@@ -18,13 +33,13 @@ TEST_F(TestMesh, NodeResultsDeserialization)
     ThermFile::NodeResults nodeResults;
     adapter >> nodeResults;
 
-    ThermFile::NodeResults correctNodeResults{1u, 12.38, 1.29, 0.12};
+    const ThermFile::NodeResults correctNodeResults{makeNode(1u, 12.38, 1.29, 0.12)};
     Helper::expect_near(correctNodeResults, nodeResults, 1e-6);
 }
 
 TEST_F(TestMesh, NodeResultsSerialization)
 {
-    ThermFile::NodeResults nodeResults{1u, 12.38, 1.29, 0.12};
+    const ThermFile::NodeResults nodeResults{makeNode(1u, 12.38, 1.29, 0.12)};
 
     Helper::MockNode node{"Node"};
     Helper::MockNodeAdapter adapter{&node};
@@ -100,7 +115,7 @@ TEST_F(TestMesh, MeshCaseResultsDeserialization)
     ThermFile::CaseMeshResults correctMeshResults{ThermFile::RunType::UFactor,
                                                   std::nullopt,   // glazingCase
                                                   std::nullopt,   // spacerCase
-                                                  {{1u, 12.38, 1.29, 0.12}, {2u, 13.38, 2.29, 1.12}},
+                                                  {makeNode(1u, 12.38, 1.29, 0.12), makeNode(2u, 13.38, 2.29, 1.12)},
                                                   {},
                                                   {},
                                                   {}};
@@ -112,7 +127,10 @@ TEST_F(TestMesh, MeshCaseResultsSerialization)
     ThermFile::CaseMeshResults meshResults{ThermFile::RunType::UFactor,
                                            std::nullopt,   // glazingCase
                                            std::nullopt,   // spacerCase
-                                           {{1u, 12.38, 1.29, 0.12}, {2u, 13.38, 2.29, 1.12}}, {}, {}, {}};
+                                           {makeNode(1u, 12.38, 1.29, 0.12), makeNode(2u, 13.38, 2.29, 1.12)},
+                                           {},
+                                           {},
+                                           {}};
 
     Helper::MockNode node{"Case"};
     Helper::MockNodeAdapter adapter{&node};
@@ -154,8 +172,8 @@ TEST_F(TestMesh, MeshResultsDeserialization)
                 std::nullopt,   // glazingCase
                 std::nullopt,   // spacerCase
                 {
-                    {1u, 12.38, 1.29, 0.12},
-                    {2u, 13.38, 2.29, 1.12}
+                    makeNode(1u, 12.38, 1.29, 0.12),
+                    makeNode(2u, 13.38, 2.29, 1.12)
                 },
                 {},
                 {},
@@ -166,8 +184,8 @@ TEST_F(TestMesh, MeshResultsDeserialization)
                 std::nullopt,   // glazingCase
                 std::nullopt,   // spacerCase
                 {
-                    {1u, 14.40, 2.30, 0.25},
-                    {2u, 15.50, 3.45, 1.25}
+                    makeNode(1u, 14.40, 2.30, 0.25),
+                    makeNode(2u, 15.50, 3.45, 1.25)
                 },
                 {},
                 {},
@@ -210,9 +228,9 @@ TEST_F(TestMesh, MeshResultsSerialization)
                 ThermFile::RunType::UFactor,    // resultsType
                 std::nullopt,                   // glazingCase
                 std::nullopt,                   // spacerCase
-                {                               // std::vector<NodeResults>
-                    {1u, 12.38, 1.29, 0.12},    // NodeResults
-                    {2u, 13.38, 2.29, 1.12}     // NodeResults
+                {                                        // std::vector<NodeResults>
+                    makeNode(1u, 12.38, 1.29, 0.12),     // NodeResults
+                    makeNode(2u, 13.38, 2.29, 1.12)      // NodeResults
                 },
                 {},                             // std::vector<EdgeResults> elementEdges
                 {},                             // std::vector<EdgeResults> polygonEdges
@@ -223,8 +241,8 @@ TEST_F(TestMesh, MeshResultsSerialization)
                 std::nullopt,                                   // glazingCase
                 std::nullopt,                                   // spacerCase
                 {                                               // std::vector<NodeResults>
-                    {1u, 14.40, 2.30, 0.25},                    // NodeResults
-                    {2u, 15.50, 3.45, 1.25}                     // NodeResults
+                    makeNode(1u, 14.40, 2.30, 0.25),            // NodeResults
+                    makeNode(2u, 15.50, 3.45, 1.25)             // NodeResults
                 },
                 {},                                             // std::vector<EdgeResults> elementEdges
                 {},                                             // std::vector<EdgeResults> polygonEdges

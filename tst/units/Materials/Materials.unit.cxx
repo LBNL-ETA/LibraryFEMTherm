@@ -60,8 +60,8 @@ TEST_F(TestMaterials, SolidMaterial1Deserialization)
     const auto & integrated{solid.optical->integrated.value()};
     Helper::assertInfraredSection({std::nullopt, 0.8, 0.7}, integrated.IR, tolerance);
 
-    Helper::assertOpticalRange({{0.75, 0.14, 0.7, 0.28}, {0.55, 0.33, 0.82, 0.15}}, integrated.Solar, tolerance);
-    Helper::assertOpticalRange({{0.61, 0.47, 0.91, 0.35}, {0.61, 0.28, 0.85, 0.24}}, integrated.Visible, tolerance);
+    Helper::assertOpticalRange({{{0.75, 0.14}, {0.7, 0.28}}, {{0.55, 0.33}, {0.82, 0.15}}}, integrated.Solar, tolerance);
+    Helper::assertOpticalRange({{{0.61, 0.47}, {0.91, 0.35}}, {{0.61, 0.28}, {0.85, 0.24}}}, integrated.Visible, tolerance);
 }
 
 TEST_F(TestMaterials, SolidMaterial1Serialization)
