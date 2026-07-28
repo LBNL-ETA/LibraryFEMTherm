@@ -36,6 +36,10 @@
 		<xs:sequence>
 			<xs:element name="UUID" type="xs:string"/>
 			<xs:element name="Name" type="xs:string"/>
+			<!-- Present only on temporary records that entered the library from a project
+			     file during reconciliation; permanent library records omit it. Not part of
+			     the content hash, so it never changes the UUID. -->
+			<xs:element name="ProjectName" type="xs:string" minOccurs="0"/>
 			<xs:element name="Protected" type="xs:boolean"/>
 			<xs:element name="Description" type="xs:string" minOccurs="0"/>
 			<xs:element name="Channel" type="Channel" minOccurs="0" maxOccurs="unbounded"/>

@@ -33,6 +33,9 @@ namespace EnvironmentDataLibrary
         void updateOrAdd(const EnvironmentData & data);
         void deleteWithUUID(std::string_view uuid);
 
+        void deleteRecordsWithProjectName(std::string_view projectName);
+        void deleteTemporaryRecords();
+
     private:
         std::string m_FileName;
         std::vector<EnvironmentData> m_EnvironmentData;

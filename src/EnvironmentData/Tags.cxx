@@ -50,6 +50,11 @@ namespace EnvironmentDataLibrary
         return name_;
     }
 
+    std::string Tags::projectName() const
+    {
+        return projectName_;
+    }
+
     std::string Tags::protectedTag() const
     {
         return protectedTag_;

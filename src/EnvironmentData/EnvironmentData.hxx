@@ -37,6 +37,10 @@ namespace EnvironmentDataLibrary
     {
         std::string UUID;
         std::string Name{"Default Name"};
+        //! Set only on temporary records that entered the library from a project file during
+        //! reconciliation; permanent library records leave it empty. Not part of the content
+        //! hash — reconciliation metadata must not change the UUID.
+        std::optional<std::string> ProjectName;
         bool Protected{false};
         std::optional<std::string> Description;
         std::vector<Channel> channels;

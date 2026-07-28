@@ -54,6 +54,7 @@ namespace EnvironmentDataLibrary
         Tags tag;
         node >> FileParse::Child{tag.uuid(), data.UUID};
         node >> FileParse::Child{tag.name(), data.Name};
+        node >> FileParse::Child{tag.projectName(), data.ProjectName};
         node >> FileParse::Child{tag.protectedTag(), data.Protected};
         node >> FileParse::Child{tag.description(), data.Description};
         node >> FileParse::Child{tag.channel(), data.channels};
@@ -66,6 +67,7 @@ namespace EnvironmentDataLibrary
         Tags tag;
         node << FileParse::Child{tag.uuid(), data.UUID};
         node << FileParse::Child{tag.name(), data.Name};
+        node << FileParse::Child{tag.projectName(), data.ProjectName};
         node << FileParse::Child{tag.protectedTag(), data.Protected};
         node << FileParse::Child{tag.description(), data.Description};
         node << FileParse::Child{tag.channel(), data.channels};

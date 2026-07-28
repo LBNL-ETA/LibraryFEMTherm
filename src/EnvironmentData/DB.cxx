@@ -11,6 +11,7 @@
 #include "Tags.hxx"
 
 #include "Common/Common.hxx"
+#include "LibraryUtilities/Common.hxx"
 #include "LibraryUtilities/FileManipulation.hxx"
 
 namespace EnvironmentDataLibrary
@@ -151,5 +152,20 @@ namespace EnvironmentDataLibrary
                                                        })
                                   .begin(),
                                 m_EnvironmentData.end());
+    }
+
+    void DB::deleteRecordsWithProjectName(std::string_view projectName)
+    {
+        m_EnvironmentData.erase(std::ranges::remove_if(m_EnvironmentData,
+                                                       [projectName](const EnvironmentData & data) {
+                                                           return data.ProjectName == projectName;
+                                                       })
+                                  .begin(),
+                                m_EnvironmentData.end());
+    }
+
+    void DB::deleteTemporaryRecords()
+    {
+        LibraryCommon::removeTemporaryRecords(m_EnvironmentData);
     }
 }   // namespace EnvironmentDataLibrary

@@ -65,11 +65,67 @@ TEST(TestEnvironmentData, DBSaveLoadRoundTrip)
     const auto record{loaded.getByUUID("11111111-2222-3333-4444-555555555555")};
     ASSERT_TRUE(record.has_value());
     EXPECT_EQ(record->Name, "Sample exterior");
+    EXPECT_FALSE(record->ProjectName.has_value());
     EXPECT_TRUE(record->Protected);
     ASSERT_EQ(record->channels.size(), 3U);
     EXPECT_EQ(record->channels[0].role, ChannelRole::AirTemperature);
     ASSERT_EQ(record->channels[0].values.size(), 3U);
     EXPECT_NEAR(record->channels[0].values[2], 20.8, 1e-9);
+}
+
+TEST(TestEnvironmentData, ProjectNameRoundTrip)
+{
+    auto sample{makeSample()};
+    sample.ProjectName = "Office model";
+
+    EnvironmentDataLibrary::DB source;
+    source.add(sample);
+
+    EnvironmentDataLibrary::DB loaded;
+    loaded.loadFromString(source.saveToString());
+
+    const auto record{loaded.getByUUID(sample.UUID)};
+    ASSERT_TRUE(record.has_value());
+    ASSERT_TRUE(record->ProjectName.has_value());
+    EXPECT_EQ(record->ProjectName.value(), "Office model");
+}
+
+TEST(TestEnvironmentData, DeleteTemporaryRecords)
+{
+    auto temporary{makeSample()};
+    temporary.UUID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    temporary.ProjectName = "Office model";
+
+    EnvironmentDataLibrary::DB database;
+    database.add(makeSample());
+    database.add(temporary);
+
+    database.deleteTemporaryRecords();
+
+    EXPECT_TRUE(database.getByUUID(makeSample().UUID).has_value());
+    EXPECT_FALSE(database.getByUUID(temporary.UUID).has_value());
+}
+
+TEST(TestEnvironmentData, DeleteRecordsWithProjectName)
+{
+    auto firstProject{makeSample()};
+    firstProject.UUID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    firstProject.ProjectName = "Office model";
+
+    auto secondProject{makeSample()};
+    secondProject.UUID = "ffffffff-0000-1111-2222-333333333333";
+    secondProject.ProjectName = "Warehouse model";
+
+    EnvironmentDataLibrary::DB database;
+    database.add(makeSample());
+    database.add(firstProject);
+    database.add(secondProject);
+
+    database.deleteRecordsWithProjectName("Office model");
+
+    EXPECT_TRUE(database.getByUUID(makeSample().UUID).has_value());
+    EXPECT_FALSE(database.getByUUID(firstProject.UUID).has_value());
+    EXPECT_TRUE(database.getByUUID(secondProject.UUID).has_value());
 }
 
 TEST(TestEnvironmentData, ContentUuidIsDeterministic)
@@ -86,6 +142,7 @@ TEST(TestEnvironmentData, ContentUuidIgnoresEnvelopeAndChannelOrder)
     const auto baseline{EnvironmentDataLibrary::contentUuid(data)};
 
     data.Name = "Renamed";
+    data.ProjectName = "Office model";
     data.Protected = false;
     EXPECT_EQ(EnvironmentDataLibrary::contentUuid(data), baseline);
 

@@ -17,6 +17,7 @@ namespace EnvironmentDataLibrary
         [[nodiscard]] std::string version() const;
         [[nodiscard]] std::string uuid() const;
         [[nodiscard]] std::string name() const;
+        [[nodiscard]] std::string projectName() const;
         [[nodiscard]] std::string protectedTag() const;
         [[nodiscard]] std::string description() const;
         [[nodiscard]] std::string channel() const;
@@ -29,6 +30,7 @@ namespace EnvironmentDataLibrary
         const std::string version_{"Version"};
         const std::string uuid_{"UUID"};
         const std::string name_{"Name"};
+        const std::string projectName_{"ProjectName"};
         const std::string protectedTag_{"Protected"};
         const std::string description_{"Description"};
         const std::string channel_{"Channel"};
