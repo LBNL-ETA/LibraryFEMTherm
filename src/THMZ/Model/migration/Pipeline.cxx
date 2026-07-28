@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 
+#include "THMZ/Model/migration/BCConsolidation.hxx"
 #include "THMZ/Model/migration/FrameCavity.hxx"
 #include "THMZ/ZipModule/ZipModule.hxx"
 
@@ -25,6 +26,21 @@ namespace ThermFile::Migration
         catch(const std::runtime_error &)
         {
             // Materials.xml not present in the archive -- nothing to migrate.
+        }
+
+        // --- BC consolidation migration ---------------------------------------
+        // Pre-consolidation archives bind segments by steady record name or by
+        // transient type-record UUID plus bare timestep file name. Capture the
+        // embedded legacy BC artifacts, convert them to the unified form, and
+        // fill each segment's {bcUUID, environmentUUID} binding.
+        try
+        {
+            const auto legacyBCs = BCConsolidation::captureFromArchive(zipFileName);
+            model = BCConsolidation::applyToModel(legacyBCs, std::move(model));
+        }
+        catch(const std::runtime_error &)
+        {
+            // Archive unreadable for BC artifacts -- nothing to migrate.
         }
 
         // --- Future migrations go below this line ----------------------------
