@@ -132,6 +132,12 @@ namespace ThermFile
         size_t ID{0u};
         std::string uuid;
         std::string name;
+        //! Unified-library binding: the segment references its boundary condition record by
+        //! UUID and, when that record reads environment channels, the dataset by UUID.
+        //! Absent in pre-consolidation archives, where the binding is the record name above
+        //! (steady state) or transientRecordData (transient); migration fills these on load.
+        std::optional<std::string> bcUUID;
+        std::optional<std::string> environmentUUID;
         std::string fluxTag;
         bool isBlocking{false};
         std::string neighborPolygonUUID;

@@ -272,6 +272,8 @@ TEST_F(TestTHMXGeometry, BoundaryConditionDeserialization)
     ThermFile::Boundary correctBoundaryCondition{14u,
                                                  "Some UUID",
                                                  "Some Name",
+                                                 std::nullopt,
+                                                 std::nullopt,
                                                  "Some Flux Tag",
                                                  true,
                                                  "Some Neighbor Polygon UUID",
@@ -302,6 +304,8 @@ TEST_F(TestTHMXGeometry, BoundaryConditionSerialization)
     ThermFile::Boundary boundaryCondition{14u,
                                           "Some UUID",
                                           "Some Name",
+                                          std::nullopt,
+                                          std::nullopt,
                                           "Some Flux Tag",
                                           true,
                                           "Some Neighbor Polygon UUID",
@@ -352,4 +356,27 @@ TEST_F(TestTHMXGeometry, BoundaryConditionSerialization)
        "5"})};
 
     EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNode));
+}
+
+TEST_F(TestTHMXGeometry, BoundaryConditionUnifiedBindingRoundTrip)
+{
+    ThermFile::Boundary boundaryCondition;
+    boundaryCondition.uuid = "Segment UUID";
+    boundaryCondition.name = "Exterior";
+    boundaryCondition.bcUUID = "11111111-2222-3333-4444-555555555555";
+    boundaryCondition.environmentUUID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    boundaryCondition.status = 0;
+
+    Helper::MockNode node{"Boundary"};
+    Helper::MockNodeAdapter adapter{&node};
+    adapter << boundaryCondition;
+
+    ThermFile::Boundary loaded;
+    const Helper::MockNodeAdapter reader{&node};
+    reader >> loaded;
+
+    ASSERT_TRUE(loaded.bcUUID.has_value());
+    EXPECT_EQ(loaded.bcUUID.value(), "11111111-2222-3333-4444-555555555555");
+    ASSERT_TRUE(loaded.environmentUUID.has_value());
+    EXPECT_EQ(loaded.environmentUUID.value(), "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
 }

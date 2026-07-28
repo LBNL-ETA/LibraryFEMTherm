@@ -103,6 +103,8 @@ namespace Helper
         EXPECT_EQ(expected.ID, actual.ID);
         EXPECT_EQ(expected.uuid, actual.uuid);
         EXPECT_EQ(expected.name, actual.name);
+        EXPECT_EQ(expected.bcUUID, actual.bcUUID);
+        EXPECT_EQ(expected.environmentUUID, actual.environmentUUID);
         EXPECT_EQ(expected.fluxTag, actual.fluxTag);
         EXPECT_EQ(expected.isBlocking, actual.isBlocking);
         EXPECT_EQ(expected.neighborPolygonUUID, actual.neighborPolygonUUID);

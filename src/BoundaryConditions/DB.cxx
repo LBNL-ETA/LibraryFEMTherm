@@ -1,9 +1,12 @@
+#include <filesystem>
 #include <fstream>
 
 #include <fileParse/FileDataHandler.hxx>
 #include <fileParse/Vector.hxx>
 
 #include <lbnl/algorithm.hxx>
+
+#include "THMZ/ZipModule/ZipModule.hxx"
 
 #include "DB.hxx"
 
@@ -60,6 +63,28 @@ namespace BCLibrary
           node);
 
         return content;
+    }
+
+    void DB::loadFromZipFile(const std::string & zipFileName)
+    {
+        if(!std::filesystem::exists(zipFileName))
+        {
+            return;
+        }
+
+        try
+        {
+            loadFromString(ThermZip::unzipFile(zipFileName, ThermZip::BoundaryConditionsFileName));
+        }
+        catch(const std::runtime_error &)
+        {
+            // Entry absent: pre-consolidation archive, nothing to load.
+        }
+    }
+
+    int DB::saveToZipFile(std::string_view zipFileName) const
+    {
+        return ThermZip::addToZipFile(zipFileName, ThermZip::BoundaryConditionsFileName, saveToString());
     }
 
     int DB::saveToFile(FileParse::FileFormat format) const

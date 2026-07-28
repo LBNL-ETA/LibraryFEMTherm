@@ -43,4 +43,12 @@ namespace EnvironmentDataLibrary
 
         [[nodiscard]] std::vector<EnvironmentData> loadEnvironmentDataFromFile(const std::string & xmlFileName);
     };
+
+    //! THMZ storage: each dataset is its own archive entry "environment data/<uuid>.xml",
+    //! shaped as a one-record library file so the library schema validates it. An archive
+    //! without such entries yields an empty vector (pre-consolidation file).
+    [[nodiscard]] std::vector<EnvironmentData> loadDatasetsFromZipFile(const std::string & zipFileName);
+
+    //! Writes every dataset as its own entry; returns the number of entries written.
+    int saveDatasetsToZipFile(const std::vector<EnvironmentData> & datasets, const std::string & zipFileName);
 }   // namespace EnvironmentDataLibrary

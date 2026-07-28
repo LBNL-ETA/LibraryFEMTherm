@@ -38,6 +38,15 @@ namespace ThermZip
     // Timestep boundary conditions directory
     const std::string TimestepFilesDir = "timestep input files";
 
+    // Unified boundary condition library and environment datasets (BC consolidation)
+    const std::string BoundaryConditionsFileName = "BoundaryConditions.xml";
+    const std::string EnvironmentDataDir = "environment data";
+
+    //! Archive entry name for one environment dataset: "environment data/<uuid>.xml".
+    //! Content-hash UUIDs make the name stable for identical data, so re-embedding the
+    //! same dataset never duplicates an entry.
+    std::string environmentDataEntryName(const std::string & datasetUUID);
+
     const std::string SteadyStateResultsName = "SteadyStateResults.xml";
     const std::string SteadyStateMeshResultsName = "SteadyStateMeshResults.xml";
     const std::string MeshName = "Mesh.xml";

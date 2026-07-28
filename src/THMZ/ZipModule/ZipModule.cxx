@@ -283,4 +283,9 @@ namespace ThermZip
     {
         return TimestepFilesDir + "/" + fileName;
     }
+
+    std::string environmentDataEntryName(const std::string & datasetUUID)
+    {
+        return EnvironmentDataDir + "/" + datasetUUID + ".xml";
+    }
 }   // namespace ThermZip

@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <filesystem>
 #include <fstream>
 
 #include <fileParse/FileDataHandler.hxx>
@@ -13,6 +15,7 @@
 #include "Common/Common.hxx"
 #include "LibraryUtilities/Common.hxx"
 #include "LibraryUtilities/FileManipulation.hxx"
+#include "THMZ/ZipModule/ZipModule.hxx"
 
 namespace EnvironmentDataLibrary
 {
@@ -167,5 +170,41 @@ namespace EnvironmentDataLibrary
     void DB::deleteTemporaryRecords()
     {
         LibraryCommon::removeTemporaryRecords(m_EnvironmentData);
+    }
+
+    std::vector<EnvironmentData> loadDatasetsFromZipFile(const std::string & zipFileName)
+    {
+        std::vector<EnvironmentData> datasets;
+        if(!std::filesystem::exists(zipFileName))
+        {
+            return datasets;
+        }
+
+        const std::string entryPrefix{ThermZip::EnvironmentDataDir + "/"};
+        for(const auto & [entryName, content] : ThermZip::unzipFiles(zipFileName))
+        {
+            if(entryName.starts_with(entryPrefix))
+            {
+                DB entryDB;
+                entryDB.loadFromString(content);
+                std::ranges::copy(entryDB.getEnvironmentData(), std::back_inserter(datasets));
+            }
+        }
+
+        return datasets;
+    }
+
+    int saveDatasetsToZipFile(const std::vector<EnvironmentData> & datasets, const std::string & zipFileName)
+    {
+        int written = 0;
+        for(const auto & dataset : datasets)
+        {
+            DB entryDB;
+            entryDB.add(dataset);
+            const auto entryName{ThermZip::environmentDataEntryName(dataset.UUID)};
+            written += ThermZip::addToZipFile(zipFileName, entryName, entryDB.saveToString());
+        }
+
+        return written;
     }
 }   // namespace EnvironmentDataLibrary
