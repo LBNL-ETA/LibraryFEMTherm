@@ -1,7 +1,7 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 
-#include "BCTransient/Types.hxx"
+#include "Legacy/Step1/BCTransient/Types.hxx"
 #include "LibraryUtilities/FileManipulation.hxx"
 
 #include "bctype1.hxx"

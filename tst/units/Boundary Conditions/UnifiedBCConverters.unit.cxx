@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "BoundaryConditions/Converters.hxx"
+#include "Legacy/Step1/Converters/Converters.hxx"
 
 using namespace BCLibrary;
 using EnvironmentDataLibrary::ChannelRole;

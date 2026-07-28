@@ -2,12 +2,12 @@
 
 #include <string>
 
-#include "BCSteadyState/SteadyState.hxx"
-#include "BCTransient/Timestep.hxx"
-#include "BCTransient/Types.hxx"
+#include "Legacy/Step1/BCSteadyState/SteadyState.hxx"
+#include "Legacy/Step1/BCTransient/Timestep.hxx"
+#include "Legacy/Step1/BCTransient/Types.hxx"
 #include "EnvironmentData/EnvironmentData.hxx"
 
-#include "BoundaryConditions.hxx"
+#include "BoundaryConditions/BoundaryConditions.hxx"
 
 namespace BCLibrary
 {

@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
-#include "BCSteadyState/SteadyState.hxx"
-#include "BCSteadyState/Operators.hxx"
+#include "Legacy/Step1/BCSteadyState/SteadyState.hxx"
+#include "Legacy/Step1/BCSteadyState/Operators.hxx"
 
 class TestBCSteadyStateOperators : public testing::Test
 {

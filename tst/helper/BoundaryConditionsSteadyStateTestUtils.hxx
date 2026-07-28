@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdexcept>
-#include <BCSteadyState/SteadyState.hxx>
+#include <Legacy/Step1/BCSteadyState/SteadyState.hxx>
 
 class MismatchRadiationTypes : public std::runtime_error
 {

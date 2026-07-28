@@ -1,4 +1,4 @@
-#include <BCSteadyState/Tags.hxx>
+#include <Legacy/Step1/BCSteadyState/Tags.hxx>
 
 #include "bcsteadyState1.hxx"
 

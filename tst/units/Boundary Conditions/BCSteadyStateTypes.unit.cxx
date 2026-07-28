@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
-#include "BCSteadyState/SteadyState.hxx"
-#include "BCSteadyState/Utils.hxx"
+#include "Legacy/Step1/BCSteadyState/SteadyState.hxx"
+#include "Legacy/Step1/BCSteadyState/Utils.hxx"
 
 using namespace BCSteadyStateLibrary;
 

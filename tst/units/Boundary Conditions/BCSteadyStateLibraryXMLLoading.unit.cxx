@@ -1,7 +1,7 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 
-#include "BCSteadyState/DB.hxx"
+#include "Legacy/Step1/BCSteadyState/DB.hxx"
 #include "LibraryUtilities/FileManipulation.hxx"
 
 #include "BoundaryConditionsSteadyStateTestUtils.hxx"
