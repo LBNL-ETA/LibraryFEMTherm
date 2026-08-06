@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace EnvironmentDataLibrary
+namespace TimeSeriesLibrary
 {
     //! Fixed vocabulary of channel roles. The list is deliberately closed: both a boundary
     //! condition input and a dataset channel name the same role, which is what makes their
@@ -33,7 +33,7 @@ namespace EnvironmentDataLibrary
         std::vector<double> values;
     };
 
-    struct EnvironmentData
+    struct TimeSeriesData
     {
         std::string UUID;
         std::string Name{"Default Name"};
@@ -48,12 +48,12 @@ namespace EnvironmentDataLibrary
 
     //! Number of steps the dataset provides: the shortest channel length (channels are
     //! expected to be equal length; the minimum is the defensive answer).
-    [[nodiscard]] size_t steps(const EnvironmentData & data);
+    [[nodiscard]] size_t steps(const TimeSeriesData & data);
 
-    [[nodiscard]] bool hasRole(const EnvironmentData & data, ChannelRole role);
+    [[nodiscard]] bool hasRole(const TimeSeriesData & data, ChannelRole role);
 
-    [[nodiscard]] std::optional<std::vector<double>> valuesForRole(const EnvironmentData & data,
+    [[nodiscard]] std::optional<std::vector<double>> valuesForRole(const TimeSeriesData & data,
                                                                    ChannelRole role);
 
-    [[nodiscard]] std::vector<ChannelRole> providedRoles(const EnvironmentData & data);
-}   // namespace EnvironmentDataLibrary
+    [[nodiscard]] std::vector<ChannelRole> providedRoles(const TimeSeriesData & data);
+}   // namespace TimeSeriesLibrary

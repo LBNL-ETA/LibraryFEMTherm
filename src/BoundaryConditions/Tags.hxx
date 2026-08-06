@@ -27,7 +27,7 @@ namespace BCLibrary
         [[nodiscard]] std::string radiationSurface() const;
 
         [[nodiscard]] std::string constant() const;
-        [[nodiscard]] std::string fromEnvironment() const;
+        [[nodiscard]] std::string fromTimeSeries() const;
 
         [[nodiscard]] std::string model() const;
         [[nodiscard]] std::string convection() const;
@@ -70,7 +70,7 @@ namespace BCLibrary
         const std::string radiationSurface_{"RadiationSurface"};
 
         const std::string constant_{"Constant"};
-        const std::string fromEnvironment_{"FromEnvironment"};
+        const std::string fromTimeSeries_{"FromTimeSeries"};
 
         const std::string model_{"Model"};
         const std::string convection_{"Convection"};

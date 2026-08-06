@@ -7,7 +7,7 @@
 #include "ContentHash.hxx"
 #include "Tags.hxx"
 
-namespace EnvironmentDataLibrary
+namespace TimeSeriesLibrary
 {
     namespace
     {
@@ -77,7 +77,7 @@ namespace EnvironmentDataLibrary
         }
     }   // namespace
 
-    std::string contentUuid(const EnvironmentData & data)
+    std::string contentUuid(const TimeSeriesData & data)
     {
         Fnv1a first{offsetBasis};
         consumeChannels(first, data.channels);
@@ -95,4 +95,4 @@ namespace EnvironmentDataLibrary
                            static_cast<uint16_t>(low >> 48U),
                            low & 0xFFFFFFFFFFFFULL);
     }
-}   // namespace EnvironmentDataLibrary
+}   // namespace TimeSeriesLibrary

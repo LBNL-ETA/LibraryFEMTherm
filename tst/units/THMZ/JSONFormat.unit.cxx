@@ -7,7 +7,7 @@
 #include <fileParse/FileFormat.hxx>
 
 #include "BoundaryConditions/DB.hxx"
-#include "EnvironmentData/DB.hxx"
+#include "TimeSeriesData/DB.hxx"
 #include "Materials/DB.hxx"
 #include "THMZ/Model/DB.hxx"
 #include "THMZ/Model/Serializers.hxx"
@@ -16,9 +16,9 @@
 #include "THMXHelper.hxx"
 #include "TestExamples.hxx"
 
-using EnvironmentDataLibrary::Channel;
-using EnvironmentDataLibrary::ChannelRole;
-using EnvironmentDataLibrary::EnvironmentData;
+using TimeSeriesLibrary::Channel;
+using TimeSeriesLibrary::ChannelRole;
+using TimeSeriesLibrary::TimeSeriesData;
 
 namespace
 {
@@ -38,9 +38,9 @@ namespace
         ThermZip::zipFiles(seed, zipPath.string());
     }
 
-    EnvironmentData makeDataset(const std::string & uuid, const std::string & name)
+    TimeSeriesData makeDataset(const std::string & uuid, const std::string & name)
     {
-        EnvironmentData data;
+        TimeSeriesData data;
         data.UUID = uuid;
         data.Name = name;
         data.channels = {Channel{ChannelRole::AirTemperature, {1.0, 2.0, 3.0}}};
@@ -148,22 +148,22 @@ TEST(TestJSONFormat, BoundaryConditionsJSONZipRoundTrip)
     std::filesystem::remove(zipPath);
 }
 
-TEST(TestJSONFormat, EnvironmentDatasetsJSONZipRoundTrip)
+TEST(TestJSONFormat, TimeSeriesDatasetsJSONZipRoundTrip)
 {
     const auto zipPath{scratchPath("json_format_env.thmz")};
     createArchive(zipPath);
 
-    const std::vector<EnvironmentData> datasets{
+    const std::vector<TimeSeriesData> datasets{
       makeDataset("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "Golden CO")};
 
-    EXPECT_EQ(EnvironmentDataLibrary::saveDatasetsToZipFile(datasets, zipPath.string(), FileParse::FileFormat::JSON),
+    EXPECT_EQ(TimeSeriesLibrary::saveDatasetsToZipFile(datasets, zipPath.string(), FileParse::FileFormat::JSON),
               1);
 
     const auto entries{ThermZip::unzipFiles(zipPath.string())};
-    EXPECT_TRUE(entries.contains("environment data/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.json"));
-    EXPECT_FALSE(entries.contains("environment data/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.xml"));
+    EXPECT_TRUE(entries.contains("time series/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.json"));
+    EXPECT_FALSE(entries.contains("time series/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.xml"));
 
-    const auto loaded{EnvironmentDataLibrary::loadDatasetsFromZipFile(zipPath.string())};
+    const auto loaded{TimeSeriesLibrary::loadDatasetsFromZipFile(zipPath.string())};
     ASSERT_EQ(loaded.size(), 1U);
     EXPECT_EQ(loaded[0].Name, "Golden CO");
     ASSERT_EQ(loaded[0].channels.size(), 1U);

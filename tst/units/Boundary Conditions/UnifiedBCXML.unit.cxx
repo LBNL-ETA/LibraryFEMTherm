@@ -4,7 +4,7 @@
 #include "BoundaryConditions/Serializers.hxx"
 
 using namespace BCLibrary;
-using EnvironmentDataLibrary::ChannelRole;
+using TimeSeriesLibrary::ChannelRole;
 
 namespace
 {
@@ -15,7 +15,7 @@ namespace
 
     ChannelRole environmentRole(const Source & source)
     {
-        return std::get<FromEnvironment>(source).role;
+        return std::get<FromTimeSeries>(source).role;
     }
 
     BoundaryCondition makeTransientExterior()
@@ -27,11 +27,11 @@ namespace
         record.Color = "0x0078D7";
 
         SurfaceExchange exchange;
-        exchange.relativeHumidity = FromEnvironment{ChannelRole::RelativeHumidity};
+        exchange.relativeHumidity = FromTimeSeries{ChannelRole::RelativeHumidity};
         exchange.convection = Convection{.model = ConvectionModel::ASHRAE_NFRC_Outside,
-                                         .airTemperature = FromEnvironment{ChannelRole::AirTemperature},
+                                         .airTemperature = FromTimeSeries{ChannelRole::AirTemperature},
                                          .filmCoefficient = std::nullopt,
-                                         .windSpeed = FromEnvironment{ChannelRole::WindSpeed},
+                                         .windSpeed = FromTimeSeries{ChannelRole::WindSpeed},
                                          .windDirection = std::nullopt};
         exchange.radiation = BlackBodyRadiation{.temperature = Constant{-18.0},
                                                 .emissivity = Constant{0.9},
@@ -116,7 +116,7 @@ TEST(TestUnifiedBC, PrescribedStateRoundTrip)
     BoundaryCondition record;
     record.UUID = "12121212-3434-5656-7878-909090909090";
     record.Name = "Fixed temperature and humidity";
-    record.data = PrescribedState{.temperature = FromEnvironment{ChannelRole::PrescribedTemperature},
+    record.data = PrescribedState{.temperature = FromTimeSeries{ChannelRole::PrescribedTemperature},
                                   .relativeHumidity = Constant{0.65}};
 
     DB source;

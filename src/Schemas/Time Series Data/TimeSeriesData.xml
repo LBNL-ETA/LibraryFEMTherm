@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<EnvironmentData>
+<TimeSeriesData>
 	<Version>1</Version>
 	<Environment>
 		<UUID>235e1454-e415-8d42-90da-8c0c9a587852</UUID>
@@ -1335,4 +1335,4 @@
 			<Value>160</Value>
 		</Channel>
 	</Environment>
-</EnvironmentData>
+</TimeSeriesData>

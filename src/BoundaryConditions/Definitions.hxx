@@ -2,7 +2,7 @@
 
 #include <variant>
 
-#include "EnvironmentData/EnvironmentData.hxx"
+#include "TimeSeriesData/TimeSeriesData.hxx"
 
 namespace BCLibrary
 {
@@ -27,13 +27,13 @@ namespace BCLibrary
         double value{0};
     };
 
-    struct FromEnvironment
+    struct FromTimeSeries
     {
-        EnvironmentDataLibrary::ChannelRole role{EnvironmentDataLibrary::ChannelRole::AirTemperature};
+        TimeSeriesLibrary::ChannelRole role{TimeSeriesLibrary::ChannelRole::AirTemperature};
     };
 
-    using Source = std::variant<Constant, FromEnvironment>;
+    using Source = std::variant<Constant, FromTimeSeries>;
 
     [[nodiscard]] bool isConstant(const Source & source);
-    [[nodiscard]] bool isFromEnvironment(const Source & source);
+    [[nodiscard]] bool isFromTimeSeries(const Source & source);
 }   // namespace BCLibrary

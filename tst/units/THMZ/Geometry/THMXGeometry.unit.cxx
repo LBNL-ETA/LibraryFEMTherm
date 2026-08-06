@@ -364,7 +364,7 @@ TEST_F(TestTHMXGeometry, BoundaryConditionUnifiedBindingRoundTrip)
     boundaryCondition.uuid = "Segment UUID";
     boundaryCondition.name = "Exterior";
     boundaryCondition.bcUUID = "11111111-2222-3333-4444-555555555555";
-    boundaryCondition.environmentUUID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    boundaryCondition.timeSeriesUUID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
     boundaryCondition.status = 0;
 
     Helper::MockNode node{"Boundary"};
@@ -377,6 +377,6 @@ TEST_F(TestTHMXGeometry, BoundaryConditionUnifiedBindingRoundTrip)
 
     ASSERT_TRUE(loaded.bcUUID.has_value());
     EXPECT_EQ(loaded.bcUUID.value(), "11111111-2222-3333-4444-555555555555");
-    ASSERT_TRUE(loaded.environmentUUID.has_value());
-    EXPECT_EQ(loaded.environmentUUID.value(), "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+    ASSERT_TRUE(loaded.timeSeriesUUID.has_value());
+    EXPECT_EQ(loaded.timeSeriesUUID.value(), "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
 }

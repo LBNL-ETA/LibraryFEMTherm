@@ -4,15 +4,15 @@
 
 #include "Converters.hxx"
 
-#include "EnvironmentData/ContentHash.hxx"
+#include "TimeSeriesData/ContentHash.hxx"
 
 namespace BCLibrary
 {
     namespace
     {
-        using EnvironmentDataLibrary::Channel;
-        using EnvironmentDataLibrary::ChannelRole;
-        using EnvironmentDataLibrary::EnvironmentData;
+        using TimeSeriesLibrary::Channel;
+        using TimeSeriesLibrary::ChannelRole;
+        using TimeSeriesLibrary::TimeSeriesData;
 
         ///////////////////////////////////////////////////////////////////////////////////
         // Steady-state record conversion
@@ -145,7 +145,7 @@ namespace BCLibrary
         {
             if(isTransient)
             {
-                return FromEnvironment{role};
+                return FromTimeSeries{role};
             }
             return Constant{legacyValue.value_or(fallback)};
         }
@@ -172,7 +172,7 @@ namespace BCLibrary
             {
                 // The legacy record stores direction as a Leeward/Windward enum usable only
                 // for steady runs; numeric per-timestep direction comes from the environment.
-                convection.windDirection = FromEnvironment{ChannelRole::WindDirection};
+                convection.windDirection = FromTimeSeries{ChannelRole::WindDirection};
             }
 
             return convection;
@@ -205,11 +205,11 @@ namespace BCLibrary
         // Timestep file conversion
         ///////////////////////////////////////////////////////////////////////////////////
 
-        void addChannel(EnvironmentData & data, ChannelRole role, std::vector<double> values)
+        void addChannel(TimeSeriesData & data, ChannelRole role, std::vector<double> values)
         {
             // One channel per role: first occurrence wins, matching the legacy content
             // validator's single-convection / single-radiation invariants.
-            if(!EnvironmentDataLibrary::hasRole(data, role) && !values.empty())
+            if(!TimeSeriesLibrary::hasRole(data, role) && !values.empty())
             {
                 data.channels.emplace_back(Channel{role, std::move(values)});
             }
@@ -222,7 +222,7 @@ namespace BCLibrary
         }
 
         template<typename RowType>
-        void addConvectionChannels(EnvironmentData & data, const std::vector<RowType> & rows)
+        void addConvectionChannels(TimeSeriesData & data, const std::vector<RowType> & rows)
         {
             if(rows.empty())
             {
@@ -326,11 +326,11 @@ namespace BCLibrary
         return converted;
     }
 
-    EnvironmentDataLibrary::EnvironmentData
+    TimeSeriesLibrary::TimeSeriesData
       environmentFromTimestep(const BCInputFileLibrary::BoundaryConditionTimestep & legacy,
                               const std::string & datasetName)
     {
-        EnvironmentData data;
+        TimeSeriesData data;
         data.Name = datasetName;
 
         addConvectionChannels(data, legacy.convection.tarp);
@@ -367,7 +367,7 @@ namespace BCLibrary
                    column(legacy.humidity,
                           [](const BCInputFileLibrary::FixedHumidity & row) { return row.humidity; }));
 
-        data.UUID = EnvironmentDataLibrary::contentUuid(data);
+        data.UUID = TimeSeriesLibrary::contentUuid(data);
         return data;
     }
 }   // namespace BCLibrary

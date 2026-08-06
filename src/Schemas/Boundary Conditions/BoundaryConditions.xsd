@@ -2,7 +2,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
 	<!-- A scalar input: either a constant value or a reference to an environment
-	     channel role (see EnvironmentData.xsd). A record whose inputs are all
+	     channel role (see TimeSeriesData.xsd). A record whose inputs are all
 	     constants is a steady-state boundary condition and is also usable in
 	     transient runs, where its constants apply at every timestep. -->
 	<xs:simpleType name="ChannelRole" final="restriction">
@@ -25,7 +25,7 @@
 	<xs:complexType name="Source">
 		<xs:choice>
 			<xs:element name="Constant" type="xs:double"/>
-			<xs:element name="FromEnvironment" type="ChannelRole"/>
+			<xs:element name="FromTimeSeries" type="ChannelRole"/>
 		</xs:choice>
 	</xs:complexType>
 

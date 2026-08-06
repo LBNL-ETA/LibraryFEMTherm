@@ -7,6 +7,7 @@
 #include "Types.hxx"
 #include "TypesSerializers.hxx"
 
+#include "Common/DB.hxx"
 #include "LibraryUtilities/FileManipulation.hxx"
 
 namespace BCTypesLibrary
@@ -31,8 +32,12 @@ namespace BCTypesLibrary
         // Need to check if file exists and create empty one if it does not.
         if(const std::ifstream f(m_FileName.c_str()); !f.good())
         {
-            // This is minimal requirement for XML file. Otherwise component will crash.
-            const std::string fileContent{"<BoundaryConditionsType>\n</BoundaryConditionsType>"};
+            // This is minimal requirement for the library file. Otherwise component will crash.
+            const bool jsonSeed{FileParse::detectFileFormatFromExtension(m_FileName)
+                                == FileParse::FileFormat::JSON};
+            const std::string fileContent{jsonSeed
+                                            ? std::string{"{\"BoundaryConditionsType\": {}}"}
+                                            : std::string{"<BoundaryConditionsType>\n</BoundaryConditionsType>"}};
             File::createFileFromString(m_FileName, fileContent);
         }
 
@@ -149,13 +154,14 @@ namespace BCTypesLibrary
 
     std::vector<TypeRecord> DB::loadBoundaryConditionsFromFile(std::string_view inputFileName)
     {
-        const auto xBCTypeNodes{getXMLTopNodeFromFile(inputFileName.data(), "BoundaryConditionsType")};
+        auto topNode{Common::getLibraryTopNodeFromFile(inputFileName, "BoundaryConditionsType")};
 
         std::vector<TypeRecord> BCTypes;
 
-        if(xBCTypeNodes.has_value())
+        if(topNode.has_value())
         {
-            xBCTypeNodes.value() >> FileParse::Child{"BoundaryConditionType", BCTypes};
+            std::visit([&BCTypes](auto & adapter) { adapter >> FileParse::Child{"BoundaryConditionType", BCTypes}; },
+                       topNode.value());
         }
 
         return BCTypes;

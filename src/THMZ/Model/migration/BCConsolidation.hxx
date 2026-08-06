@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "BoundaryConditions/BoundaryConditions.hxx"
-#include "EnvironmentData/EnvironmentData.hxx"
+#include "TimeSeriesData/TimeSeriesData.hxx"
 #include "THMZ/Model/THMX.hxx"
 
 namespace ThermFile::Migration::BCConsolidation
@@ -19,7 +19,7 @@ namespace ThermFile::Migration::BCConsolidation
     struct LegacyBCCapture
     {
         std::vector<BCLibrary::BoundaryCondition> boundaryConditions;
-        std::vector<EnvironmentDataLibrary::EnvironmentData> datasets;
+        std::vector<TimeSeriesLibrary::TimeSeriesData> datasets;
         std::map<std::string, std::string> bcUUIDByName;
         std::map<std::string, std::string> datasetUUIDByFileName;
     };
@@ -41,7 +41,7 @@ namespace ThermFile::Migration::BCConsolidation
 
     //! \brief Model-side migration: returns a copy of the input model where every segment
     //! whose unified binding is absent gets it filled from the legacy binding -- bcUUID
-    //! from the steady record name or the transient type-record UUID, environmentUUID from
+    //! from the steady record name or the transient type-record UUID, timeSeriesUUID from
     //! the timestep file name via the dataset map. Legacy fields stay in place; segments
     //! whose legacy reference has no captured counterpart are left untouched (best-effort
     //! transient migration). Idempotent: an empty capture, or a model already carrying

@@ -59,7 +59,7 @@ namespace ThermFile::Migration::BCConsolidation
             result.datasetUUIDByFileName[fileName] = dataset.UUID;
 
             const auto known{lbnl::find_element(result.datasets,
-                                                [&dataset](const EnvironmentDataLibrary::EnvironmentData & existing) {
+                                                [&dataset](const TimeSeriesLibrary::TimeSeriesData & existing) {
                                                     return existing.UUID == dataset.UUID;
                                                 })};
             if(!known.has_value())
@@ -91,12 +91,12 @@ namespace ThermFile::Migration::BCConsolidation
                 }
             }
 
-            if(!segment.environmentUUID.has_value() && transient.has_value())
+            if(!segment.timeSeriesUUID.has_value() && transient.has_value())
             {
                 const auto found{legacy.datasetUUIDByFileName.find(transient->transientFileName)};
                 if(found != legacy.datasetUUIDByFileName.end())
                 {
-                    segment.environmentUUID = found->second;
+                    segment.timeSeriesUUID = found->second;
                 }
             }
         }
@@ -127,8 +127,14 @@ namespace ThermFile::Migration::BCConsolidation
         const auto entries{ThermZip::unzipFiles(zipFileName)};
 
         const auto entryOrEmpty{[&entries](const std::string & name) {
-            const auto found{entries.find(name)};
-            return found != entries.end() ? found->second : std::string{};
+            for(const auto & candidate : ThermZip::entryNameCandidates(name))
+            {
+                if(const auto found{entries.find(candidate)}; found != entries.end())
+                {
+                    return found->second;
+                }
+            }
+            return std::string{};
         }};
 
         const std::string timestepPrefix{ThermZip::TimestepFilesDir + "/"};

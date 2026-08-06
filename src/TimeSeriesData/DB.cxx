@@ -18,7 +18,7 @@
 #include "LibraryUtilities/FileManipulation.hxx"
 #include "THMZ/ZipModule/ZipModule.hxx"
 
-namespace EnvironmentDataLibrary
+namespace TimeSeriesLibrary
 {
     DB::DB(const std::string & xmlFileName) : m_FileName(xmlFileName)
     {
@@ -26,27 +26,27 @@ namespace EnvironmentDataLibrary
         {
             Tags tags;
             const std::string fileContent{
-              Common::generateLibraryContent(tags.environmentData(),
-                                             "EnvironmentData.xsd",
+              Common::generateLibraryContent(tags.timeSeriesData(),
+                                             "TimeSeriesData.xsd",
                                              m_Version,
                                              FileParse::detectFileFormatFromExtension(xmlFileName))};
             File::createFileFromString(xmlFileName, fileContent);
         }
 
-        m_EnvironmentData = loadEnvironmentDataFromFile(xmlFileName);
+        m_TimeSeriesData = loadTimeSeriesDataFromFile(xmlFileName);
     }
 
     void DB::loadFromString(const std::string & str)
     {
         Tags tags;
-        auto node{Common::getTopNodeFromString(Common::stripUTF8BOM(str), tags.environmentData())};
+        auto node{Common::getTopNodeFromString(Common::stripUTF8BOM(str), tags.timeSeriesData())};
 
         if(node.has_value())
         {
             std::visit(
               [this, &tags](auto & adapter) {
                   adapter >> FileParse::Child{tags.version(), m_Version};
-                  adapter >> FileParse::Child{tags.environment(), m_EnvironmentData};
+                  adapter >> FileParse::Child{tags.timeSeries(), m_TimeSeriesData};
               },
               node.value());
         }
@@ -55,13 +55,13 @@ namespace EnvironmentDataLibrary
     std::string DB::saveToString(FileParse::FileFormat format) const
     {
         Tags tags;
-        auto node{Common::createTopNode(tags.environmentData(), format)};
+        auto node{Common::createTopNode(tags.timeSeriesData(), format)};
 
         std::string content;
         std::visit(
           [this, &tags, &content](auto & adapter) {
               adapter << FileParse::Child{tags.version(), m_Version};
-              adapter << FileParse::Child{tags.environment(), m_EnvironmentData};
+              adapter << FileParse::Child{tags.timeSeries(), m_TimeSeriesData};
               content = adapter.getContent();
           },
           node);
@@ -72,13 +72,13 @@ namespace EnvironmentDataLibrary
     int DB::saveToFile(FileParse::FileFormat format) const
     {
         Tags tags;
-        auto node{Common::createTopNode(tags.environmentData(), format)};
+        auto node{Common::createTopNode(tags.timeSeriesData(), format)};
 
         int result = 0;
         std::visit(
           [this, &tags, &result](auto & adapter) {
               adapter << FileParse::Child{tags.version(), m_Version};
-              adapter << FileParse::Child{tags.environment(), m_EnvironmentData};
+              adapter << FileParse::Child{tags.timeSeries(), m_TimeSeriesData};
               result = adapter.writeToFile(m_FileName);
           },
           node);
@@ -86,46 +86,46 @@ namespace EnvironmentDataLibrary
         return result;
     }
 
-    std::vector<EnvironmentData> DB::loadEnvironmentDataFromFile(const std::string & xmlFileName)
+    std::vector<TimeSeriesData> DB::loadTimeSeriesDataFromFile(const std::string & xmlFileName)
     {
         Tags tags;
-        auto topNode{Common::getLibraryTopNodeFromFile(xmlFileName, tags.environmentData())};
+        auto topNode{Common::getLibraryTopNodeFromFile(xmlFileName, tags.timeSeriesData())};
 
-        std::vector<EnvironmentData> environments;
+        std::vector<TimeSeriesData> records;
         if(topNode.has_value())
         {
             std::visit(
-              [this, &tags, &environments](auto & adapter) {
+              [this, &tags, &records](auto & adapter) {
                   adapter >> FileParse::Child{tags.version(), m_Version};
-                  adapter >> FileParse::Child{tags.environment(), environments};
+                  adapter >> FileParse::Child{tags.timeSeries(), records};
               },
               topNode.value());
         }
 
-        return environments;
+        return records;
     }
 
-    std::optional<EnvironmentData> DB::getByUUID(std::string_view uuid) const
+    std::optional<TimeSeriesData> DB::getByUUID(std::string_view uuid) const
     {
-        return lbnl::find_element(m_EnvironmentData,
-                                  [uuid](const EnvironmentData & data) { return data.UUID == uuid; });
+        return lbnl::find_element(m_TimeSeriesData,
+                                  [uuid](const TimeSeriesData & data) { return data.UUID == uuid; });
     }
 
-    std::optional<EnvironmentData> DB::getByName(std::string_view name) const
+    std::optional<TimeSeriesData> DB::getByName(std::string_view name) const
     {
-        return lbnl::find_element(m_EnvironmentData,
-                                  [name](const EnvironmentData & data) { return data.Name == name; });
+        return lbnl::find_element(m_TimeSeriesData,
+                                  [name](const TimeSeriesData & data) { return data.Name == name; });
     }
 
-    std::vector<EnvironmentData> & DB::getEnvironmentData()
+    std::vector<TimeSeriesData> & DB::getTimeSeriesData()
     {
-        return m_EnvironmentData;
+        return m_TimeSeriesData;
     }
 
     std::vector<std::string> DB::getNames() const
     {
-        return lbnl::transform_to_vector(m_EnvironmentData,
-                                         [](const EnvironmentData & data) { return data.Name; });
+        return lbnl::transform_to_vector(m_TimeSeriesData,
+                                         [](const TimeSeriesData & data) { return data.Name; });
     }
 
     std::string DB::getFileName() const
@@ -133,14 +133,14 @@ namespace EnvironmentDataLibrary
         return m_FileName;
     }
 
-    void DB::add(const EnvironmentData & data)
+    void DB::add(const TimeSeriesData & data)
     {
-        m_EnvironmentData.emplace_back(data);
+        m_TimeSeriesData.emplace_back(data);
     }
 
-    void DB::update(const EnvironmentData & data)
+    void DB::update(const TimeSeriesData & data)
     {
-        for(auto & existing : m_EnvironmentData)
+        for(auto & existing : m_TimeSeriesData)
         {
             if(existing.UUID == data.UUID)
             {
@@ -149,7 +149,7 @@ namespace EnvironmentDataLibrary
         }
     }
 
-    void DB::updateOrAdd(const EnvironmentData & data)
+    void DB::updateOrAdd(const TimeSeriesData & data)
     {
         const auto existing{getByUUID(data.UUID)};
         existing.has_value() ? update(data) : add(data);
@@ -157,52 +157,52 @@ namespace EnvironmentDataLibrary
 
     void DB::deleteWithUUID(std::string_view uuid)
     {
-        m_EnvironmentData.erase(std::ranges::remove_if(m_EnvironmentData,
-                                                       [uuid](const EnvironmentData & data) {
+        m_TimeSeriesData.erase(std::ranges::remove_if(m_TimeSeriesData,
+                                                       [uuid](const TimeSeriesData & data) {
                                                            return data.UUID == uuid;
                                                        })
                                   .begin(),
-                                m_EnvironmentData.end());
+                                m_TimeSeriesData.end());
     }
 
     void DB::deleteRecordsWithProjectName(std::string_view projectName)
     {
-        m_EnvironmentData.erase(std::ranges::remove_if(m_EnvironmentData,
-                                                       [projectName](const EnvironmentData & data) {
+        m_TimeSeriesData.erase(std::ranges::remove_if(m_TimeSeriesData,
+                                                       [projectName](const TimeSeriesData & data) {
                                                            return data.ProjectName == projectName;
                                                        })
                                   .begin(),
-                                m_EnvironmentData.end());
+                                m_TimeSeriesData.end());
     }
 
     void DB::deleteTemporaryRecords()
     {
-        LibraryCommon::removeTemporaryRecords(m_EnvironmentData);
+        LibraryCommon::removeTemporaryRecords(m_TimeSeriesData);
     }
 
-    std::vector<EnvironmentData> loadDatasetsFromZipFile(const std::string & zipFileName)
+    std::vector<TimeSeriesData> loadDatasetsFromZipFile(const std::string & zipFileName)
     {
-        std::vector<EnvironmentData> datasets;
+        std::vector<TimeSeriesData> datasets;
         if(!std::filesystem::exists(zipFileName))
         {
             return datasets;
         }
 
-        const std::string entryPrefix{ThermZip::EnvironmentDataDir + "/"};
+        const std::string entryPrefix{ThermZip::TimeSeriesDir + "/"};
         for(const auto & [entryName, content] : ThermZip::unzipFiles(zipFileName))
         {
             if(entryName.starts_with(entryPrefix))
             {
                 DB entryDB;
                 entryDB.loadFromString(content);
-                std::ranges::copy(entryDB.getEnvironmentData(), std::back_inserter(datasets));
+                std::ranges::copy(entryDB.getTimeSeriesData(), std::back_inserter(datasets));
             }
         }
 
         return datasets;
     }
 
-    int saveDatasetsToZipFile(const std::vector<EnvironmentData> & datasets,
+    int saveDatasetsToZipFile(const std::vector<TimeSeriesData> & datasets,
                               const std::string & zipFileName,
                               FileParse::FileFormat format)
     {
@@ -211,12 +211,12 @@ namespace EnvironmentDataLibrary
         {
             DB entryDB;
             entryDB.add(dataset);
-            const auto entryName{ThermZip::environmentDataEntryName(dataset.UUID, format)};
-            auto obsoleteNames{ThermZip::entryNameCandidates(ThermZip::environmentDataEntryName(dataset.UUID))};
+            const auto entryName{ThermZip::timeSeriesEntryName(dataset.UUID, format)};
+            auto obsoleteNames{ThermZip::entryNameCandidates(ThermZip::timeSeriesEntryName(dataset.UUID))};
             std::erase(obsoleteNames, entryName);
             written += ThermZip::addToZipFile(zipFileName, entryName, entryDB.saveToString(format), obsoleteNames);
         }
 
         return written;
     }
-}   // namespace EnvironmentDataLibrary
+}   // namespace TimeSeriesLibrary

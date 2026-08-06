@@ -4,12 +4,12 @@
 #include <gtest/gtest.h>
 
 #include "BoundaryConditions/DB.hxx"
-#include "EnvironmentData/DB.hxx"
+#include "TimeSeriesData/DB.hxx"
 #include "THMZ/ZipModule/ZipModule.hxx"
 
-using EnvironmentDataLibrary::Channel;
-using EnvironmentDataLibrary::ChannelRole;
-using EnvironmentDataLibrary::EnvironmentData;
+using TimeSeriesLibrary::Channel;
+using TimeSeriesLibrary::ChannelRole;
+using TimeSeriesLibrary::TimeSeriesData;
 
 namespace
 {
@@ -27,9 +27,9 @@ namespace
         ThermZip::zipFiles(seed, zipPath.string());
     }
 
-    EnvironmentData makeDataset(const std::string & uuid, const std::string & name)
+    TimeSeriesData makeDataset(const std::string & uuid, const std::string & name)
     {
-        EnvironmentData data;
+        TimeSeriesData data;
         data.UUID = uuid;
         data.Name = name;
         data.channels = {Channel{ChannelRole::AirTemperature, {1.0, 2.0, 3.0}}};
@@ -75,26 +75,26 @@ TEST(TestUnifiedBCZip, BoundaryConditionsMissingEntryLeavesDBUntouched)
     std::filesystem::remove(zipPath);
 }
 
-TEST(TestUnifiedBCZip, EnvironmentDatasetsRoundTrip)
+TEST(TestUnifiedBCZip, TimeSeriesDatasetsRoundTrip)
 {
     const auto zipPath{scratchZip("unified_env_roundtrip.thmz")};
     createArchive(zipPath);
 
-    const std::vector<EnvironmentData> datasets{
+    const std::vector<TimeSeriesData> datasets{
       makeDataset("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "Golden CO"),
       makeDataset("ffffffff-0000-1111-2222-333333333333", "Reference year")};
 
-    EXPECT_EQ(EnvironmentDataLibrary::saveDatasetsToZipFile(datasets, zipPath.string()), 2);
+    EXPECT_EQ(TimeSeriesLibrary::saveDatasetsToZipFile(datasets, zipPath.string()), 2);
 
     const auto entries{ThermZip::unzipFiles(zipPath.string())};
-    EXPECT_TRUE(entries.contains("environment data/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.xml"));
-    EXPECT_TRUE(entries.contains("environment data/ffffffff-0000-1111-2222-333333333333.xml"));
+    EXPECT_TRUE(entries.contains("time series/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.xml"));
+    EXPECT_TRUE(entries.contains("time series/ffffffff-0000-1111-2222-333333333333.xml"));
 
-    const auto loaded{EnvironmentDataLibrary::loadDatasetsFromZipFile(zipPath.string())};
+    const auto loaded{TimeSeriesLibrary::loadDatasetsFromZipFile(zipPath.string())};
     ASSERT_EQ(loaded.size(), 2U);
 
     const auto golden{std::ranges::find_if(
-      loaded, [](const EnvironmentData & data) { return data.Name == "Golden CO"; })};
+      loaded, [](const TimeSeriesData & data) { return data.Name == "Golden CO"; })};
     ASSERT_NE(golden, loaded.end());
     ASSERT_EQ(golden->channels.size(), 1U);
     EXPECT_EQ(golden->channels[0].role, ChannelRole::AirTemperature);
@@ -103,13 +103,13 @@ TEST(TestUnifiedBCZip, EnvironmentDatasetsRoundTrip)
     std::filesystem::remove(zipPath);
 }
 
-TEST(TestUnifiedBCZip, EnvironmentDatasetsAbsentYieldEmpty)
+TEST(TestUnifiedBCZip, TimeSeriesDatasetsAbsentYieldEmpty)
 {
     const auto zipPath{scratchZip("unified_env_absent.thmz")};
     createArchive(zipPath);
 
-    EXPECT_TRUE(EnvironmentDataLibrary::loadDatasetsFromZipFile(zipPath.string()).empty());
-    EXPECT_TRUE(EnvironmentDataLibrary::loadDatasetsFromZipFile("nonexistent-archive.thmz").empty());
+    EXPECT_TRUE(TimeSeriesLibrary::loadDatasetsFromZipFile(zipPath.string()).empty());
+    EXPECT_TRUE(TimeSeriesLibrary::loadDatasetsFromZipFile("nonexistent-archive.thmz").empty());
 
     std::filesystem::remove(zipPath);
 }

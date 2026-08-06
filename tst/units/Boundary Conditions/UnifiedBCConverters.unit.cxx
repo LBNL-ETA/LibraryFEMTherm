@@ -3,7 +3,7 @@
 #include "Legacy/Step1/Converters/Converters.hxx"
 
 using namespace BCLibrary;
-using EnvironmentDataLibrary::ChannelRole;
+using TimeSeriesLibrary::ChannelRole;
 
 namespace
 {
@@ -14,7 +14,7 @@ namespace
 
     ChannelRole environmentRole(const Source & source)
     {
-        return std::get<FromEnvironment>(source).role;
+        return std::get<FromTimeSeries>(source).role;
     }
 }   // namespace
 
@@ -175,14 +175,14 @@ TEST(TestUnifiedBCConverters, TimestepFileDecomposesIntoChannels)
     const auto dataset{environmentFromTimestep(legacy, "ORNL Test Exterior")};
 
     EXPECT_EQ(dataset.Name, "ORNL Test Exterior");
-    EXPECT_EQ(EnvironmentDataLibrary::steps(dataset), 3U);
-    EXPECT_TRUE(EnvironmentDataLibrary::hasRole(dataset, ChannelRole::AirTemperature));
-    EXPECT_TRUE(EnvironmentDataLibrary::hasRole(dataset, ChannelRole::RelativeHumidity));
-    EXPECT_TRUE(EnvironmentDataLibrary::hasRole(dataset, ChannelRole::WindSpeed));
-    EXPECT_TRUE(EnvironmentDataLibrary::hasRole(dataset, ChannelRole::HeatFlux));
-    EXPECT_FALSE(EnvironmentDataLibrary::hasRole(dataset, ChannelRole::WindDirection));
+    EXPECT_EQ(TimeSeriesLibrary::steps(dataset), 3U);
+    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::AirTemperature));
+    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::RelativeHumidity));
+    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::WindSpeed));
+    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::HeatFlux));
+    EXPECT_FALSE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::WindDirection));
 
-    const auto windSpeed{EnvironmentDataLibrary::valuesForRole(dataset, ChannelRole::WindSpeed)};
+    const auto windSpeed{TimeSeriesLibrary::valuesForRole(dataset, ChannelRole::WindSpeed)};
     ASSERT_TRUE(windSpeed.has_value());
     EXPECT_NEAR(windSpeed->at(2), 2.1, 1e-9);
 
@@ -207,10 +207,10 @@ TEST(TestUnifiedBCConverters, BothRadiationTypesKeepFirstRoleOccurrence)
     // One channel per role: RadiantTemperature comes from the fixed-radiation rows (first
     // occurrence), Emissivity from the black-body rows, RadiativeCoefficient from fixed.
     const auto radiantTemperature{
-      EnvironmentDataLibrary::valuesForRole(dataset, ChannelRole::RadiantTemperature)};
+      TimeSeriesLibrary::valuesForRole(dataset, ChannelRole::RadiantTemperature)};
     ASSERT_TRUE(radiantTemperature.has_value());
     EXPECT_NEAR(radiantTemperature->at(0), -10.0, 1e-9);
 
-    EXPECT_TRUE(EnvironmentDataLibrary::hasRole(dataset, ChannelRole::RadiativeCoefficient));
-    EXPECT_TRUE(EnvironmentDataLibrary::hasRole(dataset, ChannelRole::Emissivity));
+    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::RadiativeCoefficient));
+    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::Emissivity));
 }

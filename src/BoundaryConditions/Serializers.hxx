@@ -7,7 +7,7 @@
 #include <fileParse/Variant.hxx>
 #include <fileParse/Vector.hxx>
 
-#include "EnvironmentData/Serializers.hxx"
+#include "TimeSeriesData/Serializers.hxx"
 
 #include "BoundaryConditions.hxx"
 #include "Tags.hxx"
@@ -15,7 +15,7 @@
 namespace BCLibrary
 {
     template<typename NodeAdapter>
-        requires EnvironmentDataLibrary::SerializerNode<NodeAdapter>
+        requires TimeSeriesLibrary::SerializerNode<NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, ConvectionModel & model)
     {
         FileParse::deserializeEnum<NodeAdapter, ConvectionModel>(node, model, convectionModelFromString);
@@ -23,7 +23,7 @@ namespace BCLibrary
     }
 
     template<typename NodeAdapter>
-        requires EnvironmentDataLibrary::SerializerNode<NodeAdapter>
+        requires TimeSeriesLibrary::SerializerNode<NodeAdapter>
     NodeAdapter & operator<<(NodeAdapter & node, const ConvectionModel & model)
     {
         FileParse::serializeEnum<NodeAdapter, ConvectionModel>(node, model, convectionModelToString);
@@ -45,30 +45,30 @@ namespace BCLibrary
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, FromEnvironment & fromEnvironment)
+    const NodeAdapter & operator>>(const NodeAdapter & node, FromTimeSeries & fromTimeSeries)
     {
-        node >> fromEnvironment.role;
+        node >> fromTimeSeries.role;
         return node;
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const FromEnvironment & fromEnvironment)
+    NodeAdapter & operator<<(NodeAdapter & node, const FromTimeSeries & fromTimeSeries)
     {
-        node << fromEnvironment.role;
+        node << fromTimeSeries.role;
         return node;
     }
 
     template<typename NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, Source & source)
     {
-        FileParse::deserializeVariant(node, {"Constant", "FromEnvironment"}, source);
+        FileParse::deserializeVariant(node, {"Constant", "FromTimeSeries"}, source);
         return node;
     }
 
     template<typename NodeAdapter>
     NodeAdapter & operator<<(NodeAdapter & node, const Source & source)
     {
-        FileParse::serializeVariant(node, {"Constant", "FromEnvironment"}, source);
+        FileParse::serializeVariant(node, {"Constant", "FromTimeSeries"}, source);
         return node;
     }
 

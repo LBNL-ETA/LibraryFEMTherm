@@ -23,10 +23,13 @@ namespace BCSteadyStateLibrary
         // Need to check if file exists and create empty one if it does not.
         if(std::ifstream f(xmlFileName.c_str()); !f.good())
         {
-            // This is minimal requirement for XML file. Otherwise, component will crash.
+            // This is minimal requirement for the library file. Otherwise, component will crash.
             BCSteadyStateLibrary::Tags tags;
             const std::string fileContent{
-              Common::generateXmlContent(tags.boundaryConditions(), "BC Steady State.xsd", m_Version)};
+              Common::generateLibraryContent(tags.boundaryConditions(),
+                                             "BC Steady State.xsd",
+                                             m_Version,
+                                             FileParse::detectFileFormatFromExtension(xmlFileName))};
             File::createFileFromString(xmlFileName, fileContent);
         }
 
@@ -85,13 +88,17 @@ namespace BCSteadyStateLibrary
     std::vector<BoundaryCondition> DB::loadBoundaryConditionsFromFile(const std::string & xmlFileName)
     {
         BCSteadyStateLibrary::Tags tags;
-        const auto xBCNode{getXMLTopNodeFromFile(xmlFileName, tags.boundaryConditions())};
+        auto topNode{Common::getLibraryTopNodeFromFile(xmlFileName, tags.boundaryConditions())};
 
         std::vector<BoundaryCondition> boundaryConditions;
-        if(xBCNode.has_value())
+        if(topNode.has_value())
         {
-            xBCNode.value() >> FileParse::Child{"Version", m_Version};
-            xBCNode.value() >> FileParse::Child{tags.boundaryCondition(), boundaryConditions};
+            std::visit(
+              [this, &tags, &boundaryConditions](auto & adapter) {
+                  adapter >> FileParse::Child{"Version", m_Version};
+                  adapter >> FileParse::Child{tags.boundaryCondition(), boundaryConditions};
+              },
+              topNode.value());
         }
 
         return boundaryConditions;

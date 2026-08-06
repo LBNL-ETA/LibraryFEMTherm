@@ -8,12 +8,12 @@ using BCLibrary::Constant;
 using BCLibrary::Convection;
 using BCLibrary::ConvectionModel;
 using BCLibrary::FixedCoefficientRadiation;
-using BCLibrary::FromEnvironment;
+using BCLibrary::FromTimeSeries;
 using BCLibrary::PrescribedState;
 using BCLibrary::RadiationSurface;
 using BCLibrary::SurfaceExchange;
 using BCLibrary::usable;
-using EnvironmentDataLibrary::ChannelRole;
+using TimeSeriesLibrary::ChannelRole;
 using ThermFile::CalculationMode;
 using ThermFile::SimulationEngine;
 
@@ -46,7 +46,7 @@ namespace
     {
         auto record{allConstantFixedConvection()};
         auto exchange{std::get<SurfaceExchange>(record.data)};
-        exchange.convection->airTemperature = FromEnvironment{ChannelRole::AirTemperature};
+        exchange.convection->airTemperature = FromTimeSeries{ChannelRole::AirTemperature};
         record.data = exchange;
         return record;
     }

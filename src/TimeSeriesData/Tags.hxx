@@ -5,15 +5,15 @@
 #include <string_view>
 #include <vector>
 
-#include "EnvironmentData.hxx"
+#include "TimeSeriesData.hxx"
 
-namespace EnvironmentDataLibrary
+namespace TimeSeriesLibrary
 {
     class Tags
     {
     public:
-        [[nodiscard]] std::string environmentData() const;
-        [[nodiscard]] std::string environment() const;
+        [[nodiscard]] std::string timeSeriesData() const;
+        [[nodiscard]] std::string timeSeries() const;
         [[nodiscard]] std::string version() const;
         [[nodiscard]] std::string uuid() const;
         [[nodiscard]] std::string name() const;
@@ -25,8 +25,8 @@ namespace EnvironmentDataLibrary
         [[nodiscard]] std::string value() const;
 
     private:
-        const std::string environmentData_{"EnvironmentData"};
-        const std::string environment_{"Environment"};
+        const std::string timeSeriesData_{"TimeSeriesData"};
+        const std::string timeSeries_{"TimeSeries"};
         const std::string version_{"Version"};
         const std::string uuid_{"UUID"};
         const std::string name_{"Name"};
@@ -41,4 +41,4 @@ namespace EnvironmentDataLibrary
     [[nodiscard]] std::string channelRoleToString(ChannelRole role);
     [[nodiscard]] ChannelRole channelRoleFromString(std::string_view value);
     [[nodiscard]] std::vector<std::string> channelRoleStrings();
-}   // namespace EnvironmentDataLibrary
+}   // namespace TimeSeriesLibrary

@@ -3,11 +3,11 @@
 
 #include <lbnl/algorithm.hxx>
 
-#include "EnvironmentData.hxx"
+#include "TimeSeriesData.hxx"
 
-namespace EnvironmentDataLibrary
+namespace TimeSeriesLibrary
 {
-    size_t steps(const EnvironmentData & data)
+    size_t steps(const TimeSeriesData & data)
     {
         if(data.channels.empty())
         {
@@ -22,13 +22,13 @@ namespace EnvironmentDataLibrary
         return minimum->values.size();
     }
 
-    bool hasRole(const EnvironmentData & data, ChannelRole role)
+    bool hasRole(const TimeSeriesData & data, ChannelRole role)
     {
         return std::ranges::any_of(data.channels,
                                    [role](const Channel & channel) { return channel.role == role; });
     }
 
-    std::optional<std::vector<double>> valuesForRole(const EnvironmentData & data, ChannelRole role)
+    std::optional<std::vector<double>> valuesForRole(const TimeSeriesData & data, ChannelRole role)
     {
         const auto found{std::ranges::find_if(
           data.channels, [role](const Channel & channel) { return channel.role == role; })};
@@ -41,9 +41,9 @@ namespace EnvironmentDataLibrary
         return found->values;
     }
 
-    std::vector<ChannelRole> providedRoles(const EnvironmentData & data)
+    std::vector<ChannelRole> providedRoles(const TimeSeriesData & data)
     {
         return lbnl::transform_to_vector(data.channels,
                                          [](const Channel & channel) { return channel.role; });
     }
-}   // namespace EnvironmentDataLibrary
+}   // namespace TimeSeriesLibrary

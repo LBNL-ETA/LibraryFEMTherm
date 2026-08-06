@@ -4,10 +4,10 @@
 #include <fileParse/Optional.hxx>
 #include <fileParse/Vector.hxx>
 
-#include "EnvironmentData.hxx"
+#include "TimeSeriesData.hxx"
 #include "Tags.hxx"
 
-namespace EnvironmentDataLibrary
+namespace TimeSeriesLibrary
 {
     //! Constrained to real node adapters so the templates never match std::ostream (which
     //! googletest probes when printing enum values in assertion messages).
@@ -49,7 +49,7 @@ namespace EnvironmentDataLibrary
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, EnvironmentData & data)
+    const NodeAdapter & operator>>(const NodeAdapter & node, TimeSeriesData & data)
     {
         Tags tag;
         node >> FileParse::Child{tag.uuid(), data.UUID};
@@ -62,7 +62,7 @@ namespace EnvironmentDataLibrary
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const EnvironmentData & data)
+    NodeAdapter & operator<<(NodeAdapter & node, const TimeSeriesData & data)
     {
         Tags tag;
         node << FileParse::Child{tag.uuid(), data.UUID};
@@ -73,4 +73,4 @@ namespace EnvironmentDataLibrary
         node << FileParse::Child{tag.channel(), data.channels};
         return node;
     }
-}   // namespace EnvironmentDataLibrary
+}   // namespace TimeSeriesLibrary

@@ -291,9 +291,9 @@ namespace ThermZip
         return TimestepFilesDir + "/" + fileName;
     }
 
-    std::string environmentDataEntryName(const std::string & datasetUUID, FileParse::FileFormat format)
+    std::string timeSeriesEntryName(const std::string & datasetUUID, FileParse::FileFormat format)
     {
-        return entryNameForFormat(EnvironmentDataDir + "/" + datasetUUID + ".xml", format);
+        return entryNameForFormat(TimeSeriesDir + "/" + datasetUUID + ".xml", format);
     }
 
     std::string entryNameForFormat(const std::string & xmlEntryName, FileParse::FileFormat format)

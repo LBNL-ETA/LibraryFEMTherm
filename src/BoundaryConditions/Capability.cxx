@@ -2,7 +2,7 @@
 
 #include "Capability.hxx"
 
-#include "EnvironmentData/Tags.hxx"
+#include "TimeSeriesData/Tags.hxx"
 #include "Tags.hxx"
 
 namespace BCLibrary
@@ -12,13 +12,13 @@ namespace BCLibrary
         const std::string conradReason{"not supported by the Conrad engine"};
         const std::string transientReason{"requires the transient calculation mode"};
 
-        void addEnvironmentSourceIssues(const BoundaryCondition & record,
+        void addTimeSeriesSourceIssues(const BoundaryCondition & record,
                                         const std::string & reason,
                                         std::vector<CapabilityIssue> & issues)
         {
             for(const auto role : requiredRoles(record))
             {
-                issues.push_back({EnvironmentDataLibrary::channelRoleToString(role), reason});
+                issues.push_back({TimeSeriesLibrary::channelRoleToString(role), reason});
             }
         }
 
@@ -55,7 +55,7 @@ namespace BCLibrary
                 issues.push_back({"Prescribed state", conradReason});
             }
 
-            addEnvironmentSourceIssues(record, conradReason, issues);
+            addTimeSeriesSourceIssues(record, conradReason, issues);
         }
     }   // namespace
 
@@ -80,7 +80,7 @@ namespace BCLibrary
 
         if(mode == ThermFile::CalculationMode::cmSteadyState)
         {
-            addEnvironmentSourceIssues(record, transientReason, issues);
+            addTimeSeriesSourceIssues(record, transientReason, issues);
         }
 
         return issues;

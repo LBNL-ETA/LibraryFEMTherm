@@ -40,15 +40,15 @@ namespace ThermZip
     // Timestep boundary conditions directory
     const std::string TimestepFilesDir = "timestep input files";
 
-    // Unified boundary condition library and environment datasets (BC consolidation)
+    // Unified boundary condition library and time series datasets (BC consolidation)
     const std::string BoundaryConditionsFileName = "BoundaryConditions.xml";
-    const std::string EnvironmentDataDir = "environment data";
+    const std::string TimeSeriesDir = "time series";
 
-    //! Archive entry name for one environment dataset: "environment data/<uuid>.xml".
+    //! Archive entry name for one time series dataset: "time series/<uuid>.xml".
     //! Content-hash UUIDs make the name stable for identical data, so re-embedding the
     //! same dataset never duplicates an entry.
-    std::string environmentDataEntryName(const std::string & datasetUUID,
-                                         FileParse::FileFormat format = FileParse::FileFormat::XML);
+    std::string timeSeriesEntryName(const std::string & datasetUUID,
+                                    FileParse::FileFormat format = FileParse::FileFormat::XML);
 
     //! Entry names above are canonical in their .xml spelling; this returns the name to
     //! actually write for the requested format ("Model.xml" -> "Model.json" under JSON).

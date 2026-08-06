@@ -88,9 +88,9 @@ namespace BCLibrary
         return constant_;
     }
 
-    std::string Tags::fromEnvironment() const
+    std::string Tags::fromTimeSeries() const
     {
-        return fromEnvironment_;
+        return fromTimeSeries_;
     }
 
     std::string Tags::model() const

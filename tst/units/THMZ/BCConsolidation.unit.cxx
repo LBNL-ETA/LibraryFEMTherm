@@ -116,13 +116,13 @@ TEST(TestBCConsolidationMigration, TransientArchiveTimestepsBecomeDatasets)
             ++transientSegments;
             // No type records were embedded, so the record binding stays legacy-only.
             EXPECT_FALSE(segment.bcUUID.has_value());
-            if(segment.environmentUUID.has_value())
+            if(segment.timeSeriesUUID.has_value())
             {
                 ++withDataset;
                 const auto expected{
                   legacy.datasetUUIDByFileName.find(segment.transientRecordData->transientFileName)};
                 ASSERT_NE(expected, legacy.datasetUUIDByFileName.end());
-                EXPECT_EQ(segment.environmentUUID.value(), expected->second);
+                EXPECT_EQ(segment.timeSeriesUUID.value(), expected->second);
             }
         }
     }

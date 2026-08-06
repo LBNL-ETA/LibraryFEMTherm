@@ -94,9 +94,9 @@ namespace BCLibrary
         bool isIGUSurface{false};
     };
 
-    //! The set of channel roles the record reads from an environment dataset, in stable
+    //! The set of channel roles the record reads from an time series dataset, in stable
     //! first-appearance order. Empty result == steady-state capable.
-    [[nodiscard]] std::vector<EnvironmentDataLibrary::ChannelRole>
+    [[nodiscard]] std::vector<TimeSeriesLibrary::ChannelRole>
       requiredRoles(const BoundaryCondition & boundaryCondition);
 
     [[nodiscard]] bool isSteadyCapable(const BoundaryCondition & boundaryCondition);

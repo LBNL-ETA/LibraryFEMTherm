@@ -11,18 +11,18 @@ namespace BCLibrary
         return std::holds_alternative<Constant>(source);
     }
 
-    bool isFromEnvironment(const Source & source)
+    bool isFromTimeSeries(const Source & source)
     {
-        return std::holds_alternative<FromEnvironment>(source);
+        return std::holds_alternative<FromTimeSeries>(source);
     }
 
     namespace
     {
-        using EnvironmentDataLibrary::ChannelRole;
+        using TimeSeriesLibrary::ChannelRole;
 
         void appendRole(std::vector<ChannelRole> & roles, const Source & source)
         {
-            if(const auto * environment = std::get_if<FromEnvironment>(&source))
+            if(const auto * environment = std::get_if<FromTimeSeries>(&source))
             {
                 if(!lbnl::contains(roles, environment->role))
                 {
@@ -112,7 +112,7 @@ namespace BCLibrary
         };
     }   // namespace
 
-    std::vector<EnvironmentDataLibrary::ChannelRole> requiredRoles(const BoundaryCondition & boundaryCondition)
+    std::vector<TimeSeriesLibrary::ChannelRole> requiredRoles(const BoundaryCondition & boundaryCondition)
     {
         return std::visit(RequiredRolesVisitor{}, boundaryCondition.data);
     }

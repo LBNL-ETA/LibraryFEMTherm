@@ -2,7 +2,7 @@
 
 #include "LibraryUtilities/Common.hxx"
 
-namespace EnvironmentDataLibrary
+namespace TimeSeriesLibrary
 {
     namespace
     {
@@ -25,14 +25,14 @@ namespace EnvironmentDataLibrary
         }
     }   // namespace
 
-    std::string Tags::environmentData() const
+    std::string Tags::timeSeriesData() const
     {
-        return environmentData_;
+        return timeSeriesData_;
     }
 
-    std::string Tags::environment() const
+    std::string Tags::timeSeries() const
     {
-        return environment_;
+        return timeSeries_;
     }
 
     std::string Tags::version() const
@@ -94,4 +94,4 @@ namespace EnvironmentDataLibrary
     {
         return LibraryCommon::stringVector(channelRoleMap());
     }
-}   // namespace EnvironmentDataLibrary
+}   // namespace TimeSeriesLibrary

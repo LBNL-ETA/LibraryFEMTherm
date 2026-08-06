@@ -137,7 +137,7 @@ namespace ThermFile
         //! Absent in pre-consolidation archives, where the binding is the record name above
         //! (steady state) or transientRecordData (transient); migration fills these on load.
         std::optional<std::string> bcUUID;
-        std::optional<std::string> environmentUUID;
+        std::optional<std::string> timeSeriesUUID;
         std::string fluxTag;
         bool isBlocking{false};
         std::string neighborPolygonUUID;

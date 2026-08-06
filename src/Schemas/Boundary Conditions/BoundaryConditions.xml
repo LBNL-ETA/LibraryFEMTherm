@@ -343,15 +343,15 @@
 		<IGUSurface>false</IGUSurface>
 		<SurfaceExchange>
 			<RelativeHumidity>
-				<FromEnvironment>RelativeHumidity</FromEnvironment>
+				<FromTimeSeries>RelativeHumidity</FromTimeSeries>
 			</RelativeHumidity>
 			<Convection>
 				<Model>Fixed Convection Coefficient</Model>
 				<AirTemperature>
-					<FromEnvironment>AirTemperature</FromEnvironment>
+					<FromTimeSeries>AirTemperature</FromTimeSeries>
 				</AirTemperature>
 				<FilmCoefficient>
-					<FromEnvironment>ConvectiveCoefficient</FromEnvironment>
+					<FromTimeSeries>ConvectiveCoefficient</FromTimeSeries>
 				</FilmCoefficient>
 			</Convection>
 		</SurfaceExchange>
@@ -364,23 +364,23 @@
 		<IGUSurface>false</IGUSurface>
 		<SurfaceExchange>
 			<RelativeHumidity>
-				<FromEnvironment>RelativeHumidity</FromEnvironment>
+				<FromTimeSeries>RelativeHumidity</FromTimeSeries>
 			</RelativeHumidity>
 			<Convection>
 				<Model>Fixed Convection Coefficient</Model>
 				<AirTemperature>
-					<FromEnvironment>AirTemperature</FromEnvironment>
+					<FromTimeSeries>AirTemperature</FromTimeSeries>
 				</AirTemperature>
 				<FilmCoefficient>
-					<FromEnvironment>ConvectiveCoefficient</FromEnvironment>
+					<FromTimeSeries>ConvectiveCoefficient</FromTimeSeries>
 				</FilmCoefficient>
 			</Convection>
 			<FixedCoefficient>
 				<Temperature>
-					<FromEnvironment>RadiantTemperature</FromEnvironment>
+					<FromTimeSeries>RadiantTemperature</FromTimeSeries>
 				</Temperature>
 				<Coefficient>
-					<FromEnvironment>RadiativeCoefficient</FromEnvironment>
+					<FromTimeSeries>RadiativeCoefficient</FromTimeSeries>
 				</Coefficient>
 			</FixedCoefficient>
 		</SurfaceExchange>
@@ -393,15 +393,15 @@
 		<IGUSurface>false</IGUSurface>
 		<SurfaceExchange>
 			<RelativeHumidity>
-				<FromEnvironment>RelativeHumidity</FromEnvironment>
+				<FromTimeSeries>RelativeHumidity</FromTimeSeries>
 			</RelativeHumidity>
 			<Convection>
 				<Model>ASHRAE/NFRC Outside</Model>
 				<AirTemperature>
-					<FromEnvironment>AirTemperature</FromEnvironment>
+					<FromTimeSeries>AirTemperature</FromTimeSeries>
 				</AirTemperature>
 				<WindSpeed>
-					<FromEnvironment>WindSpeed</FromEnvironment>
+					<FromTimeSeries>WindSpeed</FromTimeSeries>
 				</WindSpeed>
 			</Convection>
 		</SurfaceExchange>
@@ -440,10 +440,10 @@
 		<IGUSurface>false</IGUSurface>
 		<PrescribedState>
 			<Temperature>
-				<FromEnvironment>PrescribedTemperature</FromEnvironment>
+				<FromTimeSeries>PrescribedTemperature</FromTimeSeries>
 			</Temperature>
 			<RelativeHumidity>
-				<FromEnvironment>PrescribedHumidity</FromEnvironment>
+				<FromTimeSeries>PrescribedHumidity</FromTimeSeries>
 			</RelativeHumidity>
 		</PrescribedState>
 	</BoundaryCondition>
@@ -455,12 +455,12 @@
 		<IGUSurface>false</IGUSurface>
 		<SurfaceExchange>
 			<RelativeHumidity>
-				<FromEnvironment>RelativeHumidity</FromEnvironment>
+				<FromTimeSeries>RelativeHumidity</FromTimeSeries>
 			</RelativeHumidity>
 			<Convection>
 				<Model>ASHRAE/NFRC Inside</Model>
 				<AirTemperature>
-					<FromEnvironment>AirTemperature</FromEnvironment>
+					<FromTimeSeries>AirTemperature</FromTimeSeries>
 				</AirTemperature>
 			</Convection>
 		</SurfaceExchange>
@@ -473,19 +473,19 @@
 		<IGUSurface>false</IGUSurface>
 		<SurfaceExchange>
 			<RelativeHumidity>
-				<FromEnvironment>RelativeHumidity</FromEnvironment>
+				<FromTimeSeries>RelativeHumidity</FromTimeSeries>
 			</RelativeHumidity>
 			<Convection>
 				<Model>ASHRAE/NFRC Outside</Model>
 				<AirTemperature>
-					<FromEnvironment>AirTemperature</FromEnvironment>
+					<FromTimeSeries>AirTemperature</FromTimeSeries>
 				</AirTemperature>
 				<WindSpeed>
-					<FromEnvironment>WindSpeed</FromEnvironment>
+					<FromTimeSeries>WindSpeed</FromTimeSeries>
 				</WindSpeed>
 			</Convection>
 			<Flux>
-				<FromEnvironment>HeatFlux</FromEnvironment>
+				<FromTimeSeries>HeatFlux</FromTimeSeries>
 			</Flux>
 		</SurfaceExchange>
 	</BoundaryCondition>
@@ -497,19 +497,19 @@
 		<IGUSurface>false</IGUSurface>
 		<SurfaceExchange>
 			<RelativeHumidity>
-				<FromEnvironment>RelativeHumidity</FromEnvironment>
+				<FromTimeSeries>RelativeHumidity</FromTimeSeries>
 			</RelativeHumidity>
 			<Convection>
 				<Model>ASHRAE/NFRC Outside</Model>
 				<AirTemperature>
-					<FromEnvironment>AirTemperature</FromEnvironment>
+					<FromTimeSeries>AirTemperature</FromTimeSeries>
 				</AirTemperature>
 				<WindSpeed>
-					<FromEnvironment>WindSpeed</FromEnvironment>
+					<FromTimeSeries>WindSpeed</FromTimeSeries>
 				</WindSpeed>
 			</Convection>
 			<Flux>
-				<FromEnvironment>HeatFlux</FromEnvironment>
+				<FromTimeSeries>HeatFlux</FromTimeSeries>
 			</Flux>
 		</SurfaceExchange>
 	</BoundaryCondition>
@@ -521,7 +521,7 @@
 		<IGUSurface>false</IGUSurface>
 		<PrescribedState>
 			<Temperature>
-				<FromEnvironment>PrescribedTemperature</FromEnvironment>
+				<FromTimeSeries>PrescribedTemperature</FromTimeSeries>
 			</Temperature>
 		</PrescribedState>
 	</BoundaryCondition>
@@ -533,18 +533,18 @@
 		<IGUSurface>false</IGUSurface>
 		<SurfaceExchange>
 			<RelativeHumidity>
-				<FromEnvironment>RelativeHumidity</FromEnvironment>
+				<FromTimeSeries>RelativeHumidity</FromTimeSeries>
 			</RelativeHumidity>
 			<Convection>
 				<Model>Kimura</Model>
 				<AirTemperature>
-					<FromEnvironment>AirTemperature</FromEnvironment>
+					<FromTimeSeries>AirTemperature</FromTimeSeries>
 				</AirTemperature>
 				<WindSpeed>
-					<FromEnvironment>WindSpeed</FromEnvironment>
+					<FromTimeSeries>WindSpeed</FromTimeSeries>
 				</WindSpeed>
 				<WindDirection>
-					<FromEnvironment>WindDirection</FromEnvironment>
+					<FromTimeSeries>WindDirection</FromTimeSeries>
 				</WindDirection>
 			</Convection>
 		</SurfaceExchange>
@@ -557,15 +557,15 @@
 		<IGUSurface>false</IGUSurface>
 		<SurfaceExchange>
 			<RelativeHumidity>
-				<FromEnvironment>RelativeHumidity</FromEnvironment>
+				<FromTimeSeries>RelativeHumidity</FromTimeSeries>
 			</RelativeHumidity>
 			<Convection>
 				<Model>Fixed Convection Coefficient</Model>
 				<AirTemperature>
-					<FromEnvironment>AirTemperature</FromEnvironment>
+					<FromTimeSeries>AirTemperature</FromTimeSeries>
 				</AirTemperature>
 				<FilmCoefficient>
-					<FromEnvironment>ConvectiveCoefficient</FromEnvironment>
+					<FromTimeSeries>ConvectiveCoefficient</FromTimeSeries>
 				</FilmCoefficient>
 			</Convection>
 		</SurfaceExchange>
