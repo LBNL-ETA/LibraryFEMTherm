@@ -25,7 +25,8 @@ namespace BCLibrary
         //! BoundaryConditions.xml entry. Loading from an archive without that entry
         //! leaves the DB unchanged (pre-consolidation file; migration handles it).
         void loadFromZipFile(const std::string & zipFileName);
-        [[nodiscard]] int saveToZipFile(std::string_view zipFileName) const;
+        [[nodiscard]] int saveToZipFile(std::string_view zipFileName,
+                                        FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
         [[nodiscard]] std::optional<BoundaryCondition> getByUUID(std::string_view uuid) const;
         [[nodiscard]] std::optional<BoundaryCondition> getByName(std::string_view name) const;

@@ -13,6 +13,7 @@
 #include "Tags.hxx"
 
 #include "Common/Common.hxx"
+#include "Common/DB.hxx"
 #include "LibraryUtilities/Common.hxx"
 #include "LibraryUtilities/FileManipulation.hxx"
 #include "THMZ/ZipModule/ZipModule.hxx"
@@ -25,7 +26,10 @@ namespace EnvironmentDataLibrary
         {
             Tags tags;
             const std::string fileContent{
-              Common::generateXmlContent(tags.environmentData(), "EnvironmentData.xsd", m_Version)};
+              Common::generateLibraryContent(tags.environmentData(),
+                                             "EnvironmentData.xsd",
+                                             m_Version,
+                                             FileParse::detectFileFormatFromExtension(xmlFileName))};
             File::createFileFromString(xmlFileName, fileContent);
         }
 
@@ -35,7 +39,7 @@ namespace EnvironmentDataLibrary
     void DB::loadFromString(const std::string & str)
     {
         Tags tags;
-        auto node{Common::getTopNodeFromString(str, tags.environmentData())};
+        auto node{Common::getTopNodeFromString(Common::stripUTF8BOM(str), tags.environmentData())};
 
         if(node.has_value())
         {
@@ -85,13 +89,17 @@ namespace EnvironmentDataLibrary
     std::vector<EnvironmentData> DB::loadEnvironmentDataFromFile(const std::string & xmlFileName)
     {
         Tags tags;
-        const auto topNode{getXMLTopNodeFromFile(xmlFileName, tags.environmentData())};
+        auto topNode{Common::getLibraryTopNodeFromFile(xmlFileName, tags.environmentData())};
 
         std::vector<EnvironmentData> environments;
         if(topNode.has_value())
         {
-            topNode.value() >> FileParse::Child{tags.version(), m_Version};
-            topNode.value() >> FileParse::Child{tags.environment(), environments};
+            std::visit(
+              [this, &tags, &environments](auto & adapter) {
+                  adapter >> FileParse::Child{tags.version(), m_Version};
+                  adapter >> FileParse::Child{tags.environment(), environments};
+              },
+              topNode.value());
         }
 
         return environments;
@@ -194,15 +202,19 @@ namespace EnvironmentDataLibrary
         return datasets;
     }
 
-    int saveDatasetsToZipFile(const std::vector<EnvironmentData> & datasets, const std::string & zipFileName)
+    int saveDatasetsToZipFile(const std::vector<EnvironmentData> & datasets,
+                              const std::string & zipFileName,
+                              FileParse::FileFormat format)
     {
         int written = 0;
         for(const auto & dataset : datasets)
         {
             DB entryDB;
             entryDB.add(dataset);
-            const auto entryName{ThermZip::environmentDataEntryName(dataset.UUID)};
-            written += ThermZip::addToZipFile(zipFileName, entryName, entryDB.saveToString());
+            const auto entryName{ThermZip::environmentDataEntryName(dataset.UUID, format)};
+            auto obsoleteNames{ThermZip::entryNameCandidates(ThermZip::environmentDataEntryName(dataset.UUID))};
+            std::erase(obsoleteNames, entryName);
+            written += ThermZip::addToZipFile(zipFileName, entryName, entryDB.saveToString(format), obsoleteNames);
         }
 
         return written;

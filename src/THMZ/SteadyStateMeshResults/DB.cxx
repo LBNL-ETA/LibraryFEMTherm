@@ -11,7 +11,7 @@ namespace ThermFile
 
     std::optional<MeshResults> loadSteadyStateMeshResultsFromFile(const std::string & fileName)
     {
-        return Common::loadFromXMLFile<MeshResults>(fileName, topNodeName);
+        return Common::loadFromFile<MeshResults>(fileName, topNodeName);
     }
 
     std::optional<MeshResults> loadSteadyStateMeshResultsFromZipFile(const std::string & fileName)
@@ -19,23 +19,30 @@ namespace ThermFile
         return Common::loadFromZipFile<MeshResults>(fileName, ThermZip::SteadyStateMeshResultsName, topNodeName);
     }
 
-    int saveToFile(const MeshResults & results, std::string_view fileName)
+    int saveToFile(const MeshResults & results, std::string_view fileName, FileParse::FileFormat format)
     {
-        return Common::saveToXMLFile(results, fileName, topNodeName);
+        switch(format)
+        {
+            case FileParse::FileFormat::JSON:
+                return Common::saveToJSONFile(results, fileName, topNodeName);
+            case FileParse::FileFormat::XML:
+            default:
+                return Common::saveToXMLFile(results, fileName, topNodeName);
+        }
     }
 
-    std::string saveToString(const MeshResults & results)
+    std::string saveToString(const MeshResults & results, FileParse::FileFormat format)
     {
-        return Common::saveToXMLString(results, topNodeName);
+        return Common::saveToString(results, topNodeName, format);
     }
 
-    int saveToZipFile(const MeshResults & results, std::string_view zipFileName)
+    int saveToZipFile(const MeshResults & results, std::string_view zipFileName, FileParse::FileFormat format)
     {
-        return Common::saveToZIPFile(results, ThermZip::SteadyStateMeshResultsName, zipFileName, topNodeName);
+        return Common::saveToZIPFile(results, ThermZip::SteadyStateMeshResultsName, zipFileName, topNodeName, format);
     }
 
-    std::optional<MeshResults> loadSteadyStateMeshResultsFromString(const std::string & xmlString)
+    std::optional<MeshResults> loadSteadyStateMeshResultsFromString(const std::string & str)
     {
-        return Common::loadFromXMLString<MeshResults>(xmlString, topNodeName);
+        return Common::loadFromString<MeshResults>(std::string{Common::stripUTF8BOM(str)}, topNodeName);
     }
 }   // namespace ThermFile

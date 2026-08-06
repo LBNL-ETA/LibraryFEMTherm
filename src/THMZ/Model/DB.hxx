@@ -15,10 +15,13 @@ namespace ThermFile
                    FileParse::FileFormat format = FileParse::FileFormat::XML);
 
     std::optional<ThermModel> loadThermModelFromZipFile(const std::string & zipFileName);
-    int saveToZipFile(const ThermModel & model, std::string_view zipFileName);
+    int saveToZipFile(const ThermModel & model,
+                      std::string_view zipFileName,
+                      FileParse::FileFormat format = FileParse::FileFormat::XML);
 
+    //! Unknown format means: let the content decide (XML or JSON).
     std::optional<ThermModel> loadThermModelFromString(const std::string & str,
-                                                       FileParse::FileFormat format = FileParse::FileFormat::XML);
+                                                       FileParse::FileFormat format = FileParse::FileFormat::Unknown);
     std::string saveToString(const ThermModel & model,
                              FileParse::FileFormat format = FileParse::FileFormat::XML);
 }   // namespace ThermFile

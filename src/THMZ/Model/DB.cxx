@@ -42,13 +42,18 @@ namespace ThermFile
         return Common::saveToString(model, topNodeName, format);
     }
 
-    int saveToZipFile(const ThermModel & model, std::string_view zipFileName)
+    int saveToZipFile(const ThermModel & model, std::string_view zipFileName, FileParse::FileFormat format)
     {
-        return Common::saveToZIPFile(model, ThermZip::ModelFileName, zipFileName, topNodeName);
+        return Common::saveToZIPFile(model, ThermZip::ModelFileName, zipFileName, topNodeName, format);
     }
 
     std::optional<ThermModel> loadThermModelFromString(const std::string & str, FileParse::FileFormat format)
     {
-        return Common::loadFromString<ThermModel>(str, topNodeName, format);
+        const std::string content{Common::stripUTF8BOM(str)};
+        if(format == FileParse::FileFormat::Unknown)
+        {
+            return Common::loadFromString<ThermModel>(content, topNodeName);
+        }
+        return Common::loadFromString<ThermModel>(content, topNodeName, format);
     }
 }   // namespace ThermFile

@@ -14,6 +14,7 @@
 #include "Tags.hxx"
 
 #include "Common/Common.hxx"
+#include "Common/DB.hxx"
 #include "LibraryUtilities/Common.hxx"
 #include "LibraryUtilities/FileManipulation.hxx"
 
@@ -25,7 +26,10 @@ namespace BCLibrary
         {
             Tags tags;
             const std::string fileContent{
-              Common::generateXmlContent(tags.boundaryConditions(), "BoundaryConditions.xsd", m_Version)};
+              Common::generateLibraryContent(tags.boundaryConditions(),
+                                             "BoundaryConditions.xsd",
+                                             m_Version,
+                                             FileParse::detectFileFormatFromExtension(xmlFileName))};
             File::createFileFromString(xmlFileName, fileContent);
         }
 
@@ -35,7 +39,7 @@ namespace BCLibrary
     void DB::loadFromString(const std::string & str)
     {
         Tags tags;
-        auto node{Common::getTopNodeFromString(str, tags.boundaryConditions())};
+        auto node{Common::getTopNodeFromString(Common::stripUTF8BOM(str), tags.boundaryConditions())};
 
         if(node.has_value())
         {
@@ -74,7 +78,16 @@ namespace BCLibrary
 
         try
         {
-            loadFromString(ThermZip::unzipFile(zipFileName, ThermZip::BoundaryConditionsFileName));
+            const auto candidates{ThermZip::entryNameCandidates(ThermZip::BoundaryConditionsFileName)};
+            const auto entries{ThermZip::unzipFiles(zipFileName, candidates)};
+            for(const auto & candidate : candidates)
+            {
+                if(const auto entry{entries.find(candidate)}; entry != entries.end())
+                {
+                    loadFromString(entry->second);
+                    return;
+                }
+            }
         }
         catch(const std::runtime_error &)
         {
@@ -82,9 +95,12 @@ namespace BCLibrary
         }
     }
 
-    int DB::saveToZipFile(std::string_view zipFileName) const
+    int DB::saveToZipFile(std::string_view zipFileName, FileParse::FileFormat format) const
     {
-        return ThermZip::addToZipFile(zipFileName, ThermZip::BoundaryConditionsFileName, saveToString());
+        const auto entryName{ThermZip::entryNameForFormat(ThermZip::BoundaryConditionsFileName, format)};
+        auto obsoleteNames{ThermZip::entryNameCandidates(ThermZip::BoundaryConditionsFileName)};
+        std::erase(obsoleteNames, entryName);
+        return ThermZip::addToZipFile(zipFileName, entryName, saveToString(format), obsoleteNames);
     }
 
     int DB::saveToFile(FileParse::FileFormat format) const
@@ -107,13 +123,17 @@ namespace BCLibrary
     std::vector<BoundaryCondition> DB::loadBoundaryConditionsFromFile(const std::string & xmlFileName)
     {
         Tags tags;
-        const auto topNode{getXMLTopNodeFromFile(xmlFileName, tags.boundaryConditions())};
+        auto topNode{Common::getLibraryTopNodeFromFile(xmlFileName, tags.boundaryConditions())};
 
         std::vector<BoundaryCondition> boundaryConditions;
         if(topNode.has_value())
         {
-            topNode.value() >> FileParse::Child{tags.version(), m_Version};
-            topNode.value() >> FileParse::Child{tags.boundaryCondition(), boundaryConditions};
+            std::visit(
+              [this, &tags, &boundaryConditions](auto & adapter) {
+                  adapter >> FileParse::Child{tags.version(), m_Version};
+                  adapter >> FileParse::Child{tags.boundaryCondition(), boundaryConditions};
+              },
+              topNode.value());
         }
 
         return boundaryConditions;

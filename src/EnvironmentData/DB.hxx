@@ -50,5 +50,7 @@ namespace EnvironmentDataLibrary
     [[nodiscard]] std::vector<EnvironmentData> loadDatasetsFromZipFile(const std::string & zipFileName);
 
     //! Writes every dataset as its own entry; returns the number of entries written.
-    int saveDatasetsToZipFile(const std::vector<EnvironmentData> & datasets, const std::string & zipFileName);
+    int saveDatasetsToZipFile(const std::vector<EnvironmentData> & datasets,
+                              const std::string & zipFileName,
+                              FileParse::FileFormat format = FileParse::FileFormat::XML);
 }   // namespace EnvironmentDataLibrary

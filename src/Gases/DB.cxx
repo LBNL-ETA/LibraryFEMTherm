@@ -13,6 +13,7 @@
 #include "Operators.hxx"
 
 #include "Common/Common.hxx"
+#include "Common/DB.hxx"
 #include "LibraryUtilities/Common.hxx"
 #include "LibraryUtilities/FileManipulation.hxx"
 
@@ -23,26 +24,26 @@ namespace GasesLibrary
     T processGasesNodeFromFile(const std::string_view & fileName, const std::string & tag)
     {
         Tags fileTags;
-        return lbnl::extend(getXMLTopNodeFromFile(fileName.data(), fileTags.gases()))
-          .and_then([&](auto & node) {
-              T result{};
-              node >> FileParse::Child{tag, result};
-              return std::optional<T>{result};
-          })
-          .value_or(T{});
+        T result{};
+        if(auto node{Common::getLibraryTopNodeFromFile(fileName, fileTags.gases())}; node.has_value())
+        {
+            std::visit([&tag, &result](auto & adapter) { adapter >> FileParse::Child{tag, result}; },
+                       node.value());
+        }
+        return result;
     }
 
     template<typename T>
     T processGasesNodeFromString(const std::string_view & xmlString, const std::string & tag)
     {
         Tags fileTags;
-        return lbnl::extend(getXMLTopNodeFromString(xmlString.data(), fileTags.gases()))
-          .and_then([&](auto & node) {
-              T result{};
-              node >> FileParse::Child{tag, result};
-              return std::optional<T>{result};
-          })
-          .value_or(T{});
+        T result{};
+        if(auto node{Common::getTopNodeFromString(Common::stripUTF8BOM(xmlString), fileTags.gases())}; node.has_value())
+        {
+            std::visit([&tag, &result](auto & adapter) { adapter >> FileParse::Child{tag, result}; },
+                       node.value());
+        }
+        return result;
     }
 
     std::string loadVersionFromXMLFile(std::string_view fileName)
@@ -81,8 +82,9 @@ namespace GasesLibrary
         if(std::ifstream f(fileName.c_str()); !f.good())
         {
             Tags tag;
-            // This is minimal requirement for XML file. Otherwise, component will crash.
-            const std::string fileContent{Common::generateXmlContent(tag.gases(), "Gases.xsd", m_Version)};
+            // This is minimal requirement for the library file. Otherwise, component will crash.
+            const std::string fileContent{Common::generateLibraryContent(
+              tag.gases(), "Gases.xsd", m_Version, FileParse::detectFileFormatFromExtension(fileName))};
             File::createFileFromString(fileName, fileContent);
         }
 

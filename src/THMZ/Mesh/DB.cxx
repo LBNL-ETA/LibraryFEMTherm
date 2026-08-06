@@ -36,13 +36,18 @@ namespace ThermFile::Mesh
         return Common::saveToString(mesh, topNodeName, format);
     }
 
-    int saveToZipFile(const Mesh & mesh, std::string_view zipFileName)
+    int saveToZipFile(const Mesh & mesh, std::string_view zipFileName, FileParse::FileFormat format)
     {
-        return Common::saveToZIPFile(mesh, ThermZip::MeshName, zipFileName, topNodeName);
+        return Common::saveToZIPFile(mesh, ThermZip::MeshName, zipFileName, topNodeName, format);
     }
 
     std::optional<Mesh> loadMeshFromString(const std::string & str, FileParse::FileFormat format)
     {
-        return Common::loadFromString<Mesh>(str, topNodeName, format);
+        const std::string content{Common::stripUTF8BOM(str)};
+        if(format == FileParse::FileFormat::Unknown)
+        {
+            return Common::loadFromString<Mesh>(content, topNodeName);
+        }
+        return Common::loadFromString<Mesh>(content, topNodeName, format);
     }
 }   // namespace ThermFile::Mesh

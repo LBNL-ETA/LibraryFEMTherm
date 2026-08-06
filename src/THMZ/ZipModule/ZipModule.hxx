@@ -5,6 +5,8 @@
 #include <map>
 #include <vector>
 
+#include <fileParse/FileFormat.hxx>
+
 namespace ThermZip
 {
     const std::string ModelFileName = "Model.xml";
@@ -45,7 +47,16 @@ namespace ThermZip
     //! Archive entry name for one environment dataset: "environment data/<uuid>.xml".
     //! Content-hash UUIDs make the name stable for identical data, so re-embedding the
     //! same dataset never duplicates an entry.
-    std::string environmentDataEntryName(const std::string & datasetUUID);
+    std::string environmentDataEntryName(const std::string & datasetUUID,
+                                         FileParse::FileFormat format = FileParse::FileFormat::XML);
+
+    //! Entry names above are canonical in their .xml spelling; this returns the name to
+    //! actually write for the requested format ("Model.xml" -> "Model.json" under JSON).
+    std::string entryNameForFormat(const std::string & xmlEntryName, FileParse::FileFormat format);
+
+    //! All format spellings of a canonical .xml entry name, JSON variant first. Readers
+    //! probe these in order so a re-saved archive wins over a stale counterpart entry.
+    std::vector<std::string> entryNameCandidates(const std::string & xmlEntryName);
 
     const std::string SteadyStateResultsName = "SteadyStateResults.xml";
     const std::string SteadyStateMeshResultsName = "SteadyStateMeshResults.xml";
@@ -85,7 +96,12 @@ namespace ThermZip
     //! \param zipFileName The name of the zip archive
     //! \param fileName The name of the file to add to the zip archive
     //! \param text The content of the file to add to the zip archive
+    //! \param obsoleteNames Entries to drop while rewriting the archive; used to remove the
+    //! other-format spelling of fileName so a format switch never leaves two model entries behind
     //! \return 1 if the file was successfully added to the zip archive, 0 otherwise
-    int addToZipFile(std::string_view zipFileName, std::string_view fileName, std::string_view text);
+    int addToZipFile(std::string_view zipFileName,
+                     std::string_view fileName,
+                     std::string_view text,
+                     const std::vector<std::string> & obsoleteNames = {});
 
 }   // namespace ThermZip

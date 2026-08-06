@@ -200,7 +200,10 @@ namespace ThermZip
         return itr->second;
     }
 
-    int addToZipFile(std::string_view zipFileName, std::string_view fileName, std::string_view text)
+    int addToZipFile(std::string_view zipFileName,
+                     std::string_view fileName,
+                     std::string_view text,
+                     const std::vector<std::string> & obsoleteNames)
     {
         // Step 1: Extract existing files
         std::vector<std::string> fileNames;   // Empty vector to extract all files
@@ -210,6 +213,10 @@ namespace ThermZip
                                                              : std::map<std::string, std::string>();
 
         // Step 2: Add or replace the target file in the map
+        for(const auto & obsoleteName : obsoleteNames)
+        {
+            existingFiles.erase(obsoleteName);
+        }
         existingFiles[std::string(fileName)] = std::string(text);
 
         // Step 3: Recreate the zip archive
@@ -284,8 +291,35 @@ namespace ThermZip
         return TimestepFilesDir + "/" + fileName;
     }
 
-    std::string environmentDataEntryName(const std::string & datasetUUID)
+    std::string environmentDataEntryName(const std::string & datasetUUID, FileParse::FileFormat format)
     {
-        return EnvironmentDataDir + "/" + datasetUUID + ".xml";
+        return entryNameForFormat(EnvironmentDataDir + "/" + datasetUUID + ".xml", format);
+    }
+
+    std::string entryNameForFormat(const std::string & xmlEntryName, FileParse::FileFormat format)
+    {
+        if(format != FileParse::FileFormat::JSON)
+        {
+            return xmlEntryName;
+        }
+
+        const std::string xmlExtension{".xml"};
+        if(xmlEntryName.size() < xmlExtension.size()
+           || xmlEntryName.compare(xmlEntryName.size() - xmlExtension.size(), xmlExtension.size(), xmlExtension) != 0)
+        {
+            return xmlEntryName;
+        }
+
+        return xmlEntryName.substr(0, xmlEntryName.size() - xmlExtension.size()) + ".json";
+    }
+
+    std::vector<std::string> entryNameCandidates(const std::string & xmlEntryName)
+    {
+        std::vector<std::string> candidates{entryNameForFormat(xmlEntryName, FileParse::FileFormat::JSON)};
+        if(candidates.front() != xmlEntryName)
+        {
+            candidates.push_back(xmlEntryName);
+        }
+        return candidates;
     }
 }   // namespace ThermZip

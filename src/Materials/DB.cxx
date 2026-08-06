@@ -10,6 +10,7 @@
 #include "Tags.hxx"
 
 #include "Common/Common.hxx"
+#include "Common/DB.hxx"
 
 #include "LibraryUtilities/FileManipulation.hxx"
 #include "LibraryUtilities/Common.hxx"
@@ -25,7 +26,8 @@ namespace MaterialsLibrary
         // Check if the file exists and create an empty one if it doesn't.
         if(std::ifstream f(xmlFileName); !f.good())
         {
-            const std::string fileContent{Common::generateXmlContent("Materials", "Materials.xsd", m_Version)};
+            const std::string fileContent{Common::generateLibraryContent(
+              "Materials", "Materials.xsd", m_Version, FileParse::detectFileFormatFromExtension(xmlFileName))};
             File::createFileFromString(xmlFileName, fileContent);
         }
 
@@ -36,7 +38,7 @@ namespace MaterialsLibrary
     {
         using MaterialsLibrary::operator>>;
 
-        auto node{Common::getTopNodeFromString(str, materialsString())};
+        auto node{Common::getTopNodeFromString(Common::stripUTF8BOM(str), materialsString())};
         if(node.has_value())
         {
             std::visit(
@@ -156,14 +158,18 @@ namespace MaterialsLibrary
     {
         using MaterialsLibrary::operator>>;
 
-        const auto xmlNode{getXMLTopNodeFromFile(materialXMLFileName, materialsString())};
+        auto topNode{Common::getLibraryTopNodeFromFile(materialXMLFileName, materialsString())};
 
         std::vector<Material> materials;
 
-        if(xmlNode.has_value())
+        if(topNode.has_value())
         {
-            xmlNode.value() >> FileParse::Child{"Version", m_Version};
-            xmlNode.value() >> FileParse::Child{materialString(), materials};
+            std::visit(
+              [this, &materials](auto & adapter) {
+                  adapter >> FileParse::Child{"Version", m_Version};
+                  adapter >> FileParse::Child{materialString(), materials};
+              },
+              topNode.value());
         }
 
         return materials;

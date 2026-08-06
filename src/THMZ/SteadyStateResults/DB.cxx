@@ -13,7 +13,7 @@ namespace ThermFile
 
     std::optional<SteadyStateResults> loadSteadyStateResultsFromFile(const std::string & fileName)
     {
-        return Common::loadFromXMLFile<SteadyStateResults>(fileName, topNodeName);
+        return Common::loadFromFile<SteadyStateResults>(fileName, topNodeName);
     }
 
     std::optional<SteadyStateResults> loadSteadyStateResultsFromZipFile(const std::string & fileName)
@@ -24,7 +24,12 @@ namespace ThermFile
     std::optional<SteadyStateResults> loadSteadyStateResultsFromString(const std::string & data,
                                                                        FileParse::FileFormat format)
     {
-        return Common::loadFromString<SteadyStateResults>(data, topNodeName, format);
+        const std::string content{Common::stripUTF8BOM(data)};
+        if(format == FileParse::FileFormat::Unknown)
+        {
+            return Common::loadFromString<SteadyStateResults>(content, topNodeName);
+        }
+        return Common::loadFromString<SteadyStateResults>(content, topNodeName, format);
     }
 
     int saveToFile(const SteadyStateResults & results,
@@ -47,8 +52,8 @@ namespace ThermFile
         return Common::saveToString(results, topNodeName, format);
     }
 
-    int saveToZipFile(const SteadyStateResults & results, std::string_view zipFileName)
+    int saveToZipFile(const SteadyStateResults & results, std::string_view zipFileName, FileParse::FileFormat format)
     {
-        return Common::saveToZIPFile(results, ThermZip::SteadyStateResultsName, zipFileName, topNodeName);
+        return Common::saveToZIPFile(results, ThermZip::SteadyStateResultsName, zipFileName, topNodeName, format);
     }
 }   // namespace ThermFile

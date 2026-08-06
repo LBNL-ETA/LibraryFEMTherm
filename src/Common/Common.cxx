@@ -15,6 +15,18 @@ namespace Common
                + "</Version>\n" + "</" + rootElement + ">";
     }
 
+    std::string generateLibraryContent(const std::string & rootElement,
+                                       const std::string & schemaLocation,
+                                       const std::string & version,
+                                       FileParse::FileFormat format)
+    {
+        if(format == FileParse::FileFormat::JSON)
+        {
+            return "{\"" + rootElement + "\": {\"Version\": \"" + version + "\"}}";
+        }
+        return generateXmlContent(rootElement, schemaLocation, version);
+    }
+
     void createDirectoryIfNotExists(std::string_view dirName)
     {
         std::filesystem::path path(dirName);
