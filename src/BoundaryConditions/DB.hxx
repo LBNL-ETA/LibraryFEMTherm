@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -25,6 +26,8 @@ namespace BCLibrary
         //! BoundaryConditions.xml entry. Loading from an archive without that entry
         //! leaves the DB unchanged (pre-consolidation file; migration handles it).
         void loadFromZipFile(const std::string & zipFileName);
+        //! Same, but from already-extracted archive entries (no further extraction).
+        void loadFromEntries(const std::map<std::string, std::string> & entries);
         [[nodiscard]] int saveToZipFile(std::string_view zipFileName,
                                         FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 

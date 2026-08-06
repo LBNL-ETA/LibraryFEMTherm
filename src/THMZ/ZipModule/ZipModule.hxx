@@ -9,17 +9,19 @@
 
 namespace ThermZip
 {
-    const std::string ModelFileName = "Model.xml";
-    const std::string GasesFileName = "Gases.xml";
-    const std::string MaterialsFileName = "Materials.xml";
-    const std::string SteadyStateBCFileName = "SteadyStateBC.xml";
-    const std::string TransientTypeBCFileName = "TransientTypeBC.xml";
+    // Archive entry names are extension-free bases: the name is the entry's identity,
+    // the extension is the serialization format, appended by entryNameForFormat.
+    const std::string ModelFileName = "Model";
+    const std::string GasesFileName = "Gases";
+    const std::string MaterialsFileName = "Materials";
+    const std::string SteadyStateBCFileName = "SteadyStateBC";
+    const std::string TransientTypeBCFileName = "TransientTypeBC";
 
     // Transient results directory
 
     const std::string ResultsDirPath = "transient results";
 
-    const std::string GeometryFilePath = ResultsDirPath + "/Geometry.xml";
+    const std::string GeometryFilePath = ResultsDirPath + "/Geometry";
     const std::string HeatFluxFilePath = ResultsDirPath + "/HeatFlux.csv";
     const std::string HeatFluxEdgesFilePath = ResultsDirPath + "/HeatFluxEdges.csv";
     const std::string HumidityFilePath = ResultsDirPath + "/Humidities.csv";
@@ -41,27 +43,31 @@ namespace ThermZip
     const std::string TimestepFilesDir = "timestep input files";
 
     // Unified boundary condition library and time series datasets (BC consolidation)
-    const std::string BoundaryConditionsFileName = "BoundaryConditions.xml";
+    const std::string BoundaryConditionsFileName = "BoundaryConditions";
     const std::string TimeSeriesDir = "time series";
 
-    //! Archive entry name for one time series dataset: "time series/<uuid>.xml".
-    //! Content-hash UUIDs make the name stable for identical data, so re-embedding the
-    //! same dataset never duplicates an entry.
+    //! Archive entry base name for one time series dataset ("time series/<uuid>"), with
+    //! the format's extension appended. Content-hash UUIDs make the name stable for
+    //! identical data, so re-embedding the same dataset never duplicates an entry.
     std::string timeSeriesEntryName(const std::string & datasetUUID,
                                     FileParse::FileFormat format = FileParse::FileFormat::XML);
 
-    //! Entry names above are canonical in their .xml spelling; this returns the name to
-    //! actually write for the requested format ("Model.xml" -> "Model.json" under JSON).
-    std::string entryNameForFormat(const std::string & xmlEntryName, FileParse::FileFormat format);
+    //! Appends the format's extension to an extension-free entry base name
+    //! ("Model" -> "Model.xml" or "Model.json").
+    std::string entryNameForFormat(const std::string & baseName, FileParse::FileFormat format);
 
-    //! All format spellings of a canonical .xml entry name, JSON variant first. Readers
-    //! probe these in order so a re-saved archive wins over a stale counterpart entry.
-    std::vector<std::string> entryNameCandidates(const std::string & xmlEntryName);
+    //! Both format spellings of an entry base name, JSON variant first. Readers probe
+    //! these in order so a re-saved archive wins over a stale counterpart entry.
+    std::vector<std::string> entryNameCandidates(const std::string & baseName);
 
-    const std::string SteadyStateResultsName = "SteadyStateResults.xml";
-    const std::string SteadyStateMeshResultsName = "SteadyStateMeshResults.xml";
-    const std::string MeshName = "Mesh.xml";
-    const std::string CMALibrary = "CMALibrary.xml";
+    //! Looks up an entry base name in an extracted-archive map under both format
+    //! spellings; empty when the archive carries no such entry.
+    std::string findEntry(const std::map<std::string, std::string> & entries, const std::string & baseName);
+
+    const std::string SteadyStateResultsName = "SteadyStateResults";
+    const std::string SteadyStateMeshResultsName = "SteadyStateMeshResults";
+    const std::string MeshName = "Mesh";
+    const std::string CMALibrary = "CMALibrary";
 
     bool zipFiles(const std::string & sourceDirectory, const std::string & destinationZipFile);
     void unzipFiles(std::string_view source, std::string_view destination);

@@ -1,15 +1,22 @@
 #pragma once
 
+#include <map>
 #include <string>
 #include <optional>
 
 #include <fileParse/FileFormat.hxx>
 
+#include "THMZ/Common/DeferredParse.hxx"
 #include "THMZ/SteadyStateResults/Results.hxx"
 
 namespace ThermFile
 {
     std::optional<SteadyStateResults> loadSteadyStateResultsFromFile(const std::string & fileName);
+
+    //! Starts parsing the steady-state results entry from already-extracted archive
+    //! entries on a worker thread; empty handle when the archive carries no such entry.
+    [[nodiscard]] DeferredParse<SteadyStateResults>
+      deferredResultsFromEntries(const std::map<std::string, std::string> & entries);
     int saveToFile(const SteadyStateResults & results,
                    std::string_view fileName,
                    FileParse::FileFormat format = FileParse::FileFormat::XML);

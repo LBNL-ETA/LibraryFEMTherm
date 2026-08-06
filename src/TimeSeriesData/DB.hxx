@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -48,6 +49,9 @@ namespace TimeSeriesLibrary
     //! shaped as a one-record library file so the library schema validates it. An archive
     //! without such entries yields an empty vector (pre-consolidation file).
     [[nodiscard]] std::vector<TimeSeriesData> loadDatasetsFromZipFile(const std::string & zipFileName);
+
+    //! Same, but from already-extracted archive entries (no further extraction).
+    [[nodiscard]] std::vector<TimeSeriesData> loadDatasetsFromEntries(const std::map<std::string, std::string> & entries);
 
     //! Writes every dataset as its own entry; returns the number of entries written.
     int saveDatasetsToZipFile(const std::vector<TimeSeriesData> & datasets,

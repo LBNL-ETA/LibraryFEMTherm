@@ -19,6 +19,18 @@ namespace ThermFile
         return Common::loadFromZipFile<MeshResults>(fileName, ThermZip::SteadyStateMeshResultsName, topNodeName);
     }
 
+    DeferredParse<MeshResults> deferredMeshResultsFromEntries(const std::map<std::string, std::string> & entries)
+    {
+        auto content{ThermZip::findEntry(entries, ThermZip::SteadyStateMeshResultsName)};
+        if(content.empty())
+        {
+            return {};
+        }
+        return DeferredParse<MeshResults>{std::async(std::launch::async, [entryContent = std::move(content)] {
+            return loadSteadyStateMeshResultsFromString(entryContent);
+        })};
+    }
+
     int saveToFile(const MeshResults & results, std::string_view fileName, FileParse::FileFormat format)
     {
         switch(format)

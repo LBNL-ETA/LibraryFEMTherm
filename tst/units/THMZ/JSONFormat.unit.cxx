@@ -50,12 +50,12 @@ namespace
 
 TEST(TestJSONFormat, EntryNameForFormat)
 {
-    EXPECT_EQ(ThermZip::entryNameForFormat("Model.xml", FileParse::FileFormat::XML), "Model.xml");
-    EXPECT_EQ(ThermZip::entryNameForFormat("Model.xml", FileParse::FileFormat::JSON), "Model.json");
-    EXPECT_EQ(ThermZip::entryNameForFormat("transient results/Geometry.xml", FileParse::FileFormat::JSON),
+    EXPECT_EQ(ThermZip::entryNameForFormat("Model", FileParse::FileFormat::XML), "Model.xml");
+    EXPECT_EQ(ThermZip::entryNameForFormat("Model", FileParse::FileFormat::JSON), "Model.json");
+    EXPECT_EQ(ThermZip::entryNameForFormat("transient results/Geometry", FileParse::FileFormat::JSON),
               "transient results/Geometry.json");
 
-    const auto candidates{ThermZip::entryNameCandidates("Model.xml")};
+    const auto candidates{ThermZip::entryNameCandidates("Model")};
     ASSERT_EQ(candidates.size(), 2U);
     EXPECT_EQ(candidates[0], "Model.json");
     EXPECT_EQ(candidates[1], "Model.xml");

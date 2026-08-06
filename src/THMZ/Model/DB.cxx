@@ -15,14 +15,37 @@ namespace ThermFile
         return Common::loadFromFile<ThermModel>(fileName, topNodeName);
     }
 
-    std::optional<ThermModel> loadThermModelFromZipFile(std::string const & zipFileName)
+    std::optional<ThermModel> loadThermModelFromEntries(const std::map<std::string, std::string> & entries)
     {
-        auto model = Common::loadFromZipFile<ThermModel>(zipFileName, ThermZip::ModelFileName, topNodeName);
+        const auto modelEntry{ThermZip::findEntry(entries, ThermZip::ModelFileName)};
+        if(modelEntry.empty())
+        {
+            return std::nullopt;
+        }
+
+        auto model{loadThermModelFromString(modelEntry)};
         if(model.has_value())
         {
-            model = Migration::applyAllToModel(zipFileName, std::move(*model));
+            model = Migration::applyAllToModel(entries, std::move(*model));
         }
         return model;
+    }
+
+    std::optional<ThermModel> loadThermModelFromZipFile(std::string const & zipFileName)
+    {
+        if(!std::filesystem::exists(zipFileName))
+        {
+            return std::nullopt;
+        }
+
+        try
+        {
+            return loadThermModelFromEntries(ThermZip::unzipFiles(zipFileName));
+        }
+        catch(const std::runtime_error &)
+        {
+            return std::nullopt;
+        }
     }
 
     int saveToFile(const ThermModel & model, std::string_view fileName, FileParse::FileFormat format)

@@ -78,20 +78,21 @@ namespace BCLibrary
 
         try
         {
-            const auto candidates{ThermZip::entryNameCandidates(ThermZip::BoundaryConditionsFileName)};
-            const auto entries{ThermZip::unzipFiles(zipFileName, candidates)};
-            for(const auto & candidate : candidates)
-            {
-                if(const auto entry{entries.find(candidate)}; entry != entries.end())
-                {
-                    loadFromString(entry->second);
-                    return;
-                }
-            }
+            const auto entries{
+              ThermZip::unzipFiles(zipFileName, ThermZip::entryNameCandidates(ThermZip::BoundaryConditionsFileName))};
+            loadFromEntries(entries);
         }
         catch(const std::runtime_error &)
         {
             // Entry absent: pre-consolidation archive, nothing to load.
+        }
+    }
+
+    void DB::loadFromEntries(const std::map<std::string, std::string> & entries)
+    {
+        if(const auto entry{ThermZip::findEntry(entries, ThermZip::BoundaryConditionsFileName)}; !entry.empty())
+        {
+            loadFromString(entry);
         }
     }
 

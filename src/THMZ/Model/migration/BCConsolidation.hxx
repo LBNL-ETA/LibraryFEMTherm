@@ -35,8 +35,11 @@ namespace ThermFile::Migration::BCConsolidation
                                           const std::string & typeRecordsXml,
                                           const std::map<std::string, std::string> & timestepFilesByName);
 
-    //! \brief Scan a THMZ archive for pre-consolidation BC artifacts and convert them.
-    //! Returns an empty capture when the archive carries none.
+    //! \brief Scan already-extracted archive entries for pre-consolidation BC artifacts
+    //! and convert them. Returns an empty capture when the archive carries none.
+    [[nodiscard]] LegacyBCCapture captureFromEntries(const std::map<std::string, std::string> & entries);
+
+    //! \brief Convenience overload: extracts the archive once and delegates.
     [[nodiscard]] LegacyBCCapture captureFromArchive(const std::string & zipFileName);
 
     //! \brief Model-side migration: returns a copy of the input model where every segment

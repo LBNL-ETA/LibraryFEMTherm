@@ -43,8 +43,8 @@ namespace Common
 
         return getTopNodeFromString(content, topNodeName);
     }
-    //! Callers pass the canonical .xml entry name; the funnel probes the JSON spelling first
-    //! and falls back to XML, with the content itself deciding which parser runs.
+    //! Callers pass the extension-free entry base name; the funnel probes the JSON
+    //! spelling first and falls back to XML, with the content deciding which parser runs.
     template<typename T>
     std::optional<T>
       loadFromZipFile(const std::string & zipFileName, const std::string & fileName, const std::string & nodeTypeName)

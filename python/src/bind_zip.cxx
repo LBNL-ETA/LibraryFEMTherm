@@ -42,5 +42,14 @@ void bind_zip(py::module_ & mod)
     // Add file to existing zip
     zip.def("add_to_zip_file", &ThermZip::addToZipFile,
             py::arg("zip_file_name"), py::arg("file_name"), py::arg("text"),
+            py::arg("obsolete_names") = std::vector<std::string>(),
             "Add a file to an existing ZIP archive");
+
+    // Entry base names are extension-free; these resolve the format spellings.
+    zip.def("entry_name_candidates", &ThermZip::entryNameCandidates,
+            py::arg("base_name"),
+            "Both format spellings of an entry base name, JSON first");
+    zip.def("find_entry", &ThermZip::findEntry,
+            py::arg("entries"), py::arg("base_name"),
+            "Look up an entry base name in an extracted-archive dict; empty when absent");
 }

@@ -85,34 +85,38 @@ contents = fem.zip.unzip_files("sample.thmz")
 for name, xml in contents.items():
     print(f"{name}: {len(xml)} bytes")
 
-# Extract specific files only
-contents = fem.zip.unzip_files("sample.thmz", [
-    fem.zip.MODEL_FILE_NAME,           # "Model.xml"
-    fem.zip.MATERIALS_FILE_NAME,       # "Materials.xml"
-])
+# Extract specific files. Entry names are extension-free bases; the archive stores
+# them as .xml or .json depending on the format it was saved with, so resolve the
+# concrete spellings with entry_name_candidates (JSON first, XML fallback):
+contents = fem.zip.unzip_files("sample.thmz",
+                               fem.zip.entry_name_candidates(fem.zip.MODEL_FILE_NAME)
+                               + fem.zip.entry_name_candidates(fem.zip.MATERIALS_FILE_NAME))
 
-# Extract a single file
-xml = fem.zip.unzip_file("sample.thmz", fem.zip.MATERIALS_FILE_NAME)
+# Or extract everything and look entries up by base name:
+contents = fem.zip.unzip_files("sample.thmz")
+model_text = fem.zip.find_entry(contents, fem.zip.MODEL_FILE_NAME)
 
-# Create a new THMZ from a dictionary of {filename: xml_content}
+# Create a new THMZ from a dictionary of {filename: content}
 fem.zip.zip_files({"Model.xml": xml_str, "Materials.xml": mat_str}, "new.thmz")
 
 # Add or overwrite a file inside an existing THMZ
 fem.zip.add_to_zip_file("existing.thmz", "Materials.xml", new_materials_xml)
 ```
 
-### Standard file names inside a THMZ
+### Standard entry base names inside a THMZ
 
-| Constant                              | Value                       |
-|---------------------------------------|-----------------------------|
-| `fem.zip.MODEL_FILE_NAME`             | `"Model.xml"`               |
-| `fem.zip.MATERIALS_FILE_NAME`         | `"Materials.xml"`           |
-| `fem.zip.GASES_FILE_NAME`             | `"Gases.xml"`               |
-| `fem.zip.STEADY_STATE_BC_FILE_NAME`   | `"SteadyStateBC.xml"`       |
-| `fem.zip.MESH_NAME`                   | `"Mesh.xml"`                |
-| `fem.zip.STEADY_STATE_RESULTS_NAME`   | `"SteadyStateResults.xml"`  |
-| `fem.zip.STEADY_STATE_MESH_RESULTS_NAME` | `"MeshResults.xml"`      |
-| `fem.zip.CMA_LIBRARY`                 | `"CMALibrary.xml"`          |
+Names are extension-free; the serialization format supplies `.xml` or `.json`.
+
+| Constant                              | Value                   |
+|---------------------------------------|-------------------------|
+| `fem.zip.MODEL_FILE_NAME`             | `"Model"`               |
+| `fem.zip.MATERIALS_FILE_NAME`         | `"Materials"`           |
+| `fem.zip.GASES_FILE_NAME`             | `"Gases"`               |
+| `fem.zip.STEADY_STATE_BC_FILE_NAME`   | `"SteadyStateBC"`       |
+| `fem.zip.MESH_NAME`                   | `"Mesh"`                |
+| `fem.zip.STEADY_STATE_RESULTS_NAME`   | `"SteadyStateResults"`  |
+| `fem.zip.STEADY_STATE_MESH_RESULTS_NAME` | `"SteadyStateMeshResults"` |
+| `fem.zip.CMA_LIBRARY`                 | `"CMALibrary"`          |
 
 ## Materials
 

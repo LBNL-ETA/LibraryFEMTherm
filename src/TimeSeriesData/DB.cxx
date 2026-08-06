@@ -182,14 +182,20 @@ namespace TimeSeriesLibrary
 
     std::vector<TimeSeriesData> loadDatasetsFromZipFile(const std::string & zipFileName)
     {
-        std::vector<TimeSeriesData> datasets;
         if(!std::filesystem::exists(zipFileName))
         {
-            return datasets;
+            return {};
         }
 
+        return loadDatasetsFromEntries(ThermZip::unzipFiles(zipFileName));
+    }
+
+    std::vector<TimeSeriesData> loadDatasetsFromEntries(const std::map<std::string, std::string> & entries)
+    {
+        std::vector<TimeSeriesData> datasets;
+
         const std::string entryPrefix{ThermZip::TimeSeriesDir + "/"};
-        for(const auto & [entryName, content] : ThermZip::unzipFiles(zipFileName))
+        for(const auto & [entryName, content] : entries)
         {
             if(entryName.starts_with(entryPrefix))
             {

@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <future>
 #include <iterator>
 #include <map>
 #include <sstream>
+#include <vector>
 
 #include <miniz.h>
 
@@ -123,9 +125,52 @@ namespace ThermZip
         return std::vector<char>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     }
 
+    namespace Helper
+    {
+        //! One selected archive member: index into the archive plus its stat.
+        struct SelectedEntry
+        {
+            mz_uint index;
+            std::string name;
+            size_t uncompressedSize;
+        };
+
+        //! Inflates one member with a thread-private reader over the shared buffer.
+        //! miniz readers are independent per struct, so concurrent extraction is safe
+        //! as long as each thread initializes its own.
+        std::string extractOne(const std::vector<char> & zipBuffer, const SelectedEntry & entry)
+        {
+            mz_zip_archive zipArchive;
+            memset(&zipArchive, 0, sizeof(zipArchive));
+            if(!mz_zip_reader_init_mem(&zipArchive, zipBuffer.data(), zipBuffer.size(), 0))
+            {
+                throw std::runtime_error("Failed to initialize zip archive");
+            }
+
+            std::vector<char> fileBuffer(entry.uncompressedSize + 1, 0);   // +1 to ensure null-termination
+            if(!mz_zip_reader_extract_to_mem(&zipArchive, entry.index, fileBuffer.data(), entry.uncompressedSize, 0))
+            {
+                mz_zip_reader_end(&zipArchive);
+                throw std::runtime_error("Failed to extract file: " + entry.name);
+            }
+            mz_zip_reader_end(&zipArchive);
+
+            std::string extractedContent(fileBuffer.data(), entry.uncompressedSize);
+
+            // Optional: Trim any unwanted characters at the end
+            size_t end = extractedContent.find_last_not_of("\0\xFF\xFE\xFD");
+            if(end != std::string::npos)
+            {
+                extractedContent = extractedContent.substr(0, end + 1);
+            }
+
+            return extractedContent;
+        }
+    }   // namespace Helper
+
     std::map<std::string, std::string> unzipFiles(std::string_view source, std::vector<std::string> const & fnames)
     {
-        std::vector<char> zipBuffer = readFileToBuffer(std::string(source));
+        const std::vector<char> zipBuffer = readFileToBuffer(std::string(source));
 
         mz_zip_archive zipArchive;
         memset(&zipArchive, 0, sizeof(zipArchive));
@@ -135,8 +180,7 @@ namespace ThermZip
             throw std::runtime_error("Failed to initialize zip archive");
         }
 
-        std::map<std::string, std::string> fileContents;
-
+        std::vector<Helper::SelectedEntry> selected;
         size_t fileCount = mz_zip_reader_get_num_files(&zipArchive);
         for(mz_uint i = 0; i < fileCount; ++i)
         {
@@ -156,31 +200,43 @@ namespace ThermZip
 
             if(!mz_zip_reader_is_file_a_directory(&zipArchive, i))
             {
-                std::vector<char> fileBuffer(fileStat.m_uncomp_size + 1, 0);   // +1 to ensure null-termination
-
-                if(!mz_zip_reader_extract_to_mem(&zipArchive, i, fileBuffer.data(), fileStat.m_uncomp_size, 0))
-                {
-                    std::stringstream msg;
-                    msg << "Failed to extract file: " << fileStat.m_filename;
-                    mz_zip_reader_end(&zipArchive);
-                    throw std::runtime_error(msg.str());
-                }
-
-                // Create a string, ensuring only valid data is included
-                std::string extractedContent(fileBuffer.data(), fileStat.m_uncomp_size);
-
-                // Optional: Trim any unwanted characters at the end
-                size_t end = extractedContent.find_last_not_of("\0\xFF\xFE\xFD");
-                if(end != std::string::npos)
-                {
-                    extractedContent = extractedContent.substr(0, end + 1);
-                }
-
-                fileContents[Helper::normalizeSlashes(fileStat.m_filename)] = extractedContent;
+                selected.push_back(
+                  Helper::SelectedEntry{i, fileStat.m_filename, static_cast<size_t>(fileStat.m_uncomp_size)});
             }
         }
-
         mz_zip_reader_end(&zipArchive);
+
+        // Large members inflate concurrently, each on its own reader; small archives
+        // are not worth the thread overhead.
+        constexpr size_t parallelThreshold{1U << 20U};
+        const bool runParallel{selected.size() > 1U
+                               && std::any_of(selected.begin(), selected.end(), [](const auto & entry) {
+                                      return entry.uncompressedSize > parallelThreshold;
+                                  })};
+
+        std::map<std::string, std::string> fileContents;
+        if(runParallel)
+        {
+            std::vector<std::future<std::string>> futures;
+            futures.reserve(selected.size());
+            for(const auto & entry : selected)
+            {
+                futures.push_back(std::async(std::launch::async, [&zipBuffer, &entry] {
+                    return Helper::extractOne(zipBuffer, entry);
+                }));
+            }
+            for(size_t i = 0U; i < selected.size(); ++i)
+            {
+                fileContents[Helper::normalizeSlashes(selected[i].name)] = futures[i].get();
+            }
+        }
+        else
+        {
+            for(const auto & entry : selected)
+            {
+                fileContents[Helper::normalizeSlashes(entry.name)] = Helper::extractOne(zipBuffer, entry);
+            }
+        }
 
         return fileContents;
     }
@@ -293,33 +349,33 @@ namespace ThermZip
 
     std::string timeSeriesEntryName(const std::string & datasetUUID, FileParse::FileFormat format)
     {
-        return entryNameForFormat(TimeSeriesDir + "/" + datasetUUID + ".xml", format);
+        return entryNameForFormat(TimeSeriesDir + "/" + datasetUUID, format);
     }
 
-    std::string entryNameForFormat(const std::string & xmlEntryName, FileParse::FileFormat format)
+    std::string entryNameForFormat(const std::string & baseName, FileParse::FileFormat format)
     {
-        if(format != FileParse::FileFormat::JSON)
+        if(format == FileParse::FileFormat::JSON)
         {
-            return xmlEntryName;
+            return baseName + ".json";
         }
-
-        const std::string xmlExtension{".xml"};
-        if(xmlEntryName.size() < xmlExtension.size()
-           || xmlEntryName.compare(xmlEntryName.size() - xmlExtension.size(), xmlExtension.size(), xmlExtension) != 0)
-        {
-            return xmlEntryName;
-        }
-
-        return xmlEntryName.substr(0, xmlEntryName.size() - xmlExtension.size()) + ".json";
+        return baseName + ".xml";
     }
 
-    std::vector<std::string> entryNameCandidates(const std::string & xmlEntryName)
+    std::vector<std::string> entryNameCandidates(const std::string & baseName)
     {
-        std::vector<std::string> candidates{entryNameForFormat(xmlEntryName, FileParse::FileFormat::JSON)};
-        if(candidates.front() != xmlEntryName)
+        return {entryNameForFormat(baseName, FileParse::FileFormat::JSON),
+                entryNameForFormat(baseName, FileParse::FileFormat::XML)};
+    }
+
+    std::string findEntry(const std::map<std::string, std::string> & entries, const std::string & baseName)
+    {
+        for(const auto & candidate : entryNameCandidates(baseName))
         {
-            candidates.push_back(xmlEntryName);
+            if(const auto found{entries.find(candidate)}; found != entries.end())
+            {
+                return found->second;
+            }
         }
-        return candidates;
+        return {};
     }
 }   // namespace ThermZip

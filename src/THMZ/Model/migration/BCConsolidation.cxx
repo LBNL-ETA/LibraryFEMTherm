@@ -122,21 +122,8 @@ namespace ThermFile::Migration::BCConsolidation
         return result;
     }
 
-    LegacyBCCapture captureFromArchive(const std::string & zipFileName)
+    LegacyBCCapture captureFromEntries(const std::map<std::string, std::string> & entries)
     {
-        const auto entries{ThermZip::unzipFiles(zipFileName)};
-
-        const auto entryOrEmpty{[&entries](const std::string & name) {
-            for(const auto & candidate : ThermZip::entryNameCandidates(name))
-            {
-                if(const auto found{entries.find(candidate)}; found != entries.end())
-                {
-                    return found->second;
-                }
-            }
-            return std::string{};
-        }};
-
         const std::string timestepPrefix{ThermZip::TimestepFilesDir + "/"};
         std::map<std::string, std::string> timestepFiles;
         for(const auto & [entryName, content] : entries)
@@ -147,9 +134,14 @@ namespace ThermFile::Migration::BCConsolidation
             }
         }
 
-        return capture(entryOrEmpty(ThermZip::SteadyStateBCFileName),
-                       entryOrEmpty(ThermZip::TransientTypeBCFileName),
+        return capture(ThermZip::findEntry(entries, ThermZip::SteadyStateBCFileName),
+                       ThermZip::findEntry(entries, ThermZip::TransientTypeBCFileName),
                        timestepFiles);
+    }
+
+    LegacyBCCapture captureFromArchive(const std::string & zipFileName)
+    {
+        return captureFromEntries(ThermZip::unzipFiles(zipFileName));
     }
 
     ThermFile::ThermModel applyToModel(const LegacyBCCapture & legacy, ThermFile::ThermModel model)
