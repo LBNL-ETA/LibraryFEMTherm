@@ -22,9 +22,10 @@ void bind_zip(py::module_ & mod)
 
     // In-memory zip: map<string, string> -> zip file
     zip.def("zip_files",
-            py::overload_cast<const std::map<std::string, std::string> &, const std::string &>(
+            py::overload_cast<const std::map<std::string, std::string> &, const std::string &, int>(
                 &ThermZip::zipFiles),
             py::arg("file_contents"), py::arg("zip_file_name"),
+            py::arg("compression_level") = ThermZip::DefaultCompressionLevel,
             "Create a ZIP archive from in-memory file contents");
 
     // Unzip: zip file -> map<string, string>

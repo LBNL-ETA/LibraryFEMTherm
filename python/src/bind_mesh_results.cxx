@@ -111,25 +111,30 @@ void bind_mesh_results(py::module_ & mod)
             py::arg("file_name"));
 
     mod.def("save_mesh_results_to_file",
-            static_cast<int(*)(const ThermFile::MeshResults &, std::string_view)>(
+            static_cast<int(*)(const ThermFile::MeshResults &, std::string_view,
+                               FileParse::FileFormat)>(
                 &ThermFile::saveToFile),
-            py::arg("results"), py::arg("file_name"));
+            py::arg("results"), py::arg("file_name"),
+            py::arg("format") = FileParse::FileFormat::XML);
 
     mod.def("load_steady_state_mesh_results_from_zip_file",
             &ThermFile::loadSteadyStateMeshResultsFromZipFile,
             py::arg("zip_file_name"));
 
     mod.def("save_mesh_results_to_zip_file",
-            static_cast<int(*)(const ThermFile::MeshResults &, std::string_view)>(
+            static_cast<int(*)(const ThermFile::MeshResults &, std::string_view,
+                               FileParse::FileFormat)>(
                 &ThermFile::saveToZipFile),
-            py::arg("results"), py::arg("zip_file_name"));
+            py::arg("results"), py::arg("zip_file_name"),
+            py::arg("format") = FileParse::FileFormat::XML);
 
     mod.def("load_steady_state_mesh_results_from_string",
             &ThermFile::loadSteadyStateMeshResultsFromString,
             py::arg("xml_string"));
 
     mod.def("save_mesh_results_to_string",
-            static_cast<std::string(*)(const ThermFile::MeshResults &)>(
+            static_cast<std::string(*)(const ThermFile::MeshResults &,
+                                       FileParse::FileFormat)>(
                 &ThermFile::saveToString),
-            py::arg("results"));
+            py::arg("results"), py::arg("format") = FileParse::FileFormat::XML);
 }

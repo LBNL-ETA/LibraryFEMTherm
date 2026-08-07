@@ -178,7 +178,8 @@ void bind_mesh(py::module_ & mod)
             py::arg("zip_file_name"));
 
     mod.def("save_mesh_to_zip_file", &ThermFile::Mesh::saveToZipFile,
-            py::arg("mesh"), py::arg("zip_file_name"));
+            py::arg("mesh"), py::arg("zip_file_name"),
+            py::arg("format") = FileParse::FileFormat::XML);
 
     mod.def("load_mesh_from_string", &ThermFile::Mesh::loadMeshFromString,
             py::arg("str"), py::arg("format") = FileParse::FileFormat::XML);

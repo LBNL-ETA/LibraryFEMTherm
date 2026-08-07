@@ -113,9 +113,11 @@ void bind_steady_state_results(py::module_ & mod)
             py::arg("zip_file_name"));
 
     mod.def("save_steady_state_results_to_zip_file",
-            static_cast<int(*)(const ThermFile::SteadyStateResults &, std::string_view)>(
+            static_cast<int(*)(const ThermFile::SteadyStateResults &, std::string_view,
+                               FileParse::FileFormat)>(
                 &ThermFile::saveToZipFile),
-            py::arg("results"), py::arg("zip_file_name"));
+            py::arg("results"), py::arg("zip_file_name"),
+            py::arg("format") = FileParse::FileFormat::XML);
 
     mod.def("load_steady_state_results_from_string",
             &ThermFile::loadSteadyStateResultsFromString,
