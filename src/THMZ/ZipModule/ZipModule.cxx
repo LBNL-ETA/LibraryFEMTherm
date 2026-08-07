@@ -80,7 +80,9 @@ namespace ThermZip
         return true;
     }
 
-    void zipFiles(const std::map<std::string, std::string> & fileContents, const std::string & zipFileName)
+    void zipFiles(const std::map<std::string, std::string> & fileContents,
+                  const std::string & zipFileName,
+                  int compressionLevel)
     {
         mz_zip_archive zipArchive;
         memset(&zipArchive, 0, sizeof(zipArchive));
@@ -95,7 +97,8 @@ namespace ThermZip
         for(const auto & [filePath, content] : fileContents)
         {
             // Add the file content to the zip archive
-            if(!mz_zip_writer_add_mem(&zipArchive, filePath.c_str(), content.data(), content.size(), MZ_DEFAULT_LEVEL))
+            if(!mz_zip_writer_add_mem(
+                 &zipArchive, filePath.c_str(), content.data(), content.size(), static_cast<mz_uint>(compressionLevel)))
             {
                 mz_zip_writer_end(&zipArchive);
                 std::stringstream msg;

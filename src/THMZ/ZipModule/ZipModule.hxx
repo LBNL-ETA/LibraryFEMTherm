@@ -77,11 +77,23 @@ namespace ThermZip
     //! For now timestep directory is hardcoded and the value is "timestep input files"
     std::string addTimestepDirectoryToFileName(const std::string & fileName);
 
+    //! Deflate level used when none is given: miniz's default (6).
+    constexpr int DefaultCompressionLevel{6};
+
+    //! Level for large model archives. THMZ payloads are highly repetitive, so the deflate
+    //! curve flattens early: measured on a 41 MB mesh entry, level 2 compresses in 166 ms to
+    //! 2.68 MB where level 6 needs 363 ms to reach 2.04 MB. Less than a megabyte of file for
+    //! less than half the time is the right trade for a section that grows with node count.
+    constexpr int FastCompressionLevel{2};
+
     //! Zips files into a zip archive
     //! \param fileContents The content of the files to zip where the key is the file name and the value is the content of
     //! the file
     //! \param zipFileName The name of the zip archive
-    void zipFiles(const std::map<std::string, std::string> & fileContents, const std::string & zipFileName);
+    //! \param compressionLevel Deflate level 0 (store) to 9 (smallest)
+    void zipFiles(const std::map<std::string, std::string> & fileContents,
+                  const std::string & zipFileName,
+                  int compressionLevel = DefaultCompressionLevel);
 
     //! Unzips files from a zip archive and returns the content of the files in a map
     //! \param source The name of the zip archive
