@@ -12,22 +12,42 @@ import pylibraryfemtherm as fem
 
 
 class TestZipConstants:
-    """Verify ThermZip file name constants are exposed."""
+    """Verify ThermZip entry base names are exposed without an extension.
+
+    An archive entry is stored as either Model.xml or Model.json depending on
+    the save format, so the constants name the entry without one and
+    entry_name_candidates/find_entry resolve the format spelling.
+    """
 
     def test_model_file_name(self):
-        assert fem.zip.MODEL_FILE_NAME == "Model.xml"
+        assert fem.zip.MODEL_FILE_NAME == "Model"
 
     def test_materials_file_name(self):
-        assert fem.zip.MATERIALS_FILE_NAME == "Materials.xml"
+        assert fem.zip.MATERIALS_FILE_NAME == "Materials"
 
     def test_gases_file_name(self):
-        assert fem.zip.GASES_FILE_NAME == "Gases.xml"
+        assert fem.zip.GASES_FILE_NAME == "Gases"
 
     def test_steady_state_bc_file_name(self):
-        assert fem.zip.STEADY_STATE_BC_FILE_NAME == "SteadyStateBC.xml"
+        assert fem.zip.STEADY_STATE_BC_FILE_NAME == "SteadyStateBC"
 
     def test_mesh_name(self):
-        assert fem.zip.MESH_NAME == "Mesh.xml"
+        assert fem.zip.MESH_NAME == "Mesh"
+
+
+class TestEntryNameResolution:
+    """Base names resolve to the spelling actually present in the archive."""
+
+    def test_candidates_cover_both_formats(self):
+        candidates = fem.zip.entry_name_candidates(fem.zip.MODEL_FILE_NAME)
+        assert set(candidates) == {"Model.json", "Model.xml"}
+
+    def test_find_entry_matches_either_format(self):
+        for name in ("Model.xml", "Model.json"):
+            assert fem.zip.find_entry({name: "content"}, fem.zip.MODEL_FILE_NAME) == "content"
+
+    def test_find_entry_returns_empty_when_absent(self):
+        assert fem.zip.find_entry({"Other.xml": "content"}, fem.zip.MODEL_FILE_NAME) == ""
 
 
 class TestZipInMemory:
@@ -155,13 +175,19 @@ class TestUnzipFromTHMZ:
         assert "<ThermModel>" in contents["Model.xml"]
 
     def test_extract_all_library_files(self, sample_sill_path):
-        file_names = [
+        base_names = [
             fem.zip.MODEL_FILE_NAME,
             fem.zip.MATERIALS_FILE_NAME,
             fem.zip.GASES_FILE_NAME,
             fem.zip.STEADY_STATE_BC_FILE_NAME,
         ]
-        contents = fem.zip.unzip_files(sample_sill_path, file_names)
-        for name in file_names:
-            assert name in contents
-            assert len(contents[name]) > 0
+        # unzip_files matches archive entries exactly, so ask for both spellings
+        # of every base name and let find_entry pick whichever the archive uses.
+        requested = [
+            candidate
+            for base in base_names
+            for candidate in fem.zip.entry_name_candidates(base)
+        ]
+        contents = fem.zip.unzip_files(sample_sill_path, requested)
+        for base in base_names:
+            assert len(fem.zip.find_entry(contents, base)) > 0
