@@ -1,6 +1,5 @@
 #pragma once
 
-#include <optional>
 #include <string>
 #include <map>
 #include <vector>
@@ -11,6 +10,9 @@ namespace ThermZip
 {
     // Archive entry names are extension-free bases: the name is the entry's identity,
     // the extension is the serialization format, appended by entryNameForFormat.
+    // Deliberately const, NOT constexpr: a constexpr std::string object must fit the
+    // implementation's SSO buffer (15 chars on MSVC/libstdc++, 22 on libc++), so
+    // longer names fail to compile and the limit differs per platform.
     const std::string ModelFileName = "Model";
     const std::string GasesFileName = "Gases";
     const std::string MaterialsFileName = "Materials";
