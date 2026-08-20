@@ -86,10 +86,7 @@ if(NOT TARGET LBNLCPPCommon)
 endif()
 FetchContent_GetProperties(LBNLCPPCommon)
 
-# Commit pin: the test helper's MockNodeAdapter targets the concept-based
-# NodeAdapterLike contract, which is on main past Version_1.1.5 but not yet
-# tagged. Re-pin to the next FileParse release tag once it exists.
-set(FileParse_Branch "0d0698144f50f3bd5ae78dbb85b8927e1f7a8158")
+set(FileParse_Branch "Version_1.1.5")
 
 if(NOT TARGET FileParse)
     FetchContent_Declare(

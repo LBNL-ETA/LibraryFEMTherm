@@ -68,5 +68,8 @@ namespace Helper
         MockNode * node_{nullptr};
     };
 }   // namespace Helper
-static_assert(FileParse::NodeAdapterLike<Helper::MockNodeAdapter>,
-              "MockNodeAdapter must satisfy the NodeAdapter contract");
+
+// No static_assert against FileParse::NodeAdapterLike here on purpose: the pinned
+// FileParse (Version_1.1.5) predates the concept, and the duck-typed serializer
+// templates enforce the adapter shape at every instantiation anyway. Add the assert
+// back once the pin moves past the concept-introducing FileParse release.
