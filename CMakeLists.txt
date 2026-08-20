@@ -74,7 +74,7 @@ if(LBNL_LOCAL_SIBLINGS)
     endforeach()
 endif()
 
-set(LBNLCPPCommon_Branch "v0.18")
+set(LBNLCPPCommon_Branch "v0.19")
 
 if(NOT TARGET LBNLCPPCommon)
     FetchContent_Declare(
