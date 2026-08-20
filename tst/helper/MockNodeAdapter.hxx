@@ -40,31 +40,33 @@ namespace Helper
     [[nodiscard]] bool compareNodes(const MockNode & node1, const MockNode & node2);
 
 
-    struct MockNodeAdapter : public INodeAdapter<MockNodeAdapter>
+    struct MockNodeAdapter
     {
         explicit MockNodeAdapter(MockNode * node);
 
-        [[nodiscard]] bool isEmpty() const override;
-        [[nodiscard]] std::string getCurrentTag() const override;
-        [[nodiscard]] std::vector<MockNodeAdapter> getChildNodes() const override;
+        [[nodiscard]] bool isEmpty() const;
+        [[nodiscard]] std::string getCurrentTag() const;
+        [[nodiscard]] std::vector<MockNodeAdapter> getChildNodes() const;
         [[nodiscard]] std::optional<MockNodeAdapter>
-          getFirstChildByName(std::string_view name) const override;
+          getFirstChildByName(std::string_view name) const;
         [[nodiscard]] std::vector<MockNodeAdapter>
-          getChildNodesByName(std::string_view name) const override;
-        [[nodiscard]] int nChildNode(std::string_view name) const override;
-        [[nodiscard]] bool hasChildNode(std::string_view name) const override;
-        [[nodiscard]] std::string getText() const override;
-        MockNodeAdapter addChild(std::string_view name) override;
-        void addText(std::string_view text) override;
+          getChildNodesByName(std::string_view name) const;
+        [[nodiscard]] int nChildNode(std::string_view name) const;
+        [[nodiscard]] bool hasChildNode(std::string_view name) const;
+        [[nodiscard]] std::string getText() const;
+        MockNodeAdapter addChild(std::string_view name);
+        void addText(std::string_view text);
 
         [[nodiscard]] MockNode getNode() const;
 
-        [[nodiscard]] std::string getContent() const override;
+        [[nodiscard]] std::string getContent() const;
 
-        void addAttribute(std::string_view name, std::string_view value) override;
-        [[nodiscard]] std::optional<std::string> getAttribute(std::string_view name) const override;
+        void addAttribute(std::string_view name, std::string_view value);
+        [[nodiscard]] std::optional<std::string> getAttribute(std::string_view name) const;
 
     private:
         MockNode * node_{nullptr};
     };
-}
+}   // namespace Helper
+static_assert(FileParse::NodeAdapterLike<Helper::MockNodeAdapter>,
+              "MockNodeAdapter must satisfy the NodeAdapter contract");
