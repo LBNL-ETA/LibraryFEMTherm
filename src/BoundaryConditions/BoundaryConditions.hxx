@@ -15,10 +15,10 @@ namespace BCLibrary
     struct Convection
     {
         ConvectionModel model{ConvectionModel::Fixed_Convection_Coefficient};
-        std::optional<Source> airTemperature;
-        std::optional<Source> filmCoefficient;
-        std::optional<Source> windSpeed;
-        std::optional<Source> windDirection;
+        std::optional<Source> airTemperature{};
+        std::optional<Source> filmCoefficient{};
+        std::optional<Source> windSpeed{};
+        std::optional<Source> windDirection{};
     };
 
     struct AutomaticEnclosure
@@ -58,18 +58,18 @@ namespace BCLibrary
     struct SurfaceExchange
     {
         Source relativeHumidity{Constant{0.5}};
-        std::optional<Convection> convection;
-        std::optional<RadiationOptions> radiation;
-        std::optional<Solar> solar;
-        std::optional<Source> flux;
+        std::optional<Convection> convection{};
+        std::optional<RadiationOptions> radiation{};
+        std::optional<Solar> solar{};
+        std::optional<Source> flux{};
     };
 
     //! Dirichlet: the surface state itself is imposed. At least one input is expected;
     //! enforced by the loader and the GUI, not by the type.
     struct PrescribedState
     {
-        std::optional<Source> temperature;
-        std::optional<Source> relativeHumidity;
+        std::optional<Source> temperature{};
+        std::optional<Source> relativeHumidity{};
     };
 
     struct RadiationSurface
@@ -81,13 +81,13 @@ namespace BCLibrary
 
     struct BoundaryCondition
     {
-        std::string UUID;
+        std::string UUID{};
         std::string Name{"Default Name"};
         bool Protected{false};
         std::string Color{"0x0078D7"};
-        std::variant<SurfaceExchange, PrescribedState, RadiationSurface> data;
+        std::variant<SurfaceExchange, PrescribedState, RadiationSurface> data{};
 
-        std::optional<std::string> ProjectName;
+        std::optional<std::string> ProjectName{};
 
         //! Carried over from the steady-state library; glazing-system surfaces are treated
         //! specially regardless of calculation mode.

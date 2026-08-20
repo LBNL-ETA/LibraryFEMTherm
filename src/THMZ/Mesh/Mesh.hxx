@@ -87,17 +87,17 @@ namespace ThermFile::Mesh
 
     struct Case
     {
-        std::optional<RunType> modelType;
-        std::optional<CMACase> glazingCase;
-        std::optional<CMACase> spacerCase;
-        std::vector<Node> nodes;
-        std::vector<Element> elements;
-        BCSegments bcSegments;
+        std::optional<RunType> modelType{};
+        std::optional<CMACase> glazingCase{};
+        std::optional<CMACase> spacerCase{};
+        std::vector<Node> nodes{};
+        std::vector<Element> elements{};
+        BCSegments bcSegments{};
     };
 
     struct Mesh
     {
         std::string version{"1"};
-        std::vector<Case> cases;
+        std::vector<Case> cases{};
     };
 }   // namespace ThermFile::Mesh

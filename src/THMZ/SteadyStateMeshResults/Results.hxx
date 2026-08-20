@@ -18,8 +18,8 @@ namespace ThermFile
         //! Moisture results of a coupled steady-state HygroThermFEM solve (humidity as a
         //! fraction, water content in engine units). Absent for thermal-only runs and for
         //! archives written before moisture support.
-        std::optional<double> humidity;
-        std::optional<double> waterContent;
+        std::optional<double> humidity{};
+        std::optional<double> waterContent{};
     };
 
     struct EdgeResults
@@ -35,33 +35,33 @@ namespace ThermFile
     //! It is used in calculations for the condensation resistance.
     struct TagNodes
     {
-        std::string name;
-        std::vector<size_t> nodes;
+        std::string name{};
+        std::vector<size_t> nodes{};
     };
 
     struct TagNodesCase
     {
-        std::optional<RunType> resultsType;
-        std::optional<CMACase> glazingCase;
-        std::optional<CMACase> spacerCase;
-        std::vector<TagNodes> tagNodes;
+        std::optional<RunType> resultsType{};
+        std::optional<CMACase> glazingCase{};
+        std::optional<CMACase> spacerCase{};
+        std::vector<TagNodes> tagNodes{};
     };
 
     struct CaseMeshResults
     {
-        std::optional<RunType> resultsType;
-        std::optional<CMACase> glazingCase;
-        std::optional<CMACase> spacerCase;
-        std::vector<NodeResults> nodes;
-        std::vector<EdgeResults> elementEdges;
-        std::vector<EdgeResults> polygonEdges;
-        std::vector<size_t> temperatureCountourNodeIDs;
+        std::optional<RunType> resultsType{};
+        std::optional<CMACase> glazingCase{};
+        std::optional<CMACase> spacerCase{};
+        std::vector<NodeResults> nodes{};
+        std::vector<EdgeResults> elementEdges{};
+        std::vector<EdgeResults> polygonEdges{};
+        std::vector<size_t> temperatureCountourNodeIDs{};
     };
 
     struct MeshResults
     {
         std::string version{"1"};
-        std::vector<CaseMeshResults> cases;
-        std::vector<TagNodesCase> tagNodes;
+        std::vector<CaseMeshResults> cases{};
+        std::vector<TagNodesCase> tagNodes{};
     };
 }   // namespace ThermFile
