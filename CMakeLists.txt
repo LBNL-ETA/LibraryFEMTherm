@@ -86,7 +86,7 @@ if(NOT TARGET LBNLCPPCommon)
 endif()
 FetchContent_GetProperties(LBNLCPPCommon)
 
-set(FileParse_Branch "Version_1.1.5")
+set(FileParse_Branch "Version_1.1.6")
 
 if(NOT TARGET FileParse)
     FetchContent_Declare(
