@@ -62,3 +62,18 @@ TEST_F(TestBCLibraryXMLSaving, SaveBCLibraryXML1)
 
     std::filesystem::remove(fileName);
 }
+
+TEST_F(TestBCLibraryXMLSaving, VersionRoundTrip)
+{
+    // The shipped legacy library files carry a Version element that this DB used to
+    // drop on load and omit on save - the single outlier among the library DBs.
+    const std::string content{"<BoundaryConditionsType>\n"
+                              "\t<Version>7</Version>\n"
+                              "</BoundaryConditionsType>"};
+
+    BCTypesLibrary::DB bcLibraryDB;
+    bcLibraryDB.loadFromString(content);
+
+    const auto saved{bcLibraryDB.saveToString()};
+    EXPECT_NE(saved.find("<Version>7</Version>"), std::string::npos);
+}

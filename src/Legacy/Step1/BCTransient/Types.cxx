@@ -7,6 +7,7 @@
 #include "Types.hxx"
 #include "TypesSerializers.hxx"
 
+#include "Common/Common.hxx"
 #include "Common/DB.hxx"
 #include "LibraryUtilities/FileManipulation.hxx"
 
@@ -32,12 +33,11 @@ namespace BCTypesLibrary
         // Need to check if file exists and create empty one if it does not.
         if(const std::ifstream f(m_FileName.c_str()); !f.good())
         {
-            // This is minimal requirement for the library file. Otherwise component will crash.
-            const bool jsonSeed{FileParse::detectFileFormatFromExtension(m_FileName)
-                                == FileParse::FileFormat::JSON};
-            const std::string fileContent{jsonSeed
-                                            ? std::string{"{\"BoundaryConditionsType\": {}}"}
-                                            : std::string{"<BoundaryConditionsType>\n</BoundaryConditionsType>"}};
+            const std::string fileContent{
+              Common::generateLibraryContent("BoundaryConditionsType",
+                                             "BoundaryConditionsTransient.xsd",
+                                             m_Version,
+                                             FileParse::detectFileFormatFromExtension(m_FileName))};
             File::createFileFromString(m_FileName, fileContent);
         }
 
@@ -115,6 +115,7 @@ namespace BCTypesLibrary
         int result = 0;
         std::visit(
           [this, &result](auto & adapter) {
+              adapter << FileParse::Child{"Version", m_Version};
               adapter << FileParse::Child{"BoundaryConditionType", m_BoundaryConditions};
               result = adapter.writeToFile(m_FileName);
           },
@@ -131,6 +132,7 @@ namespace BCTypesLibrary
         {
             std::visit(
               [this](auto & adapter) {
+                  adapter >> FileParse::Child{"Version", m_Version};
                   adapter >> FileParse::Child{"BoundaryConditionType", m_BoundaryConditions};
               },
               node.value());
@@ -144,6 +146,7 @@ namespace BCTypesLibrary
         std::string content;
         std::visit(
           [this, &content](auto & adapter) {
+              adapter << FileParse::Child{"Version", m_Version};
               adapter << FileParse::Child{"BoundaryConditionType", m_BoundaryConditions};
               content = adapter.getContent();
           },
@@ -160,8 +163,12 @@ namespace BCTypesLibrary
 
         if(topNode.has_value())
         {
-            std::visit([&BCTypes](auto & adapter) { adapter >> FileParse::Child{"BoundaryConditionType", BCTypes}; },
-                       topNode.value());
+            std::visit(
+              [this, &BCTypes](auto & adapter) {
+                  adapter >> FileParse::Child{"Version", m_Version};
+                  adapter >> FileParse::Child{"BoundaryConditionType", BCTypes};
+              },
+              topNode.value());
         }
 
         return BCTypes;

@@ -108,9 +108,9 @@ namespace BCTypesLibrary
     private:
         std::string m_FileName;
         std::vector<TypeRecord> m_BoundaryConditions;
+        std::string m_Version{"1"};
 
-        [[nodiscard]] static std::vector<TypeRecord>
-
+        [[nodiscard]] std::vector<TypeRecord>
           loadBoundaryConditionsFromFile(std::string_view inputFileName);
 
         // Generalized search function using a predicate
