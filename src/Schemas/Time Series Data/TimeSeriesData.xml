@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TimeSeriesData>
 	<Version>1</Version>
-	<Environment>
+	<TimeSeries>
 		<UUID>235e1454-e415-8d42-90da-8c0c9a587852</UUID>
 		<Name>ASHRAEInside</Name>
 		<Protected>false</Protected>
@@ -21,8 +21,8 @@
 			<Value>0.3</Value>
 			<Value>0.3</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>65ecba00-8eb8-69d7-3e14-489ba1be4f27</UUID>
 		<Name>ASHRAEOutside</Name>
 		<Protected>false</Protected>
@@ -50,8 +50,8 @@
 			<Value>3</Value>
 			<Value>3</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>8d3afdd8-f568-ce46-6bd3-4333cce3b7b6</UUID>
 		<Name>BoundaryConditionsASHRAE</Name>
 		<Protected>false</Protected>
@@ -73,8 +73,8 @@
 			<Value>0.15</Value>
 			<Value>0.15</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>154c115f-6107-20fc-bb35-dff4f04c082c</UUID>
 		<Name>FixedFilmExterior</Name>
 		<Protected>false</Protected>
@@ -102,8 +102,8 @@
 			<Value>4</Value>
 			<Value>1</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>876a8cfc-0488-3763-0578-2227c80e97f3</UUID>
 		<Name>BoundaryConditionsFixedFilmExterior20</Name>
 		<Protected>false</Protected>
@@ -176,8 +176,8 @@
 			<Value>4</Value>
 			<Value>1</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>59ec0a96-650f-3f64-6009-4b88bbab2894</UUID>
 		<Name>BoundaryConditionsFixedFilmFixed20Steps</Name>
 		<Protected>false</Protected>
@@ -250,8 +250,8 @@
 			<Value>2</Value>
 			<Value>2</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>db16981d-b05f-806d-ee6d-05e724545f5d</UUID>
 		<Name>BoundaryConditionsFixedFilmInterior</Name>
 		<Protected>false</Protected>
@@ -279,8 +279,8 @@
 			<Value>1.8</Value>
 			<Value>2.4</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>b21ea50b-28b8-649b-0071-83660e0ddb2b</UUID>
 		<Name>BoundaryConditionsFixedFilmInterior20</Name>
 		<Protected>false</Protected>
@@ -353,8 +353,8 @@
 			<Value>1.8</Value>
 			<Value>2.4</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>5fecd43a-3e27-5e93-78ee-21be063b5803</UUID>
 		<Name>FixedFilmInterior</Name>
 		<Protected>false</Protected>
@@ -382,8 +382,8 @@
 			<Value>1.8</Value>
 			<Value>2.4</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>f6fe12b4-59f0-202a-3412-2ae335e0cd5a</UUID>
 		<Name>FixedHeatFluxExterior</Name>
 		<Protected>false</Protected>
@@ -395,8 +395,8 @@
 			<Value>-20</Value>
 			<Value>-20</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>4dce1fcd-c223-97f5-71f3-6219850d2525</UUID>
 		<Name>FixedHeatFluxInterior</Name>
 		<Protected>false</Protected>
@@ -408,8 +408,8 @@
 			<Value>20</Value>
 			<Value>20</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>cd4c9476-470e-97f7-1adf-1747025a6187</UUID>
 		<Name>FixedTemperatureAndHumidityInside</Name>
 		<Protected>false</Protected>
@@ -439,8 +439,8 @@
 			<Value>0</Value>
 			<Value>0</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>761110dc-5558-be61-3f3f-33fde7536f91</UUID>
 		<Name>FixedTemperatureAndHumidityOutside</Name>
 		<Protected>false</Protected>
@@ -470,8 +470,8 @@
 			<Value>0.6</Value>
 			<Value>0.7</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>03f2d63b-7a7e-b000-69c1-f64ffa8d2cd0</UUID>
 		<Name>Fixed_T_RH_HC_120 steps-Exterior</Name>
 		<Protected>false</Protected>
@@ -844,8 +844,8 @@
 			<Value>7</Value>
 			<Value>7</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>9fce5602-4d00-daad-ba22-86f5d5299e5d</UUID>
 		<Name>Fixed_T_RH_HC_120 steps-Interior</Name>
 		<Protected>false</Protected>
@@ -1218,8 +1218,8 @@
 			<Value>10</Value>
 			<Value>10</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>91b12146-27ae-a225-76aa-13b2577bfe35</UUID>
 		<Name>Kimura</Name>
 		<Protected>false</Protected>
@@ -1255,8 +1255,8 @@
 			<Value>190</Value>
 			<Value>165</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>0a7befa1-705e-2261-192c-48240be38b51</UUID>
 		<Name>TARPFilmExterior</Name>
 		<Protected>false</Protected>
@@ -1276,8 +1276,8 @@
 			<Value>0.3</Value>
 			<Value>0.3</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>d3755d74-29b1-ead9-ebea-f957c2490629</UUID>
 		<Name>TARPFilmInterior</Name>
 		<Protected>false</Protected>
@@ -1297,8 +1297,8 @@
 			<Value>0</Value>
 			<Value>0</Value>
 		</Channel>
-	</Environment>
-	<Environment>
+	</TimeSeries>
+	<TimeSeries>
 		<UUID>4b20ac85-d346-1ebc-009e-c123c992e8ec</UUID>
 		<Name>YazdanianKlems</Name>
 		<Protected>false</Protected>
@@ -1334,5 +1334,5 @@
 			<Value>115</Value>
 			<Value>160</Value>
 		</Channel>
-	</Environment>
+	</TimeSeries>
 </TimeSeriesData>

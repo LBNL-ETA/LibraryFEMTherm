@@ -32,7 +32,7 @@
 		</xs:sequence>
 	</xs:complexType>
 
-	<xs:complexType name="Environment">
+	<xs:complexType name="TimeSeries">
 		<xs:sequence>
 			<xs:element name="UUID" type="xs:string"/>
 			<xs:element name="Name" type="xs:string"/>
@@ -50,7 +50,7 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element name="Version" type="xs:string"/>
-				<xs:element name="Environment" type="Environment" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="TimeSeries" type="TimeSeries" minOccurs="0" maxOccurs="unbounded"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
