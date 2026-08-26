@@ -81,6 +81,10 @@ namespace BCTypesLibrary
         std::optional<TypeRecord> getByUUID(std::string_view uuid);
         std::optional<TypeRecord> getByName(std::string_view name);
 
+        //! \brief Finds a record by its display name ("Project:Name" for project-temporary
+        //! records, plain Name otherwise) -- the name THERM boundary polygons carry.
+        std::optional<TypeRecord> getByDisplayName(std::string_view displayName);
+
         //! \brief Updates current record with new data
         //!
         //! @bcType - Record that will be updated in the library

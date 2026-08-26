@@ -9,6 +9,7 @@
 
 #include "Common/Common.hxx"
 #include "Common/DB.hxx"
+#include "LibraryUtilities/Common.hxx"
 #include "LibraryUtilities/FileManipulation.hxx"
 
 namespace BCTypesLibrary
@@ -59,6 +60,13 @@ namespace BCTypesLibrary
     std::optional<TypeRecord> DB::getByName(std::string_view name)
     {
         return getBoundaryCondition([&name](const TypeRecord & bc) { return bc.Name == name; });
+    }
+
+    std::optional<TypeRecord> DB::getByDisplayName(std::string_view displayName)
+    {
+        return getBoundaryCondition([&displayName](const TypeRecord & bc) {
+            return LibraryCommon::DisplayName(bc) == displayName;
+        });
     }
 
     void DB::update(const TypeRecord & bcType)
