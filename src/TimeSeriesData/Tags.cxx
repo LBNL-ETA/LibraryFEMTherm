@@ -65,6 +65,11 @@ namespace TimeSeriesLibrary
         return description_;
     }
 
+    std::string Tags::color() const
+    {
+        return color_;
+    }
+
     std::string Tags::channel() const
     {
         return channel_;

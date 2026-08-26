@@ -17,6 +17,7 @@ namespace
         data.UUID = "11111111-2222-3333-4444-555555555555";
         data.Name = "Sample exterior";
         data.Protected = true;
+        data.Color = "0x2A6ACC";
         data.channels = {Channel{ChannelRole::AirTemperature, {21.3, 21.1, 20.8}},
                          Channel{ChannelRole::RelativeHumidity, {0.52, 0.55, 0.57}},
                          Channel{ChannelRole::WindSpeed, {1.4, 1.7, 2.1}}};
@@ -67,6 +68,7 @@ TEST(TestTimeSeriesData, DBSaveLoadRoundTrip)
     EXPECT_EQ(record->Name, "Sample exterior");
     EXPECT_FALSE(record->ProjectName.has_value());
     EXPECT_TRUE(record->Protected);
+    EXPECT_EQ(record->Color, "0x2A6ACC");
     ASSERT_EQ(record->channels.size(), 3U);
     EXPECT_EQ(record->channels[0].role, ChannelRole::AirTemperature);
     ASSERT_EQ(record->channels[0].values.size(), 3U);

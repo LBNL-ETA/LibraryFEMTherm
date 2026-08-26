@@ -43,6 +43,10 @@ namespace TimeSeriesLibrary
         std::optional<std::string> ProjectName;
         bool Protected{false};
         std::optional<std::string> Description;
+        //! Boundaries are drawn in the color of the series they read, not of the record
+        //! they use (design decision: avoids duplicating records just to recolor). Not part
+        //! of the content hash, like every other piece of display metadata.
+        std::string Color{"0x1F6FB4"};
         std::vector<Channel> channels;
     };
 
