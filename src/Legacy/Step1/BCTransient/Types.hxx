@@ -78,12 +78,12 @@ namespace BCTypesLibrary
         explicit DB(const std::string & xmlName);
 
         std::vector<TypeRecord> & getBoundaryConditions();
-        std::optional<TypeRecord> getByUUID(std::string_view uuid);
-        std::optional<TypeRecord> getByName(std::string_view name);
+        std::optional<TypeRecord> getByUUID(std::string_view uuid) const;
+        std::optional<TypeRecord> getByName(std::string_view name) const;
 
         //! \brief Finds a record by its display name ("Project:Name" for project-temporary
         //! records, plain Name otherwise) -- the name THERM boundary polygons carry.
-        std::optional<TypeRecord> getByDisplayName(std::string_view displayName);
+        std::optional<TypeRecord> getByDisplayName(std::string_view displayName) const;
 
         //! \brief Updates current record with new data
         //!

@@ -51,18 +51,18 @@ namespace BCTypesLibrary
     }
 
 
-    std::optional<TypeRecord> DB::getByUUID(std::string_view uuid)
+    std::optional<TypeRecord> DB::getByUUID(std::string_view uuid) const
     {
         return getBoundaryCondition([&uuid](const TypeRecord & bc) { return bc.UUID == uuid; });
     }
 
 
-    std::optional<TypeRecord> DB::getByName(std::string_view name)
+    std::optional<TypeRecord> DB::getByName(std::string_view name) const
     {
         return getBoundaryCondition([&name](const TypeRecord & bc) { return bc.Name == name; });
     }
 
-    std::optional<TypeRecord> DB::getByDisplayName(std::string_view displayName)
+    std::optional<TypeRecord> DB::getByDisplayName(std::string_view displayName) const
     {
         return getBoundaryCondition([&displayName](const TypeRecord & bc) {
             return LibraryCommon::DisplayName(bc) == displayName;
