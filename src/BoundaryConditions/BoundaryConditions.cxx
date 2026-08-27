@@ -109,6 +109,11 @@ namespace BCLibrary
             {
                 return {};
             }
+
+            std::vector<ChannelRole> operator()(const NoExchange &) const
+            {
+                return {};
+            }
         };
     }   // namespace
 

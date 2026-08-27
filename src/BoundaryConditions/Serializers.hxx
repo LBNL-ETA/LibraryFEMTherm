@@ -245,6 +245,18 @@ namespace BCLibrary
     }
 
     template<typename NodeAdapter>
+    const NodeAdapter & operator>>(const NodeAdapter & node, NoExchange &)
+    {
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    NodeAdapter & operator<<(NodeAdapter & node, const NoExchange &)
+    {
+        return node;
+    }
+
+    template<typename NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, BoundaryCondition & boundaryCondition)
     {
         Tags tag;
@@ -255,7 +267,7 @@ namespace BCLibrary
         node >> FileParse::Child{tag.color(), boundaryCondition.Color};
         node >> FileParse::Child{tag.isIGUSurface(), boundaryCondition.isIGUSurface};
         FileParse::deserializeVariant(
-          node, {"SurfaceExchange", "PrescribedState", "RadiationSurface"}, boundaryCondition.data);
+          node, {"SurfaceExchange", "PrescribedState", "RadiationSurface", "NoExchange"}, boundaryCondition.data);
         return node;
     }
 
@@ -270,7 +282,7 @@ namespace BCLibrary
         node << FileParse::Child{tag.color(), boundaryCondition.Color};
         node << FileParse::Child{tag.isIGUSurface(), boundaryCondition.isIGUSurface};
         FileParse::serializeVariant(
-          node, {"SurfaceExchange", "PrescribedState", "RadiationSurface"}, boundaryCondition.data);
+          node, {"SurfaceExchange", "PrescribedState", "RadiationSurface", "NoExchange"}, boundaryCondition.data);
         return node;
     }
 }   // namespace BCLibrary

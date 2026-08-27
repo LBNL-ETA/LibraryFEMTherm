@@ -140,6 +140,29 @@ TEST(TestUnifiedBC, PrescribedStateRoundTrip)
     EXPECT_EQ(roles[0], ChannelRole::PrescribedTemperature);
 }
 
+TEST(TestUnifiedBC, NoExchangeRoundTrip)
+{
+    // The dedicated adiabatic kind: deliberately no exchange, steady-capable, no
+    // required channels, and it survives the XML round trip as its own variant.
+    BoundaryCondition record;
+    record.UUID = "adiabatic-no-exchange";
+    record.Name = "Adiabatic";
+    record.Protected = true;
+    record.data = NoExchange{};
+
+    DB source;
+    source.add(record);
+
+    DB loaded;
+    loaded.loadFromString(source.saveToString());
+
+    const auto reloaded{loaded.getByUUID(record.UUID)};
+    ASSERT_TRUE(reloaded.has_value());
+    EXPECT_TRUE(std::holds_alternative<NoExchange>(reloaded->data));
+    EXPECT_TRUE(isSteadyCapable(reloaded.value()));
+    EXPECT_TRUE(requiredRoles(reloaded.value()).empty());
+}
+
 TEST(TestUnifiedBC, RadiationSurfaceRoundTripAndDefaultLookup)
 {
     BoundaryCondition record;

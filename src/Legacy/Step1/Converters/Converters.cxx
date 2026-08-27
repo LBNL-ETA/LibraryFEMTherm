@@ -57,7 +57,7 @@ namespace BCLibrary
 
         struct SteadyDataVisitor
         {
-            std::variant<SurfaceExchange, PrescribedState, RadiationSurface>
+            std::variant<SurfaceExchange, PrescribedState, RadiationSurface, NoExchange>
               operator()(const BCSteadyStateLibrary::Comprehensive & legacy) const
             {
                 SurfaceExchange exchange;
@@ -82,7 +82,7 @@ namespace BCLibrary
                 return exchange;
             }
 
-            std::variant<SurfaceExchange, PrescribedState, RadiationSurface>
+            std::variant<SurfaceExchange, PrescribedState, RadiationSurface, NoExchange>
               operator()(const BCSteadyStateLibrary::Simplified & legacy) const
             {
                 SurfaceExchange exchange;
@@ -91,7 +91,7 @@ namespace BCLibrary
                 return exchange;
             }
 
-            std::variant<SurfaceExchange, PrescribedState, RadiationSurface>
+            std::variant<SurfaceExchange, PrescribedState, RadiationSurface, NoExchange>
               operator()(const BCSteadyStateLibrary::RadiationSurface & legacy) const
             {
                 return RadiationSurface{.isDefault = legacy.isDefault,
@@ -254,6 +254,35 @@ namespace BCLibrary
         }
     }   // namespace
 
+    namespace
+    {
+        //! The legacy library expressed adiabatic as a fixed convection with a zero film
+        //! coefficient and nothing else. That exchanges nothing - no heat, and by the
+        //! Lewis relation no moisture either - so the conversion names it: the dedicated
+        //! NoExchange kind, instead of carrying the degenerate zeros forward.
+        bool convertsToNoExchange(
+          const std::variant<SurfaceExchange, PrescribedState, RadiationSurface, NoExchange> & data)
+        {
+            const auto * exchange{std::get_if<SurfaceExchange>(&data)};
+            if(exchange == nullptr || exchange->radiation.has_value() || exchange->solar.has_value()
+               || exchange->flux.has_value())
+            {
+                return false;
+            }
+            if(!exchange->convection.has_value())
+            {
+                return true;
+            }
+            const auto & filmCoefficient{exchange->convection->filmCoefficient};
+            if(!filmCoefficient.has_value())
+            {
+                return false;
+            }
+            const auto * film{std::get_if<Constant>(&filmCoefficient.value())};
+            return film != nullptr && film->value == 0.0;
+        }
+    }   // namespace
+
     BoundaryCondition fromSteadyState(const BCSteadyStateLibrary::BoundaryCondition & legacy)
     {
         BoundaryCondition converted;
@@ -264,6 +293,10 @@ namespace BCLibrary
         converted.ProjectName = legacy.ProjectName;
         converted.isIGUSurface = legacy.isIGUSurface;
         converted.data = std::visit(SteadyDataVisitor{}, legacy.data);
+        if(convertsToNoExchange(converted.data))
+        {
+            converted.data = NoExchange{};
+        }
         return converted;
     }
 

@@ -66,8 +66,10 @@ namespace BCLibrary
         std::vector<CapabilityIssue> issues;
 
         // Radiation-surface records are internal companions of glazing systems; every
-        // engine consumes them regardless of mode.
-        if(std::holds_alternative<RadiationSurface>(record.data))
+        // engine consumes them regardless of mode. A no-exchange (adiabatic) record
+        // applies nothing, so it runs under every engine and mode too.
+        if(std::holds_alternative<RadiationSurface>(record.data)
+           || std::holds_alternative<NoExchange>(record.data))
         {
             return issues;
         }

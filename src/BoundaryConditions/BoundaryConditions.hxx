@@ -79,13 +79,19 @@ namespace BCLibrary
         double emissivity{0};
     };
 
+    //! Deliberately no exchange at all: the boundary is adiabatic and moisture-tight.
+    //! A dedicated kind (rather than an empty SurfaceExchange) so intent is explicit -
+    //! an empty exchange could equally be a half-edited record.
+    struct NoExchange
+    {};
+
     struct BoundaryCondition
     {
         std::string UUID{};
         std::string Name{"Default Name"};
         bool Protected{false};
         std::string Color{"0x0078D7"};
-        std::variant<SurfaceExchange, PrescribedState, RadiationSurface> data{};
+        std::variant<SurfaceExchange, PrescribedState, RadiationSurface, NoExchange> data{};
 
         std::optional<std::string> ProjectName{};
 

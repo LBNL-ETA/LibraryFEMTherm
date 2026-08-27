@@ -2,6 +2,14 @@
 <BoundaryConditions>
 	<Version>1</Version>
 	<BoundaryCondition>
+		<UUID>61d7bd1c-22c6-4ea0-8720-0696e8c194ad</UUID>
+		<Name>Adiabatic</Name>
+		<Protected>true</Protected>
+		<Color>0x000000</Color>
+		<IGUSurface>false</IGUSurface>
+		<NoExchange/>
+	</BoundaryCondition>
+	<BoundaryCondition>
 		<UUID>4c179ded-3f34-4102-b8d6-46d8e6d1c6d9</UUID>
 		<Name>Interior (20 tilt) Aluminum Frame (convection only)</Name>
 		<Protected>true</Protected>
@@ -237,27 +245,6 @@
 				</Emissivity>
 				<ViewFactor>1</ViewFactor>
 			</BlackBody>
-		</SurfaceExchange>
-	</BoundaryCondition>
-	<BoundaryCondition>
-		<UUID>61d7bd1c-22c6-4ea0-8720-0696e8c194ad</UUID>
-		<Name>Adiabatic</Name>
-		<Protected>true</Protected>
-		<Color>0x000000</Color>
-		<IGUSurface>false</IGUSurface>
-		<SurfaceExchange>
-			<RelativeHumidity>
-				<Constant>0.5</Constant>
-			</RelativeHumidity>
-			<Convection>
-				<Model>Fixed Convection Coefficient</Model>
-				<AirTemperature>
-					<Constant>0</Constant>
-				</AirTemperature>
-				<FilmCoefficient>
-					<Constant>0</Constant>
-				</FilmCoefficient>
-			</Convection>
 		</SurfaceExchange>
 	</BoundaryCondition>
 	<BoundaryCondition>

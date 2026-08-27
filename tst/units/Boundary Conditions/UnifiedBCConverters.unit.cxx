@@ -86,6 +86,37 @@ TEST(TestUnifiedBCConverters, SteadySimplifiedAndLinearizedRadiation)
     EXPECT_NEAR(constantValue(fixed->coefficient), 4.4, 1e-9);
 }
 
+TEST(TestUnifiedBCConverters, SteadyAdiabaticBecomesNoExchange)
+{
+    // The legacy library expressed adiabatic as a fixed convection with a zero film
+    // coefficient and nothing else; the conversion produces the dedicated NoExchange
+    // kind instead of carrying the degenerate zeros forward. This is the path both the
+    // THM and the legacy THMZ load rely on (global steady library and archive capture
+    // both convert through fromSteadyState).
+    BCSteadyStateLibrary::BoundaryCondition legacy;
+    legacy.UUID = "61d7bd1c-22c6-4ea0-8720-0696e8c194ad";
+    legacy.Name = "Adiabatic";
+    legacy.Protected = true;
+    legacy.data = BCSteadyStateLibrary::Simplified{0.0, 0.0, 0.5};
+
+    const auto converted{fromSteadyState(legacy)};
+    EXPECT_TRUE(std::holds_alternative<NoExchange>(converted.data));
+    EXPECT_TRUE(isSteadyCapable(converted));
+    EXPECT_EQ(converted.UUID, legacy.UUID);
+
+    // A zero film coefficient with radiation still exchanges - it must stay a surface
+    // exchange.
+    BCSteadyStateLibrary::BoundaryCondition radiating;
+    radiating.UUID = "r1";
+    radiating.data = BCSteadyStateLibrary::Comprehensive{
+      0.5,
+      BCSteadyStateLibrary::Convection{0.0, 0.0},
+      std::nullopt,
+      BCSteadyStateLibrary::Radiation{BCSteadyStateLibrary::LinearizedRadiation{20.0, 4.4}}};
+    const auto convertedRadiating{fromSteadyState(radiating)};
+    EXPECT_TRUE(std::holds_alternative<SurfaceExchange>(convertedRadiating.data));
+}
+
 TEST(TestUnifiedBCConverters, TransientTypeRecordInfersEnvironmentSources)
 {
     BCTypesLibrary::TypeRecord legacy;
