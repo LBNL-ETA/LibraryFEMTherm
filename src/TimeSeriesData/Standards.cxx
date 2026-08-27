@@ -218,6 +218,7 @@ namespace TimeSeriesLibrary::Standards
 
         TimeSeriesData result;
         result.Name = interiorName(exterior.Name, standard, load);
+        result.Source = "Standard - interior";
         result.channels = {Channel{ChannelRole::AirTemperature, std::move(indoorTemperature)},
                            Channel{ChannelRole::RelativeHumidity, std::move(indoorHumidity)}};
         result.UUID = contentUuid(result);

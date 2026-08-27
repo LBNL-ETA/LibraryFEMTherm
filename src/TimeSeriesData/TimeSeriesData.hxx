@@ -47,6 +47,11 @@ namespace TimeSeriesLibrary
         //! they use (design decision: avoids duplicating records just to recolor). Not part
         //! of the content hash, like every other piece of display metadata.
         std::string Color{"0x1F6FB4"};
+        //! Provenance in words, shown by the library list ("Imported",
+        //! "Standard - interior"); absent on datasets made before the label existed, and
+        //! the display falls back to "Imported". Metadata like Color - not part of the
+        //! content hash.
+        std::optional<std::string> Source;
         std::vector<Channel> channels;
     };
 

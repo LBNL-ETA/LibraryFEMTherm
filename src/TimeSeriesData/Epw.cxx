@@ -232,6 +232,7 @@ namespace TimeSeriesLibrary::Epw
         ImportResult result;
         result.location = parseLocation(locationParts);
         result.data.Name = datasetName;
+        result.data.Source = "Imported";
 
         for(const auto & direct : directChannels())
         {

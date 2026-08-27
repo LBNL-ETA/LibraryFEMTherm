@@ -256,6 +256,7 @@ namespace TimeSeriesLibrary::Csv
 
         ImportResult result;
         result.data.Name = datasetName;
+        result.data.Source = "Imported";
 
         const auto & headers{rows.front()};
         for(size_t index = 0; index < headers.size(); ++index)

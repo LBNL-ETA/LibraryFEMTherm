@@ -58,6 +58,7 @@ namespace TimeSeriesLibrary
         node >> FileParse::Child{tag.protectedTag(), data.Protected};
         node >> FileParse::Child{tag.description(), data.Description};
         node >> FileParse::Child{tag.color(), data.Color};
+        node >> FileParse::Child{tag.source(), data.Source};
         node >> FileParse::Child{tag.channel(), data.channels};
         return node;
     }
@@ -72,6 +73,7 @@ namespace TimeSeriesLibrary
         node << FileParse::Child{tag.protectedTag(), data.Protected};
         node << FileParse::Child{tag.description(), data.Description};
         node << FileParse::Child{tag.color(), data.Color};
+        node << FileParse::Child{tag.source(), data.Source};
         node << FileParse::Child{tag.channel(), data.channels};
         return node;
     }

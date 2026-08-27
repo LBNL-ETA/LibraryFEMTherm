@@ -21,6 +21,7 @@ namespace TimeSeriesLibrary
         [[nodiscard]] std::string protectedTag() const;
         [[nodiscard]] std::string description() const;
         [[nodiscard]] std::string color() const;
+        [[nodiscard]] std::string source() const;
         [[nodiscard]] std::string channel() const;
         [[nodiscard]] std::string role() const;
         [[nodiscard]] std::string value() const;
@@ -35,6 +36,7 @@ namespace TimeSeriesLibrary
         const std::string protectedTag_{"Protected"};
         const std::string description_{"Description"};
         const std::string color_{"Color"};
+        const std::string source_{"Source"};
         const std::string channel_{"Channel"};
         const std::string role_{"Role"};
         const std::string value_{"Value"};
