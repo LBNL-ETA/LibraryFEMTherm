@@ -338,7 +338,7 @@
 					<FromTimeSeries>AirTemperature</FromTimeSeries>
 				</AirTemperature>
 				<FilmCoefficient>
-					<FromTimeSeries>ConvectiveCoefficient</FromTimeSeries>
+					<Constant>8</Constant>
 				</FilmCoefficient>
 			</Convection>
 		</SurfaceExchange>
@@ -359,7 +359,7 @@
 					<FromTimeSeries>AirTemperature</FromTimeSeries>
 				</AirTemperature>
 				<FilmCoefficient>
-					<FromTimeSeries>ConvectiveCoefficient</FromTimeSeries>
+					<Constant>8</Constant>
 				</FilmCoefficient>
 			</Convection>
 			<FixedCoefficient>
@@ -367,7 +367,7 @@
 					<FromTimeSeries>RadiantTemperature</FromTimeSeries>
 				</Temperature>
 				<Coefficient>
-					<FromTimeSeries>RadiativeCoefficient</FromTimeSeries>
+					<Constant>4.4</Constant>
 				</Coefficient>
 			</FixedCoefficient>
 		</SurfaceExchange>
@@ -552,7 +552,7 @@
 					<FromTimeSeries>AirTemperature</FromTimeSeries>
 				</AirTemperature>
 				<FilmCoefficient>
-					<FromTimeSeries>ConvectiveCoefficient</FromTimeSeries>
+					<Constant>26</Constant>
 				</FilmCoefficient>
 			</Convection>
 		</SurfaceExchange>
