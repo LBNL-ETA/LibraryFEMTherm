@@ -1,6 +1,7 @@
 #include <algorithm>
 
 #include <lbnl/algorithm.hxx>
+#include <lbnl/optional.hxx>
 
 #include "Converters.hxx"
 
@@ -273,13 +274,10 @@ namespace BCLibrary
             {
                 return true;
             }
-            const auto & filmCoefficient{exchange->convection->filmCoefficient};
-            if(!filmCoefficient.has_value())
-            {
-                return false;
-            }
-            const auto * film{std::get_if<Constant>(&filmCoefficient.value())};
-            return film != nullptr && film->value == 0.0;
+            return lbnl::extend(exchange->convection->filmCoefficient)
+              .and_then([](const Source & source) { return lbnl::get_if_opt<Constant>(source); })
+              .transform([](const Constant & film) { return film.value == 0.0; })
+              .value_or(false);
         }
     }   // namespace
 
