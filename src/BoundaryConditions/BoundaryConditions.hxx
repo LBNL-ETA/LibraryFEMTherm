@@ -21,9 +21,15 @@ namespace BCLibrary
         std::optional<Source> windDirection{};
     };
 
+    //! The enclosure's radiation temperature is a value of its own, as it has been since
+    //! version 7, where the Tr field stays editable for an auto grey body record. It is
+    //! optional only so that libraries converted before the field existed keep loading;
+    //! absent, the enclosure follows the convection air temperature, which is what every
+    //! shipped record does anyway.
     struct AutomaticEnclosure
     {
         Source emissivity{Constant{0.9}};
+        std::optional<Source> temperature{};
     };
 
     struct ManualEnclosure

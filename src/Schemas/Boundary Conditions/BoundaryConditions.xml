@@ -32,6 +32,9 @@
 				<Emissivity>
 					<Constant>1</Constant>
 				</Emissivity>
+				<Temperature>
+					<Constant>21</Constant>
+				</Temperature>
 			</AutomaticEnclosure>
 		</SurfaceExchange>
 	</BoundaryCondition>
@@ -58,6 +61,9 @@
 				<Emissivity>
 					<Constant>1</Constant>
 				</Emissivity>
+				<Temperature>
+					<Constant>21</Constant>
+				</Temperature>
 			</AutomaticEnclosure>
 		</SurfaceExchange>
 	</BoundaryCondition>
@@ -84,6 +90,9 @@
 				<Emissivity>
 					<Constant>1</Constant>
 				</Emissivity>
+				<Temperature>
+					<Constant>21</Constant>
+				</Temperature>
 			</AutomaticEnclosure>
 		</SurfaceExchange>
 	</BoundaryCondition>
@@ -110,6 +119,9 @@
 				<Emissivity>
 					<Constant>1</Constant>
 				</Emissivity>
+				<Temperature>
+					<Constant>21</Constant>
+				</Temperature>
 			</AutomaticEnclosure>
 		</SurfaceExchange>
 	</BoundaryCondition>
@@ -136,6 +148,9 @@
 				<Emissivity>
 					<Constant>1</Constant>
 				</Emissivity>
+				<Temperature>
+					<Constant>21</Constant>
+				</Temperature>
 			</AutomaticEnclosure>
 		</SurfaceExchange>
 	</BoundaryCondition>
@@ -162,6 +177,9 @@
 				<Emissivity>
 					<Constant>1</Constant>
 				</Emissivity>
+				<Temperature>
+					<Constant>21</Constant>
+				</Temperature>
 			</AutomaticEnclosure>
 		</SurfaceExchange>
 	</BoundaryCondition>
@@ -188,6 +206,9 @@
 				<Emissivity>
 					<Constant>1</Constant>
 				</Emissivity>
+				<Temperature>
+					<Constant>21</Constant>
+				</Temperature>
 			</AutomaticEnclosure>
 		</SurfaceExchange>
 	</BoundaryCondition>
@@ -214,6 +235,9 @@
 				<Emissivity>
 					<Constant>1</Constant>
 				</Emissivity>
+				<Temperature>
+					<Constant>21</Constant>
+				</Temperature>
 			</AutomaticEnclosure>
 		</SurfaceExchange>
 	</BoundaryCondition>

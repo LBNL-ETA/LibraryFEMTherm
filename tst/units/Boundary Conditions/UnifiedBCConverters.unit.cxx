@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "Legacy/Step1/BCSteadyState/Operators.hxx"
 #include "Legacy/Step1/Converters/Converters.hxx"
 
 using namespace BCLibrary;
@@ -244,4 +245,95 @@ TEST(TestUnifiedBCConverters, BothRadiationTypesKeepFirstRoleOccurrence)
 
     EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::RadiativeCoefficient));
     EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::Emissivity));
+}
+
+
+namespace
+{
+    BCSteadyStateLibrary::BoundaryCondition namedRecord(const std::string & name)
+    {
+        BCSteadyStateLibrary::BoundaryCondition legacy;
+        legacy.UUID = "7d0d5f2a-1f10-4f1e-9d0a-2b2f6c9a4e11";
+        legacy.Name = name;
+        legacy.Color = "0x0078D7";
+        return legacy;
+    }
+
+    void expectRoundTrip(const BCSteadyStateLibrary::BoundaryCondition & legacy)
+    {
+        const auto returned{toSteadyState(fromSteadyState(legacy))};
+        ASSERT_TRUE(returned.has_value()) << returned.error();
+        EXPECT_TRUE(returned.value() == legacy);
+    }
+}   // namespace
+
+//! Version 7 keeps the Tr field editable for an auto grey body record, so the enclosure
+//! temperature is a value of its own and must not collapse onto the air temperature.
+TEST(TestUnifiedBCConverters, AutomaticEnclosureKeepsItsOwnTemperature)
+{
+    auto legacy{namedRecord("Interior Aluminum Frame")};
+    BCSteadyStateLibrary::Comprehensive comprehensive;
+    comprehensive.relativeHumidity = 0.5;
+    comprehensive.convection = BCSteadyStateLibrary::Convection{21.0, 4.65};
+    comprehensive.radiation =
+      BCSteadyStateLibrary::Radiation{BCSteadyStateLibrary::AutomaticEnclosure{25.0, 1.0}};
+    legacy.data = comprehensive;
+
+    const auto unified{fromSteadyState(legacy)};
+    const auto & exchange{std::get<SurfaceExchange>(unified.data)};
+    const auto & enclosure{std::get<AutomaticEnclosure>(exchange.radiation.value())};
+
+    ASSERT_TRUE(enclosure.temperature.has_value());
+    EXPECT_NEAR(constantValue(enclosure.temperature.value()), 25.0, 1e-9);
+    EXPECT_NEAR(constantValue(enclosure.emissivity), 1.0, 1e-9);
+
+    expectRoundTrip(legacy);
+}
+
+TEST(TestUnifiedBCConverters, SteadyRecordsRoundTripThroughUnified)
+{
+    auto simplified{namedRecord("Simple Interior")};
+    simplified.data = BCSteadyStateLibrary::Simplified{21.0, 8.0, 0.5};
+    expectRoundTrip(simplified);
+
+    auto blackBody{namedRecord("Exterior Black Body")};
+    BCSteadyStateLibrary::Comprehensive withBlackBody;
+    withBlackBody.relativeHumidity = 0.3;
+    withBlackBody.convection = BCSteadyStateLibrary::Convection{-18.0, 26.0};
+    withBlackBody.radiation =
+      BCSteadyStateLibrary::Radiation{BCSteadyStateLibrary::BlackBodyRadiation{-18.0, 0.9, 1.0}};
+    blackBody.data = withBlackBody;
+    expectRoundTrip(blackBody);
+
+    auto linearized{namedRecord("Linearized")};
+    BCSteadyStateLibrary::Comprehensive withLinear;
+    withLinear.relativeHumidity = 0.5;
+    withLinear.convection = BCSteadyStateLibrary::Convection{21.0, 3.0};
+    withLinear.constantFlux = BCSteadyStateLibrary::ConstantFlux{12.5};
+    withLinear.radiation =
+      BCSteadyStateLibrary::Radiation{BCSteadyStateLibrary::LinearizedRadiation{21.0, 4.4}};
+    linearized.data = withLinear;
+    expectRoundTrip(linearized);
+
+    auto surface{namedRecord("Radiation Surface")};
+    surface.data = BCSteadyStateLibrary::RadiationSurface{true, 21.0, 0.9};
+    expectRoundTrip(surface);
+}
+
+//! What steady state has no room for is reported, never approximated.
+TEST(TestUnifiedBCConverters, RecordsWithoutASteadyFormAreReported)
+{
+    BoundaryCondition prescribed;
+    prescribed.Name = "Prescribed";
+    prescribed.data = PrescribedState{};
+    EXPECT_FALSE(toSteadyState(prescribed).has_value());
+
+    BoundaryCondition series;
+    series.Name = "Reads a series";
+    SurfaceExchange exchange;
+    exchange.convection = Convection{.model = ConvectionModel::Fixed_Convection_Coefficient,
+                                     .airTemperature = FromTimeSeries{ChannelRole::AirTemperature},
+                                     .filmCoefficient = Constant{8.0}};
+    series.data = exchange;
+    EXPECT_FALSE(toSteadyState(series).has_value());
 }

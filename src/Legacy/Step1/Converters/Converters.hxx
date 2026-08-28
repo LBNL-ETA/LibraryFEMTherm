@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include <lbnl/expected.hxx>
+
 #include "Legacy/Step1/BCSteadyState/SteadyState.hxx"
 #include "Legacy/Step1/BCTransient/Timestep.hxx"
 #include "Legacy/Step1/BCTransient/Types.hxx"
@@ -14,6 +16,15 @@ namespace BCLibrary
     //! Legacy steady-state record to unified record. UUIDs are preserved so per-segment
     //! references survive migration unchanged. All resulting sources are constants.
     [[nodiscard]] BoundaryCondition fromSteadyState(const BCSteadyStateLibrary::BoundaryCondition & legacy);
+
+    //! Unified record back to the legacy steady-state shape, for the consumers that still
+    //! speak it. The pair round-trips: whatever fromSteadyState produced converts back to
+    //! the record it came from. A surface exchange carrying nothing but convection and
+    //! humidity is a Simplified record; one that also carries flux or radiation is
+    //! Comprehensive. What steady state has no room for - a prescribed state, or any input
+    //! reading a time series - is reported rather than approximated.
+    [[nodiscard]] lbnl::ExpectedExt<BCSteadyStateLibrary::BoundaryCondition, std::string>
+      toSteadyState(const BoundaryCondition & unified);
 
     //! Legacy transient type record to unified record (UUID preserved). Source inference:
     //! for bcType SteadyState every model-required input becomes a Constant taken from the

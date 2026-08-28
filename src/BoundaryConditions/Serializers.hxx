@@ -101,6 +101,7 @@ namespace BCLibrary
     {
         Tags tag;
         node >> FileParse::Child{tag.emissivity(), enclosure.emissivity};
+        node >> FileParse::Child{tag.temperature(), enclosure.temperature};
         return node;
     }
 
@@ -109,6 +110,7 @@ namespace BCLibrary
     {
         Tags tag;
         node << FileParse::Child{tag.emissivity(), enclosure.emissivity};
+        node << FileParse::Child{tag.temperature(), enclosure.temperature};
         return node;
     }
 

@@ -5,6 +5,7 @@
 
 #include "Converters.hxx"
 
+#include "BoundaryConditions/Tags.hxx"
 #include "TimeSeriesData/ContentHash.hxx"
 
 namespace BCLibrary
@@ -26,7 +27,8 @@ namespace BCLibrary
                   using OptionType = std::decay_t<decltype(option)>;
                   if constexpr(std::is_same_v<OptionType, BCSteadyStateLibrary::AutomaticEnclosure>)
                   {
-                      return AutomaticEnclosure{Constant{option.emissivity}};
+                      return AutomaticEnclosure{.emissivity = Constant{option.emissivity},
+                                                .temperature = Constant{option.temperature}};
                   }
                   else if constexpr(std::is_same_v<OptionType, BCSteadyStateLibrary::ManualEnclosure>)
                   {
@@ -183,8 +185,19 @@ namespace BCLibrary
         {
             switch(legacy.Model)
             {
-                case BCTypesLibrary::RadiationModel::Automatic_Enclosure:
-                    return AutomaticEnclosure{Constant{legacy.SurfaceEmissivity.value_or(0.9)}};
+                case BCTypesLibrary::RadiationModel::Automatic_Enclosure: {
+                    // The emissivity stays typed - it is a property, not a driver - but the
+                    // enclosure temperature is a value of its own, exactly as it is for the
+                    // two models below. Left absent when the record carries none, so the
+                    // enclosure keeps following the air temperature.
+                    AutomaticEnclosure enclosure{.emissivity = Constant{legacy.SurfaceEmissivity.value_or(0.9)}};
+                    if(isTransient || legacy.Temperature.has_value())
+                    {
+                        enclosure.temperature =
+                          inferSource(isTransient, ChannelRole::RadiantTemperature, legacy.Temperature, 0.0);
+                    }
+                    return enclosure;
+                }
                 case BCTypesLibrary::RadiationModel::Black_Body_Radiation:
                     return BlackBodyRadiation{
                       .temperature =
@@ -280,6 +293,232 @@ namespace BCLibrary
               .value_or(false);
         }
     }   // namespace
+
+    namespace
+    {
+        ///////////////////////////////////////////////////////////////////////////////////
+        // Unified record back to steady state
+        ///////////////////////////////////////////////////////////////////////////////////
+
+        //! A steady-state record stores numbers, so an input reading a channel has no
+        //! representation there. Naming it beats inventing a value for it.
+        lbnl::ExpectedExt<double, std::string> constantValue(const Source & source, const std::string & what)
+        {
+            if(const auto * constant{std::get_if<Constant>(&source)})
+            {
+                return constant->value;
+            }
+            return lbnl::Unexpected{what + " reads a time series, which a steady-state record cannot hold"};
+        }
+
+        lbnl::ExpectedExt<double, std::string>
+          constantValue(const std::optional<Source> & source, double fallback, const std::string & what)
+        {
+            if(!source.has_value())
+            {
+                return fallback;
+            }
+            return constantValue(source.value(), what);
+        }
+
+        //! The air temperature the enclosure falls back to when it carries none of its own -
+        //! the shape libraries converted before AutomaticEnclosure had a temperature.
+        double convectionTemperature(const SurfaceExchange & exchange)
+        {
+            if(!exchange.convection.has_value())
+            {
+                return 0.0;
+            }
+            return constantValue(exchange.convection->airTemperature, 0.0, "The air temperature").value_or(0.0);
+        }
+
+        lbnl::ExpectedExt<BCSteadyStateLibrary::RadiationOptions, std::string>
+          toLegacyRadiation(const RadiationOptions & options, double airTemperature)
+        {
+            if(const auto * automatic{std::get_if<AutomaticEnclosure>(&options)})
+            {
+                const auto emissivity{constantValue(automatic->emissivity, "The enclosure emissivity")};
+                const auto temperature{
+                  constantValue(automatic->temperature, airTemperature, "The enclosure temperature")};
+                if(!emissivity.has_value())
+                {
+                    return lbnl::Unexpected{emissivity.error()};
+                }
+                if(!temperature.has_value())
+                {
+                    return lbnl::Unexpected{temperature.error()};
+                }
+                return BCSteadyStateLibrary::RadiationOptions{BCSteadyStateLibrary::AutomaticEnclosure{
+                  .temperature = temperature.value(), .emissivity = emissivity.value()}};
+            }
+            if(std::holds_alternative<ManualEnclosure>(options))
+            {
+                return BCSteadyStateLibrary::RadiationOptions{BCSteadyStateLibrary::ManualEnclosure{}};
+            }
+            if(const auto * blackBody{std::get_if<BlackBodyRadiation>(&options)})
+            {
+                const auto temperature{constantValue(blackBody->temperature, "The radiant temperature")};
+                const auto emissivity{constantValue(blackBody->emissivity, "The radiant emissivity")};
+                if(!temperature.has_value())
+                {
+                    return lbnl::Unexpected{temperature.error()};
+                }
+                if(!emissivity.has_value())
+                {
+                    return lbnl::Unexpected{emissivity.error()};
+                }
+                return BCSteadyStateLibrary::RadiationOptions{
+                  BCSteadyStateLibrary::BlackBodyRadiation{.temperature = temperature.value(),
+                                                           .emissivity = emissivity.value(),
+                                                           .viewFactor = blackBody->viewFactor}};
+            }
+            const auto & fixed{std::get<FixedCoefficientRadiation>(options)};
+            const auto temperature{constantValue(fixed.temperature, "The radiant temperature")};
+            const auto coefficient{constantValue(fixed.coefficient, "The radiative coefficient")};
+            if(!temperature.has_value())
+            {
+                return lbnl::Unexpected{temperature.error()};
+            }
+            if(!coefficient.has_value())
+            {
+                return lbnl::Unexpected{coefficient.error()};
+            }
+            return BCSteadyStateLibrary::RadiationOptions{BCSteadyStateLibrary::LinearizedRadiation{
+              .temperature = temperature.value(), .filmCoefficient = coefficient.value()}};
+        }
+
+        //! Steady state knows one convection model - a fixed film coefficient. The named
+        //! correlations belong to the transient side and have no steady spelling.
+        lbnl::ExpectedExt<BCSteadyStateLibrary::Convection, std::string>
+          toLegacyConvection(const Convection & convection)
+        {
+            if(convection.model != ConvectionModel::Fixed_Convection_Coefficient)
+            {
+                return lbnl::Unexpected{std::string{"The "} + convectionModelToString(convection.model)
+                                        + " convection model has no steady-state form"};
+            }
+            const auto temperature{constantValue(convection.airTemperature, 0.0, "The air temperature")};
+            const auto film{constantValue(convection.filmCoefficient, 0.0, "The film coefficient")};
+            if(!temperature.has_value())
+            {
+                return lbnl::Unexpected{temperature.error()};
+            }
+            if(!film.has_value())
+            {
+                return lbnl::Unexpected{film.error()};
+            }
+            return BCSteadyStateLibrary::Convection{.temperature = temperature.value(),
+                                                    .filmCoefficient = film.value()};
+        }
+
+        //! Simplified is exactly a surface exchange with nothing but convection and
+        //! humidity; the moment flux or radiation joins in, only Comprehensive can hold it.
+        bool fitsSimplified(const SurfaceExchange & exchange)
+        {
+            return exchange.convection.has_value() && !exchange.flux.has_value()
+                   && !exchange.radiation.has_value() && !exchange.solar.has_value();
+        }
+
+        using LegacyData = std::variant<BCSteadyStateLibrary::Comprehensive,
+                                        BCSteadyStateLibrary::Simplified,
+                                        BCSteadyStateLibrary::RadiationSurface>;
+
+        lbnl::ExpectedExt<LegacyData, std::string> toLegacyExchange(const SurfaceExchange & exchange)
+        {
+            const auto humidity{constantValue(exchange.relativeHumidity, "The relative humidity")};
+            if(!humidity.has_value())
+            {
+                return lbnl::Unexpected{humidity.error()};
+            }
+
+            std::optional<BCSteadyStateLibrary::Convection> convection;
+            if(exchange.convection.has_value())
+            {
+                const auto converted{toLegacyConvection(exchange.convection.value())};
+                if(!converted.has_value())
+                {
+                    return lbnl::Unexpected{converted.error()};
+                }
+                convection = converted.value();
+            }
+
+            if(fitsSimplified(exchange))
+            {
+                return LegacyData{BCSteadyStateLibrary::Simplified{.temperature = convection->temperature,
+                                                                   .filmCoefficient = convection->filmCoefficient,
+                                                                   .relativeHumidity = humidity.value()}};
+            }
+
+            BCSteadyStateLibrary::Comprehensive comprehensive;
+            comprehensive.relativeHumidity = humidity.value();
+            comprehensive.convection = convection;
+
+            if(exchange.flux.has_value())
+            {
+                const auto flux{constantValue(exchange.flux.value(), "The heat flux")};
+                if(!flux.has_value())
+                {
+                    return lbnl::Unexpected{flux.error()};
+                }
+                comprehensive.constantFlux = BCSteadyStateLibrary::ConstantFlux{.flux = flux.value()};
+            }
+
+            if(exchange.radiation.has_value())
+            {
+                const auto radiation{
+                  toLegacyRadiation(exchange.radiation.value(), convectionTemperature(exchange))};
+                if(!radiation.has_value())
+                {
+                    return lbnl::Unexpected{radiation.error()};
+                }
+                comprehensive.radiation = BCSteadyStateLibrary::Radiation{radiation.value()};
+            }
+
+            return LegacyData{comprehensive};
+        }
+    }   // namespace
+
+    lbnl::ExpectedExt<BCSteadyStateLibrary::BoundaryCondition, std::string>
+      toSteadyState(const BoundaryCondition & unified)
+    {
+        BCSteadyStateLibrary::BoundaryCondition legacy;
+        legacy.UUID = unified.UUID;
+        legacy.Name = unified.Name;
+        legacy.Protected = unified.Protected;
+        legacy.Color = unified.Color;
+        legacy.ProjectName = unified.ProjectName;
+        legacy.isIGUSurface = unified.isIGUSurface;
+
+        if(const auto * surface{std::get_if<RadiationSurface>(&unified.data)})
+        {
+            legacy.data = BCSteadyStateLibrary::RadiationSurface{.isDefault = surface->isDefault,
+                                                                 .temperature = surface->temperature,
+                                                                 .emissivity = surface->emissivity};
+            return legacy;
+        }
+
+        // No exchange is the legacy zero-film record: adiabatic by the same test the
+        // conversion the other way looks for.
+        if(std::holds_alternative<NoExchange>(unified.data))
+        {
+            legacy.data = BCSteadyStateLibrary::Simplified{.temperature = 0.0, .filmCoefficient = 0.0};
+            return legacy;
+        }
+
+        if(std::holds_alternative<PrescribedState>(unified.data))
+        {
+            return lbnl::Unexpected{"\"" + unified.Name
+                                    + "\" prescribes a surface state, which steady state has no form for"};
+        }
+
+        const auto data{toLegacyExchange(std::get<SurfaceExchange>(unified.data))};
+        if(!data.has_value())
+        {
+            return lbnl::Unexpected{"\"" + unified.Name + "\": " + data.error()};
+        }
+        legacy.data = std::visit([](const auto & held) { return decltype(legacy.data){held}; }, data.value());
+        return legacy;
+    }
 
     BoundaryCondition fromSteadyState(const BCSteadyStateLibrary::BoundaryCondition & legacy)
     {
