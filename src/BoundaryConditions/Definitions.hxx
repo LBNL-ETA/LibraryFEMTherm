@@ -25,11 +25,15 @@ namespace BCLibrary
     struct Constant
     {
         double value{0};
+
+        [[nodiscard]] friend bool operator==(const Constant & lhs, const Constant & rhs) = default;
     };
 
     struct FromTimeSeries
     {
         TimeSeriesLibrary::ChannelRole role{TimeSeriesLibrary::ChannelRole::AirTemperature};
+
+        [[nodiscard]] friend bool operator==(const FromTimeSeries & lhs, const FromTimeSeries & rhs) = default;
     };
 
     using Source = std::variant<Constant, FromTimeSeries>;
