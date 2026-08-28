@@ -411,14 +411,6 @@ namespace BCLibrary
                                                     .filmCoefficient = film.value()};
         }
 
-        //! Simplified is exactly a surface exchange with nothing but convection and
-        //! humidity; the moment flux or radiation joins in, only Comprehensive can hold it.
-        bool fitsSimplified(const SurfaceExchange & exchange)
-        {
-            return exchange.convection.has_value() && !exchange.flux.has_value()
-                   && !exchange.radiation.has_value() && !exchange.solar.has_value();
-        }
-
         using LegacyData = std::variant<BCSteadyStateLibrary::Comprehensive,
                                         BCSteadyStateLibrary::Simplified,
                                         BCSteadyStateLibrary::RadiationSurface>;
@@ -440,13 +432,6 @@ namespace BCLibrary
                     return lbnl::Unexpected{converted.error()};
                 }
                 convection = converted.value();
-            }
-
-            if(fitsSimplified(exchange))
-            {
-                return LegacyData{BCSteadyStateLibrary::Simplified{.temperature = convection->temperature,
-                                                                   .filmCoefficient = convection->filmCoefficient,
-                                                                   .relativeHumidity = humidity.value()}};
             }
 
             BCSteadyStateLibrary::Comprehensive comprehensive;
@@ -497,11 +482,14 @@ namespace BCLibrary
             return legacy;
         }
 
-        // No exchange is the legacy zero-film record: adiabatic by the same test the
-        // conversion the other way looks for.
+        // No exchange is the legacy zero-film record, spelled the one way every other
+        // record is spelled: a comprehensive whose convection carries no film coefficient
+        // reads as adiabatic to exactly the test the legacy side applies.
         if(std::holds_alternative<NoExchange>(unified.data))
         {
-            legacy.data = BCSteadyStateLibrary::Simplified{.temperature = 0.0, .filmCoefficient = 0.0};
+            BCSteadyStateLibrary::Comprehensive adiabatic;
+            adiabatic.convection = BCSteadyStateLibrary::Convection{.temperature = 0.0, .filmCoefficient = 0.0};
+            legacy.data = adiabatic;
             return legacy;
         }
 

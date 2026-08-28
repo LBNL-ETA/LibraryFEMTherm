@@ -18,11 +18,16 @@ namespace BCLibrary
     [[nodiscard]] BoundaryCondition fromSteadyState(const BCSteadyStateLibrary::BoundaryCondition & legacy);
 
     //! Unified record back to the legacy steady-state shape, for the consumers that still
-    //! speak it. The pair round-trips: whatever fromSteadyState produced converts back to
-    //! the record it came from. A surface exchange carrying nothing but convection and
-    //! humidity is a Simplified record; one that also carries flux or radiation is
-    //! Comprehensive. What steady state has no room for - a prescribed state, or any input
-    //! reading a time series - is reported rather than approximated.
+    //! speak it.
+    //!
+    //! Every surface exchange comes back as a Comprehensive record. The legacy split
+    //! between Simplified and Comprehensive was a choice the user had to make before
+    //! describing a boundary; the unified record has one shape and no such choice, so
+    //! rebuilding the distinction here would invent information the record does not
+    //! carry. Comprehensive is the shape that can hold all of it, adiabatic included.
+    //!
+    //! What steady state has no room for - a prescribed state, or any input reading a
+    //! time series - is reported rather than approximated.
     [[nodiscard]] lbnl::ExpectedExt<BCSteadyStateLibrary::BoundaryCondition, std::string>
       toSteadyState(const BoundaryCondition & unified);
 

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "Legacy/Step1/BCSteadyState/Operators.hxx"
+#include "Legacy/Step1/BCSteadyState/Utils.hxx"
 #include "Legacy/Step1/Converters/Converters.hxx"
 
 using namespace BCLibrary;
@@ -290,12 +291,42 @@ TEST(TestUnifiedBCConverters, AutomaticEnclosureKeepsItsOwnTemperature)
     expectRoundTrip(legacy);
 }
 
-TEST(TestUnifiedBCConverters, SteadyRecordsRoundTripThroughUnified)
+//! The legacy split between Simplified and Comprehensive was a choice made before
+//! describing a boundary. The unified record has one shape, so a Simplified record comes
+//! back as the Comprehensive that carries the same physics rather than as itself.
+TEST(TestUnifiedBCConverters, SimplifiedComesBackAsComprehensive)
 {
     auto simplified{namedRecord("Simple Interior")};
     simplified.data = BCSteadyStateLibrary::Simplified{21.0, 8.0, 0.5};
-    expectRoundTrip(simplified);
 
+    const auto returned{toSteadyState(fromSteadyState(simplified))};
+    ASSERT_TRUE(returned.has_value()) << returned.error();
+
+    const auto & comprehensive{std::get<BCSteadyStateLibrary::Comprehensive>(returned->data)};
+    ASSERT_TRUE(comprehensive.convection.has_value());
+    EXPECT_NEAR(comprehensive.convection->temperature, 21.0, 1e-9);
+    EXPECT_NEAR(comprehensive.convection->filmCoefficient, 8.0, 1e-9);
+    EXPECT_NEAR(comprehensive.relativeHumidity, 0.5, 1e-9);
+    EXPECT_FALSE(comprehensive.constantFlux.has_value());
+    EXPECT_FALSE(comprehensive.radiation.has_value());
+}
+
+//! Adiabatic keeps reading as adiabatic on the legacy side, which tests the film
+//! coefficient rather than the record's shape.
+TEST(TestUnifiedBCConverters, NoExchangeStaysAdiabatic)
+{
+    BoundaryCondition unified;
+    unified.Name = "Adiabatic";
+    unified.data = NoExchange{};
+
+    const auto returned{toSteadyState(unified)};
+    ASSERT_TRUE(returned.has_value()) << returned.error();
+    EXPECT_TRUE(BCSteadyStateLibrary::isAdiabatic(returned.value()));
+    EXPECT_FALSE(BCSteadyStateLibrary::isConvective(returned.value()));
+}
+
+TEST(TestUnifiedBCConverters, SteadyRecordsRoundTripThroughUnified)
+{
     auto blackBody{namedRecord("Exterior Black Body")};
     BCSteadyStateLibrary::Comprehensive withBlackBody;
     withBlackBody.relativeHumidity = 0.3;
