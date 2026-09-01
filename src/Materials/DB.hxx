@@ -71,11 +71,23 @@ namespace MaterialsLibrary
         //! \brief Saves the current state of an object to the file (provided through the object constructor).
         [[nodiscard]] int saveToFile(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
+        //! True once a mutator has effectively changed the records since load or the last
+        //! successful saveIfDirty. Mutations that change nothing (updating a record with an
+        //! identical copy, deleting by a key that matches no record) do not set it.
+        [[nodiscard]] bool isDirty() const;
+
+        //! saveToFile gated on isDirty: returns 0 without touching the file when clean;
+        //! otherwise saves and clears the flag only when the save reports success (0).
+        int saveIfDirty(FileParse::FileFormat format = FileParse::FileFormat::XML);
+
         //! \brief Deletes all materials that belong to the given project.
         void deleteRecordsWithProjectName(std::string_view projectName);
 
         //! \brief Deletes temporary records (ones that contain projectName)
         void deleteTemporaryRecords();
+
+        //! \brief Moves records from one project mark to another (document Save As / rename).
+        void renameRecordsWithProjectName(std::string_view oldName, std::string_view newName);
 
         [[nodiscard]] std::string getFileName() const;
 
@@ -92,6 +104,11 @@ namespace MaterialsLibrary
         size_t m_DefaultRecordIndex{0u};
 
         std::string m_Version{"1"};
+
+        //! Effective-mutation flag behind isDirty/saveIfDirty. Known bypass: the non-const
+        //! getMaterials() hands out a mutable reference the flag cannot see; keep new call
+        //! sites read-only or route them through a tracked mutator.
+        bool m_Dirty{false};
 
         //! \brief Loads materials from the XML file.
         std::vector<Material> loadMaterialsFromXMLFile(const std::string & materialXMLFileName);

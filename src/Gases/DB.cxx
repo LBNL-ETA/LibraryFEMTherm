@@ -112,6 +112,28 @@ namespace GasesLibrary
     void DB::addPureGas(const PureGas & pure)
     {
         m_PureGases.emplace_back(pure);
+        m_Dirty = true;
+    }
+
+    bool DB::isDirty() const
+    {
+        return m_Dirty;
+    }
+
+    int DB::saveIfDirty(FileParse::FileFormat format)
+    {
+        if(!m_Dirty)
+        {
+            return 0;
+        }
+
+        const int result{saveToFile(format)};
+        if(result == 0)
+        {
+            m_Dirty = false;
+        }
+
+        return result;
     }
 
     int DB::saveToFile(FileParse::FileFormat format)
@@ -206,17 +228,22 @@ namespace GasesLibrary
 
     void DB::removeTemporaryGasRecords()
     {
+        const size_t sizeBefore{m_Gases.size()};
         LibraryCommon::removeTemporaryRecords(m_Gases);
+        m_Dirty = m_Dirty || m_Gases.size() != sizeBefore;
     }
 
     void DB::removeTemporaryPureGasRecords()
     {
+        const size_t sizeBefore{m_PureGases.size()};
         LibraryCommon::removeTemporaryRecords(m_PureGases);
+        m_Dirty = m_Dirty || m_PureGases.size() != sizeBefore;
     }
 
     void DB::addGas(const Gas & gas)
     {
         m_Gases.emplace_back(gas);
+        m_Dirty = true;
     }
 
     std::optional<Gas> DB::getGasByDisplayName(std::string_view name) const
@@ -281,12 +308,14 @@ namespace GasesLibrary
 
     void DB::deleteWithProjectName(const std::string & projectName)
     {
-        std::erase_if(m_Gases, [&projectName](const Gas & gas) { return gas.ProjectName == projectName; });
+        const auto erasedGases{
+          std::erase_if(m_Gases, [&projectName](const Gas & gas) { return gas.ProjectName == projectName; })};
         // Also drop the project's pure-gas records. Leaving them behind lets a stale
         // project pure gas (e.g. "doc:SF6") collide with the same gas freshly loaded
         // from a THMZ in the same session, corrupting the mixture's component link.
-        std::erase_if(m_PureGases,
-                      [&projectName](const PureGas & gas) { return gas.ProjectName == projectName; });
+        const auto erasedPure{std::erase_if(
+          m_PureGases, [&projectName](const PureGas & gas) { return gas.ProjectName == projectName; })};
+        m_Dirty = m_Dirty || erasedGases > 0U || erasedPure > 0U;
     }
 
     void DB::deleteTemporaryRecords()
@@ -319,15 +348,18 @@ namespace GasesLibrary
     {
         if(auto iter = std::ranges::find_if(m_PureGases,
                                              [&pure](const PureGas & gas) { return gas.Name == pure.Name; });
-           iter != m_PureGases.end())
+           iter != m_PureGases.end() && !(*iter == pure))
         {
             *iter = pure;
+            m_Dirty = true;
         }
     }
 
     void DB::removePureGas(const PureGas & pure)
     {
-        std::erase_if(m_PureGases, [&pure](const PureGas & gas) { return gas.Name == pure.Name; });
+        const auto erased{
+          std::erase_if(m_PureGases, [&pure](const PureGas & gas) { return gas.Name == pure.Name; })};
+        m_Dirty = m_Dirty || erased > 0U;
     }
 
     std::vector<GasesData> DB::getGasesData() const
@@ -353,7 +385,20 @@ namespace GasesLibrary
 
     void DB::deleteWithUUID(std::string_view uuid)
     {
-        std::erase_if(m_Gases, [&uuid](const Gas & gas) { return gas.UUID == uuid; });
+        const auto erased{std::erase_if(m_Gases, [&uuid](const Gas & gas) { return gas.UUID == uuid; })};
+        m_Dirty = m_Dirty || erased > 0U;
+    }
+
+    void DB::renameRecordsWithProjectName(std::string_view oldName, std::string_view newName)
+    {
+        for(auto & gas : m_Gases)
+        {
+            if(gas.ProjectName == oldName)
+            {
+                gas.ProjectName = std::string{newName};
+                m_Dirty = true;
+            }
+        }
     }
 
     void DB::add(const GasesData & gasData)

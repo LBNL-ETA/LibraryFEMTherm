@@ -6,6 +6,7 @@
 #include <fileParse/FileDataHandler.hxx>
 
 #include "DB.hxx"
+#include "Operators.hxx"
 #include "Serializers.hxx"
 #include "Tags.hxx"
 
@@ -107,14 +108,19 @@ namespace MaterialsLibrary
     void DB::add(const Material & material)
     {
         m_Materials.emplace_back(material);
+        m_Dirty = true;
     }
 
     void DB::update(const Material & material)
     {
-        m_Materials = lbnl::transform_if(
-          m_Materials,
-          [&](const Material & m) { return m.UUID == material.UUID; },
-          [&](const Material &) { return material; });
+        for(auto & existing : m_Materials)
+        {
+            if(existing.UUID == material.UUID && !(existing == material))
+            {
+                existing = material;
+                m_Dirty = true;
+            }
+        }
     }
 
     void DB::updateOrAdd(const Material & material)
@@ -125,10 +131,12 @@ namespace MaterialsLibrary
 
     void DB::deleteWithUUID(std::string_view uuid)
     {
+        const size_t sizeBefore{m_Materials.size()};
         m_Materials.erase(std::remove_if(std::begin(m_Materials),
                                          std::end(m_Materials),
                                          [&](Material const & u) { return u.UUID == uuid; }),
                           std::end(m_Materials));
+        m_Dirty = m_Dirty || m_Materials.size() != sizeBefore;
     }
 
     int DB::saveToFile(FileParse::FileFormat format) const
@@ -187,14 +195,51 @@ namespace MaterialsLibrary
 
     void DB::deleteRecordsWithProjectName(std::string_view projectName)
     {
+        const size_t sizeBefore{m_Materials.size()};
         m_Materials.erase(
           std::ranges::remove_if(m_Materials, [&](Material const & u) { return u.ProjectName == projectName; }).begin(),
           std::end(m_Materials));
+        m_Dirty = m_Dirty || m_Materials.size() != sizeBefore;
     }
 
     void DB::deleteTemporaryRecords()
     {
+        const size_t sizeBefore{m_Materials.size()};
         LibraryCommon::removeTemporaryRecords(m_Materials);
+        m_Dirty = m_Dirty || m_Materials.size() != sizeBefore;
+    }
+
+    void DB::renameRecordsWithProjectName(std::string_view oldName, std::string_view newName)
+    {
+        for(auto & material : m_Materials)
+        {
+            if(material.ProjectName == oldName)
+            {
+                material.ProjectName = std::string{newName};
+                m_Dirty = true;
+            }
+        }
+    }
+
+    bool DB::isDirty() const
+    {
+        return m_Dirty;
+    }
+
+    int DB::saveIfDirty(FileParse::FileFormat format)
+    {
+        if(!m_Dirty)
+        {
+            return 0;
+        }
+
+        const int result{saveToFile(format)};
+        if(result == 0)
+        {
+            m_Dirty = false;
+        }
+
+        return result;
     }
 
     void DB::setDefaultRecord(std::string_view materialName)

@@ -61,10 +61,24 @@ namespace GasesLibrary
         [[nodiscard]] int saveToFile(FileParse::FileFormat format = FileParse::FileFormat::XML);
         [[nodiscard]] std::string saveToString(FileParse::FileFormat format = FileParse::FileFormat::XML);
 
+        //! True once a mutator has effectively changed the records (gases or pure gases)
+        //! since load or the last successful saveIfDirty. Mutations that change nothing
+        //! do not set it.
+        [[nodiscard]] bool isDirty() const;
+
+        //! saveToFile gated on isDirty: returns 0 without touching the file when clean;
+        //! otherwise saves and clears the flag only when the save reports success (0).
+        int saveIfDirty(FileParse::FileFormat format = FileParse::FileFormat::XML);
+
         //! \brief Deletes all gases that have projectName set
         void deleteWithProjectName(const std::string & projectName);
         void deleteTemporaryRecords();
         void deleteWithUUID(std::string_view uuid);
+
+        //! \brief Moves gas records from one project mark to another (document Save As /
+        //! rename). Matches the historical behavior: mixtures only, pure gases keep their
+        //! project mark.
+        void renameRecordsWithProjectName(std::string_view oldName, std::string_view newName);
 
     private:
         template<typename NodeType>
@@ -76,6 +90,10 @@ namespace GasesLibrary
         std::string m_Version{"1"};
         std::vector<PureGas> m_PureGases;
         std::vector<Gas> m_Gases;
+        //! Effective-mutation flag behind isDirty/saveIfDirty. Known bypass: the non-const
+        //! getGases()/getPureGases() hand out mutable references the flag cannot see; keep
+        //! new call sites read-only or route them through a tracked mutator.
+        bool m_Dirty{false};
         void removeTemporaryGasRecords();
         void removeTemporaryPureGasRecords();
     };

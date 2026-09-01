@@ -56,15 +56,33 @@ namespace BCSteadyStateLibrary
         //! \brief Deletes all temporary records (one with set ProjectName)
         void deleteTemporaryRecords();
 
+        //! \brief Moves records from one project mark to another (document Save As /
+        //! rename). IGU-surface records are skipped: glazing surfaces cannot be reused
+        //! and are regenerated for the renamed document instead.
+        void renameRecordsWithProjectName(std::string_view oldName, std::string_view newName);
+
         [[nodiscard]] std::optional<BoundaryCondition> getDefaultRadiationSurface() const;
         [[nodiscard]] std::optional<BoundaryCondition> getDefaultRecord() const;
 
         [[nodiscard]] int saveToFile(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
+        //! True once a mutator has effectively changed the records since load or the last
+        //! successful saveIfDirty. Mutations that change nothing (updating a record with an
+        //! identical copy, deleting by a key that matches no record) do not set it.
+        [[nodiscard]] bool isDirty() const;
+
+        //! saveToFile gated on isDirty: returns 0 without touching the file when clean;
+        //! otherwise saves and clears the flag only when the save reports success (0).
+        int saveIfDirty(FileParse::FileFormat format = FileParse::FileFormat::XML);
+
     private:
         std::string m_FileName;
         std::vector<BoundaryCondition> m_BoundaryConditions;
         std::string m_Version{"1"};
+        //! Effective-mutation flag behind isDirty/saveIfDirty. Known bypass: the non-const
+        //! getBoundaryConditions() hands out a mutable reference the flag cannot see; keep
+        //! new call sites read-only or route them through a tracked mutator.
+        bool m_Dirty{false};
 
         std::vector<BoundaryCondition> loadBoundaryConditionsFromFile(const std::string & xmlFileName);
 

@@ -4,6 +4,7 @@
 #include <fileParse/FileDataHandler.hxx>
 #include <fileParse/Vector.hxx>
 
+#include "TypeOperators.hxx"
 #include "Types.hxx"
 #include "TypesSerializers.hxx"
 
@@ -75,15 +76,17 @@ namespace BCTypesLibrary
                                m_BoundaryConditions.end(),
                                [&bcType](const TypeRecord & bc) { return bc.UUID == bcType.UUID; });
 
-        if(it != m_BoundaryConditions.end())
+        if(it != m_BoundaryConditions.end() && !(*it == bcType))
         {
             *it = bcType;   // Update the first matching element
+            m_Dirty = true;
         }
     }
 
     void DB::add(const TypeRecord & bcType)
     {
         m_BoundaryConditions.emplace_back(bcType);
+        m_Dirty = true;
     }
 
     void DB::updateOrAdd(const TypeRecord & bcType)
@@ -101,10 +104,33 @@ namespace BCTypesLibrary
 
     void DB::deleteWithUUID(std::string_view uuid)
     {
+        const size_t sizeBefore{m_BoundaryConditions.size()};
         m_BoundaryConditions.erase(std::remove_if(std::begin(m_BoundaryConditions),
                                                   std::end(m_BoundaryConditions),
                                                   [&](TypeRecord const & u) { return u.UUID == uuid; }),
                                    std::end(m_BoundaryConditions));
+        m_Dirty = m_Dirty || m_BoundaryConditions.size() != sizeBefore;
+    }
+
+    bool DB::isDirty() const
+    {
+        return m_Dirty;
+    }
+
+    int DB::saveIfDirty(FileParse::FileFormat format)
+    {
+        if(!m_Dirty)
+        {
+            return 0;
+        }
+
+        const int result{saveToFile(format)};
+        if(result == 0)
+        {
+            m_Dirty = false;
+        }
+
+        return result;
     }
 
     std::optional<TypeRecord> DB::getDefaultRecord() const

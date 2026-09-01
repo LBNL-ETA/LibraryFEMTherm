@@ -7,6 +7,7 @@
 #include "DB.hxx"
 #include "Common/DB.hxx"
 
+#include "Operators.hxx"
 #include "SteadyState.hxx"
 #include "Tags.hxx"
 #include "Serializers.hxx"
@@ -108,9 +109,10 @@ namespace BCSteadyStateLibrary
     {
         for(auto & bc : m_BoundaryConditions)
         {
-            if(bc.UUID == condition.UUID)
+            if(bc.UUID == condition.UUID && !(bc == condition))
             {
                 bc = condition;
+                m_Dirty = true;
             }
         }
     }
@@ -124,6 +126,7 @@ namespace BCSteadyStateLibrary
     void DB::add(const BoundaryCondition & condition)
     {
         m_BoundaryConditions.emplace_back(condition);
+        m_Dirty = true;
     }
 
     int DB::saveToFile(FileParse::FileFormat format) const
@@ -166,10 +169,12 @@ namespace BCSteadyStateLibrary
 
     void DB::deleteWithUUID(std::string_view uuid)
     {
+        const size_t sizeBefore{m_BoundaryConditions.size()};
         m_BoundaryConditions.erase(std::remove_if(m_BoundaryConditions.begin(),
                                                   m_BoundaryConditions.end(),
                                                   [uuid](const BoundaryCondition & obj) { return obj.UUID == uuid; }),
                                    m_BoundaryConditions.end());
+        m_Dirty = m_Dirty || m_BoundaryConditions.size() != sizeBefore;
     }
 
     std::vector<std::string> DB::getNames() const
@@ -196,17 +201,54 @@ namespace BCSteadyStateLibrary
 
     void DB::deleteRecordsWithProjectName(std::string_view projectName)
     {
+        const size_t sizeBefore{m_BoundaryConditions.size()};
         m_BoundaryConditions.erase(std::ranges::remove_if(m_BoundaryConditions,
                                                           [projectName](const BoundaryCondition & obj) {
                                                               return obj.ProjectName == projectName;
                                                           })
                                      .begin(),
                                    m_BoundaryConditions.end());
+        m_Dirty = m_Dirty || m_BoundaryConditions.size() != sizeBefore;
     }
 
     void DB::deleteTemporaryRecords()
     {
+        const size_t sizeBefore{m_BoundaryConditions.size()};
         LibraryCommon::removeTemporaryRecords(m_BoundaryConditions);
+        m_Dirty = m_Dirty || m_BoundaryConditions.size() != sizeBefore;
+    }
+
+    void DB::renameRecordsWithProjectName(std::string_view oldName, std::string_view newName)
+    {
+        for(auto & record : m_BoundaryConditions)
+        {
+            if(record.ProjectName == oldName && !record.isIGUSurface)
+            {
+                record.ProjectName = std::string{newName};
+                m_Dirty = true;
+            }
+        }
+    }
+
+    bool DB::isDirty() const
+    {
+        return m_Dirty;
+    }
+
+    int DB::saveIfDirty(FileParse::FileFormat format)
+    {
+        if(!m_Dirty)
+        {
+            return 0;
+        }
+
+        const int result{saveToFile(format)};
+        if(result == 0)
+        {
+            m_Dirty = false;
+        }
+
+        return result;
     }
 
     std::optional<BoundaryCondition> DB::getByDisplayName(std::string_view displayName) const
