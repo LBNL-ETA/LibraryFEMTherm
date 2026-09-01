@@ -44,6 +44,7 @@ void bind_zip(py::module_ & mod)
     zip.def("add_to_zip_file", &ThermZip::addToZipFile,
             py::arg("zip_file_name"), py::arg("file_name"), py::arg("text"),
             py::arg("obsolete_names") = std::vector<std::string>(),
+            py::arg("compression_level") = ThermZip::DefaultCompressionLevel,
             "Add a file to an existing ZIP archive");
 
     // Entry base names are extension-free; these resolve the format spellings.
