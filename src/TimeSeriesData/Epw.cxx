@@ -31,26 +31,26 @@ namespace TimeSeriesLibrary::Epw
 
         //! The fields that map straight onto a role, with the factor taking the
         //! file's unit to ours. Zero-based EPW record positions.
-        struct DirectChannel
+        struct DirectSeries
         {
             FieldSpec field;
-            ChannelRole role;
+            SeriesRole role;
             double scale;
         };
 
-        const std::vector<DirectChannel> & directChannels()
+        const std::vector<DirectSeries> & directSeriesList()
         {
-            static const std::vector<DirectChannel> channels{
+            static const std::vector<DirectSeries> series{
               {FieldSpec{6U, "Dry bulb temperature", "degC", 99.9},
-               ChannelRole::AirTemperature,
+               SeriesRole::AirTemperature,
                1.0},
               {FieldSpec{8U, "Relative humidity", "%", 999.0},
-               ChannelRole::RelativeHumidity,
+               SeriesRole::RelativeHumidity,
                0.01},
-              {FieldSpec{21U, "Wind speed", "m/s", 999.0}, ChannelRole::WindSpeed, 1.0},
-              {FieldSpec{20U, "Wind direction", "deg", 999.0}, ChannelRole::WindDirection, 1.0},
+              {FieldSpec{21U, "Wind speed", "m/s", 999.0}, SeriesRole::WindSpeed, 1.0},
+              {FieldSpec{20U, "Wind direction", "deg", 999.0}, SeriesRole::WindDirection, 1.0},
             };
-            return channels;
+            return series;
         }
 
         const FieldSpec & horizontalInfraredField()
@@ -234,7 +234,7 @@ namespace TimeSeriesLibrary::Epw
         result.data.Name = datasetName;
         result.data.Source = "Imported";
 
-        for(const auto & direct : directChannels())
+        for(const auto & direct : directSeriesList())
         {
             if(const auto values{filled(column(records, direct.field))}; values.has_value())
             {
@@ -243,12 +243,12 @@ namespace TimeSeriesLibrary::Epw
                 std::ranges::transform(values.value(),
                                        std::back_inserter(scaled),
                                        [&direct](const double value) { return value * direct.scale; });
-                result.data.channels.push_back(Channel{.role = direct.role, .values = std::move(scaled)});
+                result.data.series.push_back(Series{.role = direct.role, .values = std::move(scaled)});
             }
         }
         if(const auto infrared{filled(column(records, horizontalInfraredField()))}; infrared.has_value())
         {
-            result.data.channels.push_back(Channel{.role = ChannelRole::RadiantTemperature,
+            result.data.series.push_back(Series{.role = SeriesRole::RadiantTemperature,
                                                    .values = skyTemperature(infrared.value())});
         }
 

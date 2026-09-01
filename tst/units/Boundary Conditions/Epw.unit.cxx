@@ -6,7 +6,7 @@
 #include "TimeSeriesData/ContentHash.hxx"
 #include "TimeSeriesData/Epw.hxx"
 
-using TimeSeriesLibrary::ChannelRole;
+using TimeSeriesLibrary::SeriesRole;
 
 namespace Epw = TimeSeriesLibrary::Epw;
 
@@ -57,7 +57,7 @@ namespace
     constexpr auto infraredForSevenDegrees{"349.28"};
 }   // namespace
 
-TEST(TestEpw, ImportReadsChannelsAndLocation)
+TEST(TestEpw, ImportReadsSeriesAndLocation)
 {
     const std::string content{makeHeader()
                               + makeRecord("10", "50", infraredForSevenDegrees, "180", "5")
@@ -78,22 +78,22 @@ TEST(TestEpw, ImportReadsChannelsAndLocation)
     EXPECT_NEAR(result->location.elevation, 3.0, 1e-9);
 
     const auto temperature{
-      TimeSeriesLibrary::valuesForRole(imported, ChannelRole::AirTemperature)};
+      TimeSeriesLibrary::valuesForRole(imported, SeriesRole::AirTemperature)};
     ASSERT_TRUE(temperature.has_value());
     EXPECT_NEAR(temperature->at(2), 12.0, 1e-9);
 
     // Per cent in the file, a fraction here; the sentinel row carries the last reading.
     const auto humidity{
-      TimeSeriesLibrary::valuesForRole(imported, ChannelRole::RelativeHumidity)};
+      TimeSeriesLibrary::valuesForRole(imported, SeriesRole::RelativeHumidity)};
     ASSERT_TRUE(humidity.has_value());
     EXPECT_NEAR(humidity->at(0), 0.5, 1e-9);
     EXPECT_NEAR(humidity->at(1), 0.5, 1e-9);
     EXPECT_NEAR(humidity->at(2), 0.6, 1e-9);
 
-    const auto wind{TimeSeriesLibrary::valuesForRole(imported, ChannelRole::WindSpeed)};
+    const auto wind{TimeSeriesLibrary::valuesForRole(imported, SeriesRole::WindSpeed)};
     ASSERT_TRUE(wind.has_value());
     EXPECT_NEAR(wind->at(1), 6.0, 1e-9);
-    const auto direction{TimeSeriesLibrary::valuesForRole(imported, ChannelRole::WindDirection)};
+    const auto direction{TimeSeriesLibrary::valuesForRole(imported, SeriesRole::WindDirection)};
     ASSERT_TRUE(direction.has_value());
     EXPECT_NEAR(direction->at(0), 180.0, 1e-9);
 }
@@ -107,7 +107,7 @@ TEST(TestEpw, ImportDerivesRadiantTemperatureFromInfrared)
     ASSERT_TRUE(result.has_value());
 
     const auto radiant{
-      TimeSeriesLibrary::valuesForRole(result->data, ChannelRole::RadiantTemperature)};
+      TimeSeriesLibrary::valuesForRole(result->data, SeriesRole::RadiantTemperature)};
     ASSERT_TRUE(radiant.has_value());
     EXPECT_NEAR(radiant->front(), 7.0, 0.01);
 }

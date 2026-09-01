@@ -20,7 +20,7 @@ namespace TimeSeriesLibrary::Epw
     //! per surface at run time.
     //!
     //! Missing readings (the field's sentinel value) carry the last good reading
-    //! forward; a field with no good reading at all produces no channel. Fields the
+    //! forward; a field with no good reading at all produces no series. Fields the
     //! role vocabulary cannot express are reported by name so the omission is
     //! visible rather than silent.
 
@@ -40,14 +40,14 @@ namespace TimeSeriesLibrary::Epw
     {
         TimeSeriesData data;
         Location location;
-        //! Fields the file carried that no channel role can express, as
+        //! Fields the file carried that no series role can express, as
         //! "Label [unit]" strings for display.
         std::vector<std::string> unmappedColumns;
     };
 
     //! Sky temperature [degC] from horizontal infrared intensity [W/m2] by
     //! Stefan-Boltzmann. Surface-independent, which is what makes it storable as a
-    //! channel when surface solar irradiance is not.
+    //! series when surface solar irradiance is not.
     [[nodiscard]] std::vector<double> skyTemperature(const std::vector<double> & horizontalInfrared);
 
     //! The imported dataset's UUID is the deterministic content hash.

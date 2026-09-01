@@ -3,6 +3,8 @@
 #include <bit>
 #include <cstdint>
 #include <format>
+#include <optional>
+#include <string>
 
 #include "ContentHash.hxx"
 #include "Tags.hxx"
@@ -51,22 +53,22 @@ namespace TimeSeriesLibrary
             uint64_t m_State;
         };
 
-        void consumeChannels(Fnv1a & hasher, const std::vector<Channel> & channels)
+        void consumeSeries(Fnv1a & hasher, const std::vector<Series> & seriesList)
         {
-            // Channel order must not affect the hash: hash each channel separately into a
-            // per-channel digest, then combine order-independently via sorted digests.
+            // Series order must not affect the hash: hash each series separately into a
+            // per-series digest, then combine order-independently via sorted digests.
             std::vector<uint64_t> digests;
-            digests.reserve(channels.size());
+            digests.reserve(seriesList.size());
 
-            for(const auto & channel : channels)
+            for(const auto & series : seriesList)
             {
-                Fnv1a channelHasher{offsetBasis};
-                channelHasher.consume(channelRoleToString(channel.role));
-                for(const double value : channel.values)
+                Fnv1a seriesHasher{offsetBasis};
+                seriesHasher.consume(seriesRoleToString(series.role));
+                for(const double value : series.values)
                 {
-                    channelHasher.consume(std::bit_cast<uint64_t>(value));
+                    seriesHasher.consume(std::bit_cast<uint64_t>(value));
                 }
-                digests.push_back(channelHasher.value());
+                digests.push_back(seriesHasher.value());
             }
 
             std::ranges::sort(digests);
@@ -75,15 +77,41 @@ namespace TimeSeriesLibrary
                 hasher.consume(digest);
             }
         }
+
+        //! Strings are length-prefixed so adjacent fields cannot alias ("ab"+"c" vs
+        //! "a"+"bc"); optionals additionally consume a presence flag so an absent field
+        //! differs from a present-but-empty one.
+        void consumeText(Fnv1a & hasher, const std::string & text)
+        {
+            hasher.consume(static_cast<uint64_t>(text.size()));
+            hasher.consume(text);
+        }
+
+        void consumeOptionalText(Fnv1a & hasher, const std::optional<std::string> & text)
+        {
+            hasher.consume(text.has_value() ? 1ULL : 0ULL);
+            consumeText(hasher, text.value_or(std::string{}));
+        }
+
+        void consumeMetadata(Fnv1a & hasher, const TimeSeriesData & data)
+        {
+            consumeText(hasher, data.UUID);
+            consumeText(hasher, data.Name);
+            consumeOptionalText(hasher, data.ProjectName);
+            hasher.consume(data.Protected ? 1ULL : 0ULL);
+            consumeOptionalText(hasher, data.Description);
+            consumeText(hasher, data.Color);
+            consumeOptionalText(hasher, data.Source);
+        }
     }   // namespace
 
     std::string contentUuid(const TimeSeriesData & data)
     {
         Fnv1a first{offsetBasis};
-        consumeChannels(first, data.channels);
+        consumeSeries(first, data.series);
 
         Fnv1a second{secondSeed};
-        consumeChannels(second, data.channels);
+        consumeSeries(second, data.series);
 
         const uint64_t high{first.value()};
         const uint64_t low{second.value()};
@@ -94,5 +122,13 @@ namespace TimeSeriesLibrary
                            static_cast<uint16_t>(high),
                            static_cast<uint16_t>(low >> 48U),
                            low & 0xFFFFFFFFFFFFULL);
+    }
+
+    std::uint64_t datasetFingerprint(const TimeSeriesData & data)
+    {
+        Fnv1a hasher{offsetBasis};
+        consumeMetadata(hasher, data);
+        consumeSeries(hasher, data.series);
+        return hasher.value();
     }
 }   // namespace TimeSeriesLibrary

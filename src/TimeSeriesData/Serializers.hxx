@@ -1,11 +1,14 @@
 #pragma once
 
+#include <string>
+
 #include <fileParse/Enum.hxx>
 #include <fileParse/Optional.hxx>
 #include <fileParse/Vector.hxx>
 
 #include "TimeSeriesData.hxx"
 #include "Tags.hxx"
+#include "ValueText.hxx"
 
 namespace TimeSeriesLibrary
 {
@@ -16,35 +19,39 @@ namespace TimeSeriesLibrary
 
     template<typename NodeAdapter>
         requires SerializerNode<NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, ChannelRole & role)
+    const NodeAdapter & operator>>(const NodeAdapter & node, SeriesRole & role)
     {
-        FileParse::deserializeEnum<NodeAdapter, ChannelRole>(node, role, channelRoleFromString);
+        FileParse::deserializeEnum<NodeAdapter, SeriesRole>(node, role, seriesRoleFromString);
         return node;
     }
 
     template<typename NodeAdapter>
         requires SerializerNode<NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const ChannelRole & role)
+    NodeAdapter & operator<<(NodeAdapter & node, const SeriesRole & role)
     {
-        FileParse::serializeEnum<NodeAdapter, ChannelRole>(node, role, channelRoleToString);
+        FileParse::serializeEnum<NodeAdapter, SeriesRole>(node, role, seriesRoleToString);
         return node;
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, Channel & channel)
+    const NodeAdapter & operator>>(const NodeAdapter & node, Series & series)
     {
         Tags tag;
-        node >> FileParse::Child{tag.role(), channel.role};
-        node >> FileParse::Child{tag.value(), channel.values};
+        node >> FileParse::Child{tag.role(), series.role};
+
+        std::string valuesText;
+        node >> FileParse::Child{tag.values(), valuesText};
+        series.values = parseSeriesValues(valuesText);
         return node;
     }
 
     template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const Channel & channel)
+    NodeAdapter & operator<<(NodeAdapter & node, const Series & series)
     {
         Tags tag;
-        node << FileParse::Child{tag.role(), channel.role};
-        node << FileParse::Child{tag.value(), channel.values};
+        node << FileParse::Child{tag.role(), series.role};
+        const std::string valuesText{formatSeriesValues(series.values)};
+        node << FileParse::Child{tag.values(), valuesText};
         return node;
     }
 
@@ -59,7 +66,7 @@ namespace TimeSeriesLibrary
         node >> FileParse::Child{tag.description(), data.Description};
         node >> FileParse::Child{tag.color(), data.Color};
         node >> FileParse::Child{tag.source(), data.Source};
-        node >> FileParse::Child{tag.channel(), data.channels};
+        node >> FileParse::Child{tag.series(), data.series};
         return node;
     }
 
@@ -74,7 +81,7 @@ namespace TimeSeriesLibrary
         node << FileParse::Child{tag.description(), data.Description};
         node << FileParse::Child{tag.color(), data.Color};
         node << FileParse::Child{tag.source(), data.Source};
-        node << FileParse::Child{tag.channel(), data.channels};
+        node << FileParse::Child{tag.series(), data.series};
         return node;
     }
 }   // namespace TimeSeriesLibrary

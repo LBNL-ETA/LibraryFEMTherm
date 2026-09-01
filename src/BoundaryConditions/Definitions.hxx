@@ -19,7 +19,7 @@ namespace BCLibrary
         Montazeri
     };
 
-    //! A scalar input is either a constant value or a reference to an environment channel
+    //! A scalar input is either a constant value or a reference to an environment series
     //! role. A record whose inputs are all constants is a steady-state boundary condition
     //! and is also usable in transient runs, where its constants apply at every timestep.
     struct Constant
@@ -31,7 +31,7 @@ namespace BCLibrary
 
     struct FromTimeSeries
     {
-        TimeSeriesLibrary::ChannelRole role{TimeSeriesLibrary::ChannelRole::AirTemperature};
+        TimeSeriesLibrary::SeriesRole role{TimeSeriesLibrary::SeriesRole::AirTemperature};
 
         [[nodiscard]] friend bool operator==(const FromTimeSeries & lhs, const FromTimeSeries & rhs) = default;
     };

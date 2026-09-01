@@ -10,7 +10,7 @@ namespace BCLibrary
 {
     namespace
     {
-        //! A steady value, or nothing when the input reads a channel instead.
+        //! A steady value, or nothing when the input reads a series instead.
         std::optional<double> constantOf(const Source & source)
         {
             return lbnl::extend(lbnl::get_if_opt<Constant>(source))

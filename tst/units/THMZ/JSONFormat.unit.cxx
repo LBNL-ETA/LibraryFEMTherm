@@ -16,8 +16,8 @@
 #include "THMXHelper.hxx"
 #include "TestExamples.hxx"
 
-using TimeSeriesLibrary::Channel;
-using TimeSeriesLibrary::ChannelRole;
+using TimeSeriesLibrary::Series;
+using TimeSeriesLibrary::SeriesRole;
 using TimeSeriesLibrary::TimeSeriesData;
 
 namespace
@@ -43,7 +43,7 @@ namespace
         TimeSeriesData data;
         data.UUID = uuid;
         data.Name = name;
-        data.channels = {Channel{ChannelRole::AirTemperature, {1.0, 2.0, 3.0}}};
+        data.series = {Series{SeriesRole::AirTemperature, {1.0, 2.0, 3.0}}};
         return data;
     }
 }   // namespace
@@ -166,8 +166,8 @@ TEST(TestJSONFormat, TimeSeriesDatasetsJSONZipRoundTrip)
     const auto loaded{TimeSeriesLibrary::loadDatasetsFromZipFile(zipPath.string())};
     ASSERT_EQ(loaded.size(), 1U);
     EXPECT_EQ(loaded[0].Name, "Golden CO");
-    ASSERT_EQ(loaded[0].channels.size(), 1U);
-    EXPECT_NEAR(loaded[0].channels[0].values[2], 3.0, 1e-9);
+    ASSERT_EQ(loaded[0].series.size(), 1U);
+    EXPECT_NEAR(loaded[0].series[0].values[2], 3.0, 1e-9);
 
     std::filesystem::remove(zipPath);
 }

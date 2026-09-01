@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
-	<!-- Fixed vocabulary of channel roles. The list is deliberately closed: a boundary
-	     condition input and a dataset channel both name a role from this enumeration,
+	<!-- Fixed vocabulary of series roles. The list is deliberately closed: a boundary
+	     condition input and a dataset series both name a role from this enumeration,
 	     which is what makes their pairing automatic. New roles ship together with the
 	     engine model that consumes them. -->
-	<xs:simpleType name="ChannelRole" final="restriction">
+	<xs:simpleType name="SeriesRole" final="restriction">
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="AirTemperature"/>
 			<xs:enumeration value="RelativeHumidity"/>
@@ -24,11 +24,17 @@
 
 	<!-- One time series: a role plus its values. Rows are implicitly indexed; step
 	     duration is a simulation setting in the model file, not a dataset property.
-	     One channel per role per dataset; enforced by the loader. -->
-	<xs:complexType name="Channel">
+	     One series per role per dataset; enforced by the loader. -->
+
+	<!-- Values holds every point of the series as one comma-separated list. A single
+	     text node instead of one element per point keeps document size and parse cost
+	     proportional to the data, not to the markup (an EPW-sized series holds 8760
+	     points). Comma is the separator, so the type is a plain string rather than an
+	     xs:list (whose separator is whitespace). -->
+	<xs:complexType name="Series">
 		<xs:sequence>
-			<xs:element name="Role" type="ChannelRole"/>
-			<xs:element name="Value" type="xs:double" minOccurs="1" maxOccurs="unbounded"/>
+			<xs:element name="Role" type="SeriesRole"/>
+			<xs:element name="Values" type="xs:string"/>
 		</xs:sequence>
 	</xs:complexType>
 
@@ -42,7 +48,7 @@
 			<xs:element name="ProjectName" type="xs:string" minOccurs="0"/>
 			<xs:element name="Protected" type="xs:boolean"/>
 			<xs:element name="Description" type="xs:string" minOccurs="0"/>
-			<xs:element name="Channel" type="Channel" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="Series" type="Series" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
 

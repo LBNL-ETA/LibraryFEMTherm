@@ -30,6 +30,32 @@ TEST(TestZippingStringToFile, AddAndVerifyFileContent)
     std::filesystem::remove(zipFileName);
 }
 
+TEST(TestZippingStringToFile, AddedContentIsCompressed)
+{
+    const std::string fileName{"Repetitive.xml"};
+    const std::string zipFileName{"CompressionRegression.zip"};
+    std::filesystem::remove(zipFileName);
+
+    // Highly repetitive ~1 MB payload; a stored (level 0) rewrite would leave the
+    // archive at payload size, a deflated one shrinks it far below 10%.
+    std::string payload;
+    payload.reserve(1000000U);
+    while(payload.size() < 1000000U)
+    {
+        payload += "<Value>21.500000</Value>";
+    }
+
+    EXPECT_EQ(ThermZip::addToZipFile(zipFileName, fileName, payload), 1);
+
+    const auto archiveSize{std::filesystem::file_size(zipFileName)};
+    EXPECT_LT(archiveSize, payload.size() / 10U);
+
+    const auto extracted{ThermZip::unzipFile(zipFileName, fileName)};
+    EXPECT_EQ(extracted, payload);
+
+    std::filesystem::remove(zipFileName);
+}
+
 TEST(TestZippingStringToFile, OverwriteExistingFile)
 {
     const std::string initialString{"< initial content >"};

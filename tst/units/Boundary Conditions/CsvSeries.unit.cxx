@@ -3,8 +3,8 @@
 #include "TimeSeriesData/ContentHash.hxx"
 #include "TimeSeriesData/CsvSeries.hxx"
 
-using TimeSeriesLibrary::Channel;
-using TimeSeriesLibrary::ChannelRole;
+using TimeSeriesLibrary::Series;
+using TimeSeriesLibrary::SeriesRole;
 using TimeSeriesLibrary::TimeSeriesData;
 
 namespace Csv = TimeSeriesLibrary::Csv;
@@ -26,11 +26,11 @@ TEST(TestCsvSeries, ImportAcceptsBothRoleSpellings)
 
     EXPECT_EQ(TimeSeriesLibrary::steps(imported), 2U);
     const auto temperature{
-      TimeSeriesLibrary::valuesForRole(imported, ChannelRole::AirTemperature)};
+      TimeSeriesLibrary::valuesForRole(imported, SeriesRole::AirTemperature)};
     ASSERT_TRUE(temperature.has_value());
     EXPECT_NEAR(temperature->at(0), 21.3, 1e-9);
     const auto humidity{
-      TimeSeriesLibrary::valuesForRole(imported, ChannelRole::RelativeHumidity)};
+      TimeSeriesLibrary::valuesForRole(imported, SeriesRole::RelativeHumidity)};
     ASSERT_TRUE(humidity.has_value());
     EXPECT_NEAR(humidity->at(1), 0.55, 1e-9);
 
@@ -48,10 +48,10 @@ TEST(TestCsvSeries, ImportReadsSemicolonSeparatedDecimalCommas)
     EXPECT_FALSE(result->hadTimeColumn);
 
     const auto temperature{
-      TimeSeriesLibrary::valuesForRole(result->data, ChannelRole::AirTemperature)};
+      TimeSeriesLibrary::valuesForRole(result->data, SeriesRole::AirTemperature)};
     ASSERT_TRUE(temperature.has_value());
     EXPECT_NEAR(temperature->at(0), 21.5, 1e-9);
-    const auto wind{TimeSeriesLibrary::valuesForRole(result->data, ChannelRole::WindSpeed)};
+    const auto wind{TimeSeriesLibrary::valuesForRole(result->data, SeriesRole::WindSpeed)};
     ASSERT_TRUE(wind.has_value());
     EXPECT_NEAR(wind->at(1), 2.1, 1e-9);
 }
@@ -68,7 +68,7 @@ TEST(TestCsvSeries, ImportCarriesLastReadingAcrossGaps)
     ASSERT_TRUE(result.has_value());
 
     const auto values{
-      TimeSeriesLibrary::valuesForRole(result->data, ChannelRole::AirTemperature)};
+      TimeSeriesLibrary::valuesForRole(result->data, SeriesRole::AirTemperature)};
     ASSERT_TRUE(values.has_value());
     ASSERT_EQ(values->size(), 4U);
     EXPECT_NEAR(values->at(0), 20.0, 1e-9);   // leading gap takes the first good reading
@@ -83,8 +83,8 @@ TEST(TestCsvSeries, ImportKeepsLastColumnOnDuplicateRole)
 
     const auto result{Csv::readFromString(content, "duplicate")};
     ASSERT_TRUE(result.has_value());
-    ASSERT_EQ(result->data.channels.size(), 1U);
-    EXPECT_NEAR(result->data.channels.front().values.front(), 25.0, 1e-9);
+    ASSERT_EQ(result->data.series.size(), 1U);
+    EXPECT_NEAR(result->data.series.front().values.front(), 25.0, 1e-9);
 }
 
 TEST(TestCsvSeries, ImportRejectsHeaderOnlyContent)
@@ -108,8 +108,8 @@ TEST(TestCsvSeries, ExportRoundTripsThroughImport)
 {
     TimeSeriesData data;
     data.Name = "round trip";
-    data.channels = {Channel{ChannelRole::AirTemperature, {21.3, 21.1, 20.8}},
-                     Channel{ChannelRole::PrescribedHumidity, {0.52, 0.55, 0.57}}};
+    data.series = {Series{SeriesRole::AirTemperature, {21.3, 21.1, 20.8}},
+                     Series{SeriesRole::PrescribedHumidity, {0.52, 0.55, 0.57}}};
 
     const auto content{Csv::writeToString(data)};
     EXPECT_NE(content.find("Time,Air Temperature,Prescribed Humidity"), std::string::npos);
@@ -117,16 +117,16 @@ TEST(TestCsvSeries, ExportRoundTripsThroughImport)
     const auto result{Csv::readFromString(content, "round trip")};
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(result->hadTimeColumn);
-    ASSERT_EQ(result->data.channels.size(), 2U);
-    EXPECT_EQ(result->data.channels[0].role, ChannelRole::AirTemperature);
-    EXPECT_EQ(result->data.channels[1].role, ChannelRole::PrescribedHumidity);
+    ASSERT_EQ(result->data.series.size(), 2U);
+    EXPECT_EQ(result->data.series[0].role, SeriesRole::AirTemperature);
+    EXPECT_EQ(result->data.series[1].role, SeriesRole::PrescribedHumidity);
     for(size_t index = 0; index < 3U; ++index)
     {
-        EXPECT_NEAR(result->data.channels[0].values[index],
-                    data.channels[0].values[index],
+        EXPECT_NEAR(result->data.series[0].values[index],
+                    data.series[0].values[index],
                     1e-9);
-        EXPECT_NEAR(result->data.channels[1].values[index],
-                    data.channels[1].values[index],
+        EXPECT_NEAR(result->data.series[1].values[index],
+                    data.series[1].values[index],
                     1e-9);
     }
 }
@@ -142,7 +142,7 @@ TEST(TestCsvSeries, ImportHandlesQuotedCellsWithSeparators)
     EXPECT_EQ(result->ignoredHeaders.front(), "Ignore, me");
 
     const auto values{
-      TimeSeriesLibrary::valuesForRole(result->data, ChannelRole::AirTemperature)};
+      TimeSeriesLibrary::valuesForRole(result->data, SeriesRole::AirTemperature)};
     ASSERT_TRUE(values.has_value());
     EXPECT_NEAR(values->front(), 21.3, 1e-9);
 }

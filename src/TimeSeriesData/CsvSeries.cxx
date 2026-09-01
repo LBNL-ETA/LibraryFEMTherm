@@ -44,13 +44,13 @@ namespace TimeSeriesLibrary::Csv
             return lbnl::contains(timeHeaders, normalise(header));
         }
 
-        const std::map<std::string, ChannelRole> & rolesByNormalisedHeader()
+        const std::map<std::string, SeriesRole> & rolesByNormalisedHeader()
         {
             static const auto roles{[]() {
-                std::map<std::string, ChannelRole> result;
-                for(const auto & name : channelRoleStrings())
+                std::map<std::string, SeriesRole> result;
+                for(const auto & name : seriesRoleStrings())
                 {
-                    const auto role{channelRoleFromString(name)};
+                    const auto role{seriesRoleFromString(name)};
                     result[normalise(name)] = role;
                     result[normalise(displayHeaderForRole(role))] = role;
                 }
@@ -59,7 +59,7 @@ namespace TimeSeriesLibrary::Csv
             return roles;
         }
 
-        std::optional<ChannelRole> roleForHeader(std::string_view header)
+        std::optional<SeriesRole> roleForHeader(std::string_view header)
         {
             const auto & roles{rolesByNormalisedHeader()};
             const auto found{roles.find(normalise(header))};
@@ -200,17 +200,17 @@ namespace TimeSeriesLibrary::Csv
             return index < row.size() ? row[index] : std::string{};
         }
 
-        void storeChannel(TimeSeriesData & data, const ChannelRole role, std::vector<double> values)
+        void storeSeries(TimeSeriesData & data, const SeriesRole role, std::vector<double> values)
         {
-            for(auto & channel : data.channels)
+            for(auto & series : data.series)
             {
-                if(channel.role == role)
+                if(series.role == role)
                 {
-                    channel.values = std::move(values);
+                    series.values = std::move(values);
                     return;
                 }
             }
-            data.channels.push_back(Channel{.role = role, .values = std::move(values)});
+            data.series.push_back(Series{.role = role, .values = std::move(values)});
         }
 
         std::vector<std::optional<double>>
@@ -226,9 +226,9 @@ namespace TimeSeriesLibrary::Csv
         }
     }   // namespace
 
-    std::string displayHeaderForRole(const ChannelRole role)
+    std::string displayHeaderForRole(const SeriesRole role)
     {
-        const auto stored{channelRoleToString(role)};
+        const auto stored{seriesRoleToString(role)};
         std::string spelled;
         for(const char letter : stored)
         {
@@ -277,10 +277,10 @@ namespace TimeSeriesLibrary::Csv
                 result.ignoredHeaders.push_back(header);
                 continue;
             }
-            storeChannel(result.data, role.value(), fillGaps(readColumn(rows, index)));
+            storeSeries(result.data, role.value(), fillGaps(readColumn(rows, index)));
         }
 
-        if(result.data.channels.empty())
+        if(result.data.series.empty())
         {
             return Failure{datasetName + " has no column named after a time series quantity"};
         }
@@ -303,9 +303,9 @@ namespace TimeSeriesLibrary::Csv
     std::string writeToString(const TimeSeriesData & data)
     {
         std::string content{"Time"};
-        for(const auto & channel : data.channels)
+        for(const auto & series : data.series)
         {
-            content += "," + displayHeaderForRole(channel.role);
+            content += "," + displayHeaderForRole(series.role);
         }
         content += "\n";
 
@@ -315,9 +315,9 @@ namespace TimeSeriesLibrary::Csv
         {
             content += std::format("{:%Y-%m-%d %H:%M}",
                                    start + std::chrono::hours{static_cast<int>(index)});
-            for(const auto & channel : data.channels)
+            for(const auto & series : data.series)
             {
-                content += std::format(",{:.4g}", channel.values[index]);
+                content += std::format(",{:.4g}", series.values[index]);
             }
             content += "\n";
         }

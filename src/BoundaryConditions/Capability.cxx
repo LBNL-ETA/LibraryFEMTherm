@@ -18,7 +18,7 @@ namespace BCLibrary
         {
             for(const auto role : requiredRoles(record))
             {
-                issues.push_back({TimeSeriesLibrary::channelRoleToString(role), reason});
+                issues.push_back({TimeSeriesLibrary::seriesRoleToString(role), reason});
             }
         }
 

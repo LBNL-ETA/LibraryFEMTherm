@@ -5,7 +5,7 @@
 #include "Legacy/Step1/Converters/Converters.hxx"
 
 using namespace BCLibrary;
-using TimeSeriesLibrary::ChannelRole;
+using TimeSeriesLibrary::SeriesRole;
 
 namespace
 {
@@ -14,7 +14,7 @@ namespace
         return std::get<Constant>(source).value;
     }
 
-    ChannelRole environmentRole(const Source & source)
+    SeriesRole environmentRole(const Source & source)
     {
         return std::get<FromTimeSeries>(source).role;
     }
@@ -138,19 +138,19 @@ TEST(TestUnifiedBCConverters, TransientTypeRecordInfersEnvironmentSources)
 
     const auto * exchange{std::get_if<SurfaceExchange>(&converted.data)};
     ASSERT_NE(exchange, nullptr);
-    EXPECT_EQ(environmentRole(exchange->relativeHumidity), ChannelRole::RelativeHumidity);
+    EXPECT_EQ(environmentRole(exchange->relativeHumidity), SeriesRole::RelativeHumidity);
 
     ASSERT_TRUE(exchange->convection.has_value());
     EXPECT_EQ(exchange->convection->model, ConvectionModel::ASHRAE_NFRC_Outside);
-    EXPECT_EQ(environmentRole(exchange->convection->airTemperature.value()), ChannelRole::AirTemperature);
-    EXPECT_EQ(environmentRole(exchange->convection->windSpeed.value()), ChannelRole::WindSpeed);
+    EXPECT_EQ(environmentRole(exchange->convection->airTemperature.value()), SeriesRole::AirTemperature);
+    EXPECT_EQ(environmentRole(exchange->convection->windSpeed.value()), SeriesRole::WindSpeed);
     EXPECT_FALSE(exchange->convection->windDirection.has_value());
 
     ASSERT_TRUE(exchange->radiation.has_value());
     const auto * fixed{std::get_if<FixedCoefficientRadiation>(&exchange->radiation.value())};
     ASSERT_NE(fixed, nullptr);
-    EXPECT_EQ(environmentRole(fixed->temperature), ChannelRole::RadiantTemperature);
-    EXPECT_EQ(environmentRole(fixed->coefficient), ChannelRole::RadiativeCoefficient);
+    EXPECT_EQ(environmentRole(fixed->temperature), SeriesRole::RadiantTemperature);
+    EXPECT_EQ(environmentRole(fixed->coefficient), SeriesRole::RadiativeCoefficient);
 }
 
 TEST(TestUnifiedBCConverters, SteadyTypeRecordBecomesAllConstant)
@@ -193,11 +193,11 @@ TEST(TestUnifiedBCConverters, DirichletTypeRecordBecomesPrescribedState)
 
     const auto * prescribed{std::get_if<PrescribedState>(&converted.data)};
     ASSERT_NE(prescribed, nullptr);
-    EXPECT_EQ(environmentRole(prescribed->temperature.value()), ChannelRole::PrescribedTemperature);
-    EXPECT_EQ(environmentRole(prescribed->relativeHumidity.value()), ChannelRole::PrescribedHumidity);
+    EXPECT_EQ(environmentRole(prescribed->temperature.value()), SeriesRole::PrescribedTemperature);
+    EXPECT_EQ(environmentRole(prescribed->relativeHumidity.value()), SeriesRole::PrescribedHumidity);
 }
 
-TEST(TestUnifiedBCConverters, TimestepFileDecomposesIntoChannels)
+TEST(TestUnifiedBCConverters, TimestepFileDecomposesIntoSeries)
 {
     BCInputFileLibrary::BoundaryConditionTimestep legacy;
     legacy.convection.ashraeOutside = {{std::nullopt, 21.3, 0.52, 1.4},
@@ -209,13 +209,13 @@ TEST(TestUnifiedBCConverters, TimestepFileDecomposesIntoChannels)
 
     EXPECT_EQ(dataset.Name, "ORNL Test Exterior");
     EXPECT_EQ(TimeSeriesLibrary::steps(dataset), 3U);
-    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::AirTemperature));
-    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::RelativeHumidity));
-    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::WindSpeed));
-    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::HeatFlux));
-    EXPECT_FALSE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::WindDirection));
+    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, SeriesRole::AirTemperature));
+    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, SeriesRole::RelativeHumidity));
+    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, SeriesRole::WindSpeed));
+    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, SeriesRole::HeatFlux));
+    EXPECT_FALSE(TimeSeriesLibrary::hasRole(dataset, SeriesRole::WindDirection));
 
-    const auto windSpeed{TimeSeriesLibrary::valuesForRole(dataset, ChannelRole::WindSpeed)};
+    const auto windSpeed{TimeSeriesLibrary::valuesForRole(dataset, SeriesRole::WindSpeed)};
     ASSERT_TRUE(windSpeed.has_value());
     EXPECT_NEAR(windSpeed->at(2), 2.1, 1e-9);
 
@@ -237,15 +237,15 @@ TEST(TestUnifiedBCConverters, BothRadiationTypesKeepFirstRoleOccurrence)
 
     const auto dataset{environmentFromTimestep(legacy, "Radiation sample")};
 
-    // One channel per role: RadiantTemperature comes from the fixed-radiation rows (first
+    // One series per role: RadiantTemperature comes from the fixed-radiation rows (first
     // occurrence), Emissivity from the black-body rows, RadiativeCoefficient from fixed.
     const auto radiantTemperature{
-      TimeSeriesLibrary::valuesForRole(dataset, ChannelRole::RadiantTemperature)};
+      TimeSeriesLibrary::valuesForRole(dataset, SeriesRole::RadiantTemperature)};
     ASSERT_TRUE(radiantTemperature.has_value());
     EXPECT_NEAR(radiantTemperature->at(0), -10.0, 1e-9);
 
-    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::RadiativeCoefficient));
-    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, ChannelRole::Emissivity));
+    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, SeriesRole::RadiativeCoefficient));
+    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, SeriesRole::Emissivity));
 }
 
 
@@ -363,7 +363,7 @@ TEST(TestUnifiedBCConverters, RecordsWithoutASteadyFormAreReported)
     series.Name = "Reads a series";
     SurfaceExchange exchange;
     exchange.convection = Convection{.model = ConvectionModel::Fixed_Convection_Coefficient,
-                                     .airTemperature = FromTimeSeries{ChannelRole::AirTemperature},
+                                     .airTemperature = FromTimeSeries{SeriesRole::AirTemperature},
                                      .filmCoefficient = Constant{8.0}};
     series.data = exchange;
     EXPECT_FALSE(toSteadyState(series).has_value());

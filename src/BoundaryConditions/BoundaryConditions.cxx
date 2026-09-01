@@ -18,9 +18,9 @@ namespace BCLibrary
 
     namespace
     {
-        using TimeSeriesLibrary::ChannelRole;
+        using TimeSeriesLibrary::SeriesRole;
 
-        void appendRole(std::vector<ChannelRole> & roles, const Source & source)
+        void appendRole(std::vector<SeriesRole> & roles, const Source & source)
         {
             if(const auto * environment = std::get_if<FromTimeSeries>(&source))
             {
@@ -31,7 +31,7 @@ namespace BCLibrary
             }
         }
 
-        void appendRole(std::vector<ChannelRole> & roles, const std::optional<Source> & source)
+        void appendRole(std::vector<SeriesRole> & roles, const std::optional<Source> & source)
         {
             if(source.has_value())
             {
@@ -39,7 +39,7 @@ namespace BCLibrary
             }
         }
 
-        void appendConvectionRoles(std::vector<ChannelRole> & roles, const std::optional<Convection> & convection)
+        void appendConvectionRoles(std::vector<SeriesRole> & roles, const std::optional<Convection> & convection)
         {
             if(!convection.has_value())
             {
@@ -52,7 +52,7 @@ namespace BCLibrary
             appendRole(roles, convection->windDirection);
         }
 
-        void appendRadiationRoles(std::vector<ChannelRole> & roles,
+        void appendRadiationRoles(std::vector<SeriesRole> & roles,
                                   const std::optional<RadiationOptions> & radiation)
         {
             if(!radiation.has_value())
@@ -83,9 +83,9 @@ namespace BCLibrary
 
         struct RequiredRolesVisitor
         {
-            std::vector<ChannelRole> operator()(const SurfaceExchange & exchange) const
+            std::vector<SeriesRole> operator()(const SurfaceExchange & exchange) const
             {
-                std::vector<ChannelRole> roles;
+                std::vector<SeriesRole> roles;
                 appendRole(roles, exchange.relativeHumidity);
                 appendConvectionRoles(roles, exchange.convection);
                 appendRadiationRoles(roles, exchange.radiation);
@@ -97,27 +97,27 @@ namespace BCLibrary
                 return roles;
             }
 
-            std::vector<ChannelRole> operator()(const PrescribedState & prescribed) const
+            std::vector<SeriesRole> operator()(const PrescribedState & prescribed) const
             {
-                std::vector<ChannelRole> roles;
+                std::vector<SeriesRole> roles;
                 appendRole(roles, prescribed.temperature);
                 appendRole(roles, prescribed.relativeHumidity);
                 return roles;
             }
 
-            std::vector<ChannelRole> operator()(const RadiationSurface &) const
+            std::vector<SeriesRole> operator()(const RadiationSurface &) const
             {
                 return {};
             }
 
-            std::vector<ChannelRole> operator()(const NoExchange &) const
+            std::vector<SeriesRole> operator()(const NoExchange &) const
             {
                 return {};
             }
         };
     }   // namespace
 
-    std::vector<TimeSeriesLibrary::ChannelRole> requiredRoles(const BoundaryCondition & boundaryCondition)
+    std::vector<TimeSeriesLibrary::SeriesRole> requiredRoles(const BoundaryCondition & boundaryCondition)
     {
         return std::visit(RequiredRolesVisitor{}, boundaryCondition.data);
     }

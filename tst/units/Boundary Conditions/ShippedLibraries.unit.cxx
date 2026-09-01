@@ -31,13 +31,13 @@ TEST(TestShippedLibraries, TimeSeriesDefaultLibraryLoads)
     for(const auto & record : records)
     {
         EXPECT_FALSE(record.UUID.empty());
-        EXPECT_FALSE(record.channels.empty());
+        EXPECT_FALSE(record.series.empty());
     }
 
     const auto ashraeInside{database.getByName("ASHRAEInside")};
     ASSERT_TRUE(ashraeInside.has_value());
     EXPECT_TRUE(TimeSeriesLibrary::hasRole(ashraeInside.value(),
-                                           TimeSeriesLibrary::ChannelRole::AirTemperature));
+                                           TimeSeriesLibrary::SeriesRole::AirTemperature));
 }
 
 TEST(TestShippedLibraries, BoundaryConditionDefaultLibraryLoads)

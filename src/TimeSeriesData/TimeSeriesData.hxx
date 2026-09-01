@@ -6,10 +6,10 @@
 
 namespace TimeSeriesLibrary
 {
-    //! Fixed vocabulary of channel roles. The list is deliberately closed: both a boundary
-    //! condition input and a dataset channel name the same role, which is what makes their
+    //! Fixed vocabulary of series roles. The list is deliberately closed: both a boundary
+    //! condition input and a dataset series name the same role, which is what makes their
     //! pairing automatic. New roles ship together with the engine model that consumes them.
-    enum class ChannelRole
+    enum class SeriesRole
     {
         AirTemperature,
         RelativeHumidity,
@@ -27,10 +27,12 @@ namespace TimeSeriesLibrary
 
     //! One time series: a role plus its values. Rows are implicitly indexed; step duration is
     //! a simulation setting in the model file, not a dataset property.
-    struct Channel
+    struct Series
     {
-        ChannelRole role{ChannelRole::AirTemperature};
+        SeriesRole role{SeriesRole::AirTemperature};
         std::vector<double> values;
+
+        [[nodiscard]] bool operator==(const Series & other) const = default;
     };
 
     struct TimeSeriesData
@@ -52,17 +54,19 @@ namespace TimeSeriesLibrary
         //! the display falls back to "Imported". Metadata like Color - not part of the
         //! content hash.
         std::optional<std::string> Source;
-        std::vector<Channel> channels;
+        std::vector<Series> series;
+
+        [[nodiscard]] bool operator==(const TimeSeriesData & other) const = default;
     };
 
-    //! Number of steps the dataset provides: the shortest channel length (channels are
+    //! Number of steps the dataset provides: the shortest series length (series are
     //! expected to be equal length; the minimum is the defensive answer).
     [[nodiscard]] size_t steps(const TimeSeriesData & data);
 
-    [[nodiscard]] bool hasRole(const TimeSeriesData & data, ChannelRole role);
+    [[nodiscard]] bool hasRole(const TimeSeriesData & data, SeriesRole role);
 
     [[nodiscard]] std::optional<std::vector<double>> valuesForRole(const TimeSeriesData & data,
-                                                                   ChannelRole role);
+                                                                   SeriesRole role);
 
-    [[nodiscard]] std::vector<ChannelRole> providedRoles(const TimeSeriesData & data);
+    [[nodiscard]] std::vector<SeriesRole> providedRoles(const TimeSeriesData & data);
 }   // namespace TimeSeriesLibrary

@@ -7,8 +7,8 @@
 #include "TimeSeriesData/DB.hxx"
 #include "THMZ/ZipModule/ZipModule.hxx"
 
-using TimeSeriesLibrary::Channel;
-using TimeSeriesLibrary::ChannelRole;
+using TimeSeriesLibrary::Series;
+using TimeSeriesLibrary::SeriesRole;
 using TimeSeriesLibrary::TimeSeriesData;
 
 namespace
@@ -32,7 +32,7 @@ namespace
         TimeSeriesData data;
         data.UUID = uuid;
         data.Name = name;
-        data.channels = {Channel{ChannelRole::AirTemperature, {1.0, 2.0, 3.0}}};
+        data.series = {Series{SeriesRole::AirTemperature, {1.0, 2.0, 3.0}}};
         return data;
     }
 }   // namespace
@@ -96,9 +96,32 @@ TEST(TestUnifiedBCZip, TimeSeriesDatasetsRoundTrip)
     const auto golden{std::ranges::find_if(
       loaded, [](const TimeSeriesData & data) { return data.Name == "Golden CO"; })};
     ASSERT_NE(golden, loaded.end());
-    ASSERT_EQ(golden->channels.size(), 1U);
-    EXPECT_EQ(golden->channels[0].role, ChannelRole::AirTemperature);
-    EXPECT_NEAR(golden->channels[0].values[2], 3.0, 1e-9);
+    ASSERT_EQ(golden->series.size(), 1U);
+    EXPECT_EQ(golden->series[0].role, SeriesRole::AirTemperature);
+    EXPECT_NEAR(golden->series[0].values[2], 3.0, 1e-9);
+
+    std::filesystem::remove(zipPath);
+}
+
+TEST(TestUnifiedBCZip, TimeSeriesFormatSwitchLeavesSingleSpelling)
+{
+    const auto zipPath{scratchZip("unified_env_format_switch.thmz")};
+    createArchive(zipPath);
+
+    const std::vector<TimeSeriesData> datasets{
+      makeDataset("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "Golden CO")};
+
+    EXPECT_EQ(
+      TimeSeriesLibrary::saveDatasetsToZipFile(datasets, zipPath.string(), FileParse::FileFormat::XML),
+      1);
+    EXPECT_EQ(
+      TimeSeriesLibrary::saveDatasetsToZipFile(datasets, zipPath.string(), FileParse::FileFormat::JSON),
+      1);
+
+    const auto entries{ThermZip::unzipFiles(zipPath.string())};
+    EXPECT_FALSE(entries.contains("time series/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.xml"));
+    EXPECT_TRUE(entries.contains("time series/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.json"));
+    EXPECT_TRUE(entries.contains("Model.xml"));
 
     std::filesystem::remove(zipPath);
 }

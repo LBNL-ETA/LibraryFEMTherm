@@ -118,10 +118,13 @@ namespace ThermZip
     //! \param text The content of the file to add to the zip archive
     //! \param obsoleteNames Entries to drop while rewriting the archive; used to remove the
     //! other-format spelling of fileName so a format switch never leaves two model entries behind
+    //! \param compressionLevel Deflate level 0 (store) to 9 (smallest) applied to every entry
+    //! of the rewritten archive
     //! \return 1 if the file was successfully added to the zip archive, 0 otherwise
     int addToZipFile(std::string_view zipFileName,
                      std::string_view fileName,
                      std::string_view text,
-                     const std::vector<std::string> & obsoleteNames = {});
+                     const std::vector<std::string> & obsoleteNames = {},
+                     int compressionLevel = DefaultCompressionLevel);
 
 }   // namespace ThermZip

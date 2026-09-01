@@ -133,7 +133,7 @@ TEST(TestUnifiedBCAccessors, AdiabaticMatchesTheLegacyAnswers)
     expectSameAnswers(legacy);
 }
 
-//! A record whose input reads a channel has no steady value to report. It cannot reach a
+//! A record whose input reads a series has no steady value to report. It cannot reach a
 //! steady consumer at all - toSteadyState refuses it - so the accessors need only decline
 //! to invent a number.
 TEST(TestUnifiedBCAccessors, ASeriesBackedInputHasNoSteadyValue)
@@ -142,7 +142,7 @@ TEST(TestUnifiedBCAccessors, ASeriesBackedInputHasNoSteadyValue)
     unified.Name = "Reads a series";
     SurfaceExchange exchange;
     exchange.convection = Convection{.model = ConvectionModel::Fixed_Convection_Coefficient,
-                                     .airTemperature = FromTimeSeries{TimeSeriesLibrary::ChannelRole::AirTemperature},
+                                     .airTemperature = FromTimeSeries{TimeSeriesLibrary::SeriesRole::AirTemperature},
                                      .filmCoefficient = Constant{8.0}};
     unified.data = exchange;
 

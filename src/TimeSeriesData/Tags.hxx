@@ -22,9 +22,9 @@ namespace TimeSeriesLibrary
         [[nodiscard]] std::string description() const;
         [[nodiscard]] std::string color() const;
         [[nodiscard]] std::string source() const;
-        [[nodiscard]] std::string channel() const;
+        [[nodiscard]] std::string series() const;
         [[nodiscard]] std::string role() const;
-        [[nodiscard]] std::string value() const;
+        [[nodiscard]] std::string values() const;
 
     private:
         const std::string timeSeriesData_{"TimeSeriesData"};
@@ -37,12 +37,12 @@ namespace TimeSeriesLibrary
         const std::string description_{"Description"};
         const std::string color_{"Color"};
         const std::string source_{"Source"};
-        const std::string channel_{"Channel"};
+        const std::string series_{"Series"};
         const std::string role_{"Role"};
-        const std::string value_{"Value"};
+        const std::string values_{"Values"};
     };
 
-    [[nodiscard]] std::string channelRoleToString(ChannelRole role);
-    [[nodiscard]] ChannelRole channelRoleFromString(std::string_view value);
-    [[nodiscard]] std::vector<std::string> channelRoleStrings();
+    [[nodiscard]] std::string seriesRoleToString(SeriesRole role);
+    [[nodiscard]] SeriesRole seriesRoleFromString(std::string_view value);
+    [[nodiscard]] std::vector<std::string> seriesRoleStrings();
 }   // namespace TimeSeriesLibrary

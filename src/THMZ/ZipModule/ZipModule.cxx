@@ -262,13 +262,12 @@ namespace ThermZip
     int addToZipFile(std::string_view zipFileName,
                      std::string_view fileName,
                      std::string_view text,
-                     const std::vector<std::string> & obsoleteNames)
+                     const std::vector<std::string> & obsoleteNames,
+                     int compressionLevel)
     {
         // Step 1: Extract existing files
-        std::vector<std::string> fileNames;   // Empty vector to extract all files
-
         std::map<std::string, std::string> existingFiles = std::filesystem::exists(zipFileName)
-                                                             ? unzipFiles(zipFileName, fileNames)
+                                                             ? unzipFiles(zipFileName)
                                                              : std::map<std::string, std::string>();
 
         // Step 2: Add or replace the target file in the map
@@ -279,28 +278,7 @@ namespace ThermZip
         existingFiles[std::string(fileName)] = std::string(text);
 
         // Step 3: Recreate the zip archive
-        mz_zip_archive zipArchive;
-        memset(&zipArchive, 0, sizeof(zipArchive));
-
-        // Initialize the writer for a new zip file
-        if(!mz_zip_writer_init_file(&zipArchive, std::string(zipFileName).c_str(), 0))
-        {
-            throw std::runtime_error("Failed to initialize zip archive for writing");
-        }
-
-        // Add all files back to the archive
-        for(const auto & [name, content] : existingFiles)
-        {
-            if(!mz_zip_writer_add_mem(&zipArchive, name.c_str(), content.data(), content.size(), 0))
-            {
-                mz_zip_writer_end(&zipArchive);
-                throw std::runtime_error("Failed to add file to zip archive");
-            }
-        }
-
-        // Finalize and close the zip archive
-        mz_zip_writer_finalize_archive(&zipArchive);
-        mz_zip_writer_end(&zipArchive);
+        zipFiles(existingFiles, std::string(zipFileName), compressionLevel);
 
         return 1;   // Return success
     }

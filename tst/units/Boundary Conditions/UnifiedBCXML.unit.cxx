@@ -4,7 +4,7 @@
 #include "BoundaryConditions/Serializers.hxx"
 
 using namespace BCLibrary;
-using TimeSeriesLibrary::ChannelRole;
+using TimeSeriesLibrary::SeriesRole;
 
 namespace
 {
@@ -13,7 +13,7 @@ namespace
         return std::get<Constant>(source).value;
     }
 
-    ChannelRole environmentRole(const Source & source)
+    SeriesRole environmentRole(const Source & source)
     {
         return std::get<FromTimeSeries>(source).role;
     }
@@ -27,11 +27,11 @@ namespace
         record.Color = "0x0078D7";
 
         SurfaceExchange exchange;
-        exchange.relativeHumidity = FromTimeSeries{ChannelRole::RelativeHumidity};
+        exchange.relativeHumidity = FromTimeSeries{SeriesRole::RelativeHumidity};
         exchange.convection = Convection{.model = ConvectionModel::ASHRAE_NFRC_Outside,
-                                         .airTemperature = FromTimeSeries{ChannelRole::AirTemperature},
+                                         .airTemperature = FromTimeSeries{SeriesRole::AirTemperature},
                                          .filmCoefficient = std::nullopt,
-                                         .windSpeed = FromTimeSeries{ChannelRole::WindSpeed},
+                                         .windSpeed = FromTimeSeries{SeriesRole::WindSpeed},
                                          .windDirection = std::nullopt};
         exchange.radiation = BlackBodyRadiation{.temperature = Constant{-18.0},
                                                 .emissivity = Constant{0.9},
@@ -65,9 +65,9 @@ TEST(TestUnifiedBC, RequiredRolesTransient)
     const auto roles{requiredRoles(record)};
 
     ASSERT_EQ(roles.size(), 3U);
-    EXPECT_EQ(roles[0], ChannelRole::RelativeHumidity);
-    EXPECT_EQ(roles[1], ChannelRole::AirTemperature);
-    EXPECT_EQ(roles[2], ChannelRole::WindSpeed);
+    EXPECT_EQ(roles[0], SeriesRole::RelativeHumidity);
+    EXPECT_EQ(roles[1], SeriesRole::AirTemperature);
+    EXPECT_EQ(roles[2], SeriesRole::WindSpeed);
     EXPECT_FALSE(isSteadyCapable(record));
 }
 
@@ -94,12 +94,12 @@ TEST(TestUnifiedBC, SurfaceExchangeRoundTrip)
     const auto * exchange{std::get_if<SurfaceExchange>(&record->data)};
     ASSERT_NE(exchange, nullptr);
 
-    EXPECT_EQ(environmentRole(exchange->relativeHumidity), ChannelRole::RelativeHumidity);
+    EXPECT_EQ(environmentRole(exchange->relativeHumidity), SeriesRole::RelativeHumidity);
 
     ASSERT_TRUE(exchange->convection.has_value());
     EXPECT_EQ(exchange->convection->model, ConvectionModel::ASHRAE_NFRC_Outside);
     ASSERT_TRUE(exchange->convection->airTemperature.has_value());
-    EXPECT_EQ(environmentRole(exchange->convection->airTemperature.value()), ChannelRole::AirTemperature);
+    EXPECT_EQ(environmentRole(exchange->convection->airTemperature.value()), SeriesRole::AirTemperature);
     ASSERT_TRUE(exchange->convection->windSpeed.has_value());
     EXPECT_FALSE(exchange->convection->filmCoefficient.has_value());
 
@@ -116,7 +116,7 @@ TEST(TestUnifiedBC, PrescribedStateRoundTrip)
     BoundaryCondition record;
     record.UUID = "12121212-3434-5656-7878-909090909090";
     record.Name = "Fixed temperature and humidity";
-    record.data = PrescribedState{.temperature = FromTimeSeries{ChannelRole::PrescribedTemperature},
+    record.data = PrescribedState{.temperature = FromTimeSeries{SeriesRole::PrescribedTemperature},
                                   .relativeHumidity = Constant{0.65}};
 
     DB source;
@@ -131,19 +131,19 @@ TEST(TestUnifiedBC, PrescribedStateRoundTrip)
     const auto * prescribed{std::get_if<PrescribedState>(&reloaded->data)};
     ASSERT_NE(prescribed, nullptr);
     ASSERT_TRUE(prescribed->temperature.has_value());
-    EXPECT_EQ(environmentRole(prescribed->temperature.value()), ChannelRole::PrescribedTemperature);
+    EXPECT_EQ(environmentRole(prescribed->temperature.value()), SeriesRole::PrescribedTemperature);
     ASSERT_TRUE(prescribed->relativeHumidity.has_value());
     EXPECT_NEAR(constantValue(prescribed->relativeHumidity.value()), 0.65, 1e-9);
 
     const auto roles{requiredRoles(reloaded.value())};
     ASSERT_EQ(roles.size(), 1U);
-    EXPECT_EQ(roles[0], ChannelRole::PrescribedTemperature);
+    EXPECT_EQ(roles[0], SeriesRole::PrescribedTemperature);
 }
 
 TEST(TestUnifiedBC, NoExchangeRoundTrip)
 {
     // The dedicated adiabatic kind: deliberately no exchange, steady-capable, no
-    // required channels, and it survives the XML round trip as its own variant.
+    // required series, and it survives the XML round trip as its own variant.
     BoundaryCondition record;
     record.UUID = "adiabatic-no-exchange";
     record.Name = "Adiabatic";

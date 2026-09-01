@@ -6,21 +6,21 @@ namespace TimeSeriesLibrary
 {
     namespace
     {
-        const std::map<ChannelRole, std::string> & channelRoleMap()
+        const std::map<SeriesRole, std::string> & seriesRoleMap()
         {
-            static const std::map<ChannelRole, std::string> roles{
-              {ChannelRole::AirTemperature, "AirTemperature"},
-              {ChannelRole::RelativeHumidity, "RelativeHumidity"},
-              {ChannelRole::WindSpeed, "WindSpeed"},
-              {ChannelRole::WindDirection, "WindDirection"},
-              {ChannelRole::SolarIrradiance, "SolarIrradiance"},
-              {ChannelRole::HeatFlux, "HeatFlux"},
-              {ChannelRole::ConvectiveCoefficient, "ConvectiveCoefficient"},
-              {ChannelRole::RadiantTemperature, "RadiantTemperature"},
-              {ChannelRole::RadiativeCoefficient, "RadiativeCoefficient"},
-              {ChannelRole::Emissivity, "Emissivity"},
-              {ChannelRole::PrescribedTemperature, "PrescribedTemperature"},
-              {ChannelRole::PrescribedHumidity, "PrescribedHumidity"}};
+            static const std::map<SeriesRole, std::string> roles{
+              {SeriesRole::AirTemperature, "AirTemperature"},
+              {SeriesRole::RelativeHumidity, "RelativeHumidity"},
+              {SeriesRole::WindSpeed, "WindSpeed"},
+              {SeriesRole::WindDirection, "WindDirection"},
+              {SeriesRole::SolarIrradiance, "SolarIrradiance"},
+              {SeriesRole::HeatFlux, "HeatFlux"},
+              {SeriesRole::ConvectiveCoefficient, "ConvectiveCoefficient"},
+              {SeriesRole::RadiantTemperature, "RadiantTemperature"},
+              {SeriesRole::RadiativeCoefficient, "RadiativeCoefficient"},
+              {SeriesRole::Emissivity, "Emissivity"},
+              {SeriesRole::PrescribedTemperature, "PrescribedTemperature"},
+              {SeriesRole::PrescribedHumidity, "PrescribedHumidity"}};
             return roles;
         }
     }   // namespace
@@ -75,9 +75,9 @@ namespace TimeSeriesLibrary
         return source_;
     }
 
-    std::string Tags::channel() const
+    std::string Tags::series() const
     {
-        return channel_;
+        return series_;
     }
 
     std::string Tags::role() const
@@ -85,23 +85,23 @@ namespace TimeSeriesLibrary
         return role_;
     }
 
-    std::string Tags::value() const
+    std::string Tags::values() const
     {
-        return value_;
+        return values_;
     }
 
-    std::string channelRoleToString(ChannelRole role)
+    std::string seriesRoleToString(SeriesRole role)
     {
-        return LibraryCommon::enumToString(role, channelRoleMap());
+        return LibraryCommon::enumToString(role, seriesRoleMap());
     }
 
-    ChannelRole channelRoleFromString(std::string_view value)
+    SeriesRole seriesRoleFromString(std::string_view value)
     {
-        return LibraryCommon::enumFromString(value, channelRoleMap());
+        return LibraryCommon::enumFromString(value, seriesRoleMap());
     }
 
-    std::vector<std::string> channelRoleStrings()
+    std::vector<std::string> seriesRoleStrings()
     {
-        return LibraryCommon::stringVector(channelRoleMap());
+        return LibraryCommon::stringVector(seriesRoleMap());
     }
 }   // namespace TimeSeriesLibrary

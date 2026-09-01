@@ -143,7 +143,7 @@
 			<xs:element name="UUID" type="xs:string" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="Name" type="xs:string" minOccurs="1" maxOccurs="1"/>
 			<!-- Unified-library binding: the segment references its boundary condition
-			     record by UUID and, when that record reads environment channels, the
+			     record by UUID and, when that record reads environment series, the
 			     dataset by UUID. Absent in pre-consolidation archives, where the binding
 			     is Name (steady state) or TransientData (transient); migration on load
 			     fills these. -->

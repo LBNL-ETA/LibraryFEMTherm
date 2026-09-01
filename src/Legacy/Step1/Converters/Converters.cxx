@@ -12,8 +12,8 @@ namespace BCLibrary
 {
     namespace
     {
-        using TimeSeriesLibrary::Channel;
-        using TimeSeriesLibrary::ChannelRole;
+        using TimeSeriesLibrary::Series;
+        using TimeSeriesLibrary::SeriesRole;
         using TimeSeriesLibrary::TimeSeriesData;
 
         ///////////////////////////////////////////////////////////////////////////////////
@@ -143,7 +143,7 @@ namespace BCLibrary
 
         //! Source inference for one input: transient records read from the environment;
         //! steady records carry the constant in the legacy record's optional value.
-        Source inferSource(bool isTransient, ChannelRole role, const std::optional<double> & legacyValue,
+        Source inferSource(bool isTransient, SeriesRole role, const std::optional<double> & legacyValue,
                            double fallback)
         {
             if(isTransient)
@@ -158,24 +158,24 @@ namespace BCLibrary
             Convection convection;
             convection.model = convertModel(legacy.Model);
             convection.airTemperature =
-              inferSource(isTransient, ChannelRole::AirTemperature, legacy.Temperature, 0.0);
+              inferSource(isTransient, SeriesRole::AirTemperature, legacy.Temperature, 0.0);
 
             if(convection.model == ConvectionModel::Fixed_Convection_Coefficient)
             {
                 convection.filmCoefficient =
-                  inferSource(isTransient, ChannelRole::ConvectiveCoefficient, legacy.FilmCoefficient, 0.0);
+                  inferSource(isTransient, SeriesRole::ConvectiveCoefficient, legacy.FilmCoefficient, 0.0);
             }
 
             if(modelUsesWindSpeed(convection.model))
             {
-                convection.windSpeed = inferSource(isTransient, ChannelRole::WindSpeed, legacy.WindSpeed, 0.0);
+                convection.windSpeed = inferSource(isTransient, SeriesRole::WindSpeed, legacy.WindSpeed, 0.0);
             }
 
             if(modelUsesWindDirection(convection.model) && isTransient)
             {
                 // The legacy record stores direction as a Leeward/Windward enum usable only
                 // for steady runs; numeric per-timestep direction comes from the environment.
-                convection.windDirection = FromTimeSeries{ChannelRole::WindDirection};
+                convection.windDirection = FromTimeSeries{SeriesRole::WindDirection};
             }
 
             return convection;
@@ -194,23 +194,23 @@ namespace BCLibrary
                     if(isTransient || legacy.Temperature.has_value())
                     {
                         enclosure.temperature =
-                          inferSource(isTransient, ChannelRole::RadiantTemperature, legacy.Temperature, 0.0);
+                          inferSource(isTransient, SeriesRole::RadiantTemperature, legacy.Temperature, 0.0);
                     }
                     return enclosure;
                 }
                 case BCTypesLibrary::RadiationModel::Black_Body_Radiation:
                     return BlackBodyRadiation{
                       .temperature =
-                        inferSource(isTransient, ChannelRole::RadiantTemperature, legacy.Temperature, 0.0),
+                        inferSource(isTransient, SeriesRole::RadiantTemperature, legacy.Temperature, 0.0),
                       .emissivity =
-                        inferSource(isTransient, ChannelRole::Emissivity, legacy.SurfaceEmissivity, 0.9),
+                        inferSource(isTransient, SeriesRole::Emissivity, legacy.SurfaceEmissivity, 0.9),
                       .viewFactor = legacy.ViewFactor.value_or(1.0)};
                 case BCTypesLibrary::RadiationModel::Fixed_Radiation_Coefficient:
                     return FixedCoefficientRadiation{
                       .temperature =
-                        inferSource(isTransient, ChannelRole::RadiantTemperature, legacy.Temperature, 0.0),
+                        inferSource(isTransient, SeriesRole::RadiantTemperature, legacy.Temperature, 0.0),
                       .coefficient = inferSource(
-                        isTransient, ChannelRole::RadiativeCoefficient, legacy.FilmCoefficient, 0.0)};
+                        isTransient, SeriesRole::RadiativeCoefficient, legacy.FilmCoefficient, 0.0)};
             }
             return AutomaticEnclosure{};
         }
@@ -219,13 +219,13 @@ namespace BCLibrary
         // Timestep file conversion
         ///////////////////////////////////////////////////////////////////////////////////
 
-        void addChannel(TimeSeriesData & data, ChannelRole role, std::vector<double> values)
+        void addSeries(TimeSeriesData & data, SeriesRole role, std::vector<double> values)
         {
-            // One channel per role: first occurrence wins, matching the legacy content
+            // One series per role: first occurrence wins, matching the legacy content
             // validator's single-convection / single-radiation invariants.
             if(!TimeSeriesLibrary::hasRole(data, role) && !values.empty())
             {
-                data.channels.emplace_back(Channel{role, std::move(values)});
+                data.series.emplace_back(Series{role, std::move(values)});
             }
         }
 
@@ -236,33 +236,33 @@ namespace BCLibrary
         }
 
         template<typename RowType>
-        void addConvectionChannels(TimeSeriesData & data, const std::vector<RowType> & rows)
+        void addConvectionSeries(TimeSeriesData & data, const std::vector<RowType> & rows)
         {
             if(rows.empty())
             {
                 return;
             }
 
-            addChannel(data, ChannelRole::AirTemperature,
+            addSeries(data, SeriesRole::AirTemperature,
                        column(rows, [](const RowType & row) { return row.temperature; }));
-            addChannel(data, ChannelRole::RelativeHumidity,
+            addSeries(data, SeriesRole::RelativeHumidity,
                        column(rows, [](const RowType & row) { return row.humidity; }));
 
             if constexpr(requires(const RowType & row) { row.windSpeed; })
             {
-                addChannel(data, ChannelRole::WindSpeed,
+                addSeries(data, SeriesRole::WindSpeed,
                            column(rows, [](const RowType & row) { return row.windSpeed; }));
             }
 
             if constexpr(requires(const RowType & row) { row.windDirection; })
             {
-                addChannel(data, ChannelRole::WindDirection,
+                addSeries(data, SeriesRole::WindDirection,
                            column(rows, [](const RowType & row) { return row.windDirection; }));
             }
 
             if constexpr(requires(const RowType & row) { row.fixedFilmCoefficient; })
             {
-                addChannel(data, ChannelRole::ConvectiveCoefficient,
+                addSeries(data, SeriesRole::ConvectiveCoefficient,
                            column(rows, [](const RowType & row) { return row.fixedFilmCoefficient; }));
             }
         }
@@ -300,7 +300,7 @@ namespace BCLibrary
         // Unified record back to steady state
         ///////////////////////////////////////////////////////////////////////////////////
 
-        //! A steady-state record stores numbers, so an input reading a channel has no
+        //! A steady-state record stores numbers, so an input reading a series has no
         //! representation there. Naming it beats inventing a value for it.
         lbnl::ExpectedExt<double, std::string> constantValue(const Source & source, const std::string & what)
         {
@@ -542,12 +542,12 @@ namespace BCLibrary
             if(legacy.UseTemperature)
             {
                 prescribed.temperature =
-                  inferSource(isTransient, ChannelRole::PrescribedTemperature, legacy.Temperature, 0.0);
+                  inferSource(isTransient, SeriesRole::PrescribedTemperature, legacy.Temperature, 0.0);
             }
             if(legacy.UseHumidity)
             {
                 prescribed.relativeHumidity =
-                  inferSource(isTransient, ChannelRole::PrescribedHumidity, legacy.Humidity, 0.5);
+                  inferSource(isTransient, SeriesRole::PrescribedHumidity, legacy.Humidity, 0.5);
             }
             converted.data = prescribed;
             return converted;
@@ -555,7 +555,7 @@ namespace BCLibrary
 
         SurfaceExchange exchange;
         exchange.relativeHumidity =
-          inferSource(isTransient, ChannelRole::RelativeHumidity, legacy.Humidity, 0.5);
+          inferSource(isTransient, SeriesRole::RelativeHumidity, legacy.Humidity, 0.5);
 
         if(legacy.ConvectionBc.has_value())
         {
@@ -571,13 +571,13 @@ namespace BCLibrary
         {
             exchange.solar =
               Solar{.irradiance = inferSource(
-                      isTransient, ChannelRole::SolarIrradiance, legacy.SolarBc->SolarRadiation, 0.0),
+                      isTransient, SeriesRole::SolarIrradiance, legacy.SolarBc->SolarRadiation, 0.0),
                     .absorptance = legacy.SolarBc->Absorptance.value_or(0.6)};
         }
 
         if(legacy.UseHeatFlux)
         {
-            exchange.flux = inferSource(isTransient, ChannelRole::HeatFlux, legacy.HeatFlux, 0.0);
+            exchange.flux = inferSource(isTransient, SeriesRole::HeatFlux, legacy.HeatFlux, 0.0);
         }
 
         converted.data = exchange;
@@ -591,37 +591,37 @@ namespace BCLibrary
         TimeSeriesData data;
         data.Name = datasetName;
 
-        addConvectionChannels(data, legacy.convection.tarp);
-        addConvectionChannels(data, legacy.convection.ashraeInside);
-        addConvectionChannels(data, legacy.convection.ashraeOutside);
-        addConvectionChannels(data, legacy.convection.fixedFilmCoefficient);
-        addConvectionChannels(data, legacy.convection.yazdanianKlems);
-        addConvectionChannels(data, legacy.convection.kimura);
-        addConvectionChannels(data, legacy.convection.montazeri);
+        addConvectionSeries(data, legacy.convection.tarp);
+        addConvectionSeries(data, legacy.convection.ashraeInside);
+        addConvectionSeries(data, legacy.convection.ashraeOutside);
+        addConvectionSeries(data, legacy.convection.fixedFilmCoefficient);
+        addConvectionSeries(data, legacy.convection.yazdanianKlems);
+        addConvectionSeries(data, legacy.convection.kimura);
+        addConvectionSeries(data, legacy.convection.montazeri);
 
-        addChannel(data, ChannelRole::RadiantTemperature,
+        addSeries(data, SeriesRole::RadiantTemperature,
                    column(legacy.radiation.fixedRadiation,
                           [](const BCInputFileLibrary::FixedRadiation & row) { return row.temperature; }));
-        addChannel(data, ChannelRole::RadiativeCoefficient,
+        addSeries(data, SeriesRole::RadiativeCoefficient,
                    column(legacy.radiation.fixedRadiation,
                           [](const BCInputFileLibrary::FixedRadiation & row) { return row.hr; }));
-        addChannel(data, ChannelRole::RadiantTemperature,
+        addSeries(data, SeriesRole::RadiantTemperature,
                    column(legacy.radiation.blackBodyRadiation,
                           [](const BCInputFileLibrary::BlackBodyRadiation & row) { return row.temperature; }));
-        addChannel(data, ChannelRole::Emissivity,
+        addSeries(data, SeriesRole::Emissivity,
                    column(legacy.radiation.blackBodyRadiation,
                           [](const BCInputFileLibrary::BlackBodyRadiation & row) { return row.emissivity; }));
 
-        addChannel(data, ChannelRole::HeatFlux,
+        addSeries(data, SeriesRole::HeatFlux,
                    column(legacy.heatFlux,
                           [](const BCInputFileLibrary::HeatFlux & row) { return row.heatFlux; }));
-        addChannel(data, ChannelRole::SolarIrradiance,
+        addSeries(data, SeriesRole::SolarIrradiance,
                    column(legacy.solarRadiation,
                           [](const BCInputFileLibrary::SolarRadiation & row) { return row.solarRadiation; }));
-        addChannel(data, ChannelRole::PrescribedTemperature,
+        addSeries(data, SeriesRole::PrescribedTemperature,
                    column(legacy.temperature,
                           [](const BCInputFileLibrary::FixedTemperature & row) { return row.temperature; }));
-        addChannel(data, ChannelRole::PrescribedHumidity,
+        addSeries(data, SeriesRole::PrescribedHumidity,
                    column(legacy.humidity,
                           [](const BCInputFileLibrary::FixedHumidity & row) { return row.humidity; }));
 

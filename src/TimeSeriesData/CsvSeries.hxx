@@ -13,7 +13,7 @@ namespace TimeSeriesLibrary::Csv
     //! matching and export back, so a dataset is never trapped in the library format.
     //!
     //! The behavior follows the interactive mockup's csv_series.py: a column is
-    //! imported when its header names a channel role - either the stored spelling
+    //! imported when its header names a series role - either the stored spelling
     //! (AirTemperature) or the spelled-out one (Air Temperature), with case and
     //! spacing ignored - and is otherwise ignored and reported. No keyword guessing:
     //! a header either is a role name or it is not. A recognized calendar time
@@ -29,7 +29,7 @@ namespace TimeSeriesLibrary::Csv
 
     //! Spelled-out spelling of a role (AirTemperature -> "Air Temperature"): the
     //! header written on export and the second spelling accepted on import.
-    [[nodiscard]] std::string displayHeaderForRole(ChannelRole role);
+    [[nodiscard]] std::string displayHeaderForRole(SeriesRole role);
 
     //! The imported dataset's UUID is the deterministic content hash, so importing
     //! the same file twice converges to one dataset. Blank cells mid-run carry the

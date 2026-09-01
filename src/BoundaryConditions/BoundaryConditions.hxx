@@ -128,9 +128,9 @@ namespace BCLibrary
         [[nodiscard]] friend bool operator==(const BoundaryCondition & lhs, const BoundaryCondition & rhs) = default;
     };
 
-    //! The set of channel roles the record reads from an time series dataset, in stable
+    //! The set of series roles the record reads from an time series dataset, in stable
     //! first-appearance order. Empty result == steady-state capable.
-    [[nodiscard]] std::vector<TimeSeriesLibrary::ChannelRole>
+    [[nodiscard]] std::vector<TimeSeriesLibrary::SeriesRole>
       requiredRoles(const BoundaryCondition & boundaryCondition);
 
     [[nodiscard]] bool isSteadyCapable(const BoundaryCondition & boundaryCondition);

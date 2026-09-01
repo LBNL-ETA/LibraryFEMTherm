@@ -86,6 +86,27 @@ namespace TimeSeriesLibrary
         return result;
     }
 
+    bool DB::isDirty() const
+    {
+        return m_Dirty;
+    }
+
+    int DB::saveIfDirty(FileParse::FileFormat format)
+    {
+        if(!m_Dirty)
+        {
+            return 0;
+        }
+
+        const int result{saveToFile(format)};
+        if(result == 0)
+        {
+            m_Dirty = false;
+        }
+
+        return result;
+    }
+
     std::vector<TimeSeriesData> DB::loadTimeSeriesDataFromFile(const std::string & xmlFileName)
     {
         Tags tags;
@@ -136,15 +157,17 @@ namespace TimeSeriesLibrary
     void DB::add(const TimeSeriesData & data)
     {
         m_TimeSeriesData.emplace_back(data);
+        m_Dirty = true;
     }
 
     void DB::update(const TimeSeriesData & data)
     {
         for(auto & existing : m_TimeSeriesData)
         {
-            if(existing.UUID == data.UUID)
+            if(existing.UUID == data.UUID && existing != data)
             {
                 existing = data;
+                m_Dirty = true;
             }
         }
     }
@@ -157,27 +180,33 @@ namespace TimeSeriesLibrary
 
     void DB::deleteWithUUID(std::string_view uuid)
     {
+        const size_t sizeBefore{m_TimeSeriesData.size()};
         m_TimeSeriesData.erase(std::ranges::remove_if(m_TimeSeriesData,
                                                        [uuid](const TimeSeriesData & data) {
                                                            return data.UUID == uuid;
                                                        })
                                   .begin(),
                                 m_TimeSeriesData.end());
+        m_Dirty = m_Dirty || m_TimeSeriesData.size() != sizeBefore;
     }
 
     void DB::deleteRecordsWithProjectName(std::string_view projectName)
     {
+        const size_t sizeBefore{m_TimeSeriesData.size()};
         m_TimeSeriesData.erase(std::ranges::remove_if(m_TimeSeriesData,
                                                        [projectName](const TimeSeriesData & data) {
                                                            return data.ProjectName == projectName;
                                                        })
                                   .begin(),
                                 m_TimeSeriesData.end());
+        m_Dirty = m_Dirty || m_TimeSeriesData.size() != sizeBefore;
     }
 
     void DB::deleteTemporaryRecords()
     {
+        const size_t sizeBefore{m_TimeSeriesData.size()};
         LibraryCommon::removeTemporaryRecords(m_TimeSeriesData);
+        m_Dirty = m_Dirty || m_TimeSeriesData.size() != sizeBefore;
     }
 
     std::vector<TimeSeriesData> loadDatasetsFromZipFile(const std::string & zipFileName)
@@ -212,17 +241,26 @@ namespace TimeSeriesLibrary
                               const std::string & zipFileName,
                               FileParse::FileFormat format)
     {
-        int written = 0;
+        // One extract and one compressed rewrite for the whole batch; the per-dataset
+        // addToZipFile alternative costs a full archive rewrite per dataset.
+        auto entries{std::filesystem::exists(zipFileName) ? ThermZip::unzipFiles(zipFileName)
+                                                          : std::map<std::string, std::string>{}};
+
         for(const auto & dataset : datasets)
         {
+            const auto baseName{ThermZip::TimeSeriesDir + "/" + dataset.UUID};
+            for(const auto & staleName : ThermZip::entryNameCandidates(baseName))
+            {
+                entries.erase(staleName);
+            }
+
             DB entryDB;
             entryDB.add(dataset);
-            const auto entryName{ThermZip::timeSeriesEntryName(dataset.UUID, format)};
-            auto obsoleteNames{ThermZip::entryNameCandidates(ThermZip::timeSeriesEntryName(dataset.UUID))};
-            std::erase(obsoleteNames, entryName);
-            written += ThermZip::addToZipFile(zipFileName, entryName, entryDB.saveToString(format), obsoleteNames);
+            entries[ThermZip::timeSeriesEntryName(dataset.UUID, format)] = entryDB.saveToString(format);
         }
 
-        return written;
+        ThermZip::zipFiles(entries, zipFileName);
+
+        return static_cast<int>(datasets.size());
     }
 }   // namespace TimeSeriesLibrary

@@ -2,8 +2,8 @@
 
 #include "TimeSeriesData/Standards.hxx"
 
-using TimeSeriesLibrary::Channel;
-using TimeSeriesLibrary::ChannelRole;
+using TimeSeriesLibrary::Series;
+using TimeSeriesLibrary::SeriesRole;
 using TimeSeriesLibrary::TimeSeriesData;
 namespace Standards = TimeSeriesLibrary::Standards;
 
@@ -13,8 +13,8 @@ namespace
     {
         TimeSeriesData exterior;
         exterior.Name = "Golden exterior";
-        exterior.channels = {Channel{ChannelRole::AirTemperature, std::move(temperatures)},
-                             Channel{ChannelRole::RelativeHumidity, std::move(humidities)}};
+        exterior.series = {Series{SeriesRole::AirTemperature, std::move(temperatures)},
+                             Series{SeriesRole::RelativeHumidity, std::move(humidities)}};
         return exterior;
     }
 }   // namespace
@@ -29,8 +29,8 @@ TEST(TestStandardsGeneration, EN15026RampAndHighLoadOffset)
       exterior, Standards::Standard::EN_15026_DIN_4108, Standards::MoistureLoad::Normal, 1U)};
     ASSERT_TRUE(normal.has_value());
 
-    const auto temperature{TimeSeriesLibrary::valuesForRole(normal.value(), ChannelRole::AirTemperature)};
-    const auto humidity{TimeSeriesLibrary::valuesForRole(normal.value(), ChannelRole::RelativeHumidity)};
+    const auto temperature{TimeSeriesLibrary::valuesForRole(normal.value(), SeriesRole::AirTemperature)};
+    const auto humidity{TimeSeriesLibrary::valuesForRole(normal.value(), SeriesRole::RelativeHumidity)};
     ASSERT_TRUE(temperature.has_value());
     ASSERT_TRUE(humidity.has_value());
 
@@ -43,7 +43,7 @@ TEST(TestStandardsGeneration, EN15026RampAndHighLoadOffset)
     const auto high{Standards::generateInterior(
       exterior, Standards::Standard::EN_15026_DIN_4108, Standards::MoistureLoad::High, 1U)};
     ASSERT_TRUE(high.has_value());
-    const auto highHumidity{TimeSeriesLibrary::valuesForRole(high.value(), ChannelRole::RelativeHumidity)};
+    const auto highHumidity{TimeSeriesLibrary::valuesForRole(high.value(), SeriesRole::RelativeHumidity)};
     ASSERT_TRUE(highHumidity.has_value());
     EXPECT_NEAR(highHumidity->at(0), 0.45, 1e-9);
 }
@@ -59,8 +59,8 @@ TEST(TestStandardsGeneration, ISO13788WarmOutdoorCarriesVapourAcross)
       exterior, Standards::Standard::ISO_13788, Standards::MoistureLoad::Normal, 1U)};
     ASSERT_TRUE(result.has_value());
 
-    const auto temperature{TimeSeriesLibrary::valuesForRole(result.value(), ChannelRole::AirTemperature)};
-    const auto humidity{TimeSeriesLibrary::valuesForRole(result.value(), ChannelRole::RelativeHumidity)};
+    const auto temperature{TimeSeriesLibrary::valuesForRole(result.value(), SeriesRole::AirTemperature)};
+    const auto humidity{TimeSeriesLibrary::valuesForRole(result.value(), SeriesRole::RelativeHumidity)};
     ASSERT_TRUE(temperature.has_value());
     ASSERT_TRUE(humidity.has_value());
     EXPECT_NEAR(temperature->at(0), 20.0, 1e-9);
@@ -72,12 +72,12 @@ TEST(TestStandardsGeneration, ISO13788WarmOutdoorCarriesVapourAcross)
     const auto coldResult{Standards::generateInterior(
       cold, Standards::Standard::ISO_13788, Standards::MoistureLoad::High, 1U)};
     ASSERT_TRUE(coldResult.has_value());
-    const auto coldHumidity{TimeSeriesLibrary::valuesForRole(coldResult.value(), ChannelRole::RelativeHumidity)};
+    const auto coldHumidity{TimeSeriesLibrary::valuesForRole(coldResult.value(), SeriesRole::RelativeHumidity)};
     ASSERT_TRUE(coldHumidity.has_value());
     const auto normalResult{Standards::generateInterior(
       cold, Standards::Standard::ISO_13788, Standards::MoistureLoad::Normal, 1U)};
     const auto normalHumidity{
-      TimeSeriesLibrary::valuesForRole(normalResult.value(), ChannelRole::RelativeHumidity)};
+      TimeSeriesLibrary::valuesForRole(normalResult.value(), SeriesRole::RelativeHumidity)};
     EXPECT_GT(coldHumidity->at(0), normalHumidity->at(0));
 }
 
@@ -89,7 +89,7 @@ TEST(TestStandardsGeneration, ASHRAE160Band)
       exterior, Standards::Standard::ASHRAE_160, Standards::MoistureLoad::Normal, 1U)};
     ASSERT_TRUE(result.has_value());
 
-    const auto temperature{TimeSeriesLibrary::valuesForRole(result.value(), ChannelRole::AirTemperature)};
+    const auto temperature{TimeSeriesLibrary::valuesForRole(result.value(), SeriesRole::AirTemperature)};
     ASSERT_TRUE(temperature.has_value());
     EXPECT_NEAR(temperature->at(0), 21.1, 1e-9);   // below the heating setpoint band
     EXPECT_NEAR(temperature->at(1), 23.9, 1e-9);   // above the cooling setpoint band
@@ -106,7 +106,7 @@ TEST(TestStandardsGeneration, DailyMeanHoldsAcrossTheDay)
       exterior, Standards::Standard::EN_15026_DIN_4108, Standards::MoistureLoad::Normal, 4U)};
     ASSERT_TRUE(result.has_value());
 
-    const auto temperature{TimeSeriesLibrary::valuesForRole(result.value(), ChannelRole::AirTemperature)};
+    const auto temperature{TimeSeriesLibrary::valuesForRole(result.value(), SeriesRole::AirTemperature)};
     ASSERT_TRUE(temperature.has_value());
     ASSERT_EQ(temperature->size(), 8U);
     for(size_t index = 0; index < 4U; ++index)
@@ -138,7 +138,7 @@ TEST(TestStandardsGeneration, MissingAirTemperatureIsAnError)
 {
     TimeSeriesData exterior;
     exterior.Name = "No temperature";
-    exterior.channels = {Channel{ChannelRole::WindSpeed, {1.0, 2.0}}};
+    exterior.series = {Series{SeriesRole::WindSpeed, {1.0, 2.0}}};
 
     const auto result{Standards::generateInterior(
       exterior, Standards::Standard::ISO_13788, Standards::MoistureLoad::Normal)};

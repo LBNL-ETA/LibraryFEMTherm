@@ -193,12 +193,12 @@ namespace TimeSeriesLibrary::Standards
                                                                     const MoistureLoad load,
                                                                     const std::size_t stepsPerDay)
     {
-        const auto temperatures{valuesForRole(exterior, ChannelRole::AirTemperature)};
+        const auto temperatures{valuesForRole(exterior, SeriesRole::AirTemperature)};
         if(!temperatures.has_value() || temperatures->empty())
         {
             return lbnl::Unexpected{std::string{"The exterior dataset carries no air temperature."}};
         }
-        auto humidities{valuesForRole(exterior, ChannelRole::RelativeHumidity)
+        auto humidities{valuesForRole(exterior, SeriesRole::RelativeHumidity)
                           .value_or(std::vector<double>(temperatures->size(), defaultOutdoorHumidity))};
         humidities.resize(temperatures->size(), defaultOutdoorHumidity);
 
@@ -219,8 +219,8 @@ namespace TimeSeriesLibrary::Standards
         TimeSeriesData result;
         result.Name = interiorName(exterior.Name, standard, load);
         result.Source = "Standard - interior";
-        result.channels = {Channel{ChannelRole::AirTemperature, std::move(indoorTemperature)},
-                           Channel{ChannelRole::RelativeHumidity, std::move(indoorHumidity)}};
+        result.series = {Series{SeriesRole::AirTemperature, std::move(indoorTemperature)},
+                           Series{SeriesRole::RelativeHumidity, std::move(indoorHumidity)}};
         result.UUID = contentUuid(result);
         return result;
     }
