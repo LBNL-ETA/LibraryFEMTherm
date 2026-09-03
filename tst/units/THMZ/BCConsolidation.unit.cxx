@@ -29,7 +29,7 @@ namespace
 
 TEST(TestBCConsolidationMigration, SteadyNameBindingBecomesUUIDBinding)
 {
-    const auto legacy{ThermFile::Migration::BCConsolidation::capture(legacySteadyLibraryXml(), "", {})};
+    const auto legacy{ThermFile::Migration::BCConsolidation::capture(legacySteadyLibraryXml(), "")};
 
     ASSERT_EQ(legacy.boundaryConditions.size(), 1U);
     EXPECT_EQ(legacy.bcUUIDByName.at("Exterior"), "11111111-2222-3333-4444-555555555555");
@@ -48,7 +48,7 @@ TEST(TestBCConsolidationMigration, SteadyNameBindingBecomesUUIDBinding)
 
 TEST(TestBCConsolidationMigration, MigrationIsIdempotentAndBestEffort)
 {
-    const auto legacy{ThermFile::Migration::BCConsolidation::capture(legacySteadyLibraryXml(), "", {})};
+    const auto legacy{ThermFile::Migration::BCConsolidation::capture(legacySteadyLibraryXml(), "")};
 
     ThermFile::ThermModel model;
     ThermFile::Boundary bound{};
@@ -73,7 +73,6 @@ TEST(TestBCConsolidationMigration, SteadyArchiveSegmentsGetUUIDBindings)
 
     const auto legacy{ThermFile::Migration::BCConsolidation::captureFromArchive(zipPath)};
     EXPECT_FALSE(ThermFile::Migration::BCConsolidation::isEmpty(legacy));
-    EXPECT_TRUE(legacy.datasets.empty());
 
     const auto model{ThermFile::loadThermModelFromZipFile(zipPath)};
     ASSERT_TRUE(model.has_value());
@@ -90,44 +89,6 @@ TEST(TestBCConsolidationMigration, SteadyArchiveSegmentsGetUUIDBindings)
         }
     }
     EXPECT_GT(bound, 0U);
-}
-
-TEST(TestBCConsolidationMigration, TransientArchiveTimestepsBecomeDatasets)
-{
-    const auto zipPath{fixturePath("StuccoWallMoisture.thmz")};
-
-    const auto legacy{ThermFile::Migration::BCConsolidation::captureFromArchive(zipPath)};
-
-    // The archive embeds two timestep files; the type-record library entry is an
-    // empty root element, a real-world quirk this migration tolerates best-effort.
-    ASSERT_EQ(legacy.datasets.size(), 2U);
-    EXPECT_TRUE(legacy.datasetUUIDByFileName.contains("BC_TS_Fixed_T_RH_HC_120 steps-Exterior.xml"));
-    EXPECT_TRUE(legacy.datasetUUIDByFileName.contains("BC_TS_Fixed_T_RH_HC_120 steps-Interior.xml"));
-
-    const auto model{ThermFile::loadThermModelFromZipFile(zipPath)};
-    ASSERT_TRUE(model.has_value());
-
-    size_t transientSegments = 0;
-    size_t withDataset = 0;
-    for(const auto & segment : model->boundaryConditions)
-    {
-        if(segment.transientRecordData.has_value())
-        {
-            ++transientSegments;
-            // No type records were embedded, so the record binding stays legacy-only.
-            EXPECT_FALSE(segment.bcUUID.has_value());
-            if(segment.timeSeriesUUID.has_value())
-            {
-                ++withDataset;
-                const auto expected{
-                  legacy.datasetUUIDByFileName.find(segment.transientRecordData->transientFileName)};
-                ASSERT_NE(expected, legacy.datasetUUIDByFileName.end());
-                EXPECT_EQ(segment.timeSeriesUUID.value(), expected->second);
-            }
-        }
-    }
-    EXPECT_GT(transientSegments, 0U);
-    EXPECT_GT(withDataset, 0U);
 }
 
 TEST(TestBCConsolidationMigration, MinimalSteadyArchiveMigrates)

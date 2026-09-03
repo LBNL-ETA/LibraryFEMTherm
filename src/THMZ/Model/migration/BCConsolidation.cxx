@@ -1,11 +1,8 @@
-#include <filesystem>
-
 #include <lbnl/algorithm.hxx>
 
 #include "BCConsolidation.hxx"
 
 #include "Legacy/Step1/BCSteadyState/DB.hxx"
-#include "Legacy/Step1/BCTransient/Timestep.hxx"
 #include "Legacy/Step1/BCTransient/Types.hxx"
 #include "Legacy/Step1/Converters/Converters.hxx"
 #include "THMZ/ZipModule/ZipModule.hxx"
@@ -45,98 +42,49 @@ namespace ThermFile::Migration::BCConsolidation
             }
         }
 
-        void captureTimestepFile(const std::string & fileName, const std::string & content, LegacyBCCapture & result)
-        {
-            BCInputFileLibrary::BoundaryConditionTimestep timestep;
-            timestep.loadFromXMLString(content);
-            if(!timestep.isLoadSuccesful())
-            {
-                return;   // best-effort transient migration: unreadable file, segment keeps its legacy binding
-            }
-
-            const auto datasetName{std::filesystem::path(fileName).stem().string()};
-            const auto dataset{BCLibrary::environmentFromTimestep(timestep, datasetName)};
-            result.datasetUUIDByFileName[fileName] = dataset.UUID;
-
-            const auto known{lbnl::find_element(result.datasets,
-                                                [&dataset](const TimeSeriesLibrary::TimeSeriesData & existing) {
-                                                    return existing.UUID == dataset.UUID;
-                                                })};
-            if(!known.has_value())
-            {
-                result.datasets.push_back(dataset);
-            }
-        }
-
         void bindSegment(const LegacyBCCapture & legacy, ThermFile::Boundary & segment)
         {
-            const auto & transient{segment.transientRecordData};
-
-            if(!segment.bcUUID.has_value())
+            if(segment.bcUUID.has_value())
             {
-                if(transient.has_value())
-                {
-                    const auto captured{lbnl::find_element(legacy.boundaryConditions,
-                                                           [&transient](const BCLibrary::BoundaryCondition & record) {
-                                                               return record.UUID == transient->typeRecordUUID;
-                                                           })};
-                    if(captured.has_value())
-                    {
-                        segment.bcUUID = transient->typeRecordUUID;
-                    }
-                }
-                else if(const auto found{legacy.bcUUIDByName.find(segment.name)}; found != legacy.bcUUIDByName.end())
-                {
-                    segment.bcUUID = found->second;
-                }
+                return;
             }
 
-            if(!segment.timeSeriesUUID.has_value() && transient.has_value())
+            const auto & transient{segment.transientRecordData};
+            if(transient.has_value())
             {
-                const auto found{legacy.datasetUUIDByFileName.find(transient->transientFileName)};
-                if(found != legacy.datasetUUIDByFileName.end())
+                const auto captured{lbnl::find_element(legacy.boundaryConditions,
+                                                       [&transient](const BCLibrary::BoundaryCondition & record) {
+                                                           return record.UUID == transient->typeRecordUUID;
+                                                       })};
+                if(captured.has_value())
                 {
-                    segment.timeSeriesUUID = found->second;
+                    segment.bcUUID = transient->typeRecordUUID;
                 }
+            }
+            else if(const auto found{legacy.bcUUIDByName.find(segment.name)}; found != legacy.bcUUIDByName.end())
+            {
+                segment.bcUUID = found->second;
             }
         }
     }   // namespace
 
     bool isEmpty(const LegacyBCCapture & capture)
     {
-        return capture.boundaryConditions.empty() && capture.datasets.empty();
+        return capture.boundaryConditions.empty();
     }
 
-    LegacyBCCapture capture(const std::string & steadyStateXml,
-                            const std::string & typeRecordsXml,
-                            const std::map<std::string, std::string> & timestepFilesByName)
+    LegacyBCCapture capture(const std::string & steadyStateXml, const std::string & typeRecordsXml)
     {
         LegacyBCCapture result;
         captureSteadyState(steadyStateXml, result);
         captureTypeRecords(typeRecordsXml, result);
-        for(const auto & [fileName, content] : timestepFilesByName)
-        {
-            captureTimestepFile(fileName, content, result);
-        }
-
         return result;
     }
 
     LegacyBCCapture captureFromEntries(const std::map<std::string, std::string> & entries)
     {
-        const std::string timestepPrefix{ThermZip::TimestepFilesDir + "/"};
-        std::map<std::string, std::string> timestepFiles;
-        for(const auto & [entryName, content] : entries)
-        {
-            if(entryName.starts_with(timestepPrefix))
-            {
-                timestepFiles[entryName.substr(timestepPrefix.size())] = content;
-            }
-        }
-
         return capture(ThermZip::findEntry(entries, ThermZip::SteadyStateBCFileName),
-                       ThermZip::findEntry(entries, ThermZip::TransientTypeBCFileName),
-                       timestepFiles);
+                       ThermZip::findEntry(entries, ThermZip::TransientTypeBCFileName));
     }
 
     LegacyBCCapture captureFromArchive(const std::string & zipFileName)

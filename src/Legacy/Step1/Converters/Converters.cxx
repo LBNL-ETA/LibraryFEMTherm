@@ -6,15 +6,12 @@
 #include "Converters.hxx"
 
 #include "BoundaryConditions/Tags.hxx"
-#include "TimeSeriesData/ContentHash.hxx"
 
 namespace BCLibrary
 {
     namespace
     {
-        using TimeSeriesLibrary::Series;
         using TimeSeriesLibrary::SeriesRole;
-        using TimeSeriesLibrary::TimeSeriesData;
 
         ///////////////////////////////////////////////////////////////////////////////////
         // Steady-state record conversion
@@ -213,58 +210,6 @@ namespace BCLibrary
                         isTransient, SeriesRole::RadiativeCoefficient, legacy.FilmCoefficient, 0.0)};
             }
             return AutomaticEnclosure{};
-        }
-
-        ///////////////////////////////////////////////////////////////////////////////////
-        // Timestep file conversion
-        ///////////////////////////////////////////////////////////////////////////////////
-
-        void addSeries(TimeSeriesData & data, SeriesRole role, std::vector<double> values)
-        {
-            // One series per role: first occurrence wins, matching the legacy content
-            // validator's single-convection / single-radiation invariants.
-            if(!TimeSeriesLibrary::hasRole(data, role) && !values.empty())
-            {
-                data.series.emplace_back(Series{role, std::move(values)});
-            }
-        }
-
-        template<typename RowType, typename Getter>
-        std::vector<double> column(const std::vector<RowType> & rows, Getter getter)
-        {
-            return lbnl::transform_to_vector(rows, getter);
-        }
-
-        template<typename RowType>
-        void addConvectionSeries(TimeSeriesData & data, const std::vector<RowType> & rows)
-        {
-            if(rows.empty())
-            {
-                return;
-            }
-
-            addSeries(data, SeriesRole::AirTemperature,
-                       column(rows, [](const RowType & row) { return row.temperature; }));
-            addSeries(data, SeriesRole::RelativeHumidity,
-                       column(rows, [](const RowType & row) { return row.humidity; }));
-
-            if constexpr(requires(const RowType & row) { row.windSpeed; })
-            {
-                addSeries(data, SeriesRole::WindSpeed,
-                           column(rows, [](const RowType & row) { return row.windSpeed; }));
-            }
-
-            if constexpr(requires(const RowType & row) { row.windDirection; })
-            {
-                addSeries(data, SeriesRole::WindDirection,
-                           column(rows, [](const RowType & row) { return row.windDirection; }));
-            }
-
-            if constexpr(requires(const RowType & row) { row.fixedFilmCoefficient; })
-            {
-                addSeries(data, SeriesRole::ConvectiveCoefficient,
-                           column(rows, [](const RowType & row) { return row.fixedFilmCoefficient; }));
-            }
         }
     }   // namespace
 
@@ -582,50 +527,5 @@ namespace BCLibrary
 
         converted.data = exchange;
         return converted;
-    }
-
-    TimeSeriesLibrary::TimeSeriesData
-      environmentFromTimestep(const BCInputFileLibrary::BoundaryConditionTimestep & legacy,
-                              const std::string & datasetName)
-    {
-        TimeSeriesData data;
-        data.Name = datasetName;
-
-        addConvectionSeries(data, legacy.convection.tarp);
-        addConvectionSeries(data, legacy.convection.ashraeInside);
-        addConvectionSeries(data, legacy.convection.ashraeOutside);
-        addConvectionSeries(data, legacy.convection.fixedFilmCoefficient);
-        addConvectionSeries(data, legacy.convection.yazdanianKlems);
-        addConvectionSeries(data, legacy.convection.kimura);
-        addConvectionSeries(data, legacy.convection.montazeri);
-
-        addSeries(data, SeriesRole::RadiantTemperature,
-                   column(legacy.radiation.fixedRadiation,
-                          [](const BCInputFileLibrary::FixedRadiation & row) { return row.temperature; }));
-        addSeries(data, SeriesRole::RadiativeCoefficient,
-                   column(legacy.radiation.fixedRadiation,
-                          [](const BCInputFileLibrary::FixedRadiation & row) { return row.hr; }));
-        addSeries(data, SeriesRole::RadiantTemperature,
-                   column(legacy.radiation.blackBodyRadiation,
-                          [](const BCInputFileLibrary::BlackBodyRadiation & row) { return row.temperature; }));
-        addSeries(data, SeriesRole::Emissivity,
-                   column(legacy.radiation.blackBodyRadiation,
-                          [](const BCInputFileLibrary::BlackBodyRadiation & row) { return row.emissivity; }));
-
-        addSeries(data, SeriesRole::HeatFlux,
-                   column(legacy.heatFlux,
-                          [](const BCInputFileLibrary::HeatFlux & row) { return row.heatFlux; }));
-        addSeries(data, SeriesRole::SolarIrradiance,
-                   column(legacy.solarRadiation,
-                          [](const BCInputFileLibrary::SolarRadiation & row) { return row.solarRadiation; }));
-        addSeries(data, SeriesRole::PrescribedTemperature,
-                   column(legacy.temperature,
-                          [](const BCInputFileLibrary::FixedTemperature & row) { return row.temperature; }));
-        addSeries(data, SeriesRole::PrescribedHumidity,
-                   column(legacy.humidity,
-                          [](const BCInputFileLibrary::FixedHumidity & row) { return row.humidity; }));
-
-        data.UUID = TimeSeriesLibrary::contentUuid(data);
-        return data;
     }
 }   // namespace BCLibrary

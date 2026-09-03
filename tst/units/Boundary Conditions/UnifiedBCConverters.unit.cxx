@@ -197,58 +197,6 @@ TEST(TestUnifiedBCConverters, DirichletTypeRecordBecomesPrescribedState)
     EXPECT_EQ(environmentRole(prescribed->relativeHumidity.value()), SeriesRole::PrescribedHumidity);
 }
 
-TEST(TestUnifiedBCConverters, TimestepFileDecomposesIntoSeries)
-{
-    BCInputFileLibrary::BoundaryConditionTimestep legacy;
-    legacy.convection.ashraeOutside = {{std::nullopt, 21.3, 0.52, 1.4},
-                                       {std::nullopt, 21.1, 0.55, 1.7},
-                                       {std::nullopt, 20.8, 0.57, 2.1}};
-    legacy.heatFlux = {{std::nullopt, 10.0}, {std::nullopt, 12.0}, {std::nullopt, 14.0}};
-
-    const auto dataset{environmentFromTimestep(legacy, "ORNL Test Exterior")};
-
-    EXPECT_EQ(dataset.Name, "ORNL Test Exterior");
-    EXPECT_EQ(TimeSeriesLibrary::steps(dataset), 3U);
-    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, SeriesRole::AirTemperature));
-    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, SeriesRole::RelativeHumidity));
-    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, SeriesRole::WindSpeed));
-    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, SeriesRole::HeatFlux));
-    EXPECT_FALSE(TimeSeriesLibrary::hasRole(dataset, SeriesRole::WindDirection));
-
-    const auto windSpeed{TimeSeriesLibrary::valuesForRole(dataset, SeriesRole::WindSpeed)};
-    ASSERT_TRUE(windSpeed.has_value());
-    EXPECT_NEAR(windSpeed->at(2), 2.1, 1e-9);
-
-    // Content-hash identity: same file content yields the same dataset UUID.
-    const auto again{environmentFromTimestep(legacy, "Renamed copy")};
-    EXPECT_EQ(dataset.UUID, again.UUID);
-
-    auto modified{legacy};
-    modified.convection.ashraeOutside[0].temperature += 0.1;
-    const auto different{environmentFromTimestep(modified, "ORNL Test Exterior")};
-    EXPECT_NE(dataset.UUID, different.UUID);
-}
-
-TEST(TestUnifiedBCConverters, BothRadiationTypesKeepFirstRoleOccurrence)
-{
-    BCInputFileLibrary::BoundaryConditionTimestep legacy;
-    legacy.radiation.fixedRadiation = {{std::nullopt, -10.0, 4.4}, {std::nullopt, -11.0, 4.5}};
-    legacy.radiation.blackBodyRadiation = {{std::nullopt, -20.0, 0.9}, {std::nullopt, -21.0, 0.9}};
-
-    const auto dataset{environmentFromTimestep(legacy, "Radiation sample")};
-
-    // One series per role: RadiantTemperature comes from the fixed-radiation rows (first
-    // occurrence), Emissivity from the black-body rows, RadiativeCoefficient from fixed.
-    const auto radiantTemperature{
-      TimeSeriesLibrary::valuesForRole(dataset, SeriesRole::RadiantTemperature)};
-    ASSERT_TRUE(radiantTemperature.has_value());
-    EXPECT_NEAR(radiantTemperature->at(0), -10.0, 1e-9);
-
-    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, SeriesRole::RadiativeCoefficient));
-    EXPECT_TRUE(TimeSeriesLibrary::hasRole(dataset, SeriesRole::Emissivity));
-}
-
-
 namespace
 {
     BCSteadyStateLibrary::BoundaryCondition namedRecord(const std::string & name)

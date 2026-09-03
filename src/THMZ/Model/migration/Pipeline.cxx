@@ -27,9 +27,9 @@ namespace ThermFile::Migration
 
         // --- BC consolidation migration ---------------------------------------
         // Pre-consolidation archives bind segments by steady record name or by
-        // transient type-record UUID plus bare timestep file name. Capture the
-        // embedded legacy BC artifacts, convert them to the unified form, and
-        // fill each segment's {bcUUID, timeSeriesUUID} binding.
+        // transient type-record UUID. Capture the embedded legacy BC records,
+        // convert them to the unified form, and fill each segment's bcUUID binding.
+        // Legacy per-boundary timestep files are not migrated.
         const auto legacyBCs{BCConsolidation::captureFromEntries(entries)};
         model = BCConsolidation::applyToModel(legacyBCs, std::move(model));
 

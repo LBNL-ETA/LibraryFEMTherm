@@ -5,7 +5,6 @@
 #include <lbnl/expected.hxx>
 
 #include "Legacy/Step1/BCSteadyState/SteadyState.hxx"
-#include "Legacy/Step1/BCTransient/Timestep.hxx"
 #include "Legacy/Step1/BCTransient/Types.hxx"
 #include "TimeSeriesData/TimeSeriesData.hxx"
 
@@ -38,11 +37,4 @@ namespace BCLibrary
     //! validator demanded of a timestep file, so every previously valid record-file pairing
     //! stays valid after migration.
     [[nodiscard]] BoundaryCondition fromTypeRecord(const BCTypesLibrary::TypeRecord & legacy);
-
-    //! Legacy timestep file to time series dataset: model-specific row types decompose into
-    //! model-agnostic role series. The dataset UUID is the deterministic content hash, so
-    //! identical files embedded in different projects converge to one dataset.
-    [[nodiscard]] TimeSeriesLibrary::TimeSeriesData
-      environmentFromTimestep(const BCInputFileLibrary::BoundaryConditionTimestep & legacy,
-                              const std::string & datasetName);
 }   // namespace BCLibrary
