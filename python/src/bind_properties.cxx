@@ -25,9 +25,7 @@ void bind_properties(py::module_ & mod)
     py::class_<ThermFile::EngineParameters>(mod, "EngineParameters")
         .def(py::init<>())
         .def_readwrite("convergence_tolerance", &ThermFile::EngineParameters::convergenceTolerance)
-        .def_readwrite("relaxation_parameter", &ThermFile::EngineParameters::relaxationParameter)
-        .def_readwrite("time_step", &ThermFile::EngineParameters::timeStep)
-        .def_readwrite("number_of_timesteps", &ThermFile::EngineParameters::numberOfTimesteps);
+        .def_readwrite("relaxation_parameter", &ThermFile::EngineParameters::relaxationParameter);
 
     py::class_<ThermFile::MeshControl>(mod, "MeshControl")
         .def(py::init<>())

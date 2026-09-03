@@ -146,8 +146,8 @@
 		<xs:all>
 			<xs:element name="ConvergenceTolerance" type="xs:double" default="1e-5" minOccurs="0"/>
 			<xs:element name="RelaxationParameter" type="xs:double" default="1" minOccurs="0"/>
-			<xs:element name="TimeStep" type="xs:double" default="3600" minOccurs="0"/>
-			<xs:element name="NumberOfTimesteps" type="xs:integer" default="8670" minOccurs="0"/>
+			<!-- A transient run's step length and count come from the time series datasets
+			     the boundaries bind, not from the model. -->
 		</xs:all>
 	</xs:complexType>
 	<xs:complexType name="MeshControlType">

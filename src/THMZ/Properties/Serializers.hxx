@@ -63,8 +63,6 @@ namespace ThermFile
     {
         node >> FileParse::Child{"ConvergenceTolerance", parameters.convergenceTolerance};
         node >> FileParse::Child{"RelaxationParameter", parameters.relaxationParameter};
-        node >> FileParse::Child{"TimeStep", parameters.timeStep};
-        node >> FileParse::Child{"NumberOfTimesteps", parameters.numberOfTimesteps};
 
         return node;
     }
@@ -74,8 +72,6 @@ namespace ThermFile
     {
         node << FileParse::Child{"ConvergenceTolerance", parameters.convergenceTolerance};
         node << FileParse::Child{"RelaxationParameter", parameters.relaxationParameter};
-        node << FileParse::Child{"TimeStep", parameters.timeStep};
-        node << FileParse::Child{"NumberOfTimesteps", parameters.numberOfTimesteps};
 
         return node;
     }

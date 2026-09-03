@@ -63,19 +63,19 @@ TEST_F(TestFileProperties, ModelingOptionsSerializer)
 
 TEST_F(TestFileProperties, EngineParametersDeserialization)
 {
-    auto elementNode(Helper::engineParametersNode({"1e-06", "0.84", "3600", "1245"}));
+    auto elementNode(Helper::engineParametersNode({"1e-06", "0.84"}));
     const Helper::MockNodeAdapter adapter{&elementNode};
 
     ThermFile::EngineParameters engineParameters;
     adapter >> engineParameters;
 
-    ThermFile::EngineParameters correctParameters{1e-6, 0.84, 3600, 1245};
+    ThermFile::EngineParameters correctParameters{1e-6, 0.84};
     Helper::expect_near(correctParameters, engineParameters, 1e-6);
 }
 
 TEST_F(TestFileProperties, EngineParametersSerialization)
 {
-    ThermFile::EngineParameters engineParameters{1e-6, 0.84, 3600, 1245};
+    ThermFile::EngineParameters engineParameters{1e-6, 0.84};
 
     Helper::MockNode node{"EngineParameters"};
     Helper::MockNodeAdapter adapter{&node};
@@ -83,7 +83,7 @@ TEST_F(TestFileProperties, EngineParametersSerialization)
     adapter << engineParameters;
 
     EXPECT_TRUE(
-      Helper::compareNodes(adapter.getNode(), Helper::engineParametersNode({"1e-06", "0.84", "3600", "1245"})));
+      Helper::compareNodes(adapter.getNode(), Helper::engineParametersNode({"1e-06", "0.84"})));
 }
 
 TEST_F(TestFileProperties, MeshControlDeserialization)
@@ -268,7 +268,7 @@ TEST_F(TestFileProperties, CalculationOptionsDeserialization)
                                                   "No time variable",
                                                   {"20", "0.5"},
                                                   {"25", "0.75"},
-                                                  {"1e-06", "0.84", "3600", "1803"},
+                                                  {"1e-06", "0.84"},
                                                   {"QuadTree Mesher", "7", "true", "1e-06", "100"},
                                                   {"false", "-0.01", "28", "true"},
                                                   {"false", "true", "true"}})};
@@ -291,7 +291,7 @@ TEST_F(TestFileProperties, CalculationOptionsDeserialization)
         ThermFile::SteadyStateCalculationMethodology::ssNoTimeVariable,
       .constantInitialConditionsTransient = {20.0, 0.5},
       .constantInitialConditionsSteadyState = {25.0, 0.75},
-      .engineParameters = {1e-6, 0.84, 3600, 1803},
+      .engineParameters = {1e-6, 0.84},
       .meshControl = {ThermFile::MesherType::QuadTreeMesher, 7u, true, 1e-6, 100},
       .heatTransferModelingOptions = {false, -0.01, 28u, true},
       .miscProperties = {false, true, true},
@@ -315,7 +315,7 @@ TEST_F(TestFileProperties, CalculationOptionsSerialization)
         ThermFile::SteadyStateCalculationMethodology::ssNoTimeVariable,
       .constantInitialConditionsTransient = {20.0, 0.5},
       .constantInitialConditionsSteadyState = {25.0, 0.75},
-      .engineParameters = {1e-6, 0.84, 3600, 1803},
+      .engineParameters = {1e-6, 0.84},
       .meshControl = {ThermFile::MesherType::QuadTreeMesher, 7u, true, 1e-6, 100},
       .heatTransferModelingOptions = {false, -0.01, 28u, true},
       .miscProperties = {false, true, true},
@@ -335,7 +335,7 @@ TEST_F(TestFileProperties, CalculationOptionsSerialization)
                                                       "No time variable",
                                                       {"20", "0.5"},
                                                       {"25", "0.75"},
-                                                      {"1e-06", "0.84", "3600", "1803"},
+                                                      {"1e-06", "0.84"},
                                                       {"QuadTree Mesher", "7", "true", "1e-06", "100"},
                                                       {"false", "-0.01", "28", "true"},
                                                       {"false", "true", "true"}})};

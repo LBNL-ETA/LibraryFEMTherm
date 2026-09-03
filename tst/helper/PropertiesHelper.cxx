@@ -34,8 +34,6 @@ namespace Helper
     {
         EXPECT_NEAR(expected.convergenceTolerance, actual.convergenceTolerance, tolerance);
         EXPECT_NEAR(expected.relaxationParameter, actual.relaxationParameter, tolerance);
-        EXPECT_NEAR(expected.timeStep, actual.timeStep, tolerance);
-        EXPECT_EQ(expected.numberOfTimesteps, actual.numberOfTimesteps);
     }
 
     void expect_near(const ThermFile::MeshControl & expected, const ThermFile::MeshControl & actual, double tolerance)
@@ -201,13 +199,9 @@ namespace Helper
     }
 
     MockEngineParameters::MockEngineParameters(std::string convergenceTolerance,
-                                               std::string relaxationParameter,
-                                               std::string timeStep,
-                                               std::string numberOfTimesteps) :
+                                               std::string relaxationParameter) :
         convergenceTolerance(std::move(convergenceTolerance)),
-        relaxationParameter(std::move(relaxationParameter)),
-        timeStep(std::move(timeStep)),
-        numberOfTimesteps(std::move(numberOfTimesteps))
+        relaxationParameter(std::move(relaxationParameter))
     {}
 
     Helper::MockNode engineParametersNode(const MockEngineParameters & engineParameters)
@@ -215,8 +209,6 @@ namespace Helper
         MockNode node{"EngineParameters"};
         addChildNode(node, "ConvergenceTolerance", engineParameters.convergenceTolerance);
         addChildNode(node, "RelaxationParameter", engineParameters.relaxationParameter);
-        addChildNode(node, "TimeStep", engineParameters.timeStep);
-        addChildNode(node, "NumberOfTimesteps", engineParameters.numberOfTimesteps);
 
         return node;
     }

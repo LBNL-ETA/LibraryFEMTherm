@@ -63,14 +63,13 @@ namespace ThermFile
     //!
     //! @param convergenceTolerance Defines convergence tolerance for the solution.
     //! @param relaxationParameter Defines relaxation parameter that will be used in solver's iterations.
-    //! @param timeStep Defines timestep size in seconds
-    //! @param numberOfTimesteps Defines number of timesteps to be used in the simulation
+    //!
+    //! A transient run's step length and step count are not properties of the model: the
+    //! time series datasets its boundaries bind set both.
     struct EngineParameters
     {
         double convergenceTolerance{1e-5};
         double relaxationParameter{1.0};
-        double timeStep{3600};
-        size_t numberOfTimesteps{8670};
     };
 
     ////////////////////////////////////////////////////////////////////////////////////

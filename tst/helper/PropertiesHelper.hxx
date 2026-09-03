@@ -87,13 +87,8 @@ namespace Helper
     {
         std::string convergenceTolerance;
         std::string relaxationParameter;
-        std::string timeStep;
-        std::string numberOfTimesteps;
 
-        MockEngineParameters(std::string convergenceTolerance,
-                             std::string relaxationParameter,
-                             std::string timeStep,
-                             std::string numberOfTimesteps);
+        MockEngineParameters(std::string convergenceTolerance, std::string relaxationParameter);
     };
 
     //! \brief Inserts an EngineParameters node into the given mock node.

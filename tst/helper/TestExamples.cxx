@@ -35,7 +35,7 @@ namespace Helper
                 ThermFile::SteadyStateCalculationMethodology::ssNoTimeVariable,
               .constantInitialConditionsTransient = {20.0, 0.5},
               .constantInitialConditionsSteadyState = {25.0, 0.75},
-              .engineParameters = {1e-6, 0.84, 3600, 1803},
+              .engineParameters = {1e-6, 0.84},
               .meshControl = {ThermFile::MesherType::QuadTreeMesher, 7u, true, 1e-6, 100},
               .heatTransferModelingOptions = {false, -0.01, 28u, true},
               .miscProperties = {false, true, true},
@@ -78,7 +78,7 @@ namespace Helper
                                                          "No time variable",
                                                          {"20", "0.5"},
                                                          {"25", "0.75"},
-                                                         {"1e-06", "0.84", "3600", "1803"},
+                                                         {"1e-06", "0.84"},
                                                          {"QuadTree Mesher", "7", "true", "1e-06", "100"},
                                                          {"false", "-0.01", "28", "true"},
                                                          {"false", "true", "true"}}));
