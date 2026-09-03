@@ -178,6 +178,33 @@ namespace TimeSeriesLibrary::Epw
                             .elevation = number(9U)};
         }
 
+        //! EPW hours run 1..24 and name the END of the interval, so hour 1 is the interval
+        //! starting at 00:00 - the axis stores that start. A sub-hourly file repeats the
+        //! hour on consecutive records; the number of records sharing the first hour gives
+        //! the step. The year field is ignored: typical-year files draw each month from a
+        //! different source year.
+        TimeAxis axisFromRecords(const std::vector<std::vector<std::string>> & records)
+        {
+            const auto field{[&records](const size_t recordIndex, const size_t fieldIndex) {
+                return static_cast<size_t>(toDouble(records[recordIndex][fieldIndex]).value_or(0.0));
+            }};
+            const auto sameHourAsFirst{[&field](const size_t recordIndex) {
+                return field(recordIndex, 1U) == field(0U, 1U) && field(recordIndex, 2U) == field(0U, 2U)
+                       && field(recordIndex, 3U) == field(0U, 3U);
+            }};
+            size_t perHour{1U};
+            while(perHour < records.size() && sameHourAsFirst(perHour))
+            {
+                ++perHour;
+            }
+            const auto endHour{field(0U, 3U)};
+            return TimeAxis{.month = std::clamp<size_t>(field(0U, 1U), 1U, 12U),
+                            .day = std::clamp<size_t>(field(0U, 2U), 1U, 31U),
+                            .hour = endHour == 0U ? 0U : endHour - 1U,
+                            .minute = 0U,
+                            .stepSeconds = 3600.0 / static_cast<double>(perHour)};
+        }
+
         std::vector<std::vector<std::string>> dataRecords(const std::string & content)
         {
             std::vector<std::vector<std::string>> records;
@@ -233,6 +260,7 @@ namespace TimeSeriesLibrary::Epw
         result.location = parseLocation(locationParts);
         result.data.Name = datasetName;
         result.data.Source = "Imported";
+        result.data.axis = axisFromRecords(records);
 
         for(const auto & direct : directSeriesList())
         {

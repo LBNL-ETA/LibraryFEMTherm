@@ -167,6 +167,99 @@ TEST(TestTimeSeriesData, ContentUuidChangesWithValues)
     EXPECT_NE(TimeSeriesLibrary::contentUuid(data), baseline);
 }
 
+TEST(TestTimeSeriesData, ContentUuidChangesWithAxis)
+{
+    auto data{makeSample()};
+    const auto baseline{TimeSeriesLibrary::contentUuid(data)};
+
+    data.axis.month = 2U;
+    const auto shifted{TimeSeriesLibrary::contentUuid(data)};
+    EXPECT_NE(shifted, baseline);
+
+    data.axis.month = 1U;
+    data.axis.stepSeconds = 1800.0;
+    EXPECT_NE(TimeSeriesLibrary::contentUuid(data), baseline);
+    EXPECT_NE(TimeSeriesLibrary::contentUuid(data), shifted);
+}
+
+TEST(TestTimeSeriesData, TimeAxisRoundTrip)
+{
+    auto sample{makeSample()};
+    sample.axis = TimeSeriesLibrary::TimeAxis{
+      .month = 3U, .day = 15U, .hour = 6U, .minute = 30U, .stepSeconds = 600.0};
+
+    TimeSeriesLibrary::DB source;
+    source.add(sample);
+    const auto content{source.saveToString()};
+    EXPECT_NE(content.find("<TimeAxis>"), std::string::npos);
+    EXPECT_NE(content.find("<StepSeconds>600</StepSeconds>"), std::string::npos);
+
+    TimeSeriesLibrary::DB loaded;
+    loaded.loadFromString(content);
+    const auto record{loaded.getByUUID(sample.UUID)};
+    ASSERT_TRUE(record.has_value());
+    EXPECT_EQ(record->axis, sample.axis);
+}
+
+TEST(TestTimeSeriesData, TimeAxisDefaultsWhenAbsent)
+{
+    // A dataset written before the axis existed: hourly from 1 January 00:00.
+    const std::string content{"<TimeSeriesData><Version>1</Version><TimeSeries>"
+                              "<UUID>old-record</UUID><Name>Legacy</Name><Protected>false</Protected>"
+                              "<Series><Role>AirTemperature</Role><Values>1,2,3</Values></Series>"
+                              "</TimeSeries></TimeSeriesData>"};
+
+    TimeSeriesLibrary::DB loaded;
+    loaded.loadFromString(content);
+    const auto record{loaded.getByUUID("old-record")};
+    ASSERT_TRUE(record.has_value());
+    EXPECT_EQ(record->axis, TimeSeriesLibrary::TimeAxis{});
+    EXPECT_EQ(TimeSeriesLibrary::startLabel(record->axis), "1 Jan 00:00");
+    EXPECT_EQ(TimeSeriesLibrary::stepLabel(record->axis), "1 h");
+}
+
+TEST(TestTimeSeriesData, AxisLabels)
+{
+    const TimeSeriesLibrary::TimeAxis axis{
+      .month = 12U, .day = 31U, .hour = 23U, .minute = 5U, .stepSeconds = 1800.0};
+    EXPECT_EQ(TimeSeriesLibrary::startLabel(axis), "31 Dec 23:05");
+    EXPECT_EQ(TimeSeriesLibrary::stepLabel(axis), "30 min");
+    EXPECT_EQ(TimeSeriesLibrary::stepLabel({.stepSeconds = 90.0}), "90 s");
+    EXPECT_EQ(TimeSeriesLibrary::stepLabel({.stepSeconds = 7200.0}), "2 h");
+
+    EXPECT_NEAR(TimeSeriesLibrary::secondsIntoYear(1U, 1U, 0U, 0U), 0.0, 1e-9);
+    EXPECT_NEAR(TimeSeriesLibrary::secondsIntoYear(2U, 1U, 0U, 0U), 31.0 * 86400.0, 1e-9);
+    EXPECT_NEAR(TimeSeriesLibrary::secondsIntoYear(12U, 31U, 23U, 0U),
+                TimeSeriesLibrary::secondsPerNominalYear() - 3600.0,
+                1e-9);
+}
+
+TEST(TestTimeSeriesData, AlignmentIssues)
+{
+    const auto exterior{makeSample()};
+    auto interior{makeSample()};
+    interior.Name = "Sample interior";
+    EXPECT_TRUE(TimeSeriesLibrary::aligned(exterior, interior));
+    EXPECT_TRUE(TimeSeriesLibrary::alignmentIssues({exterior, interior}).empty());
+    EXPECT_TRUE(TimeSeriesLibrary::alignmentIssues({}).empty());
+
+    auto shorter{makeSample()};
+    shorter.Name = "One week";
+    shorter.series[0].values.pop_back();
+    EXPECT_FALSE(TimeSeriesLibrary::aligned(exterior, shorter));
+    const auto byCount{TimeSeriesLibrary::alignmentIssues({exterior, interior, shorter})};
+    ASSERT_EQ(byCount.size(), 3U);
+    EXPECT_EQ(byCount[0], "Sample exterior: 1 Jan 00:00, step 1 h, 3 rows");
+    EXPECT_EQ(byCount[2], "One week: 1 Jan 00:00, step 1 h, 2 rows");
+
+    auto later{makeSample()};
+    later.Name = "February";
+    later.axis.month = 2U;
+    const auto byStart{TimeSeriesLibrary::alignmentIssues({exterior, later})};
+    ASSERT_EQ(byStart.size(), 2U);
+    EXPECT_EQ(byStart[1], "February: 1 Feb 00:00, step 1 h, 3 rows");
+}
+
 TEST(TestTimeSeriesData, SeriesValueTextRoundTrip)
 {
     const std::vector<double> values{21.3, -0.00042, 0.0, 98765.4321, 1e-9};

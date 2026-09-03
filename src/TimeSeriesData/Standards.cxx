@@ -219,6 +219,9 @@ namespace TimeSeriesLibrary::Standards
         TimeSeriesData result;
         result.Name = interiorName(exterior.Name, standard, load);
         result.Source = "Standard - interior";
+        // One value per exterior step on the exterior's own axis, so the pair lines up by
+        // construction whatever the weather file's step or start.
+        result.axis = exterior.axis;
         result.series = {Series{SeriesRole::AirTemperature, std::move(indoorTemperature)},
                            Series{SeriesRole::RelativeHumidity, std::move(indoorHumidity)}};
         result.UUID = contentUuid(result);

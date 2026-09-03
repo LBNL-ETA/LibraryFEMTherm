@@ -13,7 +13,7 @@ namespace TimeSeriesLibrary::Standards
     //! happening indoors, given what is happening outdoors - and all of them answer it
     //! from the outdoor DAILY MEAN rather than the hourly value, because a building's
     //! interior does not follow the weather hour by hour. The interior inherits the
-    //! exterior's step count exactly; there is no generation length to choose.
+    //! exterior's time axis and step count exactly; there is no generation length to choose.
     //!
     //! CONSTANTS NEED CHECKING: the piecewise shapes match the reference tools, but the
     //! breakpoints are written from working knowledge, not transcribed from the standard

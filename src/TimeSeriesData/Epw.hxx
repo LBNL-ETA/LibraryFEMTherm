@@ -23,6 +23,11 @@ namespace TimeSeriesLibrary::Epw
     //! forward; a field with no good reading at all produces no series. Fields the
     //! role vocabulary cannot express are reported by name so the omission is
     //! visible rather than silent.
+    //!
+    //! The dataset's TimeAxis comes from the first record's month, day, and hour
+    //! (EPW hour 1 is the interval starting at 00:00) and from how many records
+    //! share that hour (one for hourly files, two for half-hourly). The year field is
+    //! ignored: a typical-year file draws each month from a different source year.
 
     struct Location
     {

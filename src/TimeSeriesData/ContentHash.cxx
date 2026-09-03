@@ -78,6 +78,17 @@ namespace TimeSeriesLibrary
             }
         }
 
+        //! The axis is content: the same values a month apart, or at a different step, are
+        //! different data and must not converge to one dataset.
+        void consumeAxis(Fnv1a & hasher, const TimeAxis & axis)
+        {
+            hasher.consume(static_cast<uint64_t>(axis.month));
+            hasher.consume(static_cast<uint64_t>(axis.day));
+            hasher.consume(static_cast<uint64_t>(axis.hour));
+            hasher.consume(static_cast<uint64_t>(axis.minute));
+            hasher.consume(std::bit_cast<uint64_t>(axis.stepSeconds));
+        }
+
         //! Strings are length-prefixed so adjacent fields cannot alias ("ab"+"c" vs
         //! "a"+"bc"); optionals additionally consume a presence flag so an absent field
         //! differs from a present-but-empty one.
@@ -108,9 +119,11 @@ namespace TimeSeriesLibrary
     std::string contentUuid(const TimeSeriesData & data)
     {
         Fnv1a first{offsetBasis};
+        consumeAxis(first, data.axis);
         consumeSeries(first, data.series);
 
         Fnv1a second{secondSeed};
+        consumeAxis(second, data.axis);
         consumeSeries(second, data.series);
 
         const uint64_t high{first.value()};
@@ -128,6 +141,7 @@ namespace TimeSeriesLibrary
     {
         Fnv1a hasher{offsetBasis};
         consumeMetadata(hasher, data);
+        consumeAxis(hasher, data.axis);
         consumeSeries(hasher, data.series);
         return hasher.value();
     }

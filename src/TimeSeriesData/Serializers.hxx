@@ -55,6 +55,34 @@ namespace TimeSeriesLibrary
         return node;
     }
 
+    //! A missing TimeAxis element leaves the defaults (1 January 00:00, hourly): datasets
+    //! saved before the axis existed keep the meaning they always had.
+    template<typename NodeAdapter>
+        requires SerializerNode<NodeAdapter>
+    const NodeAdapter & operator>>(const NodeAdapter & node, TimeAxis & axis)
+    {
+        Tags tag;
+        node >> FileParse::Child{tag.month(), axis.month};
+        node >> FileParse::Child{tag.day(), axis.day};
+        node >> FileParse::Child{tag.hour(), axis.hour};
+        node >> FileParse::Child{tag.minute(), axis.minute};
+        node >> FileParse::Child{tag.stepSeconds(), axis.stepSeconds};
+        return node;
+    }
+
+    template<typename NodeAdapter>
+        requires SerializerNode<NodeAdapter>
+    NodeAdapter & operator<<(NodeAdapter & node, const TimeAxis & axis)
+    {
+        Tags tag;
+        node << FileParse::Child{tag.month(), axis.month};
+        node << FileParse::Child{tag.day(), axis.day};
+        node << FileParse::Child{tag.hour(), axis.hour};
+        node << FileParse::Child{tag.minute(), axis.minute};
+        node << FileParse::Child{tag.stepSeconds(), axis.stepSeconds};
+        return node;
+    }
+
     template<typename NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, TimeSeriesData & data)
     {
@@ -66,6 +94,7 @@ namespace TimeSeriesLibrary
         node >> FileParse::Child{tag.description(), data.Description};
         node >> FileParse::Child{tag.color(), data.Color};
         node >> FileParse::Child{tag.source(), data.Source};
+        node >> FileParse::Child{tag.timeAxis(), data.axis};
         node >> FileParse::Child{tag.series(), data.series};
         return node;
     }
@@ -81,6 +110,7 @@ namespace TimeSeriesLibrary
         node << FileParse::Child{tag.description(), data.Description};
         node << FileParse::Child{tag.color(), data.Color};
         node << FileParse::Child{tag.source(), data.Source};
+        node << FileParse::Child{tag.timeAxis(), data.axis};
         node << FileParse::Child{tag.series(), data.series};
         return node;
     }

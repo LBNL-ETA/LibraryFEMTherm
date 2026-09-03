@@ -48,6 +48,19 @@ TEST(TestStandardsGeneration, EN15026RampAndHighLoadOffset)
     EXPECT_NEAR(highHumidity->at(0), 0.45, 1e-9);
 }
 
+TEST(TestStandardsGeneration, InteriorInheritsExteriorAxis)
+{
+    auto exterior{makeExterior({-5.0, 15.0, 25.0}, {0.8, 0.8, 0.8})};
+    exterior.axis = TimeSeriesLibrary::TimeAxis{
+      .month = 6U, .day = 21U, .hour = 12U, .minute = 0U, .stepSeconds = 1800.0};
+
+    const auto interior{Standards::generateInterior(
+      exterior, Standards::Standard::ASHRAE_160, Standards::MoistureLoad::Normal, 1U)};
+    ASSERT_TRUE(interior.has_value());
+    EXPECT_EQ(interior->axis, exterior.axis);
+    EXPECT_TRUE(TimeSeriesLibrary::aligned(exterior, interior.value()));
+}
+
 TEST(TestStandardsGeneration, ISO13788WarmOutdoorCarriesVapourAcross)
 {
     // At or above the excess ramp's end the class excess is zero, and with the indoor

@@ -131,6 +131,95 @@ TEST(TestCsvSeries, ExportRoundTripsThroughImport)
     }
 }
 
+TEST(TestCsvSeries, ImportReadsTimeAxisFromIsoTimeColumn)
+{
+    const std::string content{"Time,Air Temperature\n"
+                              "2026-03-15 06:30,1\n"
+                              "2026-03-15 06:40,2\n"
+                              "2026-03-15T06:50:00,3\n"};
+
+    const auto result{Csv::readFromString(content, "ten minutes")};
+    ASSERT_TRUE(result.has_value());
+    EXPECT_TRUE(result->hadTimeColumn);
+    const TimeSeriesLibrary::TimeAxis expected{
+      .month = 3U, .day = 15U, .hour = 6U, .minute = 30U, .stepSeconds = 600.0};
+    EXPECT_EQ(result->data.axis, expected);
+}
+
+TEST(TestCsvSeries, ImportReadsUsAndEuropeanDateOrders)
+{
+    const std::string american{"Date,Air Temperature\n"
+                               "1/31/2026 23:00,1\n"
+                               "2/1/2026 0:00,2\n"};
+    const auto usResult{Csv::readFromString(american, "us")};
+    ASSERT_TRUE(usResult.has_value());
+    EXPECT_EQ(usResult->data.axis,
+              (TimeSeriesLibrary::TimeAxis{.month = 1U, .day = 31U, .hour = 23U}));
+
+    const std::string european{"Timestamp;Air Temperature\n"
+                               "31.1.2026 23:00;1\n"
+                               "1.2.2026 00:00;2\n"};
+    const auto euResult{Csv::readFromString(european, "eu")};
+    ASSERT_TRUE(euResult.has_value());
+    EXPECT_EQ(euResult->data.axis, usResult->data.axis);
+}
+
+TEST(TestCsvSeries, ImportKeepsSpacingAcrossNewYear)
+{
+    // Years are dropped; the run must still read as one continuous hourly sequence.
+    const std::string content{"Time,Air Temperature\n"
+                              "2025-12-31 23:00,1\n"
+                              "2026-01-01 00:00,2\n"
+                              "2026-01-01 01:00,3\n"};
+
+    const auto result{Csv::readFromString(content, "new year")};
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->data.axis,
+              (TimeSeriesLibrary::TimeAxis{.month = 12U, .day = 31U, .hour = 23U}));
+}
+
+TEST(TestCsvSeries, ImportRejectsUnevenSpacing)
+{
+    const std::string content{"Time,Air Temperature\n"
+                              "2026-01-01 00:00,1\n"
+                              "2026-01-01 01:00,2\n"
+                              "2026-01-01 03:00,3\n"};
+
+    const auto result{Csv::readFromString(content, "uneven")};
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(),
+              "uneven rows are not evenly spaced: data row 3 is 7200 s after the previous "
+              "one, expected 3600 s");
+}
+
+TEST(TestCsvSeries, ImportRejectsUnreadableTime)
+{
+    const std::string content{"Time,Air Temperature\n"
+                              "2026-01-01 00:00,1\n"
+                              "yesterday,2\n"};
+
+    const auto result{Csv::readFromString(content, "vague")};
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "vague data row 2: cannot read the time 'yesterday'");
+}
+
+TEST(TestCsvSeries, ExportRoundTripsAxis)
+{
+    TimeSeriesData data;
+    data.Name = "summer";
+    data.axis = TimeSeriesLibrary::TimeAxis{
+      .month = 7U, .day = 4U, .hour = 12U, .minute = 0U, .stepSeconds = 1800.0};
+    data.series = {Series{SeriesRole::AirTemperature, {30.0, 31.0, 32.0}}};
+
+    const auto content{Csv::writeToString(data)};
+    EXPECT_NE(content.find("\n2026-07-04 12:00,30"), std::string::npos);
+    EXPECT_NE(content.find("\n2026-07-04 12:30,31"), std::string::npos);
+
+    const auto result{Csv::readFromString(content, "summer")};
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->data.axis, data.axis);
+}
+
 TEST(TestCsvSeries, ImportHandlesQuotedCellsWithSeparators)
 {
     const std::string content{"\"Air Temperature\",\"Ignore, me\"\n"

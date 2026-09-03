@@ -75,6 +75,36 @@ namespace TimeSeriesLibrary
         return source_;
     }
 
+    std::string Tags::timeAxis() const
+    {
+        return timeAxis_;
+    }
+
+    std::string Tags::month() const
+    {
+        return month_;
+    }
+
+    std::string Tags::day() const
+    {
+        return day_;
+    }
+
+    std::string Tags::hour() const
+    {
+        return hour_;
+    }
+
+    std::string Tags::minute() const
+    {
+        return minute_;
+    }
+
+    std::string Tags::stepSeconds() const
+    {
+        return stepSeconds_;
+    }
+
     std::string Tags::series() const
     {
         return series_;

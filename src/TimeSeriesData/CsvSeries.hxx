@@ -17,9 +17,10 @@ namespace TimeSeriesLibrary::Csv
     //! (AirTemperature) or the spelled-out one (Air Temperature), with case and
     //! spacing ignored - and is otherwise ignored and reported. No keyword guessing:
     //! a header either is a role name or it is not. A recognized calendar time
-    //! column is acknowledged but skipped, because datasets carry no time axis of
-    //! their own (rows are implicitly indexed; step duration is a simulation
-    //! setting in the model file).
+    //! column (Time, Date, Datetime, Timestamp) sets the dataset's TimeAxis: the
+    //! first row's month, day, and clock time, and the spacing, which every row
+    //! must keep exactly - uneven rows are refused, not resampled. The year is read
+    //! and dropped. Without a time column the axis is 1 January 00:00, hourly.
     struct ImportResult
     {
         TimeSeriesData data;
@@ -40,8 +41,9 @@ namespace TimeSeriesLibrary::Csv
     //! Reads the file and imports it under its stem as the dataset name.
     [[nodiscard]] lbnl::ExpectedExt<ImportResult, std::string> read(const std::string & fileName);
 
-    //! Export in the shape read() accepts: a calendar time column on a nominal
-    //! hourly axis, then one column per role under its spelled-out name.
+    //! Export in the shape read() accepts: a calendar time column on the dataset's
+    //! axis in a fixed nominal year, then one column per role under its spelled-out
+    //! name.
     [[nodiscard]] std::string writeToString(const TimeSeriesData & data);
     void writeToFile(const TimeSeriesData & data, const std::string & fileName);
 }   // namespace TimeSeriesLibrary::Csv

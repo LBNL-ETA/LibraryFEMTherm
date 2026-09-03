@@ -22,9 +22,26 @@
 		</xs:restriction>
 	</xs:simpleType>
 
-	<!-- One time series: a role plus its values. Rows are implicitly indexed; step
-	     duration is a simulation setting in the model file, not a dataset property.
-	     One series per role per dataset; enforced by the loader. -->
+	<!-- Where the first row sits in the year and how far apart the rows are. There is
+	     no year: typical-year weather files stitch every month from a different source
+	     year, so a literal year could never match between two files. Two datasets line
+	     up when their axes and row counts are equal; nothing is interpolated. Absent on
+	     datasets written before the axis existed, which read as 1 January 00:00 with
+	     hourly steps. -->
+	<xs:complexType name="TimeAxis">
+		<xs:sequence>
+			<xs:element name="Month" type="xs:unsignedInt"/>
+			<xs:element name="Day" type="xs:unsignedInt"/>
+			<!-- 0..23, the start of the first interval. -->
+			<xs:element name="Hour" type="xs:unsignedInt"/>
+			<xs:element name="Minute" type="xs:unsignedInt"/>
+			<xs:element name="StepSeconds" type="xs:double"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<!-- One time series: a role plus its values. Rows are indexed; the dataset's TimeAxis
+	     places row zero in the year and sets the spacing. One series per role per
+	     dataset; enforced by the loader. -->
 
 	<!-- Values holds every point of the series as one comma-separated list. A single
 	     text node instead of one element per point keeps document size and parse cost
@@ -48,6 +65,10 @@
 			<xs:element name="ProjectName" type="xs:string" minOccurs="0"/>
 			<xs:element name="Protected" type="xs:boolean"/>
 			<xs:element name="Description" type="xs:string" minOccurs="0"/>
+			<!-- Display metadata, not part of the content hash. -->
+			<xs:element name="Color" type="xs:string" minOccurs="0"/>
+			<xs:element name="Source" type="xs:string" minOccurs="0"/>
+			<xs:element name="TimeAxis" type="TimeAxis" minOccurs="0"/>
 			<xs:element name="Series" type="Series" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>

@@ -98,6 +98,41 @@ TEST(TestEpw, ImportReadsSeriesAndLocation)
     EXPECT_NEAR(direction->at(0), 180.0, 1e-9);
 }
 
+namespace
+{
+    //! The same record with its date fields (year, month, day, hour) replaced.
+    std::string datedRecord(const std::string & record, const std::string & datePrefix)
+    {
+        return datePrefix + record.substr(std::string{"2026,1,1,1,"}.size());
+    }
+}   // namespace
+
+TEST(TestEpw, ImportReadsAxisFromFirstRecordAndIgnoresYear)
+{
+    const auto record{makeRecord("10", "50", infraredForSevenDegrees, "180", "5")};
+    // EPW hour 7 names the interval ending at 07:00, so the axis starts at 06:00.
+    const std::string content{makeHeader() + datedRecord(record, "1987,3,15,7,")
+                              + datedRecord(record, "1987,3,15,8,")
+                              + datedRecord(record, "1990,3,15,9,")};
+
+    const auto result{Epw::readFromString(content, "typical year")};
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->data.axis,
+              (TimeSeriesLibrary::TimeAxis{.month = 3U, .day = 15U, .hour = 6U}));
+}
+
+TEST(TestEpw, ImportDetectsSubHourlyRecords)
+{
+    const auto record{makeRecord("10", "50", infraredForSevenDegrees, "180", "5")};
+    const std::string content{makeHeader() + record + record
+                              + datedRecord(record, "2026,1,1,2,") + datedRecord(record, "2026,1,1,2,")};
+
+    const auto result{Epw::readFromString(content, "half hourly")};
+    ASSERT_TRUE(result.has_value());
+    EXPECT_NEAR(result->data.axis.stepSeconds, 1800.0, 1e-9);
+    EXPECT_EQ(result->data.axis.hour, 0U);
+}
+
 TEST(TestEpw, ImportDerivesRadiantTemperatureFromInfrared)
 {
     const std::string content{makeHeader()
