@@ -23,6 +23,9 @@ python/Debug/
 .DS_Store
 Thumbs.db
 
+# Bulk material library data - belongs in the product install, not in this repo
+src/Schemas/Materials Schema/Materials_Full.xml
+
 # Coverage / profiling
 *.gcda
 *.gcno
