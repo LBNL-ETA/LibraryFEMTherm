@@ -19,6 +19,7 @@ namespace ThermFile
         node >> FileParse::Child{"Y-flux", nodeResults.yFlux};
         node >> FileParse::Child{"Humidity", nodeResults.humidity};
         node >> FileParse::Child{"WaterContent", nodeResults.waterContent};
+        node >> FileParse::Child{"IceContent", nodeResults.iceContent};
 
         return node;
     }
@@ -32,6 +33,7 @@ namespace ThermFile
         node << FileParse::Child{"Y-flux", nodeResults.yFlux};
         node << FileParse::Child{"Humidity", nodeResults.humidity};
         node << FileParse::Child{"WaterContent", nodeResults.waterContent};
+        node << FileParse::Child{"IceContent", nodeResults.iceContent};
 
         return node;
     }

@@ -21,7 +21,8 @@ namespace
                                       .xFlux = xFlux,
                                       .yFlux = yFlux,
                                       .humidity = std::nullopt,
-                                      .waterContent = std::nullopt};
+                                      .waterContent = std::nullopt,
+                                      .iceContent = std::nullopt};
     }
 }   // namespace
 
