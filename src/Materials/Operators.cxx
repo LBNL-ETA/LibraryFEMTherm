@@ -61,6 +61,9 @@ namespace MaterialsLibrary
             lhs.LiquidTransportationCoefficientRedistribution,
             rhs.LiquidTransportationCoefficientRedistribution);
         vis("Conductivity (moisture-dependent)", lhs.ThermalConductivityMoistureDependent, rhs.ThermalConductivityMoistureDependent);
+        vis("Vapor resistance factor (moisture-dependent)",
+            lhs.WaterVaporDiffusionResistanceFactorMoistureDependent,
+            rhs.WaterVaporDiffusionResistanceFactorMoistureDependent);
         vis("Conductivity (temperature-dependent)",
             lhs.ThermalConductivityTemperatureDependent,
             rhs.ThermalConductivityTemperatureDependent);

@@ -52,6 +52,9 @@ TEST_F(TestMaterials, SolidMaterial1Deserialization)
       {{35, 3.1e-10}, {100, 3.1e-09}}, hygroThermal.LiquidTransportationCoefficientSuction, tolerance);
     Helper::assertVectorOfPoints(
       {{0.05, 0.1}, {0.1, 0.2}}, hygroThermal.ThermalConductivityMoistureDependent, tolerance);
+    Helper::assertVectorOfPoints({{12.0, 220.0}, {37.0, 640.0}},
+                                 hygroThermal.WaterVaporDiffusionResistanceFactorMoistureDependent,
+                                 tolerance);
     Helper::assertVectorOfPoints(
       {{10, 0.18}, {15, 0.23}}, hygroThermal.ThermalConductivityTemperatureDependent, tolerance);
 
@@ -75,19 +78,23 @@ TEST_F(TestMaterials, SolidMaterial1Serialization)
 
     // Set up the solid material properties
     MaterialsLibrary::Solid solid;
-    solid.hygroThermal = MaterialsLibrary::HygroThermal{0.1,
-                                                        "Some material information",
-                                                        800.0,
-                                                        0.35,
-                                                        840.0,
-                                                        0.2,
-                                                        MaterialsLibrary::MaterialRoughness::MediumRough,
-                                                        std::nullopt,
-                                                        {{{0.05, 12}, {0.1, 37}}},
-                                                        {{{35, 3.1e-10}, {100, 3.1e-09}}},
-                                                        std::nullopt,
-                                                        {{{0.05, 0.1}, {0.1, 0.2}}},
-                                                        {{{10, 0.18}, {15, 0.23}}}};
+    // Designated initializers on purpose: this struct gains fields in the middle over
+    // time, and a positional list silently shifts every value after the insertion point.
+    solid.hygroThermal = MaterialsLibrary::HygroThermal{
+      .DefaultThickness = 0.1,
+      .MaterialInformation = "Some material information",
+      .BulkDensity = 800.0,
+      .Porosity = 0.35,
+      .SpecificHeatCapacityDry = 840.0,
+      .ThermalConductivityDry = 0.2,
+      .Roughness = MaterialsLibrary::MaterialRoughness::MediumRough,
+      .WaterVaporDiffusionResistanceFactor = std::nullopt,
+      .MoistureStorageFunction = {{{0.05, 12}, {0.1, 37}}},
+      .LiquidTransportationCoefficientSuction = {{{35, 3.1e-10}, {100, 3.1e-09}}},
+      .LiquidTransportationCoefficientRedistribution = std::nullopt,
+      .ThermalConductivityMoistureDependent = {{{0.05, 0.1}, {0.1, 0.2}}},
+      .WaterVaporDiffusionResistanceFactorMoistureDependent = {{{12.0, 220.0}, {37.0, 640.0}}},
+      .ThermalConductivityTemperatureDependent = {{{10, 0.18}, {15, 0.23}}}};
 
     // clang-format off
     MaterialsLibrary::Optical optical{

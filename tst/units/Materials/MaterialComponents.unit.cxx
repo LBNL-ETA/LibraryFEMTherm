@@ -77,6 +77,10 @@ TEST_F(TestMaterialComponents, DeserializeHygroThermal)
           node, "LiquidTransportationCoefficientSuction", "TableValue", {{"35", "3.1e-10"}, {"100", "3.1e-09"}});
         fillNodesWithTableValues(
           node, "ThermalConductivityMoistureDependent", "TableValue", {{"0.05", "0.1"}, {"0.1", "0.2"}});
+        fillNodesWithTableValues(node,
+                                 "WaterVaporDiffusionResistanceFactorMoistureDependent",
+                                 "TableValue",
+                                 {{"12", "220"}, {"37", "640"}});
         fillNodesWithTableValues(
           node, "ThermalConductivityTemperatureDependent", "TableValue", {{"10", "0.18"}, {"15", "0.23"}});
 
@@ -112,6 +116,9 @@ TEST_F(TestMaterialComponents, DeserializeHygroThermal)
     Helper::assertVectorOfPoints(
       {{35, 3.1e-10}, {100, 3.1e-9}}, material.LiquidTransportationCoefficientSuction, tolerance);
     Helper::assertVectorOfPoints({{0.05, 0.1}, {0.1, 0.2}}, material.ThermalConductivityMoistureDependent, tolerance);
+    Helper::assertVectorOfPoints({{12.0, 220.0}, {37.0, 640.0}},
+                                 material.WaterVaporDiffusionResistanceFactorMoistureDependent,
+                                 tolerance);
     Helper::assertVectorOfPoints({{10, 0.18}, {15, 0.23}}, material.ThermalConductivityTemperatureDependent, tolerance);
 }
 
@@ -129,6 +136,7 @@ TEST_F(TestMaterialComponents, SerializeHygroThermal)
     material.MoistureStorageFunction = {{0.05, 12}, {0.1, 37}};
     material.LiquidTransportationCoefficientSuction = {{35, 3.1e-10}, {100, 3.1e-9}};
     material.ThermalConductivityMoistureDependent = {{0.05, 0.1}, {0.1, 0.2}};
+    material.WaterVaporDiffusionResistanceFactorMoistureDependent = {{12.0, 220.0}, {37.0, 640.0}};
     material.ThermalConductivityTemperatureDependent = {{10, 0.18}, {15, 0.23}};
 
     // Serialize
@@ -153,6 +161,10 @@ TEST_F(TestMaterialComponents, SerializeHygroThermal)
           node, "LiquidTransportationCoefficientSuction", "TableValue", {{"35", "3.1e-10"}, {"100", "3.1e-09"}});
         fillNodesWithTableValues(
           node, "ThermalConductivityMoistureDependent", "TableValue", {{"0.05", "0.1"}, {"0.1", "0.2"}});
+        fillNodesWithTableValues(node,
+                                 "WaterVaporDiffusionResistanceFactorMoistureDependent",
+                                 "TableValue",
+                                 {{"12", "220"}, {"37", "640"}});
         fillNodesWithTableValues(
           node, "ThermalConductivityTemperatureDependent", "TableValue", {{"10", "0.18"}, {"15", "0.23"}});
 

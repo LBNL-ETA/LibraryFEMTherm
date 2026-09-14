@@ -28,6 +28,8 @@ void bind_materials(py::module_ & mod)
         .def_readwrite("liquid_transportation_coefficient_suction", &MaterialsLibrary::HygroThermal::LiquidTransportationCoefficientSuction)
         .def_readwrite("liquid_transportation_coefficient_redistribution", &MaterialsLibrary::HygroThermal::LiquidTransportationCoefficientRedistribution)
         .def_readwrite("thermal_conductivity_moisture_dependent", &MaterialsLibrary::HygroThermal::ThermalConductivityMoistureDependent)
+        .def_readwrite("water_vapor_diffusion_resistance_factor_moisture_dependent",
+                       &MaterialsLibrary::HygroThermal::WaterVaporDiffusionResistanceFactorMoistureDependent)
         .def_readwrite("thermal_conductivity_temperature_dependent", &MaterialsLibrary::HygroThermal::ThermalConductivityTemperatureDependent);
 
     py::class_<MaterialsLibrary::OpticalProperties>(mod, "OpticalProperties")

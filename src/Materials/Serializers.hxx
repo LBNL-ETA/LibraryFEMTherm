@@ -66,6 +66,8 @@ namespace MaterialsLibrary
                              material.LiquidTransportationCoefficientRedistribution};
         node >> FileParse::Child{{"ThermalConductivityMoistureDependent", "TableValue"},
                              material.ThermalConductivityMoistureDependent};
+        node >> FileParse::Child{{"WaterVaporDiffusionResistanceFactorMoistureDependent", "TableValue"},
+                             material.WaterVaporDiffusionResistanceFactorMoistureDependent};
         node >> FileParse::Child{{"ThermalConductivityTemperatureDependent", "TableValue"},
                              material.ThermalConductivityTemperatureDependent};
 
@@ -94,6 +96,8 @@ namespace MaterialsLibrary
                              hygroThermal.LiquidTransportationCoefficientRedistribution};
         node << FileParse::Child{{"ThermalConductivityMoistureDependent", "TableValue"},
                              hygroThermal.ThermalConductivityMoistureDependent};
+        node << FileParse::Child{{"WaterVaporDiffusionResistanceFactorMoistureDependent", "TableValue"},
+                             hygroThermal.WaterVaporDiffusionResistanceFactorMoistureDependent};
         node << FileParse::Child{{"ThermalConductivityTemperatureDependent", "TableValue"},
                              hygroThermal.ThermalConductivityTemperatureDependent};
 

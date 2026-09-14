@@ -82,6 +82,17 @@ namespace MaterialsLibrary
         /// represented as a series of points mapping moisture content to conductivity.
         std::optional<std::vector<point>> ThermalConductivityMoistureDependent{};
 
+        /// \brief Moisture-dependent water vapor diffusion resistance factor,
+        /// represented as a series of points mapping moisture content to the
+        /// dimensionless resistance factor.
+        ///
+        /// When present it supersedes the scalar WaterVaporDiffusionResistanceFactor,
+        /// which stays the dry-range value. Materials whose resistance does not vary
+        /// with moisture carry the scalar alone and leave this empty. EN 15026:2007
+        /// Annex A is the reference case for a material that needs the table: its
+        /// factor runs from 212 to 866 across the benchmark's own moisture range.
+        std::optional<std::vector<point>> WaterVaporDiffusionResistanceFactorMoistureDependent{};
+
         /// \brief Temperature-dependent thermal conductivity,
         /// represented as a series of points mapping temperature to conductivity.
         std::optional<std::vector<point>> ThermalConductivityTemperatureDependent{};

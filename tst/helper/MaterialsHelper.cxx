@@ -163,6 +163,10 @@ namespace Helper
           htNode, "LiquidTransportationCoefficientSuction", "TableValue", {{"35", "3.1e-10"}, {"100", "3.1e-09"}});
         fillNodesWithTableValues(
           htNode, "ThermalConductivityMoistureDependent", "TableValue", {{"0.05", "0.1"}, {"0.1", "0.2"}});
+        fillNodesWithTableValues(htNode,
+                                 "WaterVaporDiffusionResistanceFactorMoistureDependent",
+                                 "TableValue",
+                                 {{"12", "220"}, {"37", "640"}});
         fillNodesWithTableValues(
           htNode, "ThermalConductivityTemperatureDependent", "TableValue", {{"10", "0.18"}, {"15", "0.23"}});
 
