@@ -28,10 +28,11 @@
         {
             "name": "local",
             "hidden": true,
-            "description": "Development mode: build this project and its dependency graph from sibling working copies (../<Name>) when checked out, each falling back to its remote when absent. Sets LBNL_LOCAL_SIBLINGS, a cache flag that cascades into sub-builds so the whole tree resolves locally; `default` leaves it off so everything comes from remotes. Inherited by local-debug, local-release, and personal compiler presets.",
+            "description": "Development mode: build this project and its dependency graph from sibling working copies (../<Name>) when checked out, each falling back to its remote when absent. Sets LBNL_LOCAL_SIBLINGS, a cache flag that cascades into sub-builds so the whole tree resolves locally; `default` leaves it off so everything comes from remotes. Also builds the Python bindings, so `--target pylibraryfemtherm` works from the same build directory. Inherited by local-debug, local-release, and personal compiler presets.",
             "inherits": "default",
             "cacheVariables": {
-                "LBNL_LOCAL_SIBLINGS": { "type": "BOOL", "value": "ON" }
+                "LBNL_LOCAL_SIBLINGS": { "type": "BOOL", "value": "ON" },
+                "BUILD_PYTHON_BINDINGS": "ON"
             }
         },
         {
@@ -55,7 +56,7 @@
         {
             "name": "python",
             "hidden": true,
-            "description": "Base: enables Python bindings (BUILD_PYTHON_BINDINGS=ON) and C++ tests on top of `default`. Inherited by python-debug and python-release.",
+            "description": "Base: enables Python bindings (BUILD_PYTHON_BINDINGS=ON) and C++ tests on top of `default`, i.e. bindings with every dependency fetched from its remote, the way the published wheel is built. Inherited by python-debug and python-release.",
             "inherits": "default",
             "cacheVariables": {
                 "BUILD_PYTHON_BINDINGS": "ON",
@@ -79,6 +80,58 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "default-debug",
+            "configurePreset": "default-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "default-release",
+            "configurePreset": "default-release",
+            "configuration": "Release"
+        },
+        {
+            "name": "local-debug",
+            "configurePreset": "local-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "local-release",
+            "configurePreset": "local-release",
+            "configuration": "Release"
+        },
+        {
+            "name": "python-debug",
+            "configurePreset": "python-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "python-release",
+            "configurePreset": "python-release",
+            "configuration": "Release"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "default-release",
+            "configurePreset": "default-release",
+            "configuration": "Release",
+            "output": { "outputOnFailure": true }
+        },
+        {
+            "name": "local-release",
+            "configurePreset": "local-release",
+            "configuration": "Release",
+            "output": { "outputOnFailure": true }
+        },
+        {
+            "name": "python-release",
+            "configurePreset": "python-release",
+            "configuration": "Release",
+            "output": { "outputOnFailure": true }
         }
     ]
 }

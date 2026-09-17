@@ -13,28 +13,39 @@ C++20 static library for reading, writing, and manipulating THERM (.thmz) files.
 
 ### CMake presets
 
-`CMakePresets.json` ships six visible configure presets plus three hidden inheritance bases. Use the `default-*` presets for normal builds, `local-*` to consume sibling working copies of LBNL deps, and `python-*` to also build the Python bindings:
+`CMakePresets.json` ships six visible configure presets plus three hidden inheritance bases, each with a matching build preset (and a test preset for the release variants). Use the `default-*` presets for C++-only builds, `local-*` for day-to-day development against sibling working copies of LBNL deps, and `python-*` to build the bindings the way the published wheel does:
 
 | Preset | Description | Python bindings | C++ tests |
 |---|---|---|---|
 | `default-debug` / `default-release` | C++ only. Fetches all dependencies from declared remotes. | OFF | ON |
-| `local-debug` / `local-release` | C++ only, but consume sibling `../LBNLCPPCommon` and `../FileParse` working copies when present. | OFF | ON |
+| `local-debug` / `local-release` | Development: consume sibling `../LBNLCPPCommon` and `../FileParse` working copies when present, and build the Python bindings from the same tree. | ON | ON |
 | `python-debug` / `python-release` | C++ with Python bindings. Fetches all dependencies from declared remotes. | ON | ON |
 
-Missing siblings under `local-*` fall back to the declared remote automatically, so `local-*` is safe to invoke even if you don't have the LBNL siblings checked out.
+Missing siblings under `local-*` fall back to the declared remote automatically, so `local-*` is safe to invoke even if you don't have the LBNL siblings checked out. `local-*` needs a Python 3.11+ interpreter on the machine, since it builds the bindings; use `default-*` where there is none.
 
 ```bash
 cmake --preset default-release
-cmake --build build/default-release --config Release --parallel
-ctest --test-dir build/default-release -C Release --output-on-failure
+cmake --build --preset default-release --parallel
+ctest --preset default-release
 ```
 
-For Python bindings:
+For development, including the Python bindings:
+
+```bash
+cmake --preset local-release
+cmake --build --preset local-release --parallel
+cmake --build --preset local-release --target pylibraryfemtherm   # bindings only
+ctest --preset local-release
+```
+
+The bindings module is written to `python/` (`python/Release/` with a multi-config generator such as Visual Studio).
+
+`python-release` is the same with every dependency fetched from its remote instead of a sibling, which is how the PyPI wheel is built; the wheel itself is produced by scikit-build-core from `pyproject.toml` and does not read this presets file.
 
 ```bash
 cmake --preset python-release
-cmake --build build/python-release --config Release --parallel
-ctest --test-dir build/python-release -C Release -V
+cmake --build --preset python-release --parallel
+ctest --preset python-release
 ```
 
 CLion and VS Code automatically detect these presets.

@@ -11,8 +11,8 @@ pip install libraryfemtherm
 Or build from source:
 
 ```bash
-cmake --preset python
-cmake --build build/python --config Release
+cmake --preset python-release
+cmake --build --preset python-release --target pylibraryfemtherm
 ```
 
 When building from source, add the output directory to your Python path:
