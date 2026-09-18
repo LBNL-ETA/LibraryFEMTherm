@@ -98,6 +98,73 @@ TEST_F(TestTHMXGeometry, PolygonSerialization)
     EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNode));
 }
 
+//! Both volumetric sources survive a write followed by a read. PolygonSerialization
+//! above already pins the other half of the contract: with the optionals unset,
+//! nothing is written at all, so a file authored without them is unchanged.
+TEST_F(TestTHMXGeometry, PolygonVolumetricSourcesRoundTrip)
+{
+    constexpr double heatSource{12.5};        // [W/m^3]
+    constexpr double moistureSource{3.5e-6};  // [kg/(m^3 s)]
+
+    const ThermFile::Polygon polygon{"Some uuid",
+                                     45,
+                                     "Some material uuid",
+                                     "Some Name",
+                                     ThermFile::GlazingSystemData{2, 2},
+                                     {0.2, 0.4},
+                                     {{20.0, 0.5}, {25.0, 0.6}, {30.0, 0.7}},
+                                     {"Attribute1", "Attribute2"},
+                                     ThermFile::PolygonType::Material,
+                                     std::nullopt,
+                                     std::nullopt,
+                                     heatSource,
+                                     moistureSource};
+
+    Helper::MockNode node{"Polygon"};
+    Helper::MockNodeAdapter writer{&node};
+    writer << polygon;
+
+    ThermFile::Polygon restored;
+    const Helper::MockNodeAdapter reader{&node};
+    reader >> restored;
+
+    ASSERT_TRUE(restored.volumetricHeatSource.has_value());
+    EXPECT_NEAR(heatSource, restored.volumetricHeatSource.value(), 1e-9);
+
+    ASSERT_TRUE(restored.volumetricMoistureSource.has_value());
+    EXPECT_NEAR(moistureSource, restored.volumetricMoistureSource.value(), 1e-15);
+}
+
+//! The two sources are independent: a polygon may carry either alone.
+TEST_F(TestTHMXGeometry, PolygonHeatSourceWithoutMoistureSource)
+{
+    const ThermFile::Polygon polygon{"Some uuid",
+                                     45,
+                                     "Some material uuid",
+                                     "Some Name",
+                                     ThermFile::GlazingSystemData{2, 2},
+                                     {0.2, 0.4},
+                                     {{20.0, 0.5}, {25.0, 0.6}, {30.0, 0.7}},
+                                     {"Attribute1", "Attribute2"},
+                                     ThermFile::PolygonType::Material,
+                                     std::nullopt,
+                                     std::nullopt,
+                                     7.25,
+                                     std::nullopt};
+
+    Helper::MockNode node{"Polygon"};
+    Helper::MockNodeAdapter writer{&node};
+    writer << polygon;
+
+    ThermFile::Polygon restored;
+    const Helper::MockNodeAdapter reader{&node};
+    reader >> restored;
+
+    ASSERT_TRUE(restored.volumetricHeatSource.has_value());
+    EXPECT_NEAR(7.25, restored.volumetricHeatSource.value(), 1e-9);
+    EXPECT_FALSE(restored.volumetricMoistureSource.has_value());
+}
+
 TEST_F(TestTHMXGeometry, SurfaceDataDeserialization)
 {
     auto node{Helper::generateSurfaceDataNode({"45", "2000"})};

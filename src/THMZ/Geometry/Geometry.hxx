@@ -59,6 +59,28 @@ namespace ThermFile
         PolygonType polygonType{PolygonType::None};
         std::optional<int> linkID;
         std::optional<CavityData> cavity;
+        //! \brief Volumetric heat generation within this polygon [W/m^3].
+        //!
+        //! Absent on every polygon THERM authors, and nothing writes it unless a
+        //! producer sets it deliberately. Kept separate from the moisture source
+        //! below because the two carry different units and feed different
+        //! equations; a polygon may have either, both or neither.
+        std::optional<double> volumetricHeatSource;
+        //! \brief Volumetric moisture generation within this polygon [kg/(m^3 s)].
+        //!
+        //! Water appearing in or removed from the material by something the
+        //! transport terms do not describe.
+        //!
+        //! One figure, deliberately, although the governing documents name a
+        //! liquid source and a vapour source separately. For mass the two simply
+        //! add, so a single number loses nothing. They differ only in the energy
+        //! balance -- water arriving as vapour has yet to release its latent heat
+        //! and water arriving as liquid has already done so -- and the solver
+        //! carries one volumetric source per domain with no way to say which
+        //! phase arrived. Splitting the field here would promise a distinction
+        //! nothing downstream could act on. If that distinction is ever wanted it
+        //! is a solver change first, and this field follows.
+        std::optional<double> volumetricMoistureSource;
     };
 
     //! \brief Represents geometry data that are used in certain boundary condition types

@@ -76,6 +76,8 @@ namespace ThermFile
         node >> FileParse::Child{"Type", polygon.polygonType};
         node >> FileParse::Child{"LinkID", polygon.linkID};
         node >> FileParse::Child{"Cavity", polygon.cavity};
+        node >> FileParse::Child{"VolumetricHeatSource", polygon.volumetricHeatSource};
+        node >> FileParse::Child{"VolumetricMoistureSource", polygon.volumetricMoistureSource};
 
         return node;
     }
@@ -94,6 +96,8 @@ namespace ThermFile
         node << FileParse::Child{"Type", polygon.polygonType};
         node << FileParse::Child{"LinkID", polygon.linkID};
         node << FileParse::Child{"Cavity", polygon.cavity};
+        node << FileParse::Child{"VolumetricHeatSource", polygon.volumetricHeatSource};
+        node << FileParse::Child{"VolumetricMoistureSource", polygon.volumetricMoistureSource};
 
         return node;
     }

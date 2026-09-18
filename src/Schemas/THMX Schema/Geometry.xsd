@@ -92,6 +92,20 @@
 			<xs:element name="Type" type="PolygonType" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="LinkID" type="xs:integer" minOccurs="0" maxOccurs="1"/>
 			<xs:element name="Cavity" type="CavityData" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="VolumetricHeatSource" type="xs:double" minOccurs="0" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation>Volumetric heat generation within this polygon,
+                        in W/m^3. Optional and absent unless a producer sets it.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="VolumetricMoistureSource" type="xs:double" minOccurs="0" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation>Volumetric moisture generation within this polygon,
+                        in kg/(m^3 s). Separate from the heat source: different units,
+                        different equation. A single figure, not split into liquid and
+                        vapour.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="GeometrySpecification">
