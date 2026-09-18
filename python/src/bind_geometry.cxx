@@ -38,7 +38,10 @@ void bind_geometry(py::module_ & mod)
         .def_readwrite("attributes", &ThermFile::Polygon::attributes)
         .def_readwrite("polygon_type", &ThermFile::Polygon::polygonType)
         .def_readwrite("link_id", &ThermFile::Polygon::linkID)
-        .def_readwrite("cavity", &ThermFile::Polygon::cavity);
+        .def_readwrite("cavity", &ThermFile::Polygon::cavity)
+        .def_readwrite("volumetric_heat_source", &ThermFile::Polygon::volumetricHeatSource)
+        .def_readwrite("volumetric_moisture_source",
+                       &ThermFile::Polygon::volumetricMoistureSource);
 
     py::class_<ThermFile::SurfaceData>(mod, "SurfaceData")
         .def(py::init<>())
