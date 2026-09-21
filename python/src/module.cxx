@@ -16,12 +16,17 @@ void bind_gases(py::module_ & mod);
 void bind_mesh(py::module_ & mod);
 void bind_mesh_results(py::module_ & mod);
 void bind_steady_state_results(py::module_ & mod);
+void bind_time_series(py::module_ & mod);
+void bind_bc_library(py::module_ & mod);
 
 PYBIND11_MODULE(pylibraryfemtherm, mod)
 {
     mod.doc() = "Python bindings for LibraryFEMTherm — THMZ load/save and library access";
 
     bind_enums(mod);
+    // SeriesRole is registered here; bind_bc_library's FromTimeSeries refers to it.
+    bind_time_series(mod);
+    bind_bc_library(mod);
     bind_geometry(mod);
     bind_preferences(mod);
     bind_glazing_system(mod);

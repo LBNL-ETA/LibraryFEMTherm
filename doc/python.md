@@ -174,52 +174,146 @@ json_str = db.save_to_string(fem.FileFormat.JSON)
 
 ## Boundary Conditions
 
-### Loading boundary conditions
+One record shape serves steady-state and transient use, stored in the archive as the
+`BoundaryConditions` entry. A record's `data` is one of four kinds:
+
+| Kind | Meaning |
+|---|---|
+| `SurfaceExchange` | Exchange with an environment: humidity, convection, optionally radiation, solar and a fixed flux |
+| `PrescribedState` | The surface state itself is imposed: temperature and/or relative humidity |
+| `BCRadiationSurface` | A radiating surface for view-factor radiation |
+| `NoExchange` | Adiabatic and moisture-tight |
+
+Every scalar input is a *source*: a `Constant`, or a `FromTimeSeries` naming the dataset
+series it reads. A plain number or a `SeriesRole` is accepted wherever a source is
+expected, so a record is written the same way whether its inputs are fixed or come from a
+dataset. Archives saved before this library existed are migrated to it on load.
+
+### Loading
 
 ```python
-contents = fem.zip.unzip_files("model.thmz", [fem.zip.STEADY_STATE_BC_FILE_NAME])
-db = fem.BCSteadyStateDB()
-db.load_from_string(contents[fem.zip.STEADY_STATE_BC_FILE_NAME])
+library = fem.BoundaryConditionsDB()
+library.load_from_zip_file("model.thmz")
+
+# Or from entries already extracted, when several libraries are read from one archive
+entries = fem.zip.unzip_files("model.thmz")
+library.load_from_entries(entries)
 ```
 
 ### Querying
 
 ```python
-print(db.get_names())
+print(library.get_names())
 
-bc = db.get_by_name("Interior")
-print(f"UUID: {bc.uuid}")
-print(f"Name: {bc.name}")
+record = library.get_by_name("Interior")
+print(f"UUID: {record.uuid}")
+print(f"Name: {record.name}")
 
-# Boundary conditions use variant types for their data
-data = bc.data
-if isinstance(data, fem.Comprehensive):
-    print(f"Convection temp:    {data.convection.temperature}")
-    print(f"Film coefficient:   {data.convection.film_coefficient}")
+data = record.data
+if isinstance(data, fem.SurfaceExchange):
     print(f"Relative humidity:  {data.relative_humidity}")
-    print(f"Constant flux:      {data.constant_flux.flux}")
-elif isinstance(data, fem.Simplified):
+    if data.convection is not None:
+        print(f"Air temperature:    {data.convection.air_temperature}")
+        print(f"Film coefficient:   {data.convection.film_coefficient}")
+elif isinstance(data, fem.PrescribedState):
     print(f"Temperature:        {data.temperature}")
-    print(f"Film coefficient:   {data.film_coefficient}")
-elif isinstance(data, fem.RadiationSurface):
+    print(f"Relative humidity:  {data.relative_humidity}")
+elif isinstance(data, fem.BCRadiationSurface):
     print(f"Temperature:        {data.temperature}")
     print(f"Emissivity:         {data.emissivity}")
+elif isinstance(data, fem.NoExchange):
+    print("sealed")
+
+# What the record needs, and what it can do
+print(fem.required_roles(record))      # series roles it reads; empty when every input is constant
+print(fem.is_steady_capable(record))   # True when nothing is read from a dataset
+print(fem.is_convective(record), fem.is_adiabatic(record), fem.is_radiation_bc(record))
 ```
 
-### Creating boundary conditions
+A source is inspected with `fem.is_constant(source)` / `fem.is_from_time_series(source)`;
+a `Constant` carries `.value`, a `FromTimeSeries` carries `.role`.
+
+### Creating
 
 ```python
-bc = fem.BCSteadyState()
-bc.name = "Custom Interior"
+# A prescribed surface state (Dirichlet): temperature and humidity from a dataset
+fixed = fem.BoundaryCondition()
+fixed.uuid = "..."
+fixed.name = "Fixed temperature and humidity"
+state = fem.PrescribedState()
+state.temperature = fem.SeriesRole.PrescribedTemperature
+state.relative_humidity = fem.SeriesRole.PrescribedHumidity
+fixed.data = state
 
-comp = fem.Comprehensive()
-comp.convection.temperature = 21.0
-comp.convection.film_coefficient = 8.29
-comp.relative_humidity = 0.5
-bc.data = comp
+# A convective exchange with constant inputs (steady-state capable)
+film = fem.BoundaryCondition()
+film.name = "Fixed film, 20 C"
+exchange = fem.SurfaceExchange()
+exchange.relative_humidity = 0.5
+exchange.convection = fem.BCConvection()
+exchange.convection.air_temperature = 20.0
+exchange.convection.film_coefficient = 8.0
+film.data = exchange
 
-db.add(bc)
+# Adiabatic and moisture-tight
+sealed = fem.BoundaryCondition()
+sealed.name = "Sealed"
+sealed.data = fem.NoExchange()
+
+library = fem.BoundaryConditionsDB()
+for record in (fixed, film, sealed):
+    library.add(record)
+print(fem.required_roles(fixed))       # [PrescribedTemperature, PrescribedHumidity]
+print(fem.is_steady_capable(film))     # True
 ```
+
+A record that belongs to one model rather than to the user's global library carries the
+model's name in `project_name`; THERM imports an archive's records into its library only
+when they are marked that way.
+
+### Saving
+
+```python
+library.save_to_zip_file("model.thmz")    # writes the BoundaryConditions entry
+xml = library.save_to_string()            # or fem.FileFormat.JSON
+```
+
+A model's boundary segments refer to records by UUID (`Boundary.bc_uuid`), and a
+transient segment additionally names the dataset its record reads from
+(`Boundary.timeSeries_uuid`) -- see the next section.
+
+## Time Series Datasets
+
+A dataset is the per-timestep environment a transient boundary reads: one series per
+role (air temperature, relative humidity, film coefficient, prescribed temperature, ...),
+one value per timestep. The dataset's time axis also sets the simulation clock: the number
+of rows is the number of timesteps and `step_seconds` the step length. Each dataset is its
+own archive entry, `time series/<uuid>.xml`.
+
+```python
+weather = fem.TimeSeriesData()
+weather.uuid = "..."
+weather.name = "Constant 30 C, 95 %"
+weather.axis.step_seconds = 3600.0
+weather.series = [
+    fem.Series(fem.SeriesRole.PrescribedTemperature, [30.0] * 24),
+    fem.Series(fem.SeriesRole.PrescribedHumidity, [0.95] * 24),
+]
+print(fem.time_series_steps(weather))          # 24
+print(fem.describe_axis(weather))              # "1 Jan 00:00, step 1 h, 24 rows"
+
+fem.save_datasets_to_zip_file([weather], "model.thmz")
+datasets = fem.load_datasets_from_zip_file("model.thmz")
+entry = fem.zip.time_series_entry_name(weather.uuid)   # "time series/<uuid>.xml"
+```
+
+A boundary binds a dataset through `Boundary.timeSeries_uuid`; the dataset must supply
+every role its record reads (`fem.required_roles(record)`). A record whose inputs are all
+constant needs no dataset, but a transient model still needs one somewhere for the clock.
+
+`series` is copied out as a Python list, so build the list and assign it; appending to
+the returned list does not change the dataset. The same holds for every list-valued
+field in these bindings.
 
 ## Gases
 

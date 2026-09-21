@@ -19,6 +19,15 @@ void bind_zip(py::module_ & mod)
     zip.attr("STEADY_STATE_MESH_RESULTS_NAME") = ThermZip::SteadyStateMeshResultsName;
     zip.attr("MESH_NAME") = ThermZip::MeshName;
     zip.attr("CMA_LIBRARY") = ThermZip::CMALibrary;
+    zip.attr("BOUNDARY_CONDITIONS_FILE_NAME") = ThermZip::BoundaryConditionsFileName;
+    zip.attr("TIME_SERIES_DIR") = ThermZip::TimeSeriesDir;
+
+    zip.def("time_series_entry_name", &ThermZip::timeSeriesEntryName,
+            py::arg("dataset_uuid"), py::arg("format") = FileParse::FileFormat::XML,
+            "Archive entry name of one time series dataset: \"time series/<uuid>.<ext>\"");
+    zip.def("entry_name_for_format", &ThermZip::entryNameForFormat,
+            py::arg("base_name"), py::arg("format"),
+            "Appends the format's extension to an entry base name (\"Model\" -> \"Model.xml\")");
 
     // In-memory zip: map<string, string> -> zip file
     zip.def("zip_files",
