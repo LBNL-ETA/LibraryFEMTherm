@@ -21,6 +21,7 @@ if(BUILD_LibraryFEMTHERM_TESTING)
             "units/THMZ/SteadyStateMeshResults/*.cxx"
             "units/THMZ/SteadyStateResults/*.cxx"
             "units/THMZ/*.cxx"
+            "units/TransientResults/*.cxx"
             "helper/Common/*.hxx"
             "helper/*.hxx"
             "helper/*.cxx")

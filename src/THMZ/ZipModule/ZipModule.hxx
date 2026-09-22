@@ -29,6 +29,8 @@ namespace ThermZip
     const std::string HumidityFilePath = ResultsDirPath + "/Humidities.csv";
     const std::string TemperatureFilePath = ResultsDirPath + "/Temperatures.csv";
     const std::string WaterContentFilePath = ResultsDirPath + "/WaterContent.csv";
+    // Written only when freezing is modelled; absent otherwise.
+    const std::string IceContentFilePath = ResultsDirPath + "/IceContent.csv";
     const std::string WaterFluxFilePath = ResultsDirPath + "/WaterFlux.csv";
     const std::string WaterFluxEdgesFilePath = ResultsDirPath + "/WaterFluxEdges.csv";
 
@@ -36,6 +38,7 @@ namespace ThermZip
     inline std::string getHeatFluxFileName() { return HeatFluxFilePath; }
     inline std::string getHeatFluxEdgesFileName() { return HeatFluxEdgesFilePath; }
     inline std::string getHumidityFileName() { return HumidityFilePath; }
+    inline std::string getIceContentFileName() { return IceContentFilePath; }
     inline std::string getTemperatureFileName() { return TemperatureFilePath; }
     inline std::string getWaterContentFileName() { return WaterContentFilePath; }
     inline std::string getWaterFluxFileName() { return WaterFluxFilePath; }
