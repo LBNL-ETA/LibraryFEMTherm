@@ -144,6 +144,15 @@ TEST(TestTimeSeriesData, ContentUuidIsDeterministic)
     EXPECT_EQ(first.size(), 36U);
 }
 
+TEST(TestTimeSeriesData, ContentUuidIsPinned)
+{
+    // The literal is what the hasher produced before it was shared with the stable-UUID
+    // utility. Datasets already in archives carry this UUID, so the value is a contract:
+    // a refactor that moves it silently re-identifies every imported dataset.
+    EXPECT_EQ(TimeSeriesLibrary::contentUuid(makeSample()), "bee1c22f-e0ef-8399-31ce-a9945b381369");
+    EXPECT_EQ(TimeSeriesLibrary::datasetFingerprint(makeSample()), 12072969643835789468ULL);
+}
+
 TEST(TestTimeSeriesData, ContentUuidIgnoresEnvelopeAndSeriesOrder)
 {
     auto data{makeSample()};

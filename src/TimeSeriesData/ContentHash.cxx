@@ -1,10 +1,10 @@
 #include <algorithm>
-#include <array>
 #include <bit>
 #include <cstdint>
-#include <format>
 #include <optional>
 #include <string>
+
+#include "LibraryUtilities/StableUuid.hxx"
 
 #include "ContentHash.hxx"
 #include "Tags.hxx"
@@ -13,46 +13,11 @@ namespace TimeSeriesLibrary
 {
     namespace
     {
-        constexpr uint64_t offsetBasis{14695981039346656037ULL};
-        constexpr uint64_t secondSeed{0x9E3779B97F4A7C15ULL};
+        using LibraryCommon::Fnv1a;
+        using LibraryCommon::fnvOffsetBasis;
+        using LibraryCommon::fnvSecondSeed;
 
-        //! FNV-1a, 64 bit. Deterministic and platform-independent for identical input bytes;
-        //! doubles are hashed by their IEEE-754 bit patterns so no formatting is involved.
-        class Fnv1a
-        {
-        public:
-            explicit Fnv1a(uint64_t seed) : m_State{seed}
-            {}
-
-            void consume(uint64_t bits)
-            {
-                for(size_t byteIndex = 0U; byteIndex < sizeof(bits); ++byteIndex)
-                {
-                    const auto byte{static_cast<uint8_t>(bits >> (8U * byteIndex))};
-                    m_State ^= byte;
-                    m_State *= prime;
-                }
-            }
-
-            void consume(const std::string & text)
-            {
-                for(const char character : text)
-                {
-                    m_State ^= static_cast<uint8_t>(character);
-                    m_State *= prime;
-                }
-            }
-
-            [[nodiscard]] uint64_t value() const
-            {
-                return m_State;
-            }
-
-        private:
-            static constexpr uint64_t prime{1099511628211ULL};
-            uint64_t m_State;
-        };
-
+        //! Doubles are hashed by their IEEE-754 bit patterns, so no formatting is involved.
         void consumeSeries(Fnv1a & hasher, const std::vector<Series> & seriesList)
         {
             // Series order must not affect the hash: hash each series separately into a
@@ -62,7 +27,7 @@ namespace TimeSeriesLibrary
 
             for(const auto & series : seriesList)
             {
-                Fnv1a seriesHasher{offsetBasis};
+                Fnv1a seriesHasher{fnvOffsetBasis};
                 seriesHasher.consume(seriesRoleToString(series.role));
                 for(const double value : series.values)
                 {
@@ -118,28 +83,20 @@ namespace TimeSeriesLibrary
 
     std::string contentUuid(const TimeSeriesData & data)
     {
-        Fnv1a first{offsetBasis};
+        Fnv1a first{fnvOffsetBasis};
         consumeAxis(first, data.axis);
         consumeSeries(first, data.series);
 
-        Fnv1a second{secondSeed};
+        Fnv1a second{fnvSecondSeed};
         consumeAxis(second, data.axis);
         consumeSeries(second, data.series);
 
-        const uint64_t high{first.value()};
-        const uint64_t low{second.value()};
-
-        return std::format("{:08x}-{:04x}-{:04x}-{:04x}-{:012x}",
-                           static_cast<uint32_t>(high >> 32U),
-                           static_cast<uint16_t>(high >> 16U),
-                           static_cast<uint16_t>(high),
-                           static_cast<uint16_t>(low >> 48U),
-                           low & 0xFFFFFFFFFFFFULL);
+        return LibraryCommon::uuidFromDigests(first.value(), second.value());
     }
 
     std::uint64_t datasetFingerprint(const TimeSeriesData & data)
     {
-        Fnv1a hasher{offsetBasis};
+        Fnv1a hasher{fnvOffsetBasis};
         consumeMetadata(hasher, data);
         consumeAxis(hasher, data.axis);
         consumeSeries(hasher, data.series);
