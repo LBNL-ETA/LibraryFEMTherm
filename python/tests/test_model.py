@@ -15,8 +15,9 @@ from pylibraryfemtherm import build, model
 TOL = 1e-12
 
 
-def linear_sorption() -> model.Material:
-    return model.Material(
+def linear_sorption() -> fem.Material:
+    """THERM's library record for a material stated from a few numbers."""
+    return fem.Material(
         name="linear-sorption",
         diffusion_resistance_factor=10.0,
         sorption_curve=[(0.0, 0.0), (1.0, 100.0)],
@@ -52,7 +53,18 @@ class TestVocabulary:
         segment = model.Segment(model.Adiabatic(), (0.0, 0.0), (1.0, 0.0))
         assert segment.end == model.Point(1.0, 0.0)
         assert segment.region is None
+        assert segment.name is None
         assert model.Segment(model.Adiabatic(), (0.0, 0.0), (1.0, 0.0), region=1).region == 1
+        assert model.Segment(model.Adiabatic(), (0.0, 0.0), (1.0, 0.0), name="bottom").name == "bottom"
+
+    def test_a_named_segment_is_named_in_its_issue(self):
+        case = sealed_strip()
+        segments = list(case.segments)
+        segments[1] = model.Segment(model.Prescribed(temperature=20.0), (0.1, 0.0), (0.1, 0.02), name="warm end")
+        case.segments = segments
+        assert model.issues(case) == [
+            "segment 1 'warm end' from (0.1, 0) to (0.1, 0.02) does not lie along an edge of any region"
+        ]
 
     def test_segments_attach_to_the_region_found(self):
         case = sealed_strip()
@@ -94,13 +106,14 @@ class TestVocabulary:
         assert abs(model.Schedule(3600.0, 24).duration - 86400.0) < TOL
 
     def test_material_defaults_and_curves(self):
-        material = model.Material("m", 5.0, [(0.0, 0.0), (1.0, 50.0)])
-        assert material.liquid_transport_curve == []
-        assert material.mu_curve == []
-        assert material.density == 0.0
-        assert material.sorption_curve == [(0.0, 0.0), (1.0, 50.0)]
-        assert abs(build.water_content(material, 0.5) - 25.0) < TOL
-        assert abs(build.max_water_content(material) - 50.0) < TOL
+        record = fem.Material("m", 5.0, [(0.0, 0.0), (1.0, 50.0)])
+        assert isinstance(record, fem.Material)
+        hygro = record.data.hygro_thermal
+        assert hygro.bulk_density == 0.0
+        assert abs(hygro.water_vapor_diffusion_resistance_factor - 5.0) < TOL
+        assert [(p.x, p.y) for p in hygro.moisture_storage_function] == [(0.0, 0.0), (1.0, 50.0)]
+        assert [(p.x, p.y) for p in hygro.liquid_transportation_coefficient_suction] == [(0.0, 0.0)]
+        assert hygro.water_vapor_diffusion_resistance_factor_moisture_dependent is None
 
     def test_cases_compare_by_value(self):
         assert sealed_strip() == sealed_strip()
@@ -110,9 +123,58 @@ class TestVocabulary:
 
     def test_regions_carry_their_material(self):
         case = sealed_strip()
-        assert case.regions[0].material == linear_sorption()
+        assert case.regions[0].material.uuid == linear_sorption().uuid
         assert model.region_material(case, 0).name == "linear-sorption"
         assert model.region_material(case, 3) is None
+
+
+class TestColours:
+    def test_kind_colour_unless_stated(self):
+        assert model.kind_color(model.Adiabatic()) == "0x000000"
+        segment = model.Segment(model.Convective(20.0, 8.0), (0.0, 0.0), (0.1, 0.0))
+        assert segment.color is None
+        assert model.segment_color(segment) == model.kind_color(model.Convective(20.0, 8.0))
+        coloured = model.Segment(model.Convective(20.0, 8.0), (0.0, 0.0), (0.1, 0.0), color="0xE07A1F")
+        assert model.segment_color(coloured) == "0xE07A1F"
+
+    def test_material_colour_unless_stated(self):
+        assert linear_sorption().color == fem.material_color("linear-sorption")
+        stated = fem.Material("m", 5.0, [(0.0, 0.0), (1.0, 50.0)], color="0xB03A2E")
+        assert stated.color == "0xB03A2E"
+
+    def test_colours_reach_the_file(self):
+        case = sealed_strip()
+        segments = list(case.segments)
+        segments[1] = model.Segment(model.Prescribed(temperature=20.0), (0.1, 0.0), (0.1, 0.005), color="0xE07A1F")
+        case.segments = segments
+        therm_model = build.model(case)
+        assert therm_model.boundary_conditions[1].color == "0xE07A1F"
+        assert therm_model.boundary_conditions[0].color == "0x000000"
+        records = build.libraries(case).boundary_conditions
+        assert records.get_by_name("Adiabatic").color == "0x000000"
+
+
+class TestOutline:
+    def test_every_face_stated_leaves_no_gap(self):
+        assert model.outline_gaps(sealed_strip()) == []
+        assert model.completed(sealed_strip()) == sealed_strip()
+
+    def test_unstated_faces_become_adiabatic(self):
+        case = sealed_strip()
+        case.segments = [case.segments[1], case.segments[3]]   # the two prescribed ends
+        gaps = model.outline_gaps(case)
+        assert [type(gap.kind).__name__ for gap in gaps] == ["Adiabatic", "Adiabatic"]
+        assert gaps[0].start == model.Point(0.0, 0.0) and gaps[0].end == model.Point(0.1, 0.0)
+        assert gaps[0].region == 0
+        full = model.completed(case)
+        assert len(full.segments) == 4
+        assert full.segments[:2] == case.segments
+        assert model.outline_gaps(full) == []
+
+        therm_model = build.model(case)
+        assert [boundary.name for boundary in therm_model.boundary_conditions] == [
+            "Prescribed temperature", "Prescribed temperature", "Adiabatic", "Adiabatic"
+        ]
 
 
 class TestIssues:
@@ -130,19 +192,19 @@ class TestIssues:
         assert "no name" in found[0]
         assert "at least one step" in found[1]
 
-    def test_one_name_with_two_definitions_is_an_issue(self):
+    def test_one_name_with_two_records_is_an_issue(self):
         case = sealed_strip()
-        denser = linear_sorption()
-        denser.density = 1200.0
+        another = linear_sorption()
+        another.uuid = "another-record"
         case.regions = list(case.regions) + [
-            model.Region(denser, [(0.1, 0.0), (0.2, 0.0), (0.2, 0.005), (0.1, 0.005)])
+            model.Region(another, [(0.1, 0.0), (0.2, 0.0), (0.2, 0.005), (0.1, 0.005)])
         ]
         segments = list(case.segments)
         segments[1] = model.Segment(model.Prescribed(temperature=20.0), (0.1, 0.0), (0.1, 0.005), region=0)
         case.segments = segments
         found = model.issues(case)
         assert len(found) == 1
-        assert "'linear-sorption' with different properties" in found[0]
+        assert "two different materials both named 'linear-sorption'" in found[0]
 
     def test_writing_an_invalid_case_raises(self, tmp_path):
         case = sealed_strip()
@@ -158,11 +220,11 @@ class TestIssues:
 
 
 class TestLibraryRecords:
-    def test_library_material_is_a_materials_record(self):
-        record = build.library_material(linear_sorption())
+    def test_stated_material_is_a_materials_record(self):
+        record = linear_sorption()
         assert isinstance(record, fem.Material)
         assert record.name == "linear-sorption"
-        assert record.uuid == build.material_uuid("linear-sorption")
+        assert record.uuid == fem.material_uuid("linear-sorption")
         hygro = record.data.hygro_thermal
         assert abs(hygro.bulk_density - 1000.0) < TOL
         assert [(p.x, p.y) for p in hygro.moisture_storage_function] == [(0.0, 0.0), (1.0, 100.0)]

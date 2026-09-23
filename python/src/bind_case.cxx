@@ -5,7 +5,6 @@
 #include <string>
 
 #include "Model/Archive.hxx"
-#include "Model/Materials.hxx"
 #include "Model/Case.hxx"
 
 namespace py = pybind11;
@@ -50,10 +49,10 @@ namespace
         auto region{py::class_<Region>(model,
                                        "Region",
                                        "One material polygon: its corners in metres, in drawing order, each given "
-                                       "once and the polygon closed implicitly, and the material filling it. "
-                                       "Regions that share a material state the same one; the archive's library "
-                                       "keeps one record per material name.")
-                      .def(py::init([](Material material, std::vector<Point> points) {
+                                       "once and the polygon closed implicitly, and the material filling it: a "
+                                       "pylibraryfemtherm.Material record, built by keyword, taken from a library or "
+                                       "a file. Regions that share a material carry the same record.")
+                      .def(py::init([](MaterialsLibrary::Material material, std::vector<Point> points) {
                                return Region{std::move(material), std::move(points)};
                            }),
                            py::arg("material"),
@@ -68,21 +67,29 @@ namespace
                                          "outline, the condition it carries (Adiabatic, Prescribed or Convective), and "
                                          "optionally the index of the region it bounds. Left None, the region is "
                                          "found: a segment on the outline lies on exactly one region's edge. It must "
-                                         "be given where two regions share the edge.")
+                                         "be given where two regions share the edge. `color` is what THERM draws the "
+                                         "segment in, 0xRRGGBB; left None, the kind's own colour. `name` is what the "
+                                         "caller calls the face, for plots and messages; it is not written to the file.")
                        .def(py::init([](Boundary kind,
                                         const Point & start,
                                         const Point & end,
-                                        const std::optional<std::size_t> region) {
-                                return Segment{std::move(kind), start, end, region};
+                                        const std::optional<std::size_t> region,
+                                        std::optional<std::string> color,
+                                        std::optional<std::string> name) {
+                                return Segment{std::move(kind), start, end, region, std::move(color), std::move(name)};
                             }),
                             py::arg("kind"),
                             py::arg("start"),
                             py::arg("end"),
-                            py::arg("region") = py::none())
+                            py::arg("region") = py::none(),
+                            py::arg("color") = py::none(),
+                            py::arg("name") = py::none())
                        .def_readwrite("kind", &Segment::kind)
                        .def_readwrite("start", &Segment::start)
                        .def_readwrite("end", &Segment::end)
-                       .def_readwrite("region", &Segment::region)};
+                       .def_readwrite("region", &Segment::region)
+                       .def_readwrite("color", &Segment::color)
+                       .def_readwrite("name", &Segment::name)};
         addEquality(segment);
     }
 
@@ -219,81 +226,6 @@ namespace
         addEquality(numerics);
     }
 
-    void bindMaterial(py::module_ & model)
-    {
-        auto material{
-          py::class_<Material>(model,
-                               "Material",
-                               "One material's thermal and hygric properties, as the caller states them. Required: "
-                               "a name, a vapour resistance factor and a sorption isotherm; the thermal properties "
-                               "default to zero so a moisture-only case need not invent them. Curves are lists of "
-                               "(x, y) pairs.")
-            .def(py::init([](std::string name,
-                             const double diffusionResistanceFactor,
-                             Curve sorptionCurve,
-                             Curve liquidTransportCurve,
-                             Curve muCurve,
-                             const double density,
-                             const double heatCapacity,
-                             const double thermalConductivity,
-                             const double thermalConductivityBeta,
-                             const double thermalConductivityMoistureSlope,
-                             const double porosity) {
-                     return Material{std::move(name),
-                                     diffusionResistanceFactor,
-                                     std::move(sorptionCurve),
-                                     std::move(liquidTransportCurve),
-                                     std::move(muCurve),
-                                     density,
-                                     heatCapacity,
-                                     thermalConductivity,
-                                     thermalConductivityBeta,
-                                     thermalConductivityMoistureSlope,
-                                     porosity};
-                 }),
-                 py::arg("name"),
-                 py::arg("diffusion_resistance_factor"),
-                 py::arg("sorption_curve"),
-                 py::arg("liquid_transport_curve") = Curve{},
-                 py::arg("mu_curve") = Curve{},
-                 py::arg("density") = 0.0,
-                 py::arg("heat_capacity") = 0.0,
-                 py::arg("thermal_conductivity") = 0.0,
-                 py::arg("thermal_conductivity_beta") = 0.0,
-                 py::arg("thermal_conductivity_moisture_slope") = 0.0,
-                 py::arg("porosity") = 0.0)
-            .def_readwrite("name", &Material::name)
-            .def_readwrite("diffusion_resistance_factor", &Material::diffusionResistanceFactor)
-            .def_readwrite("sorption_curve", &Material::sorptionCurve)
-            .def_readwrite("liquid_transport_curve", &Material::liquidTransportCurve)
-            .def_readwrite("mu_curve", &Material::muCurve)
-            .def_readwrite("density", &Material::density)
-            .def_readwrite("heat_capacity", &Material::heatCapacity)
-            .def_readwrite("thermal_conductivity", &Material::thermalConductivity)
-            .def_readwrite("thermal_conductivity_beta", &Material::thermalConductivityBeta)
-            .def_readwrite("thermal_conductivity_moisture_slope", &Material::thermalConductivityMoistureSlope)
-            .def_readwrite("porosity", &Material::porosity)};
-        addEquality(material);
-    }
-
-    void bindMaterialRecords(py::module_ & build)
-    {
-        build.def("material_uuid", &materialUuid, py::arg("name"),
-                  "The record UUID for a material name, the same on every machine and run.");
-        build.def("material_color", &materialColor, py::arg("name"),
-                  "THERM's polygon fill colour for a material name, 0xRRGGBB, the same in every archive.");
-        build.def("max_water_content", &maxWaterContent, py::arg("material"),
-                  "The isotherm's last value: the water-content axis end of every w-keyed table.");
-        build.def("water_content", &waterContent, py::arg("material"), py::arg("humidity"),
-                  "The sorption isotherm at a humidity: linear interpolation, clamped at the table's ends.");
-        build.def("resistance_factor_by_water_content", &resistanceFactorByWaterContent, py::arg("material"),
-                  "The mu(phi) curve re-keyed by water content through the isotherm; empty without a curve.");
-        build.def("library_material", &libraryMaterial, py::arg("material"),
-                  "The model material as a THERM library record, ready for a MaterialsDB.");
-        build.def("materials_database", &materialsDatabase, py::arg("materials"),
-                  "A materials library holding the given materials, one record per distinct name.");
-    }
-
     void bindCase(py::module_ & model)
     {
         auto modelCase{
@@ -343,6 +275,17 @@ namespace
         model.def("segment_region", &segmentRegion, py::arg("model_case"), py::arg("index"),
                       "The region the segment at the given index is attached to: the one it names, or the "
                       "only region whose edge carries it. None when issues() would report the segment.");
+        model.def("kind_color", &kindColor, py::arg("boundary"),
+                  "The colour a boundary kind is drawn in when a segment states none, 0xRRGGBB: black for "
+                  "Adiabatic, as THERM draws its own record. The writer puts it on the kind's library record too.");
+        model.def("segment_color", &segmentColor, py::arg("segment"),
+                  "The colour a segment is drawn in, 0xRRGGBB: its own, or its kind's.");
+        model.def("outline_gaps", &outlineGaps, py::arg("model_case"),
+                  "The adiabatic segments the case leaves unstated: every stretch of a region's edge that no "
+                  "other region's edge and no stated segment covers. Empty when every outside face is stated.");
+        model.def("completed", &completed, py::arg("model_case"),
+                  "The case with its outline gaps appended as adiabatic segments, after the stated ones. This "
+                  "is what build writes; a caller states only the faces that exchange something.");
     }
 
     void bindArchive(py::module_ & build)
@@ -415,15 +358,11 @@ namespace
 void bind_case(py::module_ & mod)
 {
     auto model{mod.def_submodule("model", "State a THERM model in physical terms; see pylibraryfemtherm docs.")};
-    // Material before Geometry: a Region takes one, and pybind11 names a parameter's type
-    // in the signature only if the type is already registered.
-    bindMaterial(model);
     bindGeometry(model);
     bindBoundaryKinds(model);
     bindSettings(model);
     bindCase(model);
 
     auto build{mod.def_submodule("build", "Turn a stated model into the archive THERM would have saved.")};
-    bindMaterialRecords(build);
     bindArchive(build);
 }

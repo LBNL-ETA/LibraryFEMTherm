@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "Model/Archive.hxx"
-#include "Model/Materials.hxx"
+#include "Materials/FromValues.hxx"
 #include "THMZ/Model/DB.hxx"
 #include "THMZ/ZipModule/ZipModule.hxx"
 #include "TimeSeriesData/DB.hxx"
@@ -19,36 +19,19 @@ namespace
 {
     constexpr double tolerance{1e-12};
 
-    Material stucco()
+    MaterialsLibrary::Material stucco()
     {
-        return Material{.name = "Stucco",
-                        .diffusionResistanceFactor = 25.0,
-                        .sorptionCurve = {{0.0, 0.0}, {0.8, 30.0}, {1.0, 180.0}},
-                        .density = 1800.0,
-                        .heatCapacity = 850.0,
-                        .thermalConductivity = 0.8,
-                        .porosity = 0.3};
+        return MaterialsLibrary::fromValues("Stucco", 25.0, {{0.0, 0.0}, {0.8, 30.0}, {1.0, 180.0}}, {}, {}, 1800.0, 850.0, 0.8, 0.0, 0.0, 0.3);
     }
 
-    Material cottaerSandstone()
+    MaterialsLibrary::Material cottaerSandstone()
     {
-        return Material{.name = "Cottaer Sandstone",
-                        .diffusionResistanceFactor = 15.0,
-                        .sorptionCurve = {{0.0, 0.0}, {0.8, 27.0}, {1.0, 180.0}},
-                        .density = 2050.0,
-                        .heatCapacity = 850.0,
-                        .thermalConductivity = 1.8,
-                        .porosity = 0.22};
+        return MaterialsLibrary::fromValues("Cottaer Sandstone", 15.0, {{0.0, 0.0}, {0.8, 27.0}, {1.0, 180.0}}, {}, {}, 2050.0, 850.0, 1.8, 0.0, 0.0, 0.22);
     }
 
-    Material linearSorption()
+    MaterialsLibrary::Material linearSorption()
     {
-        return Material{.name = "linear-sorption",
-                        .diffusionResistanceFactor = 10.0,
-                        .sorptionCurve = {{0.0, 0.0}, {1.0, 100.0}},
-                        .density = 1000.0,
-                        .heatCapacity = 1000.0,
-                        .thermalConductivity = 1.0};
+        return MaterialsLibrary::fromValues("linear-sorption", 10.0, {{0.0, 0.0}, {1.0, 100.0}}, {}, {}, 1000.0, 1000.0, 1.0);
     }
 
     //! A general 2D model: two rectangles of different materials, six segments.
@@ -120,6 +103,36 @@ TEST(Build, SegmentsAttachToTheRegionFoundWhenNoneIsNamed)
     {
         EXPECT_EQ(found.boundaryConditions[index].neighborPolygonUUID, named.boundaryConditions[index].neighborPolygonUUID);
     }
+}
+
+TEST(Build, SegmentsAndRecordsCarryTheirColours)
+{
+    auto stated{sealedStrip()};
+    stated.segments = {stated.segments[1], stated.segments[3]};
+    stated.segments[0].color = "0xE07A1F";
+    const auto built{model(stated)};
+    ASSERT_EQ(built.boundaryConditions.size(), 4U);
+    EXPECT_EQ(built.boundaryConditions[0].color, "0xE07A1F");
+    EXPECT_EQ(built.boundaryConditions[1].color, kindColor(Prescribed{}));
+    EXPECT_EQ(built.boundaryConditions[2].color, "0x000000");
+    const auto records{libraries(stated).boundaryConditions};
+    EXPECT_EQ(records.getByName("Prescribed temperature")->Color, kindColor(Prescribed{}));
+    EXPECT_EQ(records.getByName("Adiabatic")->Color, "0x000000");
+}
+
+TEST(Build, UnstatedFacesAreWrittenAdiabatic)
+{
+    auto stated{sealedStrip()};
+    stated.segments = {stated.segments[1], stated.segments[3]};   // the two prescribed ends
+    const auto built{model(stated)};
+    ASSERT_EQ(built.boundaryConditions.size(), 4U);
+    EXPECT_EQ(built.boundaryConditions[0].name, "Prescribed temperature");
+    EXPECT_EQ(built.boundaryConditions[2].name, "Adiabatic");
+    EXPECT_EQ(built.boundaryConditions[3].name, "Adiabatic");
+    auto names{libraries(stated).boundaryConditions.getNames()};
+    std::ranges::sort(names);
+    EXPECT_EQ(names, (std::vector<std::string>{"Adiabatic", "Prescribed temperature"}));
+    EXPECT_EQ(boundaryDatasets(stated).size(), 2U);
 }
 
 TEST(Build, RegionsBecomePolygonsInMillimetres)
@@ -288,7 +301,7 @@ TEST(Build, EntriesCarryEveryLibrary)
 TEST(Build, AnInvalidCaseIsRefusedWithItsIssues)
 {
     auto modelCase{sealedStrip()};
-    modelCase.regions[0].material.name.clear();
+    modelCase.regions[0].material.Name.clear();
     modelCase.schedule.nSteps = 0U;
 
     const auto entries{archiveEntries(modelCase)};

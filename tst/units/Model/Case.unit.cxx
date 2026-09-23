@@ -1,20 +1,15 @@
 #include <gtest/gtest.h>
 
 #include "Model/Case.hxx"
+#include "Materials/FromValues.hxx"
 
 using namespace ThermFile::Model;
 
 namespace
 {
-    Material stucco()
+    MaterialsLibrary::Material stucco()
     {
-        return Material{.name = "Stucco",
-                        .diffusionResistanceFactor = 25.0,
-                        .sorptionCurve = {{0.0, 0.0}, {0.8, 30.0}, {1.0, 180.0}},
-                        .density = 1800.0,
-                        .heatCapacity = 850.0,
-                        .thermalConductivity = 0.8,
-                        .porosity = 0.3};
+        return MaterialsLibrary::fromValues("Stucco", 25.0, {{0.0, 0.0}, {0.8, 30.0}, {1.0, 180.0}}, {}, {}, 1800.0, 850.0, 0.8, 0.0, 0.0, 0.3);
     }
 
     //! A strip of one material, sealed top and bottom, a condition on each end.
@@ -84,6 +79,16 @@ TEST(Model, SegmentOffTheOutlineIsAnIssue)
     EXPECT_EQ(found[0], "segment 1 from (0, 0) to (0.1, 0.002) does not lie along an edge of any region");
 }
 
+TEST(Model, ANamedSegmentIsNamedInItsIssue)
+{
+    auto modelCase{strip()};
+    modelCase.segments[1].name = "bottom";
+    modelCase.segments[1].end = {0.1, 0.002};
+    const auto found{issues(modelCase)};
+    ASSERT_EQ(found.size(), 1U);
+    EXPECT_EQ(found[0], "segment 1 'bottom' from (0, 0) to (0.1, 0.002) does not lie along an edge of any region");
+}
+
 TEST(Model, NamedRegionIsCheckedAsNamed)
 {
     auto modelCase{strip()};
@@ -150,24 +155,24 @@ TEST(Model, OutlineIsNotCheckedForARegionAlreadyReported)
 TEST(Model, NamelessMaterialIsAnIssue)
 {
     auto modelCase{strip()};
-    modelCase.regions[0].material.name.clear();
+    modelCase.regions[0].material.Name.clear();
     const auto found{issues(modelCase)};
     ASSERT_EQ(found.size(), 1U);
     EXPECT_EQ(found[0], "region 0 has a material with no name");
 }
 
-TEST(Model, OneNameWithTwoDefinitionsIsAnIssue)
+TEST(Model, OneNameWithTwoRecordsIsAnIssue)
 {
     auto modelCase{strip()};
-    auto denser{stucco()};
-    denser.density = 1900.0;
-    modelCase.regions.push_back({.material = denser, .points = {{0.1, 0.0}, {0.2, 0.0}, {0.2, 0.01}, {0.1, 0.01}}});
+    auto another{stucco()};
+    another.UUID = "another-record";
+    modelCase.regions.push_back({.material = another, .points = {{0.1, 0.0}, {0.2, 0.0}, {0.2, 0.01}, {0.1, 0.01}}});
     modelCase.segments[2].region = 0U;   // the shared edge, attributed
     const auto found{issues(modelCase)};
     ASSERT_EQ(found.size(), 1U);
     EXPECT_EQ(found[0],
-              "regions 0 and 1 both use a material named 'Stucco' with different properties; the library keeps one "
-              "record per name");
+              "regions 0 and 1 carry two different materials both named 'Stucco'; the library keeps one record per "
+              "name");
 
     modelCase.regions[1].material = stucco();
     EXPECT_TRUE(issues(modelCase).empty());
@@ -186,7 +191,7 @@ TEST(Model, BadScheduleIsTwoIssues)
 TEST(Model, IssuesAccumulate)
 {
     auto modelCase{strip()};
-    modelCase.regions[0].material.name.clear();
+    modelCase.regions[0].material.Name.clear();
     modelCase.segments[0].region = 9U;
     modelCase.schedule.nSteps = 0U;
     EXPECT_EQ(issues(modelCase).size(), 3U);
@@ -196,9 +201,82 @@ TEST(Model, MaterialLookup)
 {
     const auto modelCase{strip()};
     ASSERT_TRUE(regionMaterial(modelCase, 0U).has_value());
-    EXPECT_EQ(regionMaterial(modelCase, 0U)->name, "Stucco");
-    EXPECT_NEAR(regionMaterial(modelCase, 0U)->density, 1800.0, 1e-9);
+    EXPECT_EQ(regionMaterial(modelCase, 0U)->Name, "Stucco");
+    EXPECT_NEAR(regionMaterial(modelCase, 0U)->data.hygroThermal->BulkDensity.value(), 1800.0, 1e-9);
     EXPECT_FALSE(regionMaterial(modelCase, 1U).has_value());
+}
+
+TEST(Model, OutlineGapsAreEmptyWhenEveryFaceIsStated)
+{
+    EXPECT_TRUE(outlineGaps(strip()).empty());
+    EXPECT_EQ(completed(strip()), strip());
+}
+
+TEST(Model, UnstatedFacesBecomeAdiabaticSegments)
+{
+    auto modelCase{strip()};
+    modelCase.segments = {modelCase.segments[0], modelCase.segments[2]};   // the two ends only
+    const auto gaps{outlineGaps(modelCase)};
+    ASSERT_EQ(gaps.size(), 2U);
+    EXPECT_TRUE(std::holds_alternative<Adiabatic>(gaps[0].kind));
+    EXPECT_NEAR(gaps[0].start.x, 0.0, 1e-12);   // the bottom, in the edge's drawing direction
+    EXPECT_NEAR(gaps[0].end.x, 0.1, 1e-12);
+    EXPECT_NEAR(gaps[0].end.y, 0.0, 1e-12);
+    EXPECT_NEAR(gaps[1].start.x, 0.1, 1e-12);   // the top
+    EXPECT_NEAR(gaps[1].end.x, 0.0, 1e-12);
+    EXPECT_NEAR(gaps[1].start.y, 0.01, 1e-12);
+    EXPECT_EQ(gaps[0].region, std::optional{std::size_t{0U}});
+
+    const auto full{completed(modelCase)};
+    EXPECT_EQ(full.segments.size(), 4U);
+    EXPECT_EQ(full.segments[0], modelCase.segments[0]);
+    EXPECT_TRUE(outlineGaps(full).empty());
+}
+
+TEST(Model, AStatedSpanLeavesTheRestOfItsEdgeToFill)
+{
+    auto modelCase{strip()};
+    modelCase.segments[1] = {.kind = Prescribed{.temperature = 5.0}, .start = {0.02, 0.0}, .end = {0.07, 0.0}};
+    const auto gaps{outlineGaps(modelCase)};
+    ASSERT_EQ(gaps.size(), 2U);
+    EXPECT_NEAR(gaps[0].start.x, 0.0, 1e-12);
+    EXPECT_NEAR(gaps[0].end.x, 0.02, 1e-12);
+    EXPECT_NEAR(gaps[1].start.x, 0.07, 1e-12);
+    EXPECT_NEAR(gaps[1].end.x, 0.1, 1e-12);
+}
+
+TEST(Model, ASharedEdgeIsNotOutline)
+{
+    auto modelCase{strip()};
+    modelCase.regions.push_back({.material = stucco(), .points = {{0.1, 0.0}, {0.2, 0.0}, {0.2, 0.01}, {0.1, 0.01}}});
+    modelCase.segments = {modelCase.segments[0]};   // only the left end stated
+    const auto gaps{outlineGaps(modelCase)};
+    // First rectangle: bottom, top. Second: bottom, right end, top. Nothing at x = 0.1.
+    ASSERT_EQ(gaps.size(), 5U);
+    for(const auto & gap : gaps)
+    {
+        EXPECT_FALSE(std::abs(gap.start.x - 0.1) < 1e-12 && std::abs(gap.end.x - 0.1) < 1e-12);
+    }
+}
+
+TEST(Model, ANeighbourCoveringPartOfAnEdgeLeavesTheRestOutline)
+{
+    auto modelCase{strip()};
+    modelCase.segments.clear();
+    // A block 0.02 wide sitting on the middle of the strip's top edge.
+    modelCase.regions.push_back({.material = stucco(), .points = {{0.04, 0.01}, {0.06, 0.01}, {0.06, 0.02}, {0.04, 0.02}}});
+    // Strip: bottom, right, two pieces of the top, left. Block: right, top, left.
+    EXPECT_EQ(outlineGaps(modelCase).size(), 8U);
+}
+
+TEST(Model, ColoursComeFromTheKindUnlessStated)
+{
+    EXPECT_EQ(kindColor(Adiabatic{}), "0x000000");
+    EXPECT_NE(kindColor(Prescribed{}), kindColor(Convective{}));
+    Segment segment{.kind = Convective{}, .start = {0.0, 0.0}, .end = {0.1, 0.0}};
+    EXPECT_EQ(segmentColor(segment), kindColor(Convective{}));
+    segment.color = "0xE07A1F";
+    EXPECT_EQ(segmentColor(segment), "0xE07A1F");
 }
 
 TEST(Model, RecordNamesAreFixedPerKind)

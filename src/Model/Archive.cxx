@@ -9,8 +9,9 @@
 #include "TimeSeriesData/DB.hxx"
 #include "TimeSeriesData/Tags.hxx"
 
+#include "Materials/FromValues.hxx"
+
 #include "Archive.hxx"
-#include "Materials.hxx"
 
 namespace ThermFile::Build
 {
@@ -18,22 +19,23 @@ namespace ThermFile::Build
     // using-directive: Model::Point and Model::Boundary must win over ThermFile's own.
     using Model::Adiabatic;
     using Model::Boundary;
+    using Model::completed;
     using Model::Convective;
-    using Model::Material;
     using Model::ModelCase;
     using Model::Point;
     using Model::Prescribed;
     using Model::Schedule;
     using Model::issues;
     using Model::recordName;
+    using Model::segmentColor;
     using Model::segmentRegion;
+    using Model::kindColor;
 
     namespace
     {
         constexpr double mmPerM{1000.0};
 
-        //! THERM's boundary colour and the "use the material's emissivity" marker it writes.
-        constexpr const char * boundaryColor{"0x000000"};
+        //! The "use the material's emissivity" marker THERM writes on a boundary.
         constexpr double globalEmissivityMarker{-1.0};
 
         const std::string emptyGases{"<Gases>\n\t<Version>1</Version>\n</Gases>\n"};
@@ -122,8 +124,8 @@ namespace ThermFile::Build
             Polygon result;
             result.uuid = caseUuid(modelCase, std::format("region/{}", index));
             result.ID = static_cast<int>(index) + 1;
-            result.materialUUID = materialUuid(material.name);
-            result.materialName = material.name;
+            result.materialUUID = material.UUID;
+            result.materialName = material.Name;
             result.polygonType = PolygonType::Material;
             for(const auto & corner : region.points)
             {
@@ -149,7 +151,7 @@ namespace ThermFile::Build
             result.startPoint = pagePoint(segment.start);
             result.endPoint = pagePoint(segment.end);
             result.surfaceType = SurfaceType::BoundaryCondition;
-            result.color = boundaryColor;
+            result.color = segmentColor(segment);
             result.status = 1;
             result.thermalEmissionProperties.emissivity = globalEmissivityMarker;
             result.thermalEmissionProperties.useGlobalEmissivity = true;
@@ -214,6 +216,7 @@ namespace ThermFile::Build
         BCLibrary::BoundaryCondition record;
         record.UUID = recordUuid(name);
         record.Name = name;
+        record.Color = kindColor(boundary);
         if(std::holds_alternative<Adiabatic>(boundary))
         {
             // THERM's own record, as it ships: protected, owned by no project.
@@ -254,8 +257,9 @@ namespace ThermFile::Build
         return values;
     }
 
-    std::map<std::size_t, TimeSeriesLibrary::TimeSeriesData> boundaryDatasets(const ModelCase & modelCase)
+    std::map<std::size_t, TimeSeriesLibrary::TimeSeriesData> boundaryDatasets(const ModelCase & stated)
     {
+        const auto modelCase{completed(stated)};
         std::map<std::size_t, TimeSeriesLibrary::TimeSeriesData> datasets;
         for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
         {
@@ -272,8 +276,9 @@ namespace ThermFile::Build
         return datasets;
     }
 
-    ThermModel model(const ModelCase & modelCase)
+    ThermModel model(const ModelCase & stated)
     {
+        const auto modelCase{completed(stated)};
         const auto datasets{boundaryDatasets(modelCase)};
         ThermModel result;
         result.calculationReady = true;
@@ -300,9 +305,10 @@ namespace ThermFile::Build
         return result;
     }
 
-    Libraries libraries(const ModelCase & modelCase)
+    Libraries libraries(const ModelCase & stated)
     {
-        std::vector<Material> used;
+        const auto modelCase{completed(stated)};
+        std::vector<MaterialsLibrary::Material> used;
         for(const auto & region : modelCase.regions)
         {
             used.push_back(region.material);
@@ -323,7 +329,7 @@ namespace ThermFile::Build
         {
             datasets.push_back(data);
         }
-        return Libraries{.materials = materialsDatabase(used),
+        return Libraries{.materials = MaterialsLibrary::materialsDatabase(used),
                          .boundaryConditions = std::move(records),
                          .datasets = std::move(datasets)};
     }

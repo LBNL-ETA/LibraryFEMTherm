@@ -51,6 +51,143 @@ namespace ThermFile::Model
             return false;
         }
 
+        // --------------------------------------------------------------------------------
+        // The outline: the parts of region edges nothing covers
+        // --------------------------------------------------------------------------------
+
+        //! A stretch of an edge, as fractions of its length from its start.
+        struct Span
+        {
+            double start{0.0};
+            double end{0.0};
+        };
+
+        double edgeLength(const Point & edgeStart, const Point & edgeEnd)
+        {
+            return std::hypot(edgeEnd.x - edgeStart.x, edgeEnd.y - edgeStart.y);
+        }
+
+        //! Distance from a point to the infinite line through an edge.
+        double distanceToLine(const Point & point, const Point & edgeStart, const Point & edgeEnd)
+        {
+            const double length{edgeLength(edgeStart, edgeEnd)};
+            if(length <= 0.0)
+            {
+                return edgeLength(point, edgeStart);
+            }
+            const double cross{(edgeEnd.x - edgeStart.x) * (point.y - edgeStart.y)
+                               - (edgeEnd.y - edgeStart.y) * (point.x - edgeStart.x)};
+            return std::abs(cross) / length;
+        }
+
+        //! Where a point on the line falls along the edge: 0 at its start, 1 at its end.
+        double parameterAlong(const Point & point, const Point & edgeStart, const Point & edgeEnd)
+        {
+            const double edgeX{edgeEnd.x - edgeStart.x};
+            const double edgeY{edgeEnd.y - edgeStart.y};
+            return ((point.x - edgeStart.x) * edgeX + (point.y - edgeStart.y) * edgeY) / (edgeX * edgeX + edgeY * edgeY);
+        }
+
+        Point along(const Point & edgeStart, const Point & edgeEnd, const double parameter)
+        {
+            return Point{edgeStart.x + parameter * (edgeEnd.x - edgeStart.x),
+                         edgeStart.y + parameter * (edgeEnd.y - edgeStart.y)};
+        }
+
+        //! The stretch of an edge a straight piece covers, if the piece is collinear with it
+        //! and the overlap is longer than the tolerance.
+        std::optional<Span>
+          coveredBy(const Point & pieceStart, const Point & pieceEnd, const Point & edgeStart, const Point & edgeEnd)
+        {
+            if(distanceToLine(pieceStart, edgeStart, edgeEnd) > outlineTolerance
+               || distanceToLine(pieceEnd, edgeStart, edgeEnd) > outlineTolerance)
+            {
+                return std::nullopt;
+            }
+            const double first{parameterAlong(pieceStart, edgeStart, edgeEnd)};
+            const double second{parameterAlong(pieceEnd, edgeStart, edgeEnd)};
+            const Span span{.start = std::clamp(std::min(first, second), 0.0, 1.0),
+                            .end = std::clamp(std::max(first, second), 0.0, 1.0)};
+            if((span.end - span.start) * edgeLength(edgeStart, edgeEnd) <= outlineTolerance)
+            {
+                return std::nullopt;
+            }
+            return span;
+        }
+
+        //! Every stretch of the edge covered by another region's edge or by a stated segment.
+        std::vector<Span> coveredSpans(const ModelCase & modelCase,
+                                       const std::size_t regionIndex,
+                                       const Point & edgeStart,
+                                       const Point & edgeEnd)
+        {
+            std::vector<Span> spans;
+            const auto consider{[&](const Point & pieceStart, const Point & pieceEnd) {
+                if(const auto span{coveredBy(pieceStart, pieceEnd, edgeStart, edgeEnd)})
+                {
+                    spans.push_back(span.value());
+                }
+            }};
+            for(std::size_t other = 0U; other < modelCase.regions.size(); ++other)
+            {
+                const auto & theirs{modelCase.regions[other].points};
+                for(std::size_t corner = 0U; other != regionIndex && corner < theirs.size(); ++corner)
+                {
+                    consider(theirs[corner], theirs[(corner + 1U) % theirs.size()]);
+                }
+            }
+            for(const auto & segment : modelCase.segments)
+            {
+                consider(segment.start, segment.end);
+            }
+            return spans;
+        }
+
+        //! The complement of the covered stretches within [0, 1], ignoring gaps shorter
+        //! than the tolerance (given as a fraction of the edge).
+        std::vector<Span> gapsBetween(std::vector<Span> covered, const double fractionTolerance)
+        {
+            std::ranges::sort(covered, {}, &Span::start);
+            std::vector<Span> gaps;
+            double reached{0.0};
+            for(const auto & span : covered)
+            {
+                if(span.start - reached > fractionTolerance)
+                {
+                    gaps.push_back(Span{.start = reached, .end = span.start});
+                }
+                reached = std::max(reached, span.end);
+            }
+            if(1.0 - reached > fractionTolerance)
+            {
+                gaps.push_back(Span{.start = reached, .end = 1.0});
+            }
+            return gaps;
+        }
+
+        //! The adiabatic segments one edge of a region needs.
+        std::vector<Segment> edgeGaps(const ModelCase & modelCase, const std::size_t regionIndex, const std::size_t corner)
+        {
+            const auto & points{modelCase.regions[regionIndex].points};
+            const Point & edgeStart{points[corner]};
+            const Point & edgeEnd{points[(corner + 1U) % points.size()]};
+            const double length{edgeLength(edgeStart, edgeEnd)};
+            std::vector<Segment> found;
+            if(length <= outlineTolerance)
+            {
+                return found;
+            }
+            const auto covered{coveredSpans(modelCase, regionIndex, edgeStart, edgeEnd)};
+            for(const auto & gap : gapsBetween(covered, outlineTolerance / length))
+            {
+                found.push_back(Segment{.kind = Adiabatic{},
+                                        .start = along(edgeStart, edgeEnd, gap.start),
+                                        .end = along(edgeStart, edgeEnd, gap.end),
+                                        .region = regionIndex});
+            }
+            return found;
+        }
+
         void checkRegions(const ModelCase & modelCase, std::vector<std::string> & found)
         {
             if(modelCase.regions.empty())
@@ -66,15 +203,15 @@ namespace ThermFile::Model
                                                 index,
                                                 region.points.size()));
                 }
-                if(region.material.name.empty())
+                if(region.material.Name.empty())
                 {
                     found.push_back(std::format("region {} has a material with no name", index));
                 }
             }
         }
 
-        //! The library keeps one record per material name, so two regions that use the
-        //! same name must state the same material.
+        //! The archive's library keeps one record per UUID and THERM finds records by name,
+        //! so two regions whose materials share a name must carry the same record.
         void checkMaterialNames(const ModelCase & modelCase, std::vector<std::string> & found)
         {
             const auto & regions{modelCase.regions};
@@ -84,13 +221,13 @@ namespace ThermFile::Model
                 {
                     const auto & mine{regions[first].material};
                     const auto & theirs{regions[second].material};
-                    if(mine.name == theirs.name && mine != theirs)
+                    if(mine.Name == theirs.Name && mine.UUID != theirs.UUID)
                     {
-                        found.push_back(std::format("regions {} and {} both use a material named '{}' with "
-                                                    "different properties; the library keeps one record per name",
+                        found.push_back(std::format("regions {} and {} carry two different materials both named "
+                                                    "'{}'; the library keeps one record per name",
                                                     first,
                                                     second,
-                                                    mine.name));
+                                                    mine.Name));
                     }
                 }
             }
@@ -112,8 +249,10 @@ namespace ThermFile::Model
 
         std::string describe(const std::size_t index, const Segment & segment)
         {
-            return std::format("segment {} from ({}, {}) to ({}, {})",
-                               index,
+            const std::string who{segment.name.has_value() ? std::format("segment {} '{}'", index, segment.name.value())
+                                                           : std::format("segment {}", index)};
+            return std::format("{} from ({}, {}) to ({}, {})",
+                               who,
                                segment.start.x,
                                segment.start.y,
                                segment.end.x,
@@ -216,7 +355,56 @@ namespace ThermFile::Model
         return segment.region.has_value() ? segment.region : std::optional{regionsAlong(modelCase, segment)[0]};
     }
 
-    std::optional<Material> regionMaterial(const ModelCase & modelCase, const std::size_t index)
+    std::string kindColor(const Boundary & boundary)
+    {
+        return std::visit(
+          [](const auto & kind) -> std::string {
+              using Kind = std::decay_t<decltype(kind)>;
+              if constexpr(std::is_same_v<Kind, Adiabatic>)
+              {
+                  return "0x000000";
+              }
+              else if constexpr(std::is_same_v<Kind, Prescribed>)
+              {
+                  return "0xD32F2F";
+              }
+              else
+              {
+                  return "0x1E5A96";
+              }
+          },
+          boundary);
+    }
+
+    std::string segmentColor(const Segment & segment)
+    {
+        return segment.color.value_or(kindColor(segment.kind));
+    }
+
+    std::vector<Segment> outlineGaps(const ModelCase & modelCase)
+    {
+        std::vector<Segment> found;
+        for(std::size_t regionIndex = 0U; regionIndex < modelCase.regions.size(); ++regionIndex)
+        {
+            const auto & points{modelCase.regions[regionIndex].points};
+            for(std::size_t corner = 0U; points.size() >= 3U && corner < points.size(); ++corner)
+            {
+                const auto gaps{edgeGaps(modelCase, regionIndex, corner)};
+                found.insert(found.end(), gaps.begin(), gaps.end());
+            }
+        }
+        return found;
+    }
+
+    ModelCase completed(const ModelCase & modelCase)
+    {
+        auto result{modelCase};
+        const auto gaps{outlineGaps(modelCase)};
+        result.segments.insert(result.segments.end(), gaps.begin(), gaps.end());
+        return result;
+    }
+
+    std::optional<MaterialsLibrary::Material> regionMaterial(const ModelCase & modelCase, const std::size_t index)
     {
         if(index >= modelCase.regions.size())
         {

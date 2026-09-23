@@ -1,13 +1,14 @@
 #pragma once
 
 #include <cstddef>
-#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
+
+#include "Materials/Materials.hxx"
 
 //! A THERM model stated in physical terms, for writing an archive from code.
 //!
@@ -32,9 +33,6 @@ namespace ThermFile::Model
 
         [[nodiscard]] friend bool operator==(const Point & lhs, const Point & rhs) = default;
     };
-
-    //! A table of (x, y) samples, interpolated linearly by whoever reads it.
-    using Curve = std::vector<std::pair<double, double>>;
 
     // ------------------------------------------------------------------------------------
     // Boundary kinds
@@ -72,51 +70,26 @@ namespace ThermFile::Model
     using Boundary = std::variant<Adiabatic, Prescribed, Convective>;
 
     // ------------------------------------------------------------------------------------
-    // Material
-    // ------------------------------------------------------------------------------------
-
-    //! One material's thermal and hygric properties, as a caller states them. The only
-    //! required fields are a name, a vapour resistance factor and a sorption isotherm; the
-    //! thermal properties default to zero so a moisture-only case need not invent them.
-    //! Materials.hxx converts one of these into the library record THERM stores.
-    struct Material
-    {
-        std::string name;
-        //! mu [-], the factor by which the material resists vapour diffusion relative to
-        //! still air. Stands alone unless muCurve is given.
-        double diffusionResistanceFactor{0.0};
-        //! (phi, w) with w in kg/m³: total water content against relative humidity.
-        Curve sorptionCurve;
-        //! (w, D_l) with D_l in m²/s. Empty: no liquid transport.
-        Curve liquidTransportCurve;
-        //! (phi, mu). Empty: the scalar factor above. Given: mu varies with humidity.
-        Curve muCurve;
-        double density{0.0};                             //!< dry, kg/m³
-        double heatCapacity{0.0};                        //!< dry, J/(kg K)
-        double thermalConductivity{0.0};                 //!< dry, W/(m K)
-        //! k(T) = thermalConductivity (1 + beta T). Zero keeps it constant.
-        double thermalConductivityBeta{0.0};
-        //! k(w) = thermalConductivity + slope w. Zero keeps it constant.
-        double thermalConductivityMoistureSlope{0.0};
-        double porosity{0.0};                            //!< total, [-]
-
-        [[nodiscard]] friend bool operator==(const Material & lhs, const Material & rhs) = default;
-    };
-
-    // ------------------------------------------------------------------------------------
     // Geometry
     // ------------------------------------------------------------------------------------
 
     //! One material polygon: its corners in metres, in drawing order, each given once and
-    //! the polygon closed implicitly, and the material filling it. Regions that share a
-    //! material state the same one; the archive's library keeps one record per material
-    //! name.
+    //! the polygon closed implicitly, and the material filling it -- a record of THERM's
+    //! materials library, whether stated from numbers (MaterialsLibrary::fromValues), taken from a
+    //! library or read back from a file. Regions that share a material carry the same
+    //! record; the archive's library keeps one record per UUID.
     struct Region
     {
-        Material material;
+        MaterialsLibrary::Material material;
         std::vector<Point> points;
 
-        [[nodiscard]] friend bool operator==(const Region & lhs, const Region & rhs) = default;
+        //! Two regions are the same region when they carry the same material record, by
+        //! identity, over the same corners; a record's tables are not compared.
+        [[nodiscard]] friend bool operator==(const Region & lhs, const Region & rhs)
+        {
+            return lhs.material.UUID == rhs.material.UUID && lhs.material.Name == rhs.material.Name
+                   && lhs.points == rhs.points;
+        }
     };
 
     //! One boundary segment: a straight line between two points on a region's outline, the
@@ -130,9 +103,24 @@ namespace ThermFile::Model
         Point start;
         Point end;
         std::optional<std::size_t> region{};
+        //! The colour THERM draws the segment in, 0xRRGGBB. Unset, the kind's own colour
+        //! (see kindColor).
+        std::optional<std::string> color{};
+        //! What the caller calls the face, for plots and messages: "outside", "room side".
+        //! Not written to the file, whose segment name is the record's.
+        std::optional<std::string> name{};
 
         [[nodiscard]] friend bool operator==(const Segment & lhs, const Segment & rhs) = default;
     };
+
+    //! The colour a boundary kind is drawn in when a segment states none, 0xRRGGBB:
+    //! black for Adiabatic, as THERM draws its own record, and two colours THERM's shipped
+    //! records do not use for the other kinds. The writer puts it on the kind's library
+    //! record too, so THERM shows the same colours a plot of the case does.
+    [[nodiscard]] std::string kindColor(const Boundary & boundary);
+
+    //! The colour a segment is drawn in: its own, or its kind's.
+    [[nodiscard]] std::string segmentColor(const Segment & segment);
 
     // ------------------------------------------------------------------------------------
     // Settings
@@ -221,9 +209,22 @@ namespace ThermFile::Model
     //! when it names none and more than one region does -- each of which issues() reports.
     [[nodiscard]] std::optional<std::size_t> segmentRegion(const ModelCase & modelCase, std::size_t index);
 
-    //! The material filling the region at the given index, or nothing if the index is out
-    //! of range.
-    [[nodiscard]] std::optional<Material> regionMaterial(const ModelCase & modelCase, std::size_t index);
+    //! The adiabatic segments the case leaves unstated: every stretch of a region's edge
+    //! that no other region's edge and no stated segment covers lies on the outside of the
+    //! model, and a face nothing is said about is one nothing crosses. Each is attached to
+    //! its region and runs in the edge's drawing direction. Empty when every outside face
+    //! is stated. Regions with fewer than three points have no edges and are skipped.
+    [[nodiscard]] std::vector<Segment> outlineGaps(const ModelCase & modelCase);
+
+    //! The case with its outline gaps appended as adiabatic segments, after the stated
+    //! ones so their indices hold. This is what the Build namespace writes; a caller states
+    //! only the faces that exchange something.
+    [[nodiscard]] ModelCase completed(const ModelCase & modelCase);
+
+    //! The material record filling the region at the given index, or nothing if the index
+    //! is out of range.
+    [[nodiscard]] std::optional<MaterialsLibrary::Material> regionMaterial(const ModelCase & modelCase,
+                                                                          std::size_t index);
 
     //! The library record a boundary kind is written as. The same in every generated file,
     //! so a library imported from one archive serves another. An adiabatic segment is

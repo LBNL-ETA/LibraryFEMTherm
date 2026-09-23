@@ -2,6 +2,7 @@
 #include <pybind11/stl.h>
 
 #include "Materials/DB.hxx"
+#include "Materials/FromValues.hxx"
 
 namespace py = pybind11;
 
@@ -80,8 +81,58 @@ void bind_materials(py::module_ & mod)
         .def_readwrite("window", &MaterialsLibrary::Database::Window);
 
     // --- Material ---
-    py::class_<MaterialsLibrary::Material>(mod, "Material")
+    py::class_<MaterialsLibrary::Material>(
+      mod,
+      "Material",
+      "One record of THERM's materials library: the same object a library holds, a file carries and a model's "
+      "region is filled with. Build it empty and fill it field by field, or from physical values by keyword: "
+      "Material(name=..., diffusion_resistance_factor=..., sorption_curve=[(humidity, water content), ...], "
+      "density=..., heat_capacity=..., thermal_conductivity=..., color=...), which writes THERM's tables and "
+      "derives the UUID from the name.")
         .def(py::init<>())
+        .def(py::init([](const std::string & name,
+                         const double diffusionResistanceFactor,
+                         const MaterialsLibrary::Curve & sorptionCurve,
+                         const MaterialsLibrary::Curve & liquidTransportCurve,
+                         const MaterialsLibrary::Curve & muCurve,
+                         const double density,
+                         const double heatCapacity,
+                         const double thermalConductivity,
+                         const double thermalConductivityBeta,
+                         const double thermalConductivityMoistureSlope,
+                         const double porosity,
+                         const std::optional<std::string> & color) {
+                 return MaterialsLibrary::fromValues(name,
+                                                   diffusionResistanceFactor,
+                                                   sorptionCurve,
+                                                   liquidTransportCurve,
+                                                   muCurve,
+                                                   density,
+                                                   heatCapacity,
+                                                   thermalConductivity,
+                                                   thermalConductivityBeta,
+                                                   thermalConductivityMoistureSlope,
+                                                   porosity,
+                                                   color);
+             }),
+             py::arg("name"),
+             py::arg("diffusion_resistance_factor"),
+             py::arg("sorption_curve"),
+             py::arg("liquid_transport_curve") = MaterialsLibrary::Curve{},
+             py::arg("mu_curve") = MaterialsLibrary::Curve{},
+             py::arg("density") = 0.0,
+             py::arg("heat_capacity") = 0.0,
+             py::arg("thermal_conductivity") = 0.0,
+             py::arg("thermal_conductivity_beta") = 0.0,
+             py::arg("thermal_conductivity_moisture_slope") = 0.0,
+             py::arg("porosity") = 0.0,
+             py::arg("color") = py::none(),
+             "The record for a material stated in physical terms. Required: a name, a vapour resistance factor "
+             "and a sorption isotherm as (humidity, water content) pairs; the thermal properties default to zero "
+             "so a moisture-only case need not invent them. A linear k(T) or k(w) law becomes a two-point table, "
+             "a constant a single point, and the mu(phi) curve is re-keyed by water content. `color` is THERM's "
+             "fill, 0xRRGGBB; left None, one derived from the name. The UUID is derived from the name, so "
+             "regenerating a case never makes a second record.")
         .def_readwrite("uuid", &MaterialsLibrary::Material::UUID)
         .def_readwrite("name", &MaterialsLibrary::Material::Name)
         .def_readwrite("project_name", &MaterialsLibrary::Material::ProjectName)
@@ -89,6 +140,13 @@ void bind_materials(py::module_ & mod)
         .def_readwrite("color", &MaterialsLibrary::Material::Color)
         .def_readwrite("database", &MaterialsLibrary::Material::database)
         .def_readwrite("data", &MaterialsLibrary::Material::data);
+
+    mod.def("material_uuid", &MaterialsLibrary::materialUuid, py::arg("name"),
+            "The record UUID for a material name, the same on every machine and run.");
+    mod.def("material_color", &MaterialsLibrary::materialColor, py::arg("name"),
+            "THERM's polygon fill colour derived from a material name, 0xRRGGBB, the same in every archive.");
+    mod.def("materials_database", &MaterialsLibrary::materialsDatabase, py::arg("records"),
+            "A materials library holding the given records, one per distinct UUID.");
 
     // --- DB ---
     py::class_<MaterialsLibrary::DB>(mod, "MaterialsDB")

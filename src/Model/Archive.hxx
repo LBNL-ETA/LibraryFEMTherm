@@ -23,7 +23,9 @@
 //!   millimetres around THERM's default drawing origin (cosmetic; the mediator subtracts
 //!   the origin and divides by 1000 to get the mesh's metres). Segments become boundary
 //!   records that name their condition record by UUID and, when the record reads series,
-//!   their dataset by UUID. The calculation options are the case's Physics, Initial and
+//!   their dataset by UUID. The case is completed first (Model::completed): every outside
+//!   face the caller left unstated is written adiabatic, so a caller states only the
+//!   faces that exchange something. The calculation options are the case's Physics, Initial and
 //!   Numerics written as the file's switches.
 //! - Materials: the regions' materials, converted by Materials.hxx.
 //! - BoundaryConditions: the consolidated records the segments refer to. They are the same
