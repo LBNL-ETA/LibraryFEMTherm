@@ -4,13 +4,14 @@
 #include <format>
 #include <string>
 
-#include "Authoring/Archive.hxx"
-#include "Authoring/Materials.hxx"
-#include "Authoring/Model.hxx"
+#include "Model/Archive.hxx"
+#include "Model/Materials.hxx"
+#include "Model/Case.hxx"
 
 namespace py = pybind11;
 
-using namespace ThermFile::Authoring;
+using namespace ThermFile::Model;
+using namespace ThermFile::Build;
 
 namespace
 {
@@ -28,9 +29,9 @@ namespace
             py::is_operator());
     }
 
-    void bindGeometry(py::module_ & authoring)
+    void bindGeometry(py::module_ & model)
     {
-        auto point{py::class_<Point>(authoring,
+        auto point{py::class_<Point>(model,
                                      "Point",
                                      "A position in metres, in the case's own coordinates. A 2-tuple is "
                                      "accepted wherever a Point is expected.")
@@ -46,12 +47,13 @@ namespace
         addEquality(point);
         py::implicitly_convertible<py::tuple, Point>();
 
-        auto region{py::class_<Region>(authoring,
+        auto region{py::class_<Region>(model,
                                        "Region",
                                        "One material polygon: its corners in metres, in drawing order, each given "
-                                       "once and the polygon closed implicitly, and the name of the material "
-                                       "filling it -- whatever the case calls it in `ModelCase.materials`.")
-                      .def(py::init([](std::string material, std::vector<Point> points) {
+                                       "once and the polygon closed implicitly, and the material filling it. "
+                                       "Regions that share a material state the same one; the archive's library "
+                                       "keeps one record per material name.")
+                      .def(py::init([](Material material, std::vector<Point> points) {
                                return Region{std::move(material), std::move(points)};
                            }),
                            py::arg("material"),
@@ -60,18 +62,23 @@ namespace
                       .def_readwrite("points", &Region::points)};
         addEquality(region);
 
-        auto segment{py::class_<Segment>(authoring,
+        auto segment{py::class_<Segment>(model,
                                          "Segment",
                                          "One boundary segment: a straight line between two points on a region's "
-                                         "outline, the condition it carries (Sealed, Prescribed or Convective), and "
-                                         "the index of the region it bounds.")
-                       .def(py::init([](Boundary kind, const Point & start, const Point & end, const std::size_t region) {
+                                         "outline, the condition it carries (Adiabatic, Prescribed or Convective), and "
+                                         "optionally the index of the region it bounds. Left None, the region is "
+                                         "found: a segment on the outline lies on exactly one region's edge. It must "
+                                         "be given where two regions share the edge.")
+                       .def(py::init([](Boundary kind,
+                                        const Point & start,
+                                        const Point & end,
+                                        const std::optional<std::size_t> region) {
                                 return Segment{std::move(kind), start, end, region};
                             }),
                             py::arg("kind"),
                             py::arg("start"),
                             py::arg("end"),
-                            py::arg("region") = 0U)
+                            py::arg("region") = py::none())
                        .def_readwrite("kind", &Segment::kind)
                        .def_readwrite("start", &Segment::start)
                        .def_readwrite("end", &Segment::end)
@@ -79,15 +86,18 @@ namespace
         addEquality(segment);
     }
 
-    void bindBoundaryKinds(py::module_ & authoring)
+    void bindBoundaryKinds(py::module_ & model)
     {
-        auto sealed{py::class_<Sealed>(authoring, "Sealed", "No exchange at all: adiabatic and moisture-tight.")
-                      .def(py::init<>())
-                      .def("__repr__", [](const Sealed &) { return std::string{"Sealed()"}; })};
-        addEquality(sealed);
+        auto adiabatic{py::class_<Adiabatic>(model,
+                                             "Adiabatic",
+                                             "No exchange at all: no heat and no moisture crosses the surface. "
+                                             "Written as THERM's own built-in Adiabatic record.")
+                         .def(py::init<>())
+                         .def("__repr__", [](const Adiabatic &) { return std::string{"Adiabatic()"}; })};
+        addEquality(adiabatic);
 
         auto prescribed{
-          py::class_<Prescribed>(authoring,
+          py::class_<Prescribed>(model,
                                  "Prescribed",
                                  "The surface state itself is imposed: a temperature in degrees C and optionally a "
                                  "relative humidity as a fraction. Constant in time.")
@@ -106,7 +116,7 @@ namespace
         addEquality(prescribed);
 
         auto convective{
-          py::class_<Convective>(authoring,
+          py::class_<Convective>(model,
                                  "Convective",
                                  "Exchange with an environment: air temperature in degrees C, film coefficient in "
                                  "W/(m2 K), relative humidity as a fraction. Constant in time.")
@@ -128,9 +138,9 @@ namespace
         addEquality(convective);
     }
 
-    void bindSettings(py::module_ & authoring)
+    void bindSettings(py::module_ & model)
     {
-        auto initial{py::class_<Initial>(authoring,
+        auto initial{py::class_<Initial>(model,
                                          "Initial",
                                          "Uniform initial state: temperature in degrees C, relative humidity as a "
                                          "fraction.")
@@ -143,7 +153,7 @@ namespace
                        .def_readwrite("humidity", &Initial::humidity)};
         addEquality(initial);
 
-        auto schedule{py::class_<Schedule>(authoring, "Schedule", "The clock: n_steps steps of dtime seconds.")
+        auto schedule{py::class_<Schedule>(model, "Schedule", "The clock: n_steps steps of dtime seconds.")
                         .def(py::init([](const double dtime, const std::size_t nSteps) {
                                  return Schedule{dtime, nSteps};
                              }),
@@ -155,7 +165,7 @@ namespace
         addEquality(schedule);
 
         auto physics{
-          py::class_<Physics>(authoring,
+          py::class_<Physics>(model,
                               "Physics",
                               "Which terms are simulated, stated positively. Each switch is written to the file's "
                               "calculation options; what the engine does with each is the engine's documentation.")
@@ -194,7 +204,7 @@ namespace
             .def_readwrite("conductivity_dependent", &Physics::conductivityDependent)};
         addEquality(physics);
 
-        auto numerics{py::class_<Numerics>(authoring,
+        auto numerics{py::class_<Numerics>(model,
                                            "Numerics",
                                            "The nonlinear iteration's settings, as the file's engine parameters.")
                         .def(py::init([](const double convergenceTolerance, const double relaxation, const int maxIterations) {
@@ -209,10 +219,10 @@ namespace
         addEquality(numerics);
     }
 
-    void bindMaterial(py::module_ & authoring)
+    void bindMaterial(py::module_ & model)
     {
         auto material{
-          py::class_<Material>(authoring,
+          py::class_<Material>(model,
                                "Material",
                                "One material's thermal and hygric properties, as the caller states them. Required: "
                                "a name, a vapour resistance factor and a sorption isotherm; the thermal properties "
@@ -264,30 +274,33 @@ namespace
             .def_readwrite("thermal_conductivity_moisture_slope", &Material::thermalConductivityMoistureSlope)
             .def_readwrite("porosity", &Material::porosity)};
         addEquality(material);
-
-        authoring.def("material_uuid", &materialUuid, py::arg("name"),
-                      "The record UUID for a material name, the same on every machine and run.");
-        authoring.def("material_color", &materialColor, py::arg("name"),
-                      "THERM's polygon fill colour for a material name, 0xRRGGBB, the same in every archive.");
-        authoring.def("max_water_content", &maxWaterContent, py::arg("material"),
-                      "The isotherm's last value: the water-content axis end of every w-keyed table.");
-        authoring.def("water_content", &waterContent, py::arg("material"), py::arg("humidity"),
-                      "The sorption isotherm at a humidity: linear interpolation, clamped at the table's ends.");
-        authoring.def("resistance_factor_by_water_content", &resistanceFactorByWaterContent, py::arg("material"),
-                      "The mu(phi) curve re-keyed by water content through the isotherm; empty without a curve.");
-        authoring.def("library_material", &libraryMaterial, py::arg("material"),
-                      "The authoring material as a THERM library record, ready for a MaterialsDB.");
-        authoring.def("materials_database", &materialsDatabase, py::arg("materials"),
-                      "A materials library holding the given materials, one record per distinct name.");
     }
 
-    void bindCase(py::module_ & authoring)
+    void bindMaterialRecords(py::module_ & build)
+    {
+        build.def("material_uuid", &materialUuid, py::arg("name"),
+                  "The record UUID for a material name, the same on every machine and run.");
+        build.def("material_color", &materialColor, py::arg("name"),
+                  "THERM's polygon fill colour for a material name, 0xRRGGBB, the same in every archive.");
+        build.def("max_water_content", &maxWaterContent, py::arg("material"),
+                  "The isotherm's last value: the water-content axis end of every w-keyed table.");
+        build.def("water_content", &waterContent, py::arg("material"), py::arg("humidity"),
+                  "The sorption isotherm at a humidity: linear interpolation, clamped at the table's ends.");
+        build.def("resistance_factor_by_water_content", &resistanceFactorByWaterContent, py::arg("material"),
+                  "The mu(phi) curve re-keyed by water content through the isotherm; empty without a curve.");
+        build.def("library_material", &libraryMaterial, py::arg("material"),
+                  "The model material as a THERM library record, ready for a MaterialsDB.");
+        build.def("materials_database", &materialsDatabase, py::arg("materials"),
+                  "A materials library holding the given materials, one record per distinct name.");
+    }
+
+    void bindCase(py::module_ & model)
     {
         auto modelCase{
-          py::class_<ModelCase>(authoring,
+          py::class_<ModelCase>(model,
                                 "ModelCase",
-                                "A THERM model stated in code: regions, segments, start, clock, settings, and the "
-                                "materials the regions name, keyed by whatever the regions call them.")
+                                "A THERM model stated in code: regions, each carrying its material, segments, "
+                                "start, clock and settings.")
             .def(py::init([](std::string id,
                              std::vector<Region> regions,
                              std::vector<Segment> segments,
@@ -295,7 +308,6 @@ namespace
                              const Schedule & schedule,
                              const Physics & physics,
                              const Numerics & numerics,
-                             std::map<std::string, Material> materials,
                              std::string title) {
                      return ModelCase{std::move(id),
                                       std::move(title),
@@ -304,8 +316,7 @@ namespace
                                       initial,
                                       schedule,
                                       physics,
-                                      numerics,
-                                      std::move(materials)};
+                                      numerics};
                  }),
                  py::arg("id"),
                  py::arg("regions"),
@@ -314,7 +325,6 @@ namespace
                  py::arg("schedule"),
                  py::arg("physics") = Physics{},
                  py::arg("numerics") = Numerics{},
-                 py::arg("materials") = std::map<std::string, Material>{},
                  py::arg("title") = std::string{})
             .def_readwrite("id", &ModelCase::id)
             .def_readwrite("title", &ModelCase::title)
@@ -323,48 +333,49 @@ namespace
             .def_readwrite("initial", &ModelCase::initial)
             .def_readwrite("schedule", &ModelCase::schedule)
             .def_readwrite("physics", &ModelCase::physics)
-            .def_readwrite("numerics", &ModelCase::numerics)
-            .def_readwrite("materials", &ModelCase::materials)};
+            .def_readwrite("numerics", &ModelCase::numerics)};
         addEquality(modelCase);
 
-        authoring.def("issues", &issues, py::arg("model_case"),
+        model.def("issues", &issues, py::arg("model_case"),
                       "Everything that stops the case from being written, one line each; empty when it can be.");
-        authoring.def("material", &material, py::arg("model_case"), py::arg("name"),
-                      "The material a region names, or None if the case does not carry it.");
-        authoring.def("region_material", &regionMaterial, py::arg("model_case"), py::arg("index"),
-                      "The material filling the region at the given index, or None.");
-        authoring.def("record_name", &recordName, py::arg("boundary"),
-                      "The library record a boundary kind is written as; the same in every generated file.");
+        model.def("region_material", &regionMaterial, py::arg("model_case"), py::arg("index"),
+                      "The material filling the region at the given index, or None when there is no such region.");
+        model.def("segment_region", &segmentRegion, py::arg("model_case"), py::arg("index"),
+                      "The region the segment at the given index is attached to: the one it names, or the "
+                      "only region whose edge carries it. None when issues() would report the segment.");
     }
 
-    void bindArchive(py::module_ & authoring)
+    void bindArchive(py::module_ & build)
     {
-        py::class_<Libraries>(authoring, "Libraries", "Everything a model refers to by UUID.")
+        py::class_<Libraries>(build, "Libraries", "Everything a model refers to by UUID.")
           .def_readonly("materials", &Libraries::materials)
           .def_readonly("boundary_conditions", &Libraries::boundaryConditions)
           .def_readonly("datasets", &Libraries::datasets);
 
-        authoring.attr("DRAWING_ORIGIN_MM") = py::make_tuple(drawingOriginMm.x, drawingOriginMm.y);
+        build.attr("DRAWING_ORIGIN_MM") = py::make_tuple(drawingOriginMm.x, drawingOriginMm.y);
 
-        authoring.def("case_uuid", &caseUuid, py::arg("model_case"), py::arg("key"),
-                      "A UUID that depends on the case id and a key, stable across runs.");
-        authoring.def("record_uuid", &recordUuid, py::arg("record_name"),
-                      "The UUID of a boundary-condition record, the same in every generated file.");
-        authoring.def("boundary_record", &boundaryRecord, py::arg("boundary"), py::arg("project"),
-                      "The library record for a boundary kind, marked as the project's own.");
-        authoring.def("series_values", &seriesValues, py::arg("boundary"),
-                      "(role name, constant value) pairs, one per series the segment's dataset carries, in the "
-                      "order the dataset writes them. Empty for a sealed segment.");
-        authoring.def("boundary_datasets", &boundaryDatasets, py::arg("model_case"),
-                      "Segment index -> dataset for every segment that reads values, plus a clock on the first "
-                      "segment when none does.");
-        authoring.def("build_model", &buildModel, py::arg("model_case"),
-                      "The THERM model of the case: polygons, boundary segments and calculation options. The case "
-                      "must have no issues.");
-        authoring.def("build_libraries", &buildLibraries, py::arg("model_case"),
-                      "The materials, the boundary-condition records and the datasets the model uses. The case "
-                      "must have no issues.");
-        authoring.def(
+        build.def("case_uuid", &caseUuid, py::arg("model_case"), py::arg("key"),
+                  "A UUID that depends on the case id and a key, stable across runs.");
+        build.def("record_name", &recordName, py::arg("boundary"),
+                  "The library record a boundary kind is written as; the same in every generated file.");
+        build.def("record_uuid", &recordUuid, py::arg("record_name"),
+                  "The UUID of a boundary-condition record, the same in every generated file.");
+        build.def("boundary_record", &boundaryRecord, py::arg("boundary"), py::arg("project"),
+                  "The library record for a boundary kind: THERM's built-in for Adiabatic, otherwise marked as "
+                  "the project's own.");
+        build.def("series_values", &seriesValues, py::arg("boundary"),
+                  "(role name, constant value) pairs, one per series the segment's dataset carries, in the "
+                  "order the dataset writes them. Empty for an adiabatic segment.");
+        build.def("boundary_datasets", &boundaryDatasets, py::arg("model_case"),
+                  "Segment index -> dataset for every segment that reads values, plus a clock on the first "
+                  "segment when none does.");
+        build.def("model", &model, py::arg("model_case"),
+                  "The THERM model of the case: polygons, boundary segments and calculation options. The case "
+                  "must have no issues.");
+        build.def("libraries", &libraries, py::arg("model_case"),
+                  "The materials, the boundary-condition records and the datasets the model uses. The case "
+                  "must have no issues.");
+        build.def(
           "archive_entries",
           [](const ModelCase & modelCase) {
               const auto entries{archiveEntries(modelCase)};
@@ -377,10 +388,10 @@ namespace
           py::arg("model_case"),
           "Every entry of the case's THMZ, name -> content, before zipping. Raises ValueError with the case's "
           "issues when it cannot be written.");
-        authoring.def(
-          "write_archive",
+        build.def(
+          "archive",
           [](const ModelCase & modelCase, const std::string & path) {
-              const auto written{writeArchive(modelCase, path)};
+              const auto written{archive(modelCase, path)};
               if(!written.has_value())
               {
                   throw py::value_error(written.error());
@@ -391,23 +402,28 @@ namespace
           py::arg("path"),
           "Writes the case's THMZ and returns the path. Creates the parent directory and overwrites an existing "
           "file. Raises ValueError with the case's issues when it cannot be written.");
-        authoring.def("schedule_of", &scheduleOf, py::arg("datasets"),
-                      "The clock the mediator will run, read from the first dataset as the mediator does.");
+        build.def("schedule_of", &scheduleOf, py::arg("datasets"),
+                  "The clock the mediator will run, read from the first dataset as the mediator does.");
     }
 }   // namespace
 
-//! Stating a THERM model in physical terms and writing it as the archive THERM would have
-//! saved: regions in metres filled with named materials, segments carrying a physical
-//! condition, a uniform start, a clock and the calculation switches. The file-level types
-//! bound elsewhere in this module are what the archive is made of; this is the layer above.
-void bind_authoring(py::module_ & mod)
+//! Two submodules. `model` is the vocabulary a THERM model is stated in: regions in metres
+//! carrying their material, segments carrying a physical condition, a uniform start, a clock
+//! and the calculation switches. `build` turns such a case into what THERM would have saved:
+//! the model, its libraries, the archive. The file-level types bound elsewhere in this
+//! module are what the archive is made of; these two are the layer above.
+void bind_case(py::module_ & mod)
 {
-    auto authoring{mod.def_submodule(
-      "authoring", "State a THERM model in physical terms and write it as a THMZ; see pylibraryfemtherm docs.")};
-    bindGeometry(authoring);
-    bindBoundaryKinds(authoring);
-    bindSettings(authoring);
-    bindMaterial(authoring);
-    bindCase(authoring);
-    bindArchive(authoring);
+    auto model{mod.def_submodule("model", "State a THERM model in physical terms; see pylibraryfemtherm docs.")};
+    // Material before Geometry: a Region takes one, and pybind11 names a parameter's type
+    // in the signature only if the type is already registered.
+    bindMaterial(model);
+    bindGeometry(model);
+    bindBoundaryKinds(model);
+    bindSettings(model);
+    bindCase(model);
+
+    auto build{mod.def_submodule("build", "Turn a stated model into the archive THERM would have saved.")};
+    bindMaterialRecords(build);
+    bindArchive(build);
 }

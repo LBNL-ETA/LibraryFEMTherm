@@ -8,8 +8,11 @@
 
 #include "Materials.hxx"
 
-namespace ThermFile::Authoring
+namespace ThermFile::Build
 {
+    using Model::Curve;
+    using Model::Material;
+
     namespace
     {
         //! Temperatures bracketing the two-point k(T) table, °C.
@@ -187,4 +190,4 @@ namespace ThermFile::Authoring
         }
         return database;
     }
-}   // namespace ThermFile::Authoring
+}   // namespace ThermFile::Build

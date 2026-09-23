@@ -6,13 +6,14 @@
 #include <string>
 #include <vector>
 
-#include "Authoring/Archive.hxx"
-#include "Authoring/Materials.hxx"
+#include "Model/Archive.hxx"
+#include "Model/Materials.hxx"
 #include "THMZ/Model/DB.hxx"
 #include "THMZ/ZipModule/ZipModule.hxx"
 #include "TimeSeriesData/DB.hxx"
 
-using namespace ThermFile::Authoring;
+using namespace ThermFile::Model;
+using namespace ThermFile::Build;
 
 namespace
 {
@@ -55,24 +56,23 @@ namespace
     {
         return ModelCase{
           .id = "two_regions",
-          .regions = {{.material = "stucco", .points = {{0.0, 0.05}, {0.0, 0.0}, {0.02, 0.0}, {0.02, 0.05}}},
-                      {.material = "cottaer_sandstone",
+          .regions = {{.material = stucco(), .points = {{0.0, 0.05}, {0.0, 0.0}, {0.02, 0.0}, {0.02, 0.05}}},
+                      {.material = cottaerSandstone(),
                        .points = {{0.02, 0.05}, {0.02, 0.0}, {0.10, 0.0}, {0.10, 0.05}}}},
-          .segments = {{.kind = Sealed{}, .start = {0.0, 0.0}, .end = {0.02, 0.0}, .region = 0U},
-                       {.kind = Sealed{}, .start = {0.02, 0.0}, .end = {0.10, 0.0}, .region = 1U},
+          .segments = {{.kind = Adiabatic{}, .start = {0.0, 0.0}, .end = {0.02, 0.0}, .region = 0U},
+                       {.kind = Adiabatic{}, .start = {0.02, 0.0}, .end = {0.10, 0.0}, .region = 1U},
                        {.kind = Convective{.airTemperature = 20.0, .filmCoefficient = 8.0, .humidity = 0.5},
                         .start = {0.10, 0.0},
                         .end = {0.10, 0.05},
                         .region = 1U},
-                       {.kind = Sealed{}, .start = {0.10, 0.05}, .end = {0.02, 0.05}, .region = 1U},
-                       {.kind = Sealed{}, .start = {0.02, 0.05}, .end = {0.0, 0.05}, .region = 0U},
+                       {.kind = Adiabatic{}, .start = {0.10, 0.05}, .end = {0.02, 0.05}, .region = 1U},
+                       {.kind = Adiabatic{}, .start = {0.02, 0.05}, .end = {0.0, 0.05}, .region = 0U},
                        {.kind = Prescribed{.temperature = -5.0, .humidity = 0.8},
                         .start = {0.0, 0.05},
                         .end = {0.0, 0.0},
                         .region = 0U}},
           .initial = {.temperature = 20.0, .humidity = 0.5},
           .schedule = {.dtime = 3600.0, .nSteps = 24U},
-          .materials = {{"stucco", stucco()}, {"cottaer_sandstone", cottaerSandstone()}},
         };
     }
 
@@ -82,16 +82,15 @@ namespace
     {
         return ModelCase{
           .id = "sealed_strip_gradient",
-          .regions = {{.material = "linear-sorption",
+          .regions = {{.material = linearSorption(),
                        .points = {{0.0, 0.0}, {0.1, 0.0}, {0.1, 0.005}, {0.0, 0.005}}}},
-          .segments = {{.kind = Sealed{}, .start = {0.0, 0.0}, .end = {0.1, 0.0}},
+          .segments = {{.kind = Adiabatic{}, .start = {0.0, 0.0}, .end = {0.1, 0.0}},
                        {.kind = Prescribed{.temperature = 20.0}, .start = {0.1, 0.0}, .end = {0.1, 0.005}},
-                       {.kind = Sealed{}, .start = {0.1, 0.005}, .end = {0.0, 0.005}},
+                       {.kind = Adiabatic{}, .start = {0.1, 0.005}, .end = {0.0, 0.005}},
                        {.kind = Prescribed{.temperature = 40.0}, .start = {0.0, 0.005}, .end = {0.0, 0.0}}},
           .initial = {.temperature = 30.0, .humidity = 0.4},
           .schedule = {.dtime = 36000.0, .nSteps = 300U},
           .physics = {.liquidTransport = false, .heatOfEvaporation = false},
-          .materials = {{"linear-sorption", linearSorption()}},
         };
     }
 
@@ -106,40 +105,57 @@ namespace
     }
 }   // namespace
 
-TEST(AuthoringArchive, RegionsBecomePolygonsInMillimetres)
+TEST(Build, SegmentsAttachToTheRegionFoundWhenNoneIsNamed)
 {
-    const auto model{buildModel(twoRegionCase())};
-    ASSERT_EQ(model.polygons.size(), 2U);
-    EXPECT_EQ(model.polygons[0].materialName, "Stucco");
-    EXPECT_EQ(model.polygons[1].materialName, "Cottaer Sandstone");
-    EXPECT_EQ(model.polygons[1].polygonType, ThermFile::PolygonType::Material);
-
-    const auto & origin{model.preferences.settings.origin};
-    EXPECT_NEAR(origin.x, drawingOriginMm.x, tolerance);
-    EXPECT_NEAR(origin.y, drawingOriginMm.y, tolerance);
-    EXPECT_EQ(offsets(model.polygons[1].points, origin.x, true), (std::set<double>{20.0, 100.0}));
-    EXPECT_EQ(offsets(model.polygons[1].points, origin.y, false), (std::set<double>{0.0, 50.0}));
+    auto unnamed{twoRegionCase()};
+    for(auto & segment : unnamed.segments)
+    {
+        segment.region = std::nullopt;
+    }
+    ASSERT_TRUE(issues(unnamed).empty());
+    const auto named{model(twoRegionCase())};
+    const auto found{model(unnamed)};
+    ASSERT_EQ(found.boundaryConditions.size(), named.boundaryConditions.size());
+    for(std::size_t index = 0U; index < named.boundaryConditions.size(); ++index)
+    {
+        EXPECT_EQ(found.boundaryConditions[index].neighborPolygonUUID, named.boundaryConditions[index].neighborPolygonUUID);
+    }
 }
 
-TEST(AuthoringArchive, SegmentsLinkRecordsRegionsAndDatasets)
+TEST(Build, RegionsBecomePolygonsInMillimetres)
+{
+    const auto built{model(twoRegionCase())};
+    ASSERT_EQ(built.polygons.size(), 2U);
+    EXPECT_EQ(built.polygons[0].materialName, "Stucco");
+    EXPECT_EQ(built.polygons[1].materialName, "Cottaer Sandstone");
+    EXPECT_EQ(built.polygons[1].polygonType, ThermFile::PolygonType::Material);
+
+    const auto & origin{built.preferences.settings.origin};
+    EXPECT_NEAR(origin.x, drawingOriginMm.x, tolerance);
+    EXPECT_NEAR(origin.y, drawingOriginMm.y, tolerance);
+    EXPECT_EQ(offsets(built.polygons[1].points, origin.x, true), (std::set<double>{20.0, 100.0}));
+    EXPECT_EQ(offsets(built.polygons[1].points, origin.y, false), (std::set<double>{0.0, 50.0}));
+}
+
+TEST(Build, SegmentsLinkRecordsRegionsAndDatasets)
 {
     const auto modelCase{twoRegionCase()};
     const auto datasets{boundaryDatasets(modelCase)};
-    const auto model{buildModel(modelCase)};
-    const auto libraries{buildLibraries(modelCase)};
+    const auto built{model(modelCase)};
+    const auto libs{libraries(modelCase)};
 
-    ASSERT_EQ(model.boundaryConditions.size(), 6U);
-    EXPECT_EQ(model.boundaryConditions[2].name, "Convective exchange");
-    EXPECT_EQ(model.boundaryConditions[5].name, "Prescribed temperature and humidity");
-    for(const auto & boundary : model.boundaryConditions)
+    ASSERT_EQ(built.boundaryConditions.size(), 6U);
+    EXPECT_EQ(built.boundaryConditions[2].name, "Convective exchange");
+    EXPECT_EQ(built.boundaryConditions[5].name, "Prescribed temperature and humidity");
+    for(const auto & boundary : built.boundaryConditions)
     {
-        EXPECT_TRUE(libraries.boundaryConditions.getByUUID(boundary.bcUUID.value()).has_value());
+        EXPECT_TRUE(libs.boundaryConditions.getByUUID(boundary.bcUUID.value()).has_value());
         EXPECT_EQ(boundary.status, 1);
         EXPECT_TRUE(boundary.isBlocking);
         EXPECT_EQ(boundary.surfaceType, ThermFile::SurfaceType::BoundaryCondition);
     }
-    EXPECT_EQ(model.boundaryConditions[2].neighborPolygonUUID, model.polygons[1].uuid);
-    EXPECT_EQ(model.boundaryConditions[5].neighborPolygonUUID, model.polygons[0].uuid);
+    EXPECT_EQ(built.boundaryConditions[2].neighborPolygonUUID, built.polygons[1].uuid);
+    EXPECT_EQ(built.boundaryConditions[5].neighborPolygonUUID, built.polygons[0].uuid);
 
     std::vector<std::size_t> keys;
     for(const auto & [index, data] : datasets)
@@ -149,7 +165,7 @@ TEST(AuthoringArchive, SegmentsLinkRecordsRegionsAndDatasets)
     EXPECT_EQ(keys, (std::vector<std::size_t>{2U, 5U}));
 
     std::set<std::string> bound;
-    for(const auto & boundary : model.boundaryConditions)
+    for(const auto & boundary : built.boundaryConditions)
     {
         if(boundary.timeSeriesUUID.has_value())
         {
@@ -157,20 +173,20 @@ TEST(AuthoringArchive, SegmentsLinkRecordsRegionsAndDatasets)
         }
     }
     std::set<std::string> stored;
-    for(const auto & data : libraries.datasets)
+    for(const auto & data : libs.datasets)
     {
         stored.insert(data.UUID);
     }
     EXPECT_EQ(bound, stored);
-    EXPECT_EQ(libraries.materials.getNames(), (std::vector<std::string>{"Stucco", "Cottaer Sandstone"}));
+    EXPECT_EQ(libs.materials.getNames(), (std::vector<std::string>{"Stucco", "Cottaer Sandstone"}));
 }
 
-TEST(AuthoringArchive, FullySealedModelStillHasAClock)
+TEST(Build, AllAdiabaticModelStillHasAClock)
 {
     auto modelCase{twoRegionCase()};
     for(auto & segment : modelCase.segments)
     {
-        segment.kind = Sealed{};
+        segment.kind = Adiabatic{};
     }
     const auto datasets{boundaryDatasets(modelCase)};
     ASSERT_EQ(datasets.size(), 1U);
@@ -179,7 +195,7 @@ TEST(AuthoringArchive, FullySealedModelStillHasAClock)
     EXPECT_EQ(datasets.at(0U).Name, "clock");
 }
 
-TEST(AuthoringArchive, ConvectiveRecordReadsThreeRoles)
+TEST(Build, ConvectiveRecordReadsThreeRoles)
 {
     const auto record{
       boundaryRecord(Convective{.airTemperature = 20.0, .filmCoefficient = 8.0, .humidity = 0.5}, "probe")};
@@ -190,30 +206,41 @@ TEST(AuthoringArchive, ConvectiveRecordReadsThreeRoles)
                                                           TimeSeriesLibrary::SeriesRole::ConvectiveCoefficient}));
 }
 
-TEST(AuthoringArchive, RecordUuidsAreTheSameInEveryFile)
+TEST(Build, RecordUuidsAreTheSameInEveryFile)
 {
-    EXPECT_EQ(boundaryRecord(Sealed{}, "a").UUID, boundaryRecord(Sealed{}, "b").UUID);
-    EXPECT_NE(boundaryRecord(Sealed{}, "a").UUID, boundaryRecord(Convective{}, "a").UUID);
-    EXPECT_EQ(recordUuid("Sealed"), boundaryRecord(Sealed{}, "a").UUID);
+    EXPECT_EQ(boundaryRecord(Convective{}, "a").UUID, boundaryRecord(Convective{}, "b").UUID);
+    EXPECT_NE(boundaryRecord(Adiabatic{}, "a").UUID, boundaryRecord(Convective{}, "a").UUID);
+    EXPECT_EQ(recordUuid("Convective exchange"), boundaryRecord(Convective{}, "a").UUID);
 }
 
-TEST(AuthoringArchive, StripIsOneRectangleWithFourSegments)
+TEST(Build, AdiabaticIsThermsBuiltInRecord)
 {
-    const auto model{buildModel(sealedStrip())};
-    ASSERT_EQ(model.polygons.size(), 1U);
-    ASSERT_EQ(model.boundaryConditions.size(), 4U);
-    const auto & origin{model.preferences.settings.origin};
-    EXPECT_EQ(offsets(model.polygons[0].points, origin.x, true), (std::set<double>{0.0, 100.0}));
-    EXPECT_EQ(offsets(model.polygons[0].points, origin.y, false), (std::set<double>{0.0, 5.0}));
-    EXPECT_EQ(model.polygons[0].materialName, "linear-sorption");
-    EXPECT_EQ(model.properties.general.fileName, "sealed_strip_gradient");
-    EXPECT_EQ(model.properties.general.title, "sealed_strip_gradient");
-    EXPECT_TRUE(model.calculationReady);
+    const auto record{boundaryRecord(Adiabatic{}, "a")};
+    EXPECT_EQ(record.UUID, std::string{adiabaticRecordUuid});
+    EXPECT_EQ(record.Name, "Adiabatic");
+    EXPECT_TRUE(record.Protected);
+    EXPECT_FALSE(record.ProjectName.has_value());
+    EXPECT_TRUE(std::holds_alternative<BCLibrary::NoExchange>(record.data));
+    EXPECT_EQ(recordUuid("Adiabatic"), std::string{adiabaticRecordUuid});
 }
 
-TEST(AuthoringArchive, CalculationOptionsFollowTheCase)
+TEST(Build, StripIsOneRectangleWithFourSegments)
 {
-    const auto & options{buildModel(sealedStrip()).properties.calculationOptions};
+    const auto built{model(sealedStrip())};
+    ASSERT_EQ(built.polygons.size(), 1U);
+    ASSERT_EQ(built.boundaryConditions.size(), 4U);
+    const auto & origin{built.preferences.settings.origin};
+    EXPECT_EQ(offsets(built.polygons[0].points, origin.x, true), (std::set<double>{0.0, 100.0}));
+    EXPECT_EQ(offsets(built.polygons[0].points, origin.y, false), (std::set<double>{0.0, 5.0}));
+    EXPECT_EQ(built.polygons[0].materialName, "linear-sorption");
+    EXPECT_EQ(built.properties.general.fileName, "sealed_strip_gradient");
+    EXPECT_EQ(built.properties.general.title, "sealed_strip_gradient");
+    EXPECT_TRUE(built.calculationReady);
+}
+
+TEST(Build, CalculationOptionsFollowTheCase)
+{
+    const auto & options{model(sealedStrip()).properties.calculationOptions};
     EXPECT_EQ(options.simulationEngine, ThermFile::SimulationEngine::HygroThermFEM);
     EXPECT_EQ(options.calculationMode, ThermFile::CalculationMode::cmTransient);
     EXPECT_TRUE(options.simulateThermal);
@@ -231,21 +258,21 @@ TEST(AuthoringArchive, CalculationOptionsFollowTheCase)
     EXPECT_FALSE(options.meshControl.runErrorEstimator);
 }
 
-TEST(AuthoringArchive, DatasetsSetTheClock)
+TEST(Build, DatasetsSetTheClock)
 {
-    const auto libraries{buildLibraries(sealedStrip())};
-    ASSERT_EQ(libraries.datasets.size(), 2U);
-    const auto schedule{scheduleOf(libraries.datasets)};
+    const auto libs{libraries(sealedStrip())};
+    ASSERT_EQ(libs.datasets.size(), 2U);
+    const auto schedule{scheduleOf(libs.datasets)};
     EXPECT_EQ(schedule.nSteps, 300U);
     EXPECT_NEAR(schedule.dtime, 36000.0, tolerance);
-    EXPECT_TRUE(TimeSeriesLibrary::alignmentIssues(libraries.datasets).empty());
-    for(const auto & data : libraries.datasets)
+    EXPECT_TRUE(TimeSeriesLibrary::alignmentIssues(libs.datasets).empty());
+    for(const auto & data : libs.datasets)
     {
         EXPECT_EQ(data.ProjectName.value(), "sealed_strip_gradient");
     }
 }
 
-TEST(AuthoringArchive, EntriesCarryEveryLibrary)
+TEST(Build, EntriesCarryEveryLibrary)
 {
     const auto entries{archiveEntries(sealedStrip())};
     ASSERT_TRUE(entries.has_value());
@@ -258,26 +285,26 @@ TEST(AuthoringArchive, EntriesCarryEveryLibrary)
     EXPECT_EQ(seriesEntries, 2);
 }
 
-TEST(AuthoringArchive, AnInvalidCaseIsRefusedWithItsIssues)
+TEST(Build, AnInvalidCaseIsRefusedWithItsIssues)
 {
     auto modelCase{sealedStrip()};
-    modelCase.regions[0].material = "brick";
+    modelCase.regions[0].material.name.clear();
     modelCase.schedule.nSteps = 0U;
 
     const auto entries{archiveEntries(modelCase)};
     ASSERT_FALSE(entries.has_value());
-    EXPECT_NE(entries.error().find("names material 'brick'"), std::string::npos);
+    EXPECT_NE(entries.error().find("material with no name"), std::string::npos);
     EXPECT_NE(entries.error().find("at least one step"), std::string::npos);
 
-    const auto written{writeArchive(modelCase, "should-not-exist.thmz")};
+    const auto written{archive(modelCase, "should-not-exist.thmz")};
     EXPECT_FALSE(written.has_value());
     EXPECT_FALSE(std::filesystem::exists("should-not-exist.thmz"));
 }
 
-TEST(AuthoringArchive, WrittenArchiveRoundTrips)
+TEST(Build, WrittenArchiveRoundTrips)
 {
     const auto path{(std::filesystem::temp_directory_path() / "authoring-sealed-strip.thmz").string()};
-    const auto written{writeArchive(sealedStrip(), path)};
+    const auto written{archive(sealedStrip(), path)};
     ASSERT_TRUE(written.has_value()) << written.error();
     EXPECT_EQ(written.value(), path);
     ASSERT_TRUE(std::filesystem::exists(path));
@@ -291,7 +318,7 @@ TEST(AuthoringArchive, WrittenArchiveRoundTrips)
     records.loadFromZipFile(path);
     auto names{records.getNames()};
     std::ranges::sort(names);
-    EXPECT_EQ(names, (std::vector<std::string>{"Prescribed temperature", "Sealed"}));
+    EXPECT_EQ(names, (std::vector<std::string>{"Adiabatic", "Prescribed temperature"}));
 
     EXPECT_EQ(TimeSeriesLibrary::loadDatasetsFromZipFile(path).size(), 2U);
 
@@ -301,6 +328,6 @@ TEST(AuthoringArchive, WrittenArchiveRoundTrips)
     EXPECT_EQ(materials.getNames(), (std::vector<std::string>{"linear-sorption"}));
 
     // Overwrites in place rather than failing on an existing file.
-    EXPECT_TRUE(writeArchive(sealedStrip(), path).has_value());
+    EXPECT_TRUE(archive(sealedStrip(), path).has_value());
     std::filesystem::remove(path);
 }

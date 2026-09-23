@@ -12,8 +12,22 @@
 #include "Archive.hxx"
 #include "Materials.hxx"
 
-namespace ThermFile::Authoring
+namespace ThermFile::Build
 {
+    // The vocabulary this namespace turns into a file. Using-declarations rather than a
+    // using-directive: Model::Point and Model::Boundary must win over ThermFile's own.
+    using Model::Adiabatic;
+    using Model::Boundary;
+    using Model::Convective;
+    using Model::Material;
+    using Model::ModelCase;
+    using Model::Point;
+    using Model::Prescribed;
+    using Model::Schedule;
+    using Model::issues;
+    using Model::recordName;
+    using Model::segmentRegion;
+
     namespace
     {
         constexpr double mmPerM{1000.0};
@@ -104,7 +118,7 @@ namespace ThermFile::Authoring
         Polygon polygon(const ModelCase & modelCase, const std::size_t index)
         {
             const auto & region{modelCase.regions[index]};
-            const auto material{regionMaterial(modelCase, index).value()};
+            const auto & material{region.material};
             Polygon result;
             result.uuid = caseUuid(modelCase, std::format("region/{}", index));
             result.ID = static_cast<int>(index) + 1;
@@ -187,6 +201,10 @@ namespace ThermFile::Authoring
 
     std::string recordUuid(const std::string_view name)
     {
+        if(name == recordName(Adiabatic{}))
+        {
+            return std::string{adiabaticRecordUuid};
+        }
         return LibraryCommon::stableUuid("boundary-condition", name);
     }
 
@@ -196,13 +214,16 @@ namespace ThermFile::Authoring
         BCLibrary::BoundaryCondition record;
         record.UUID = recordUuid(name);
         record.Name = name;
+        if(std::holds_alternative<Adiabatic>(boundary))
+        {
+            // THERM's own record, as it ships: protected, owned by no project.
+            record.Protected = true;
+            record.data = BCLibrary::NoExchange{};
+            return record;
+        }
         record.ProjectName = std::string{project};
         record.Protected = false;
-        if(std::holds_alternative<Sealed>(boundary))
-        {
-            record.data = BCLibrary::NoExchange{};
-        }
-        else if(const auto * prescribed{std::get_if<Prescribed>(&boundary)})
+        if(const auto * prescribed{std::get_if<Prescribed>(&boundary)})
         {
             record.data = prescribedRecord(prescribed->humidity.has_value());
         }
@@ -251,40 +272,40 @@ namespace ThermFile::Authoring
         return datasets;
     }
 
-    ThermModel buildModel(const ModelCase & modelCase)
+    ThermModel model(const ModelCase & modelCase)
     {
         const auto datasets{boundaryDatasets(modelCase)};
-        ThermModel model;
-        model.calculationReady = true;
-        model.preferences.settings.origin = drawingOriginMm;
-        model.glazingOrigin = drawingOriginMm;
-        model.properties.general.fileName = modelCase.id;
-        model.properties.general.title = modelCase.title.empty() ? modelCase.id : modelCase.title;
-        applyCalculationOptions(modelCase, model);
+        ThermModel result;
+        result.calculationReady = true;
+        result.preferences.settings.origin = drawingOriginMm;
+        result.glazingOrigin = drawingOriginMm;
+        result.properties.general.fileName = modelCase.id;
+        result.properties.general.title = modelCase.title.empty() ? modelCase.id : modelCase.title;
+        applyCalculationOptions(modelCase, result);
 
         for(std::size_t index = 0U; index < modelCase.regions.size(); ++index)
         {
-            model.polygons.push_back(polygon(modelCase, index));
+            result.polygons.push_back(polygon(modelCase, index));
         }
         for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
         {
             const auto & segment{modelCase.segments[index]};
             const auto bound{datasets.find(index)};
-            model.boundaryConditions.push_back(
+            result.boundaryConditions.push_back(
               boundary(modelCase,
                        index,
-                       model.polygons[segment.region].uuid,
+                       result.polygons[segmentRegion(modelCase, index).value()].uuid,
                        bound == datasets.end() ? std::nullopt : std::optional<std::string>{bound->second.UUID}));
         }
-        return model;
+        return result;
     }
 
-    Libraries buildLibraries(const ModelCase & modelCase)
+    Libraries libraries(const ModelCase & modelCase)
     {
         std::vector<Material> used;
-        for(std::size_t index = 0U; index < modelCase.regions.size(); ++index)
+        for(const auto & region : modelCase.regions)
         {
-            used.push_back(regionMaterial(modelCase, index).value());
+            used.push_back(region.material);
         }
 
         BCLibrary::DB records;
@@ -313,25 +334,25 @@ namespace ThermFile::Authoring
         {
             return lbnl::Unexpected<std::string>{joined(found)};
         }
-        const auto model{buildModel(modelCase)};
-        const auto libraries{buildLibraries(modelCase)};
+        const auto thermModel{model(modelCase)};
+        const auto built{libraries(modelCase)};
         const auto xml{FileParse::FileFormat::XML};
         std::map<std::string, std::string> entries{
-          {ThermZip::entryNameForFormat(ThermZip::ModelFileName, xml), saveToString(model)},
-          {ThermZip::entryNameForFormat(ThermZip::MaterialsFileName, xml), libraries.materials.saveToString()},
+          {ThermZip::entryNameForFormat(ThermZip::ModelFileName, xml), saveToString(thermModel)},
+          {ThermZip::entryNameForFormat(ThermZip::MaterialsFileName, xml), built.materials.saveToString()},
           {ThermZip::entryNameForFormat(ThermZip::BoundaryConditionsFileName, xml),
-           libraries.boundaryConditions.saveToString()},
+           built.boundaryConditions.saveToString()},
           {ThermZip::entryNameForFormat(ThermZip::GasesFileName, xml), emptyGases},
           {ThermZip::entryNameForFormat(ThermZip::MeshName, xml), emptyMesh},
         };
-        for(const auto & data : libraries.datasets)
+        for(const auto & data : built.datasets)
         {
             entries.insert(datasetEntry(data));
         }
         return entries;
     }
 
-    lbnl::ExpectedExt<std::string, std::string> writeArchive(const ModelCase & modelCase, const std::string & path)
+    lbnl::ExpectedExt<std::string, std::string> archive(const ModelCase & modelCase, const std::string & path)
     {
         const auto entries{archiveEntries(modelCase)};
         if(!entries.has_value())
@@ -353,4 +374,4 @@ namespace ThermFile::Authoring
         const auto & first{datasets.front()};
         return Schedule{.dtime = first.axis.stepSeconds, .nSteps = TimeSeriesLibrary::steps(first)};
     }
-}   // namespace ThermFile::Authoring
+}   // namespace ThermFile::Build

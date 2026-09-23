@@ -18,7 +18,7 @@ void bind_mesh_results(py::module_ & mod);
 void bind_steady_state_results(py::module_ & mod);
 void bind_time_series(py::module_ & mod);
 void bind_bc_library(py::module_ & mod);
-void bind_authoring(py::module_ & mod);
+void bind_case(py::module_ & mod);
 void bind_transient_results(py::module_ & mod);
 
 PYBIND11_MODULE(pylibraryfemtherm, mod)
@@ -42,8 +42,8 @@ PYBIND11_MODULE(pylibraryfemtherm, mod)
     bind_mesh(mod);
     bind_mesh_results(mod);
     bind_steady_state_results(mod);
-    // Last: the authoring layer hands out ThermModel, Material, BoundaryCondition and
+    // Last: the model and build layers hand out ThermModel, Material, BoundaryCondition and
     // TimeSeriesData objects, so every one of those must already be registered.
-    bind_authoring(mod);
+    bind_case(mod);
     bind_transient_results(mod);
 }

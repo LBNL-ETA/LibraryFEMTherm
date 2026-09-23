@@ -4,7 +4,7 @@ if(BUILD_LibraryFEMTHERM_TESTING)
 
     file(GLOB all_test_src RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
             "main.cxx"
-            "units/Authoring/*.cxx"
+            "units/Model/*.cxx"
             "units/Boundary Conditions/*.cxx"
             "units/CMA/*.cxx"
             "units/Common/*.cxx"

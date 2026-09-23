@@ -4,9 +4,10 @@
 #include <string>
 #include <vector>
 
-#include "Authoring/Materials.hxx"
+#include "Model/Materials.hxx"
 
-using namespace ThermFile::Authoring;
+using namespace ThermFile::Model;
+using namespace ThermFile::Build;
 
 namespace
 {
@@ -74,13 +75,13 @@ namespace
     }
 }   // namespace
 
-TEST(AuthoringMaterials, UuidIsStableAndNameBound)
+TEST(BuildMaterials, UuidIsStableAndNameBound)
 {
     EXPECT_EQ(materialUuid("Stucco"), materialUuid("Stucco"));
     EXPECT_NE(materialUuid("Stucco"), materialUuid("stucco"));
 }
 
-TEST(AuthoringMaterials, RecordCarriesNameAndUuid)
+TEST(BuildMaterials, RecordCarriesNameAndUuid)
 {
     const auto record{libraryMaterial(cottaerSandstone())};
     EXPECT_EQ(record.Name, "Cottaer Sandstone");
@@ -88,7 +89,7 @@ TEST(AuthoringMaterials, RecordCarriesNameAndUuid)
     EXPECT_FALSE(record.Protected);
 }
 
-TEST(AuthoringMaterials, ColorIsStableAndNeitherWhiteNorBlack)
+TEST(BuildMaterials, ColorIsStableAndNeitherWhiteNorBlack)
 {
     const auto first{libraryMaterial(cottaerSandstone()).Color};
     EXPECT_EQ(first, materialColor("Cottaer Sandstone"));
@@ -107,7 +108,7 @@ TEST(AuthoringMaterials, ColorIsStableAndNeitherWhiteNorBlack)
     }
 }
 
-TEST(AuthoringMaterials, ScalarsAndIsotherm)
+TEST(BuildMaterials, ScalarsAndIsotherm)
 {
     const auto material{cottaerSandstone()};
     const auto & record{hygro(libraryMaterial(material))};
@@ -122,7 +123,7 @@ TEST(AuthoringMaterials, ScalarsAndIsotherm)
     EXPECT_EQ(pairs(record.LiquidTransportationCoefficientRedistribution), material.liquidTransportCurve);
 }
 
-TEST(AuthoringMaterials, ConstantConductivityIsASinglePoint)
+TEST(BuildMaterials, ConstantConductivityIsASinglePoint)
 {
     const auto & record{hygro(libraryMaterial(cottaerSandstone()))};
     EXPECT_EQ(pairs(record.ThermalConductivityMoistureDependent), (Curve{{0.0, 1.8}}));
@@ -130,7 +131,7 @@ TEST(AuthoringMaterials, ConstantConductivityIsASinglePoint)
     EXPECT_FALSE(record.WaterVaporDiffusionResistanceFactorMoistureDependent.has_value());
 }
 
-TEST(AuthoringMaterials, LinearConductivityInTemperatureIsATwoPointTable)
+TEST(BuildMaterials, LinearConductivityInTemperatureIsATwoPointTable)
 {
     const auto table{pairs(hygro(libraryMaterial(unitThermal())).ThermalConductivityTemperatureDependent)};
     ASSERT_EQ(table.size(), 2U);
@@ -142,13 +143,13 @@ TEST(AuthoringMaterials, LinearConductivityInTemperatureIsATwoPointTable)
     EXPECT_NEAR(table.back().first, 150.0, tolerance);
 }
 
-TEST(AuthoringMaterials, EmptyLiquidCurveBecomesAZeroTable)
+TEST(BuildMaterials, EmptyLiquidCurveBecomesAZeroTable)
 {
     const auto & record{hygro(libraryMaterial(linearSorption()))};
     EXPECT_EQ(pairs(record.LiquidTransportationCoefficientSuction), (Curve{{0.0, 0.0}}));
 }
 
-TEST(AuthoringMaterials, WaterContentInterpolatesAndClamps)
+TEST(BuildMaterials, WaterContentInterpolatesAndClamps)
 {
     const auto material{cottaerSandstone()};
     EXPECT_NEAR(waterContent(material, 0.5), 10.0, tolerance);
@@ -158,7 +159,7 @@ TEST(AuthoringMaterials, WaterContentInterpolatesAndClamps)
     EXPECT_NEAR(maxWaterContent(material), 180.0, tolerance);
 }
 
-TEST(AuthoringMaterials, ResistanceFactorIsRekeyedByWaterContent)
+TEST(BuildMaterials, ResistanceFactorIsRekeyedByWaterContent)
 {
     const auto material{annexMaterial()};
     const auto table{resistanceFactorByWaterContent(material)};
@@ -173,7 +174,7 @@ TEST(AuthoringMaterials, ResistanceFactorIsRekeyedByWaterContent)
     EXPECT_EQ(record.WaterVaporDiffusionResistanceFactorMoistureDependent->size(), table.size());
 }
 
-TEST(AuthoringMaterials, LinearConductivityInWaterSpansTheIsotherm)
+TEST(BuildMaterials, LinearConductivityInWaterSpansTheIsotherm)
 {
     const auto material{annexMaterial()};
     const auto table{pairs(hygro(libraryMaterial(material)).ThermalConductivityMoistureDependent)};
@@ -185,7 +186,7 @@ TEST(AuthoringMaterials, LinearConductivityInWaterSpansTheIsotherm)
                 tolerance);
 }
 
-TEST(AuthoringMaterials, DatabaseRoundTripsThroughXml)
+TEST(BuildMaterials, DatabaseRoundTripsThroughXml)
 {
     auto database{materialsDatabase({cottaerSandstone(), cottaerSandstone(), annexMaterial()})};
     EXPECT_EQ(database.getNames(), (std::vector<std::string>{"Cottaer Sandstone", "Annex material"}));

@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "Authoring/Model.hxx"
+#include "Model/Case.hxx"
 
-using namespace ThermFile::Authoring;
+using namespace ThermFile::Model;
 
 namespace
 {
@@ -22,33 +22,32 @@ namespace
     {
         return ModelCase{
           .id = "strip",
-          .regions = {{.material = "stucco", .points = {{0.0, 0.0}, {0.1, 0.0}, {0.1, 0.01}, {0.0, 0.01}}}},
+          .regions = {{.material = stucco(), .points = {{0.0, 0.0}, {0.1, 0.0}, {0.1, 0.01}, {0.0, 0.01}}}},
           .segments = {{.kind = Prescribed{.temperature = 20.0, .humidity = 0.8},
                         .start = {0.0, 0.01},
                         .end = {0.0, 0.0}},
-                       {.kind = Sealed{}, .start = {0.0, 0.0}, .end = {0.1, 0.0}},
+                       {.kind = Adiabatic{}, .start = {0.0, 0.0}, .end = {0.1, 0.0}},
                        {.kind = Convective{.airTemperature = -5.0, .filmCoefficient = 8.0, .humidity = 0.9},
                         .start = {0.1, 0.0},
                         .end = {0.1, 0.01}},
-                       {.kind = Sealed{}, .start = {0.1, 0.01}, .end = {0.0, 0.01}}},
+                       {.kind = Adiabatic{}, .start = {0.1, 0.01}, .end = {0.0, 0.01}}},
           .initial = {.temperature = 20.0, .humidity = 0.5},
           .schedule = {.dtime = 3600.0, .nSteps = 24U},
-          .materials = {{"stucco", stucco()}},
         };
     }
 }   // namespace
 
-TEST(AuthoringModel, WellFormedCaseHasNoIssues)
+TEST(Model, WellFormedCaseHasNoIssues)
 {
     EXPECT_TRUE(issues(strip()).empty());
 }
 
-TEST(AuthoringModel, ScheduleDuration)
+TEST(Model, ScheduleDuration)
 {
     EXPECT_NEAR(strip().schedule.duration(), 86400.0, 1e-9);
 }
 
-TEST(AuthoringModel, NoRegionsIsAnIssue)
+TEST(Model, NoRegionsIsAnIssue)
 {
     auto modelCase{strip()};
     modelCase.regions.clear();
@@ -58,7 +57,7 @@ TEST(AuthoringModel, NoRegionsIsAnIssue)
     EXPECT_EQ(found[0], "a model needs at least one region");
 }
 
-TEST(AuthoringModel, TwoPointRegionIsAnIssue)
+TEST(Model, TwoPointRegionIsAnIssue)
 {
     auto modelCase{strip()};
     modelCase.regions[0].points = {{0.0, 0.0}, {0.1, 0.0}};
@@ -67,7 +66,7 @@ TEST(AuthoringModel, TwoPointRegionIsAnIssue)
     EXPECT_EQ(found[0], "region 0 has 2 points; a region needs at least three");
 }
 
-TEST(AuthoringModel, SegmentOnMissingRegionIsAnIssue)
+TEST(Model, SegmentOnMissingRegionIsAnIssue)
 {
     auto modelCase{strip()};
     modelCase.segments[1].region = 3U;
@@ -76,51 +75,105 @@ TEST(AuthoringModel, SegmentOnMissingRegionIsAnIssue)
     EXPECT_EQ(found[0], "segment 1 borders region 3, which does not exist");
 }
 
-TEST(AuthoringModel, SegmentOffTheOutlineIsAnIssue)
+TEST(Model, SegmentOffTheOutlineIsAnIssue)
 {
     auto modelCase{strip()};
     modelCase.segments[1].end = {0.1, 0.002};   // lifted off the bottom edge
     const auto found{issues(modelCase)};
     ASSERT_EQ(found.size(), 1U);
+    EXPECT_EQ(found[0], "segment 1 from (0, 0) to (0.1, 0.002) does not lie along an edge of any region");
+}
+
+TEST(Model, NamedRegionIsCheckedAsNamed)
+{
+    auto modelCase{strip()};
+    modelCase.segments[1].region = 0U;
+    modelCase.segments[1].end = {0.1, 0.002};
+    const auto found{issues(modelCase)};
+    ASSERT_EQ(found.size(), 1U);
     EXPECT_EQ(found[0], "segment 1 from (0, 0) to (0.1, 0.002) does not lie along an edge of region 0");
 }
 
-TEST(AuthoringModel, SegmentBridgingTwoEdgesIsAnIssue)
+TEST(Model, UnnamedSegmentOnTheOutlineIsAttachedToItsRegion)
+{
+    const auto modelCase{strip()};
+    for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
+    {
+        EXPECT_FALSE(modelCase.segments[index].region.has_value());
+        EXPECT_EQ(segmentRegion(modelCase, index), std::optional{std::size_t{0U}});
+    }
+    EXPECT_FALSE(segmentRegion(modelCase, modelCase.segments.size()).has_value());
+}
+
+TEST(Model, SharedEdgeMustNameItsRegion)
+{
+    auto modelCase{strip()};
+    modelCase.regions.push_back({.material = stucco(), .points = {{0.1, 0.0}, {0.2, 0.0}, {0.2, 0.01}, {0.1, 0.01}}});
+    // The convective segment now sits on the edge both rectangles share.
+    auto found{issues(modelCase)};
+    ASSERT_EQ(found.size(), 1U);
+    EXPECT_EQ(found[0],
+              "segment 2 from (0.1, 0) to (0.1, 0.01) lies on an edge shared by regions 0 and 1; state which with region");
+    EXPECT_FALSE(segmentRegion(modelCase, 2U).has_value());
+
+    modelCase.segments[2].region = 1U;
+    EXPECT_TRUE(issues(modelCase).empty());
+    EXPECT_EQ(segmentRegion(modelCase, 2U), std::optional{std::size_t{1U}});
+}
+
+TEST(Model, SegmentBridgingTwoEdgesIsAnIssue)
 {
     auto modelCase{strip()};
     // Both endpoints are corners of the region, but on different edges: a chord.
-    modelCase.segments[1] = {.kind = Sealed{}, .start = {0.0, 0.0}, .end = {0.1, 0.01}};
+    modelCase.segments[1] = {.kind = Adiabatic{}, .start = {0.0, 0.0}, .end = {0.1, 0.01}};
     EXPECT_EQ(issues(modelCase).size(), 1U);
 }
 
-TEST(AuthoringModel, ASpanOfOneEdgeIsFine)
+TEST(Model, ASpanOfOneEdgeIsFine)
 {
     auto modelCase{strip()};
-    modelCase.segments[1] = {.kind = Sealed{}, .start = {0.02, 0.0}, .end = {0.07, 0.0}};
+    modelCase.segments[1] = {.kind = Adiabatic{}, .start = {0.02, 0.0}, .end = {0.07, 0.0}};
     EXPECT_TRUE(issues(modelCase).empty());
 
     // Arithmetic on stated coordinates lands within tolerance.
-    modelCase.segments[1] = {.kind = Sealed{}, .start = {0.1 - 0.07, 0.0}, .end = {0.3 * 0.1 + 0.04, 0.0}};
+    modelCase.segments[1] = {.kind = Adiabatic{}, .start = {0.1 - 0.07, 0.0}, .end = {0.3 * 0.1 + 0.04, 0.0}};
     EXPECT_TRUE(issues(modelCase).empty());
 }
 
-TEST(AuthoringModel, OutlineIsNotCheckedForARegionAlreadyReported)
+TEST(Model, OutlineIsNotCheckedForARegionAlreadyReported)
 {
     auto modelCase{strip()};
     modelCase.regions[0].points = {{0.0, 0.0}, {0.1, 0.0}};   // two points: reported once
     EXPECT_EQ(issues(modelCase).size(), 1U);
 }
 
-TEST(AuthoringModel, MaterialNotCarriedIsAnIssue)
+TEST(Model, NamelessMaterialIsAnIssue)
 {
     auto modelCase{strip()};
-    modelCase.regions[0].material = "brick";
+    modelCase.regions[0].material.name.clear();
     const auto found{issues(modelCase)};
     ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0], "region 0 names material 'brick', which the case does not carry");
+    EXPECT_EQ(found[0], "region 0 has a material with no name");
 }
 
-TEST(AuthoringModel, BadScheduleIsTwoIssues)
+TEST(Model, OneNameWithTwoDefinitionsIsAnIssue)
+{
+    auto modelCase{strip()};
+    auto denser{stucco()};
+    denser.density = 1900.0;
+    modelCase.regions.push_back({.material = denser, .points = {{0.1, 0.0}, {0.2, 0.0}, {0.2, 0.01}, {0.1, 0.01}}});
+    modelCase.segments[2].region = 0U;   // the shared edge, attributed
+    const auto found{issues(modelCase)};
+    ASSERT_EQ(found.size(), 1U);
+    EXPECT_EQ(found[0],
+              "regions 0 and 1 both use a material named 'Stucco' with different properties; the library keeps one "
+              "record per name");
+
+    modelCase.regions[1].material = stucco();
+    EXPECT_TRUE(issues(modelCase).empty());
+}
+
+TEST(Model, BadScheduleIsTwoIssues)
 {
     auto modelCase{strip()};
     modelCase.schedule = {.dtime = 0.0, .nSteps = 0U};
@@ -130,36 +183,33 @@ TEST(AuthoringModel, BadScheduleIsTwoIssues)
     EXPECT_EQ(found[1], "the schedule needs at least one step");
 }
 
-TEST(AuthoringModel, IssuesAccumulate)
+TEST(Model, IssuesAccumulate)
 {
     auto modelCase{strip()};
-    modelCase.regions[0].material = "brick";
+    modelCase.regions[0].material.name.clear();
     modelCase.segments[0].region = 9U;
     modelCase.schedule.nSteps = 0U;
     EXPECT_EQ(issues(modelCase).size(), 3U);
 }
 
-TEST(AuthoringModel, MaterialLookup)
+TEST(Model, MaterialLookup)
 {
     const auto modelCase{strip()};
-    ASSERT_TRUE(material(modelCase, "stucco").has_value());
-    EXPECT_EQ(material(modelCase, "stucco")->name, "Stucco");
-    EXPECT_FALSE(material(modelCase, "brick").has_value());
-
     ASSERT_TRUE(regionMaterial(modelCase, 0U).has_value());
+    EXPECT_EQ(regionMaterial(modelCase, 0U)->name, "Stucco");
     EXPECT_NEAR(regionMaterial(modelCase, 0U)->density, 1800.0, 1e-9);
     EXPECT_FALSE(regionMaterial(modelCase, 1U).has_value());
 }
 
-TEST(AuthoringModel, RecordNamesAreFixedPerKind)
+TEST(Model, RecordNamesAreFixedPerKind)
 {
-    EXPECT_EQ(recordName(Sealed{}), "Sealed");
+    EXPECT_EQ(recordName(Adiabatic{}), "Adiabatic");
     EXPECT_EQ(recordName(Prescribed{.temperature = 20.0}), "Prescribed temperature");
     EXPECT_EQ(recordName(Prescribed{.temperature = 20.0, .humidity = 0.5}), "Prescribed temperature and humidity");
     EXPECT_EQ(recordName(Convective{}), "Convective exchange");
 }
 
-TEST(AuthoringModel, DefaultsMatchTheEngineSettings)
+TEST(Model, DefaultsMatchTheEngineSettings)
 {
     const Physics physics;
     EXPECT_TRUE(physics.thermal && physics.moisture && physics.liquidTransport && physics.heatOfEvaporation
@@ -172,10 +222,10 @@ TEST(AuthoringModel, DefaultsMatchTheEngineSettings)
     EXPECT_EQ(numerics.maxIterations, 25);
 
     EXPECT_NEAR(Convective{}.humidity, 0.5, 1e-15);
-    EXPECT_TRUE(std::holds_alternative<Sealed>(Segment{}.kind));
+    EXPECT_TRUE(std::holds_alternative<Adiabatic>(Segment{}.kind));
 }
 
-TEST(AuthoringModel, CasesCompareByValue)
+TEST(Model, CasesCompareByValue)
 {
     EXPECT_EQ(strip(), strip());
     auto changed{strip()};
