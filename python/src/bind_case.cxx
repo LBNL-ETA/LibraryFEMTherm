@@ -64,7 +64,7 @@ namespace
         auto segment{py::class_<Segment>(model,
                                          "Segment",
                                          "One boundary segment: a straight line between two points on a region's "
-                                         "outline, the condition it carries (Adiabatic, Prescribed or Convective), and "
+                                         "outline, the condition it carries (one of the `bc` kinds), and "
                                          "optionally the index of the region it bounds. Left None, the region is "
                                          "found: a segment on the outline lies on exactly one region's edge. It must "
                                          "be given where two regions share the edge. `color` is what THERM draws the "
@@ -95,7 +95,11 @@ namespace
 
     void bindBoundaryKinds(py::module_ & model)
     {
-        auto adiabatic{py::class_<Adiabatic>(model,
+        auto bc{model.def_submodule("bc",
+                                    "The boundary conditions a segment can carry: Adiabatic, Prescribed or "
+                                    "Convective. Each is constant in time.")};
+
+        auto adiabatic{py::class_<Adiabatic>(bc,
                                              "Adiabatic",
                                              "No exchange at all: no heat and no moisture crosses the surface. "
                                              "Written as THERM's own built-in Adiabatic record.")
@@ -104,7 +108,7 @@ namespace
         addEquality(adiabatic);
 
         auto prescribed{
-          py::class_<Prescribed>(model,
+          py::class_<Prescribed>(bc,
                                  "Prescribed",
                                  "The surface state itself is imposed: a temperature in degrees C and optionally a "
                                  "relative humidity as a fraction. Constant in time.")
@@ -123,7 +127,7 @@ namespace
         addEquality(prescribed);
 
         auto convective{
-          py::class_<Convective>(model,
+          py::class_<Convective>(bc,
                                  "Convective",
                                  "Exchange with an environment: air temperature in degrees C, film coefficient in "
                                  "W/(m2 K), relative humidity as a fraction. Constant in time.")
@@ -351,8 +355,9 @@ namespace
 }   // namespace
 
 //! Two submodules. `model` is the vocabulary a THERM model is stated in: regions in metres
-//! carrying their material, segments carrying a physical condition, a uniform start, a clock
-//! and the calculation switches. `build` turns such a case into what THERM would have saved:
+//! carrying their material, segments carrying a physical condition (the kinds live in
+//! `model.bc`), a uniform start, a clock and the calculation switches. `build` turns such a
+//! case into what THERM would have saved:
 //! the model, its libraries, the archive. The file-level types bound elsewhere in this
 //! module are what the archive is made of; these two are the layer above.
 void bind_case(py::module_ & mod)
