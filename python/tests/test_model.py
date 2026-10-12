@@ -212,10 +212,10 @@ class TestIssues:
         nameless.name = ""
         case.regions = [model.Region(nameless, case.regions[0].points)]
         with pytest.raises(ValueError, match="no name"):
-            build.archive_entries(case)
+            build.thmz_entries(case)
         target = tmp_path / "invalid.thmz"
         with pytest.raises(ValueError, match="no name"):
-            build.archive(case, str(target))
+            build.thmz(case, str(target))
         assert not target.exists()
 
 
@@ -277,13 +277,13 @@ class TestLibraryRecords:
 
 class TestArchive:
     def test_entries(self):
-        entries = build.archive_entries(sealed_strip())
+        entries = build.thmz_entries(sealed_strip())
         assert {"Model.xml", "Materials.xml", "BoundaryConditions.xml", "Gases.xml", "Mesh.xml"} <= set(entries)
         assert sum(name.startswith("time series/") for name in entries) == 2
 
     def test_written_archive_round_trips(self, tmp_path):
         path = str(tmp_path / "nested" / "strip.thmz")
-        assert build.archive(sealed_strip(), path) == path
+        assert build.thmz(sealed_strip(), path) == path
         assert os.path.exists(path)
 
         loaded = fem.load_model_from_zip_file(path)
@@ -301,15 +301,15 @@ class TestArchive:
         assert materials.get_names() == ["linear-sorption"]
 
         # Overwrites in place.
-        assert build.archive(sealed_strip(), path) == path
+        assert build.thmz(sealed_strip(), path) == path
 
     def test_identity_is_stable(self):
         case = sealed_strip()
         assert build.case_uuid(case, "region/0") == build.case_uuid(sealed_strip(), "region/0")
         assert build.case_uuid(case, "region/0") != build.case_uuid(case, "region/1")
         assert build.record_uuid("Convective exchange") == build.boundary_record(model.bc.Convective(20.0, 8.0), "x").uuid
-        first = build.archive_entries(case)
-        second = build.archive_entries(sealed_strip())
+        first = build.thmz_entries(case)
+        second = build.thmz_entries(sealed_strip())
         assert first.keys() == second.keys()
 
     def test_adiabatic_is_therms_built_in_record(self):

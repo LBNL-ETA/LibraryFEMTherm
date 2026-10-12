@@ -294,7 +294,6 @@ namespace ThermFile::Build
         }
         for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
         {
-            const auto & segment{modelCase.segments[index]};
             const auto bound{datasets.find(index)};
             result.boundaryConditions.push_back(
               boundary(modelCase,
@@ -334,7 +333,7 @@ namespace ThermFile::Build
                          .datasets = std::move(datasets)};
     }
 
-    lbnl::ExpectedExt<std::map<std::string, std::string>, std::string> archiveEntries(const ModelCase & modelCase)
+    lbnl::ExpectedExt<std::map<std::string, std::string>, std::string> thmzEntries(const ModelCase & modelCase)
     {
         if(const auto found{issues(modelCase)}; !found.empty())
         {
@@ -358,9 +357,9 @@ namespace ThermFile::Build
         return entries;
     }
 
-    lbnl::ExpectedExt<std::string, std::string> archive(const ModelCase & modelCase, const std::string & path)
+    lbnl::ExpectedExt<std::string, std::string> thmz(const ModelCase & modelCase, const std::string & path)
     {
-        const auto entries{archiveEntries(modelCase)};
+        const auto entries{thmzEntries(modelCase)};
         if(!entries.has_value())
         {
             return lbnl::Unexpected<std::string>{entries.error()};

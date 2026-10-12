@@ -71,7 +71,8 @@ namespace ThermFile::Build
     //! ``project`` is written as the record's project name: THERM imports an archive's
     //! records into its library only when they are marked as the project's own. The
     //! Adiabatic record is THERM's built-in and carries no project name.
-    [[nodiscard]] BCLibrary::BoundaryCondition boundaryRecord(const Model::Boundary & boundary, std::string_view project);
+    [[nodiscard]] BCLibrary::BoundaryCondition boundaryRecord(const Model::Boundary & boundary,
+                                                              std::string_view project);
 
     //! (role name, constant value) pairs, one per series the segment's dataset carries, in
     //! the order the dataset writes them: temperature before humidity for a prescribed
@@ -81,7 +82,8 @@ namespace ThermFile::Build
 
     //! Segment index -> dataset for every segment that reads values, plus a clock on the
     //! first segment when none does.
-    [[nodiscard]] std::map<std::size_t, TimeSeriesLibrary::TimeSeriesData> boundaryDatasets(const Model::ModelCase & modelCase);
+    [[nodiscard]] std::map<std::size_t, TimeSeriesLibrary::TimeSeriesData>
+      boundaryDatasets(const Model::ModelCase & modelCase);
 
     //! The THERM model of the case: polygons, boundary segments and calculation options.
     //! Precondition: issues(modelCase) is empty.
@@ -94,13 +96,13 @@ namespace ThermFile::Build
     //! Every entry of the case's THMZ, name -> content, before zipping. Fails with the
     //! case's issues, one per line, when it cannot be written.
     [[nodiscard]] lbnl::ExpectedExt<std::map<std::string, std::string>, std::string>
-      archiveEntries(const Model::ModelCase & modelCase);
+      thmzEntries(const Model::ModelCase & modelCase);
 
     //! Writes the case's THMZ and returns the path written. Creates the parent directory
     //! and overwrites an existing file. Fails with the case's issues when it cannot be
     //! written.
-    [[nodiscard]] lbnl::ExpectedExt<std::string, std::string> archive(const Model::ModelCase & modelCase,
-                                                                          const std::string & path);
+    [[nodiscard]] lbnl::ExpectedExt<std::string, std::string> thmz(const Model::ModelCase & modelCase,
+                                                                   const std::string & path);
 
     //! The clock the mediator will run, read from the first dataset as the mediator does.
     [[nodiscard]] Model::Schedule scheduleOf(const std::vector<TimeSeriesLibrary::TimeSeriesData> & datasets);

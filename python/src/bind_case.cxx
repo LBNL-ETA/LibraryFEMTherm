@@ -323,9 +323,9 @@ namespace
                   "The materials, the boundary-condition records and the datasets the model uses. The case "
                   "must have no issues.");
         build.def(
-          "archive_entries",
+          "thmz_entries",
           [](const ModelCase & modelCase) {
-              const auto entries{archiveEntries(modelCase)};
+              const auto entries{thmzEntries(modelCase)};
               if(!entries.has_value())
               {
                   throw py::value_error(entries.error());
@@ -336,9 +336,9 @@ namespace
           "Every entry of the case's THMZ, name -> content, before zipping. Raises ValueError with the case's "
           "issues when it cannot be written.");
         build.def(
-          "archive",
+          "thmz",
           [](const ModelCase & modelCase, const std::string & path) {
-              const auto written{archive(modelCase, path)};
+              const auto written{thmz(modelCase, path)};
               if(!written.has_value())
               {
                   throw py::value_error(written.error());

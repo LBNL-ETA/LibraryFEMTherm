@@ -287,7 +287,7 @@ TEST(Build, DatasetsSetTheClock)
 
 TEST(Build, EntriesCarryEveryLibrary)
 {
-    const auto entries{archiveEntries(sealedStrip())};
+    const auto entries{thmzEntries(sealedStrip())};
     ASSERT_TRUE(entries.has_value());
     for(const auto * name : {"Model.xml", "Materials.xml", "BoundaryConditions.xml", "Gases.xml", "Mesh.xml"})
     {
@@ -304,12 +304,12 @@ TEST(Build, AnInvalidCaseIsRefusedWithItsIssues)
     modelCase.regions[0].material.Name.clear();
     modelCase.schedule.nSteps = 0U;
 
-    const auto entries{archiveEntries(modelCase)};
+    const auto entries{thmzEntries(modelCase)};
     ASSERT_FALSE(entries.has_value());
     EXPECT_NE(entries.error().find("material with no name"), std::string::npos);
     EXPECT_NE(entries.error().find("at least one step"), std::string::npos);
 
-    const auto written{archive(modelCase, "should-not-exist.thmz")};
+    const auto written{thmz(modelCase, "should-not-exist.thmz")};
     EXPECT_FALSE(written.has_value());
     EXPECT_FALSE(std::filesystem::exists("should-not-exist.thmz"));
 }
@@ -317,7 +317,7 @@ TEST(Build, AnInvalidCaseIsRefusedWithItsIssues)
 TEST(Build, WrittenArchiveRoundTrips)
 {
     const auto path{(std::filesystem::temp_directory_path() / "authoring-sealed-strip.thmz").string()};
-    const auto written{archive(sealedStrip(), path)};
+    const auto written{thmz(sealedStrip(), path)};
     ASSERT_TRUE(written.has_value()) << written.error();
     EXPECT_EQ(written.value(), path);
     ASSERT_TRUE(std::filesystem::exists(path));
@@ -341,6 +341,6 @@ TEST(Build, WrittenArchiveRoundTrips)
     EXPECT_EQ(materials.getNames(), (std::vector<std::string>{"linear-sorption"}));
 
     // Overwrites in place rather than failing on an existing file.
-    EXPECT_TRUE(archive(sealedStrip(), path).has_value());
+    EXPECT_TRUE(thmz(sealedStrip(), path).has_value());
     std::filesystem::remove(path);
 }
