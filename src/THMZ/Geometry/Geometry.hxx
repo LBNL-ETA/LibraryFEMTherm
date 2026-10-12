@@ -48,24 +48,24 @@ namespace ThermFile
     //! @cavity - per-polygon frame-cavity attributes (present iff polygonType == FrameCavity).
     struct Polygon
     {
-        std::string uuid;
+        std::string uuid{};
         int ID{-1};
-        std::string materialUUID;
-        std::string materialName;
-        std::optional<GlazingSystemData> glazingSystem;
-        Point origin;
-        std::vector<Point> points;
-        std::vector<std::string> attributes;
+        std::string materialUUID{};
+        std::string materialName{};
+        std::optional<GlazingSystemData> glazingSystem{};
+        Point origin{};
+        std::vector<Point> points{};
+        std::vector<std::string> attributes{};
         PolygonType polygonType{PolygonType::None};
-        std::optional<int> linkID;
-        std::optional<CavityData> cavity;
+        std::optional<int> linkID{};
+        std::optional<CavityData> cavity{};
         //! \brief Volumetric heat generation within this polygon [W/m^3].
         //!
         //! Absent on every polygon THERM authors, and nothing writes it unless a
         //! producer sets it deliberately. Kept separate from the moisture source
         //! below because the two carry different units and feed different
         //! equations; a polygon may have either, both or neither.
-        std::optional<double> volumetricHeatSource;
+        std::optional<double> volumetricHeatSource{};
         //! \brief Volumetric moisture generation within this polygon [kg/(m^3 s)].
         //!
         //! Water appearing in or removed from the material by something the
@@ -80,7 +80,7 @@ namespace ThermFile
         //! phase arrived. Splitting the field here would promise a distinction
         //! nothing downstream could act on. If that distinction is ever wanted it
         //! is a solver change first, and this field follows.
-        std::optional<double> volumetricMoistureSource;
+        std::optional<double> volumetricMoistureSource{};
     };
 
     //! \brief Represents geometry data that are used in certain boundary condition types

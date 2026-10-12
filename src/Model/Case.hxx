@@ -182,14 +182,14 @@ namespace ThermFile::Model
     //! clock and settings.
     struct ModelCase
     {
-        std::string id;
-        std::string title;
-        std::vector<Region> regions;
-        std::vector<Segment> segments;
-        Initial initial;
-        Schedule schedule;
-        Physics physics;
-        Numerics numerics;
+        std::string id{};
+        std::string title{};
+        std::vector<Region> regions{};
+        std::vector<Segment> segments{};
+        Initial initial{};
+        Schedule schedule{};
+        Physics physics{};
+        Numerics numerics{};
 
         [[nodiscard]] friend bool operator==(const ModelCase & lhs, const ModelCase & rhs) = default;
     };
