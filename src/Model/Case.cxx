@@ -3,6 +3,7 @@
 #include <format>
 
 #include "Case.hxx"
+#include "Common/PlanarGeometry.hxx"
 
 namespace ThermFile::Model
 {
@@ -17,22 +18,6 @@ namespace ThermFile::Model
         //! it, in metres. Coordinates are stated by hand; this absorbs arithmetic on them.
         constexpr double outlineTolerance{1e-9};
 
-        double distanceToEdge(const Point & point, const Point & edgeStart, const Point & edgeEnd)
-        {
-            const double edgeX{edgeEnd.x - edgeStart.x};
-            const double edgeY{edgeEnd.y - edgeStart.y};
-            const double lengthSquared{edgeX * edgeX + edgeY * edgeY};
-            double parameter{0.0};
-            if(lengthSquared > 0.0)
-            {
-                parameter = ((point.x - edgeStart.x) * edgeX + (point.y - edgeStart.y) * edgeY) / lengthSquared;
-                parameter = std::clamp(parameter, 0.0, 1.0);
-            }
-            const double offsetX{point.x - (edgeStart.x + parameter * edgeX)};
-            const double offsetY{point.y - (edgeStart.y + parameter * edgeY)};
-            return std::sqrt(offsetX * offsetX + offsetY * offsetY);
-        }
-
         //! True when both endpoints lie on the same edge of the region's outline: a segment
         //! is a span of one edge, never a chord or a bridge between two edges.
         bool liesOnAnEdge(const Region & region, const Segment & segment)
@@ -42,8 +27,8 @@ namespace ThermFile::Model
             {
                 const auto & edgeStart{points[index]};
                 const auto & edgeEnd{points[(index + 1U) % points.size()]};
-                if(distanceToEdge(segment.start, edgeStart, edgeEnd) <= outlineTolerance
-                   && distanceToEdge(segment.end, edgeStart, edgeEnd) <= outlineTolerance)
+                if(Geometry::distanceToSegment(segment.start, edgeStart, edgeEnd) <= outlineTolerance
+                   && Geometry::distanceToSegment(segment.end, edgeStart, edgeEnd) <= outlineTolerance)
                 {
                     return true;
                 }
