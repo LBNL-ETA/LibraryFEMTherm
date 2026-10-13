@@ -3,6 +3,7 @@
 
 #include "THMZ/SteadyStateResults/Results.hxx"
 #include "THMZ/SteadyStateResults/DB.hxx"
+#include "THMZ/SteadyStateResults/UFactors.hxx"
 
 namespace py = pybind11;
 
@@ -128,4 +129,17 @@ void bind_steady_state_results(py::module_ & mod)
                                        FileParse::FileFormat)>(
                 &ThermFile::saveToString),
             py::arg("results"), py::arg("format") = FileParse::FileFormat::XML);
+
+    // --- Reading a U-factor the way THERM's results screen does ---
+    mod.attr("DEGENERATE_PROJECTION_LENGTH") = ThermFile::degenerateProjectionLength;
+    mod.def("is_degenerate", &ThermFile::isDegenerate, py::arg("projection"),
+            "The projection has a length, and it is at or below DEGENERATE_PROJECTION_LENGTH.");
+    mod.def("is_reportable", &ThermFile::isReportable, py::arg("projection"),
+            "The projection carries a U-factor and a length, and the length is not degenerate.");
+    mod.def("projection_of", &ThermFile::projectionOf, py::arg("tag"), py::arg("length_type"),
+            "The tag's projection of that UValueDimensionType, or None.");
+    mod.def("displayed_projection", &ThermFile::displayedProjection, py::arg("tag"),
+            "The projection THERM shows for the tag: the one of its default display type, or None.");
+    mod.def("displayed_u_factor", &ThermFile::displayedUFactor, py::arg("tag"),
+            "The U-factor THERM shows for the tag; None when that projection is missing or not reportable.");
 }

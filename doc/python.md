@@ -409,6 +409,21 @@ for bnd in model.boundary_conditions:
     print(f"BC: {bnd.name} (uuid={bnd.uuid})")
 ```
 
+### Plane geometry
+
+`pylibraryfemtherm.geometry` is the C++ `Common/PlanarGeometry.hxx`: plane geometry on any points with an `x` and a `y` - this module's `Point`, pyhygrotherm's `Point` and `Node`, a mesh's `MeshNode`, or a type of the caller's own. Points may be any iterable, a generator included.
+
+```python
+from pylibraryfemtherm import geometry
+
+box = geometry.bounding_box(poly.points)      # BoundingBox: min_x, min_y, max_x, max_y, width, height, empty
+geometry.polygon_area(poly.points)            # shoelace, either winding
+geometry.is_inside_polygon(point, poly.points)
+geometry.distance_to_segment(point, start, end)
+```
+
+A point without an `x` or a `y` raises `AttributeError`.
+
 ## Model Properties and Preferences
 
 ```python
@@ -506,6 +521,36 @@ for case in results.cases:
             print(f"    {proj.length_type}: length={proj.length}, "
                   f"U={proj.u_factor}")
 ```
+
+### The U-factor THERM shows
+
+Each tag stores one projection per length type; THERM's results screen shows the one of the tag's `default_display_type`, when it holds a number worth showing. A projection is *degenerate* when its length is at or below `DEGENERATE_PROJECTION_LENGTH` (1e-9): THERM stores a Custom Rotation projection for every tag even at a projection angle of zero, which reports a U-factor of about 1e16 over a length of about 5e-15.
+
+```python
+for uf in results.cases[0].steady_state_u_factors:
+    print(uf.tag, fem.displayed_u_factor(uf))          # None when not reportable
+
+shown = fem.displayed_projection(uf)                   # the default display type's projection, or None
+x_projected = fem.projection_of(uf, fem.UValueDimensionType.XProjected)
+fem.is_reportable(x_projected)                         # has U and length, length not degenerate
+fem.is_degenerate(x_projected)
+```
+
+### One run's field on its mesh
+
+`steady_state_field` joins the stored mesh with the nodal results of one run. The two sections refer to a node differently - a mesh element's corners are 0-based positions in the case's node list, a node's own `index` (the key the results use) is a 1-based label - and the join is made on the label, so every per-node list of the field is in mesh-node order and an element corner indexes it directly.
+
+```python
+from pylibraryfemtherm import steady_state_field
+
+field = steady_state_field.read_from_zip_file("model.thmz", fem.RunType.UFactor)
+field.nodes, field.elements          # MeshNode / MeshElement, as the mesh stores them
+field.temperature                    # one value per node; NaN where the run has none
+field.x_flux, field.y_flux, field.flux_magnitude
+field.humidity, field.water_content, field.ice_content   # NaN for a heat-only run
+```
+
+`read_from_zip_file` raises `ValueError` when the archive has no stored mesh, no nodal results, or no case of that run type (the message names the run types there are). `read(entries, run_type)` does the same on already-extracted entries. A CMA archive keeps one case per glazing and spacer variant; the first case of the run type is read.
 
 ### Mesh results (temperatures and fluxes at nodes)
 

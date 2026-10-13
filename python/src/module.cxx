@@ -20,6 +20,8 @@ void bind_time_series(py::module_ & mod);
 void bind_bc_library(py::module_ & mod);
 void bind_case(py::module_ & mod);
 void bind_transient_results(py::module_ & mod);
+void bind_planar_geometry(py::module_ & mod);
+void bind_steady_state_field(py::module_ & mod);
 
 PYBIND11_MODULE(pylibraryfemtherm, mod)
 {
@@ -46,4 +48,7 @@ PYBIND11_MODULE(pylibraryfemtherm, mod)
     // TimeSeriesData objects, so every one of those must already be registered.
     bind_case(mod);
     bind_transient_results(mod);
+    bind_planar_geometry(mod);
+    // After bind_mesh: a Field hands out the mesh's MeshNode and MeshElement records.
+    bind_steady_state_field(mod);
 }
