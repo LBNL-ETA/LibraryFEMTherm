@@ -172,21 +172,25 @@ TEST(TestJSONFormat, TimeSeriesDatasetsJSONZipRoundTrip)
     std::filesystem::remove(zipPath);
 }
 
-TEST(TestJSONFormat, SeededJSONLibraryFileLoads)
+TEST(TestJSONFormat, AMissingJSONLibraryIsEmptyUntilSaved)
 {
     const auto fileName{scratchPath("json_format_materials.json")};
     std::filesystem::remove(fileName);
 
-    // Constructor seeds a missing .json library file with JSON content and loads it back empty.
+    // A missing library file opens as an empty library and writes nothing...
     MaterialsLibrary::DB database{fileName.string()};
     EXPECT_TRUE(database.getMaterials().empty());
+    EXPECT_FALSE(std::filesystem::exists(fileName));
 
+    // ...until it is saved, in the format asked for, and then it loads back empty.
+    EXPECT_EQ(database.saveToFile(FileParse::FileFormat::JSON), 0);
     {
-        std::ifstream seeded(fileName);
+        std::ifstream saved(fileName);
         std::string firstChar;
-        seeded >> firstChar;
+        saved >> firstChar;
         EXPECT_EQ(firstChar.front(), '{');
     }
+    EXPECT_TRUE(MaterialsLibrary::DB{fileName.string()}.getMaterials().empty());
 
     std::filesystem::remove(fileName);
 }

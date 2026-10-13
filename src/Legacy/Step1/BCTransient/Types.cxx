@@ -30,19 +30,10 @@ namespace BCTypesLibrary
     /// DB
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    DB::DB(const std::string & xmlName) : m_FileName(xmlName)
+    //! A missing file is an empty library; nothing is written until the library is saved.
+    DB::DB(const std::string & xmlName) :
+        m_FileName(xmlName)
     {
-        // Need to check if file exists and create empty one if it does not.
-        if(const std::ifstream f(m_FileName.c_str()); !f.good())
-        {
-            const std::string fileContent{
-              Common::generateLibraryContent("BoundaryConditionsType",
-                                             "BoundaryConditionsTransient.xsd",
-                                             m_Version,
-                                             FileParse::detectFileFormatFromExtension(m_FileName))};
-            File::createFileFromString(m_FileName, fileContent);
-        }
-
         m_BoundaryConditions = loadBoundaryConditionsFromFile(xmlName);
     }
 

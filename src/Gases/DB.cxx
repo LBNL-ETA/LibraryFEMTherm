@@ -76,21 +76,17 @@ namespace GasesLibrary
         return processGasesNodeFromString<std::vector<PureGas>>(xmlString, tag.pureGas());
     }
 
-    DB::DB(const std::string & fileName) : m_FileName(fileName)
+    //! A missing file is an empty library at the current version; nothing is written until the
+    //! library is saved.
+    DB::DB(const std::string & fileName) :
+        m_FileName(fileName)
     {
-        // Need to check if file exists and create empty one if it does not.
-        if(std::ifstream f(fileName.c_str()); !f.good())
-        {
-            Tags tag;
-            // This is minimal requirement for the library file. Otherwise, component will crash.
-            const std::string fileContent{Common::generateLibraryContent(
-              tag.gases(), "Gases.xsd", m_Version, FileParse::detectFileFormatFromExtension(fileName))};
-            File::createFileFromString(fileName, fileContent);
-        }
-
-        m_Version = loadVersionFromXMLFile(fileName);
         m_PureGases = loadPureGasesFromXMLFile(fileName);
         m_Gases = loadGasesFromXMLFile(fileName);
+        if(auto version{loadVersionFromXMLFile(fileName)}; !version.empty())
+        {
+            m_Version = std::move(version);
+        }
     }
 
     void DB::loadFromString(const std::string & str)

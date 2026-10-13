@@ -20,19 +20,10 @@
 
 namespace TimeSeriesLibrary
 {
-    DB::DB(const std::string & xmlFileName) : m_FileName(xmlFileName)
+    //! A missing file is an empty library; nothing is written until the library is saved.
+    DB::DB(const std::string & xmlFileName) :
+        m_FileName(xmlFileName)
     {
-        if(std::ifstream file(xmlFileName.c_str()); !file.good())
-        {
-            Tags tags;
-            const std::string fileContent{
-              Common::generateLibraryContent(tags.timeSeriesData(),
-                                             "TimeSeriesData.xsd",
-                                             m_Version,
-                                             FileParse::detectFileFormatFromExtension(xmlFileName))};
-            File::createFileFromString(xmlFileName, fileContent);
-        }
-
         m_TimeSeriesData = loadTimeSeriesDataFromFile(xmlFileName);
     }
 

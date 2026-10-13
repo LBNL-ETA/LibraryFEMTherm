@@ -22,16 +22,10 @@ namespace MaterialsLibrary
     ///   DB
     /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    DB::DB(const std::string & xmlFileName) : m_FileName(xmlFileName)
+    //! A missing file is an empty library; nothing is written until the library is saved.
+    DB::DB(const std::string & xmlFileName) :
+        m_FileName(xmlFileName)
     {
-        // Check if the file exists and create an empty one if it doesn't.
-        if(std::ifstream f(xmlFileName); !f.good())
-        {
-            const std::string fileContent{Common::generateLibraryContent(
-              "Materials", "Materials.xsd", m_Version, FileParse::detectFileFormatFromExtension(xmlFileName))};
-            File::createFileFromString(xmlFileName, fileContent);
-        }
-
         m_Materials = loadMaterialsFromXMLFile(xmlFileName);
     }
 

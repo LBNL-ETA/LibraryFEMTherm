@@ -19,21 +19,10 @@
 
 namespace BCSteadyStateLibrary
 {
-    DB::DB(const std::string & xmlFileName) : m_FileName(xmlFileName)
+    //! A missing file is an empty library; nothing is written until the library is saved.
+    DB::DB(const std::string & xmlFileName) :
+        m_FileName(xmlFileName)
     {
-        // Need to check if file exists and create empty one if it does not.
-        if(std::ifstream f(xmlFileName.c_str()); !f.good())
-        {
-            // This is minimal requirement for the library file. Otherwise, component will crash.
-            BCSteadyStateLibrary::Tags tags;
-            const std::string fileContent{
-              Common::generateLibraryContent(tags.boundaryConditions(),
-                                             "BC Steady State.xsd",
-                                             m_Version,
-                                             FileParse::detectFileFormatFromExtension(xmlFileName))};
-            File::createFileFromString(xmlFileName, fileContent);
-        }
-
         m_BoundaryConditions = loadBoundaryConditionsFromFile(xmlFileName);
     }
 
