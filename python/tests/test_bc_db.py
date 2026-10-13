@@ -13,7 +13,7 @@ TOL = 1e-6
 @pytest.fixture()
 def bc_db_sill(sample_sill_path):
     """Load BCSteadyStateDB from the sample-sill THMZ."""
-    contents = fem.zip.unzip_files(sample_sill_path, ["SteadyStateBC.xml"])
+    contents = fem.thmz.read_entries(sample_sill_path, ["SteadyStateBC.xml"])
     bdb = fem.BCSteadyStateDB()
     bdb.load_from_string(contents["SteadyStateBC.xml"])
     return bdb
@@ -23,7 +23,7 @@ class TestBCDBLoading:
     """Ported from THMZFile.unit.cxx — TestSteadyStateBC::Deserialization."""
 
     def test_load_from_id50(self, id50_path):
-        contents = fem.zip.unzip_files(id50_path, ["SteadyStateBC.xml"])
+        contents = fem.thmz.read_entries(id50_path, ["SteadyStateBC.xml"])
         bdb = fem.BCSteadyStateDB()
         bdb.load_from_string(contents["SteadyStateBC.xml"])
         names = bdb.get_names()

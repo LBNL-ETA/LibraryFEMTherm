@@ -144,11 +144,11 @@ void bind_bc_library(py::module_ & mod)
         .def("load_from_string", &BCLibrary::DB::loadFromString, py::arg("str"))
         .def("save_to_string", &BCLibrary::DB::saveToString,
              py::arg("format") = FileParse::FileFormat::XML)
-        .def("load_from_zip_file", &BCLibrary::DB::loadFromZipFile, py::arg("zip_file_name"),
+        .def("load", &BCLibrary::DB::loadFromZipFile, py::arg("thmz_file_name"),
              "Reads the archive's BoundaryConditions entry; leaves the DB unchanged when absent.")
         .def("load_from_entries", &BCLibrary::DB::loadFromEntries, py::arg("entries"),
              "Same, from an already-extracted archive dict.")
-        .def("save_to_zip_file", &BCLibrary::DB::saveToZipFile, py::arg("zip_file_name"),
+        .def("save", &BCLibrary::DB::saveToZipFile, py::arg("thmz_file_name"),
              py::arg("format") = FileParse::FileFormat::XML)
         .def("get_boundary_conditions", &BCLibrary::DB::getBoundaryConditions,
              py::return_value_policy::reference_internal)

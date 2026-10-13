@@ -122,23 +122,23 @@ class TestLibraryRoundTrip:
 
 class TestArchiveEntries:
     def test_entry_name(self):
-        name = fem.zip.time_series_entry_name("abc")
-        assert name == fem.zip.TIME_SERIES_DIR + "/abc.xml"
-        assert fem.zip.time_series_entry_name("abc", fem.FileFormat.JSON).endswith(".json")
-        assert fem.zip.entry_name_for_format("Model", fem.FileFormat.XML) == "Model.xml"
+        name = fem.thmz.time_series_entry_name("abc")
+        assert name == fem.thmz.TIME_SERIES_DIR + "/abc.xml"
+        assert fem.thmz.time_series_entry_name("abc", fem.FileFormat.JSON).endswith(".json")
+        assert fem.thmz.entry_name_for_format("Model", fem.FileFormat.XML) == "Model.xml"
 
     def test_datasets_through_a_zip(self, tmp_path):
         archive = str(tmp_path / "datasets.thmz")
-        fem.zip.zip_files({"Model.xml": "<ThermModel/>"}, archive)
-        written = fem.save_datasets_to_zip_file([_dataset()], archive)
+        fem.thmz.write_entries({"Model.xml": "<ThermModel/>"}, archive)
+        written = fem.save_datasets([_dataset()], archive)
         assert written == 1
 
-        datasets = fem.load_datasets_from_zip_file(archive)
+        datasets = fem.load_datasets(archive)
         assert len(datasets) == 1
         assert datasets[0].name == "Two steps of constant weather"
 
-        entries = fem.zip.unzip_files(archive)
-        assert fem.zip.time_series_entry_name(_dataset().uuid) in entries
+        entries = fem.thmz.read_entries(archive)
+        assert fem.thmz.time_series_entry_name(_dataset().uuid) in entries
         from_entries = fem.load_datasets_from_entries(entries)
         assert len(from_entries) == 1
         assert fem.values_for_role(from_entries[0], fem.SeriesRole.RelativeHumidity) == [0.5, 0.55]

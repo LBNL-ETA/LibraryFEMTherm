@@ -111,7 +111,7 @@ Or build from source with `BUILD_PYTHON_BINDINGS=ON` (see above).
 import pylibraryfemtherm as fem
 
 # Load a THMZ file
-model = fem.load_model_from_zip_file("sample-sill.thmz")
+model = fem.load_model("sample-sill.thmz")
 print(f"Polygons:   {len(model.polygons)}")
 print(f"Boundaries: {len(model.boundary_conditions)}")
 
@@ -119,12 +119,12 @@ print(f"Boundaries: {len(model.boundary_conditions)}")
 xml = fem.save_model_to_string(model)
 
 # Save to a new THMZ file
-fem.save_model_to_zip_file(model, "output.thmz")
+fem.save_model(model, "output.thmz")
 
-# Work with ZIP contents directly
-contents = fem.zip.unzip_files("sample.thmz", [fem.zip.MATERIALS_FILE_NAME])
+# Work with .thmz entries directly
+contents = fem.thmz.read_entries("sample.thmz", [fem.thmz.MATERIALS_FILE_NAME])
 db = fem.MaterialsDB()
-db.load_from_string(contents[fem.zip.MATERIALS_FILE_NAME])
+db.load_from_string(contents[fem.thmz.MATERIALS_FILE_NAME])
 ```
 
 For comprehensive Python API documentation with examples, see [doc/python.md](doc/python.md).

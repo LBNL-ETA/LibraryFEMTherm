@@ -286,18 +286,18 @@ class TestArchive:
         assert build.thmz(sealed_strip(), path) == path
         assert os.path.exists(path)
 
-        loaded = fem.load_model_from_zip_file(path)
+        loaded = fem.load_model(path)
         assert loaded is not None
         assert len(loaded.polygons) == 1
         assert len(loaded.boundary_conditions) == 4
 
         records = fem.BoundaryConditionsDB()
-        records.load_from_zip_file(path)
+        records.load(path)
         assert sorted(records.get_names()) == ["Adiabatic", "Prescribed temperature"]
-        assert len(fem.load_datasets_from_zip_file(path)) == 2
+        assert len(fem.load_datasets(path)) == 2
 
         materials = fem.MaterialsDB()
-        materials.load_from_string(fem.zip.unzip_files(path, ["Materials.xml"])["Materials.xml"])
+        materials.load_from_string(fem.thmz.read_entries(path, ["Materials.xml"])["Materials.xml"])
         assert materials.get_names() == ["linear-sorption"]
 
         # Overwrites in place.

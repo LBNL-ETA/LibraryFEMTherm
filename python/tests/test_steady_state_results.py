@@ -8,17 +8,17 @@ TOL = 1e-6
 class TestSteadyStateResultsLoadFromTHMZ:
 
     def test_load_sample_sill(self, sample_sill_path):
-        results = fem.load_steady_state_results_from_zip_file(sample_sill_path)
+        results = fem.load_steady_state_results(sample_sill_path)
         assert results is not None
         assert len(results.cases) > 0
 
     def test_first_case_has_u_factors(self, sample_sill_path):
-        results = fem.load_steady_state_results_from_zip_file(sample_sill_path)
+        results = fem.load_steady_state_results(sample_sill_path)
         case = results.cases[0]
         assert len(case.steady_state_u_factors) > 0
 
     def test_u_factor_fields(self, sample_sill_path):
-        results = fem.load_steady_state_results_from_zip_file(sample_sill_path)
+        results = fem.load_steady_state_results(sample_sill_path)
         ufactor = results.cases[0].steady_state_u_factors[0]
         assert isinstance(ufactor.tag, str)
         assert len(ufactor.tag) > 0
@@ -28,25 +28,25 @@ class TestSteadyStateResultsLoadFromTHMZ:
         assert len(ufactor.projections) > 0
 
     def test_projection_fields(self, sample_sill_path):
-        results = fem.load_steady_state_results_from_zip_file(sample_sill_path)
+        results = fem.load_steady_state_results(sample_sill_path)
         proj = results.cases[0].steady_state_u_factors[0].projections[0]
         assert isinstance(proj.length_type, fem.UValueDimensionType)
 
     def test_no_results_returns_none(self, sample_sill_no_results_path):
-        results = fem.load_steady_state_results_from_zip_file(
+        results = fem.load_steady_state_results(
             sample_sill_no_results_path
         )
         assert results is None
 
     def test_nonexistent_file_returns_none(self):
-        result = fem.load_steady_state_results_from_zip_file("nonexistent.thmz")
+        result = fem.load_steady_state_results("nonexistent.thmz")
         assert result is None
 
 
 class TestSteadyStateResultsStringRoundTrip:
 
     def test_save_and_reload(self, sample_sill_path):
-        results = fem.load_steady_state_results_from_zip_file(sample_sill_path)
+        results = fem.load_steady_state_results(sample_sill_path)
         assert results is not None
 
         xml = fem.save_steady_state_results_to_string(results)

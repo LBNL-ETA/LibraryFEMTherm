@@ -7,60 +7,56 @@ namespace py = pybind11;
 
 void bind_zip(py::module_ & mod)
 {
-    auto zip = mod.def_submodule("zip", "THMZ ZIP archive operations");
+    auto thmz = mod.def_submodule("thmz", "THERM archive (.thmz) operations: its entries, read and written by name");
 
-    // File name constants
-    zip.attr("MODEL_FILE_NAME") = ThermZip::ModelFileName;
-    zip.attr("GASES_FILE_NAME") = ThermZip::GasesFileName;
-    zip.attr("MATERIALS_FILE_NAME") = ThermZip::MaterialsFileName;
-    zip.attr("STEADY_STATE_BC_FILE_NAME") = ThermZip::SteadyStateBCFileName;
-    zip.attr("TRANSIENT_TYPE_BC_FILE_NAME") = ThermZip::TransientTypeBCFileName;
-    zip.attr("STEADY_STATE_RESULTS_NAME") = ThermZip::SteadyStateResultsName;
-    zip.attr("STEADY_STATE_MESH_RESULTS_NAME") = ThermZip::SteadyStateMeshResultsName;
-    zip.attr("MESH_NAME") = ThermZip::MeshName;
-    zip.attr("CMA_LIBRARY") = ThermZip::CMALibrary;
-    zip.attr("BOUNDARY_CONDITIONS_FILE_NAME") = ThermZip::BoundaryConditionsFileName;
-    zip.attr("TIME_SERIES_DIR") = ThermZip::TimeSeriesDir;
+    // Entry base names
+    thmz.attr("MODEL_FILE_NAME") = ThermZip::ModelFileName;
+    thmz.attr("GASES_FILE_NAME") = ThermZip::GasesFileName;
+    thmz.attr("MATERIALS_FILE_NAME") = ThermZip::MaterialsFileName;
+    thmz.attr("STEADY_STATE_BC_FILE_NAME") = ThermZip::SteadyStateBCFileName;
+    thmz.attr("TRANSIENT_TYPE_BC_FILE_NAME") = ThermZip::TransientTypeBCFileName;
+    thmz.attr("STEADY_STATE_RESULTS_NAME") = ThermZip::SteadyStateResultsName;
+    thmz.attr("STEADY_STATE_MESH_RESULTS_NAME") = ThermZip::SteadyStateMeshResultsName;
+    thmz.attr("MESH_NAME") = ThermZip::MeshName;
+    thmz.attr("CMA_LIBRARY") = ThermZip::CMALibrary;
+    thmz.attr("BOUNDARY_CONDITIONS_FILE_NAME") = ThermZip::BoundaryConditionsFileName;
+    thmz.attr("TIME_SERIES_DIR") = ThermZip::TimeSeriesDir;
 
-    zip.def("time_series_entry_name", &ThermZip::timeSeriesEntryName,
-            py::arg("dataset_uuid"), py::arg("format") = FileParse::FileFormat::XML,
-            "Archive entry name of one time series dataset: \"time series/<uuid>.<ext>\"");
-    zip.def("entry_name_for_format", &ThermZip::entryNameForFormat,
-            py::arg("base_name"), py::arg("format"),
-            "Appends the format's extension to an entry base name (\"Model\" -> \"Model.xml\")");
+    thmz.def("time_series_entry_name", &ThermZip::timeSeriesEntryName,
+             py::arg("dataset_uuid"), py::arg("format") = FileParse::FileFormat::XML,
+             "Archive entry name of one time series dataset: \"time series/<uuid>.<ext>\"");
+    thmz.def("entry_name_for_format", &ThermZip::entryNameForFormat,
+             py::arg("base_name"), py::arg("format"),
+             "Appends the format's extension to an entry base name (\"Model\" -> \"Model.xml\")");
 
-    // In-memory zip: map<string, string> -> zip file
-    zip.def("zip_files",
-            py::overload_cast<const std::map<std::string, std::string> &, const std::string &, int>(
-                &ThermZip::zipFiles),
-            py::arg("file_contents"), py::arg("zip_file_name"),
-            py::arg("compression_level") = ThermZip::DefaultCompressionLevel,
-            "Create a ZIP archive from in-memory file contents");
+    thmz.def("write_entries",
+             py::overload_cast<const std::map<std::string, std::string> &, const std::string &, int>(
+                 &ThermZip::zipFiles),
+             py::arg("entries"), py::arg("thmz_file_name"),
+             py::arg("compression_level") = ThermZip::DefaultCompressionLevel,
+             "Write a .thmz holding the given entries, name -> content");
 
-    // Unzip: zip file -> map<string, string>
-    zip.def("unzip_files",
-            py::overload_cast<std::string_view, std::vector<std::string> const &>(
-                &ThermZip::unzipFiles),
-            py::arg("source"), py::arg("file_names") = std::vector<std::string>(),
-            "Extract files from a ZIP archive into a dict");
+    thmz.def("read_entries",
+             py::overload_cast<std::string_view, std::vector<std::string> const &>(
+                 &ThermZip::unzipFiles),
+             py::arg("thmz_file_name"), py::arg("names") = std::vector<std::string>(),
+             "The .thmz's entries as a dict, name -> content: the named ones, or all when none are named");
 
-    // Unzip single file
-    zip.def("unzip_file", &ThermZip::unzipFile,
-            py::arg("zip_file_name"), py::arg("file_name"),
-            "Extract a single file from a ZIP archive as a string");
+    thmz.def("read_entry", &ThermZip::unzipFile,
+             py::arg("thmz_file_name"), py::arg("name"),
+             "One entry of a .thmz, as a string");
 
-    // Add file to existing zip
-    zip.def("add_to_zip_file", &ThermZip::addToZipFile,
-            py::arg("zip_file_name"), py::arg("file_name"), py::arg("text"),
-            py::arg("obsolete_names") = std::vector<std::string>(),
-            py::arg("compression_level") = ThermZip::DefaultCompressionLevel,
-            "Add a file to an existing ZIP archive");
+    thmz.def("add_entry", &ThermZip::addToZipFile,
+             py::arg("thmz_file_name"), py::arg("name"), py::arg("text"),
+             py::arg("obsolete_names") = std::vector<std::string>(),
+             py::arg("compression_level") = ThermZip::DefaultCompressionLevel,
+             "Add an entry to an existing .thmz, or replace it; obsolete_names are removed");
 
     // Entry base names are extension-free; these resolve the format spellings.
-    zip.def("entry_name_candidates", &ThermZip::entryNameCandidates,
-            py::arg("base_name"),
-            "Both format spellings of an entry base name, JSON first");
-    zip.def("find_entry", &ThermZip::findEntry,
-            py::arg("entries"), py::arg("base_name"),
-            "Look up an entry base name in an extracted-archive dict; empty when absent");
+    thmz.def("entry_name_candidates", &ThermZip::entryNameCandidates,
+             py::arg("base_name"),
+             "Both format spellings of an entry base name, JSON first");
+    thmz.def("find_entry", &ThermZip::findEntry,
+             py::arg("entries"), py::arg("base_name"),
+             "Look up an entry base name in an extracted-archive dict; empty when absent");
 }

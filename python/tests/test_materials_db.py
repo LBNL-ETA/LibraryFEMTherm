@@ -14,7 +14,7 @@ TOL = 1e-6
 @pytest.fixture()
 def materials_db(sample_sill_path):
     """Load MaterialsDB from the sample-sill THMZ."""
-    contents = fem.zip.unzip_files(sample_sill_path, ["Materials.xml"])
+    contents = fem.thmz.read_entries(sample_sill_path, ["Materials.xml"])
     mdb = fem.MaterialsDB()
     mdb.load_from_string(contents["Materials.xml"])
     return mdb

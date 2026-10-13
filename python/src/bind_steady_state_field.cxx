@@ -31,7 +31,7 @@ void bind_steady_state_field(py::module_ & mod)
       .def_property_readonly("flux_magnitude", &fluxMagnitude, "Heat-flux magnitude at every node.");
 
     field.def(
-      "read",
+      "read_entries",
       [](const std::map<std::string, std::string> & entries, const ThermFile::RunType runType) {
           const auto result{read(entries, runType)};
           if(!result.has_value())
@@ -45,7 +45,7 @@ void bind_steady_state_field(py::module_ & mod)
       "Reads the run's field out of extracted entries. Raises ValueError when the archive has no stored mesh, no "
       "nodal results, or no case of that run type.");
     field.def(
-      "read_from_zip_file",
+      "read",
       [](const std::string & zipFileName, const ThermFile::RunType runType) {
           const auto result{readFromZipFile(zipFileName, runType)};
           if(!result.has_value())
@@ -54,7 +54,7 @@ void bind_steady_state_field(py::module_ & mod)
           }
           return result.value();
       },
-      py::arg("zip_file_name"),
+      py::arg("thmz_file_name"),
       py::arg("run_type") = ThermFile::RunType::UFactor,
-      "Extracts the archive's mesh and nodal results and reads the run's field. Raises ValueError as read() does.");
+      "Extracts the archive's mesh and nodal results and reads the run's field. Raises ValueError as read_entries() does.");
 }

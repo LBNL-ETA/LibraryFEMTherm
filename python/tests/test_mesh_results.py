@@ -8,17 +8,17 @@ TOL = 1e-6
 class TestMeshResultsLoadFromTHMZ:
 
     def test_load_sample_sill(self, sample_sill_path):
-        results = fem.load_steady_state_mesh_results_from_zip_file(sample_sill_path)
+        results = fem.load_steady_state_mesh_results(sample_sill_path)
         assert results is not None
         assert len(results.cases) > 0
 
     def test_first_case_has_nodes(self, sample_sill_path):
-        results = fem.load_steady_state_mesh_results_from_zip_file(sample_sill_path)
+        results = fem.load_steady_state_mesh_results(sample_sill_path)
         case = results.cases[0]
         assert len(case.nodes) > 0
 
     def test_node_result_fields(self, sample_sill_path):
-        results = fem.load_steady_state_mesh_results_from_zip_file(sample_sill_path)
+        results = fem.load_steady_state_mesh_results(sample_sill_path)
         node = results.cases[0].nodes[0]
         assert isinstance(node.index, int)
         assert isinstance(node.temperature, float)
@@ -26,23 +26,23 @@ class TestMeshResultsLoadFromTHMZ:
         assert isinstance(node.y_flux, float)
 
     def test_no_results_returns_none(self, sample_sill_no_results_path):
-        results = fem.load_steady_state_mesh_results_from_zip_file(
+        results = fem.load_steady_state_mesh_results(
             sample_sill_no_results_path
         )
         assert results is None
 
     def test_nonexistent_file_returns_none(self):
-        result = fem.load_steady_state_mesh_results_from_zip_file("nonexistent.thmz")
+        result = fem.load_steady_state_mesh_results("nonexistent.thmz")
         assert result is None
 
 
 class TestMeshResultsStringRoundTrip:
 
     def test_save_and_reload(self, sample_sill_path):
-        results = fem.load_steady_state_mesh_results_from_zip_file(sample_sill_path)
+        results = fem.load_steady_state_mesh_results(sample_sill_path)
         assert results is not None
 
-        xml = fem.save_mesh_results_to_string(results)
+        xml = fem.save_steady_state_mesh_results_to_string(results)
         assert len(xml) > 0
 
         reloaded = fem.load_steady_state_mesh_results_from_string(xml)

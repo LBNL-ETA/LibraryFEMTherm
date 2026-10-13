@@ -54,6 +54,6 @@ def id50_path(test_data_dir):
 @pytest.fixture()
 def sample_model(sample_sill_path):
     """Load and return the sample-sill ThermModel."""
-    result = fem.load_model_from_zip_file(sample_sill_path)
+    result = fem.load_model(sample_sill_path)
     assert result is not None
     return result

@@ -23,7 +23,7 @@ def strip_path(test_data_dir):
 
 class TestFixture:
     def test_reads_every_quantity(self, strip_path):
-        results = tr.read_from_zip_file(strip_path)
+        results = tr.read(strip_path)
         assert results.node_count == 22
         assert results.frame_count == 25
         assert results.first_frame_is_initial
@@ -42,21 +42,21 @@ class TestFixture:
         assert isinstance(results.heat_flux[0][0], tr.FluxVector)
 
     def test_nodes_are_in_column_order(self, strip_path):
-        results = tr.read_from_zip_file(strip_path)
+        results = tr.read(strip_path)
         assert [node.id for node in results.nodes] == list(range(1, 23))
         assert len({node.x for node in results.nodes}) == 11
         assert results.geometry.nodes[0].id >= 1
 
     def test_entries_and_zip_agree(self, strip_path):
-        entries = fem.zip.unzip_files(strip_path)
+        entries = fem.thmz.read_entries(strip_path)
         assert tr.has_transient_results(entries)
-        from_entries = tr.read(entries)
-        from_zip = tr.read_from_zip_file(strip_path)
+        from_entries = tr.read_entries(entries)
+        from_zip = tr.read(strip_path)
         assert from_entries.frames == from_zip.frames
         assert from_entries[tr.Quantity.WaterContent].values == from_zip[tr.Quantity.WaterContent].values
 
     def test_missing_quantity_is_a_key_error(self, strip_path):
-        results = tr.read_from_zip_file(strip_path)
+        results = tr.read(strip_path)
         with pytest.raises(KeyError):
             results[tr.Quantity.IceContent]
 
@@ -67,12 +67,12 @@ class TestFixture:
 
 class TestErrors:
     def test_a_steady_archive_raises(self, sample_sill_path):
-        assert not tr.has_transient_results(fem.zip.unzip_files(sample_sill_path))
+        assert not tr.has_transient_results(fem.thmz.read_entries(sample_sill_path))
         with pytest.raises(ValueError, match="transient results"):
-            tr.read_from_zip_file(sample_sill_path)
+            tr.read(sample_sill_path)
 
     def test_inconsistent_entries_raise(self, strip_path):
-        entries = fem.zip.unzip_files(strip_path)
+        entries = fem.thmz.read_entries(strip_path)
         entries["transient results/Humidities.csv"] = "timestep #,error tolerance,1\n0,0,1\n"
         with pytest.raises(ValueError, match="node columns"):
-            tr.read(entries)
+            tr.read_entries(entries)

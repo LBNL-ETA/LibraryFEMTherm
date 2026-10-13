@@ -20,12 +20,12 @@ class TestTHMZLoad:
         assert len(sample_model.boundary_conditions) == 64
 
     def test_load_id50(self, id50_path):
-        model = fem.load_model_from_zip_file(id50_path)
+        model = fem.load_model(id50_path)
         assert model is not None
         assert len(model.polygons) > 0
 
     def test_load_nonexistent_file_returns_none(self):
-        result = fem.load_model_from_zip_file("nonexistent_file.thmz")
+        result = fem.load_model("nonexistent_file.thmz")
         assert result is None
 
 
@@ -60,8 +60,8 @@ class TestZipRoundTrip:
         os.remove(tmp_path)  # miniz needs to create the file itself
 
         try:
-            fem.save_model_to_zip_file(sample_model, tmp_path)
-            reloaded = fem.load_model_from_zip_file(tmp_path)
+            fem.save_model(sample_model, tmp_path)
+            reloaded = fem.load_model(tmp_path)
             assert reloaded is not None
             assert len(reloaded.polygons) == len(sample_model.polygons)
             assert len(reloaded.boundary_conditions) == len(sample_model.boundary_conditions)

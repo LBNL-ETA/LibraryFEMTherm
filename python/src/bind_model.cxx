@@ -35,11 +35,11 @@ void bind_model(py::module_ & mod)
             py::arg("model"), py::arg("file_name"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("load_model_from_zip_file", &ThermFile::loadThermModelFromZipFile,
-            py::arg("zip_file_name"));
+    mod.def("load_model", &ThermFile::loadThermModelFromZipFile,
+            py::arg("thmz_file_name"));
 
-    mod.def("save_model_to_zip_file", &ThermFile::saveToZipFile,
-            py::arg("model"), py::arg("zip_file_name"),
+    mod.def("save_model", &ThermFile::saveToZipFile,
+            py::arg("model"), py::arg("thmz_file_name"),
             py::arg("format") = FileParse::FileFormat::XML);
 
     mod.def("load_model_from_string", &ThermFile::loadThermModelFromString,

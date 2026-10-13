@@ -94,14 +94,14 @@ void bind_time_series(py::module_ & mod)
         .def("is_dirty", &TimeSeriesLibrary::DB::isDirty);
 
     // THMZ storage: one archive entry per dataset, independent of any library file.
-    mod.def("load_datasets_from_zip_file", &TimeSeriesLibrary::loadDatasetsFromZipFile,
-            py::arg("zip_file_name"),
+    mod.def("load_datasets", &TimeSeriesLibrary::loadDatasetsFromZipFile,
+            py::arg("thmz_file_name"),
             "Every \"time series/<uuid>\" entry of a THMZ; empty for a pre-consolidation file.");
     mod.def("load_datasets_from_entries", &TimeSeriesLibrary::loadDatasetsFromEntries,
             py::arg("entries"),
             "Same, from an already-extracted archive dict.");
-    mod.def("save_datasets_to_zip_file", &TimeSeriesLibrary::saveDatasetsToZipFile,
-            py::arg("datasets"), py::arg("zip_file_name"),
+    mod.def("save_datasets", &TimeSeriesLibrary::saveDatasetsToZipFile,
+            py::arg("datasets"), py::arg("thmz_file_name"),
             py::arg("format") = FileParse::FileFormat::XML,
             "Writes every dataset as its own entry; returns the number written.");
 }

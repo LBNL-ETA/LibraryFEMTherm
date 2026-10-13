@@ -1,2 +1,2 @@
 from pylibraryfemtherm import *
-from pylibraryfemtherm import zip
+from pylibraryfemtherm import thmz
