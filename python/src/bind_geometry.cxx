@@ -1,3 +1,5 @@
+#include <format>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -12,9 +14,7 @@ void bind_geometry(py::module_ & mod)
         .def(py::init<double, double>())
         .def_readwrite("x", &ThermFile::Point::x)
         .def_readwrite("y", &ThermFile::Point::y)
-        .def("__repr__", [](const ThermFile::Point & pnt) {
-            return "Point(" + std::to_string(pnt.x) + ", " + std::to_string(pnt.y) + ")";
-        });
+        .def("__repr__", [](const ThermFile::Point & pnt) { return std::format("Point({}, {})", pnt.x, pnt.y); });
 
     py::class_<ThermFile::GlazingSystemData>(mod, "GlazingSystemData")
         .def(py::init<>())

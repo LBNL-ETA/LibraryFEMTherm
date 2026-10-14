@@ -96,6 +96,24 @@ class TestVocabulary:
         assert build.record_name(model.bc.Prescribed(20.0, 0.8)) == "Prescribed temperature and humidity"
         assert build.record_name(model.bc.Convective(20.0, 8.0)) == "Convective exchange"
 
+    def test_reprs(self):
+        region = model.Region(linear_sorption(), [(0.0, 0.0), (0.2, 0.0), (0.2, 3.0)])
+        assert repr(region) == "Region(material='linear-sorption', points=[Point(0, 0), Point(0.2, 0), Point(0.2, 3)])"
+        segment = model.Segment(model.bc.Prescribed(temperature=20.0), (0.0, 3.0), (0.0, 0.0))
+        assert repr(segment) == "Segment(kind=Prescribed(temperature=20), start=Point(0, 3), end=Point(0, 0))"
+        named = model.Segment(model.bc.Adiabatic(), (0.0, 0.0), (0.2, 0.0), region=1, color="0x1E5A96", name="bottom")
+        assert repr(named) == (
+            "Segment(kind=Adiabatic(), start=Point(0, 0), end=Point(0.2, 0), region=1, color='0x1E5A96', name='bottom')"
+        )
+        assert repr(model.Initial(temperature=20.0, humidity=0.5)) == "Initial(temperature=20, humidity=0.5)"
+        assert repr(model.Schedule(dtime=3600.0, n_steps=24)) == "Schedule(dtime=3600, n_steps=24)"
+        assert repr(model.Physics(moisture=False)) == (
+            "Physics(thermal=True, moisture=False, liquid_transport=True, heat_of_evaporation=True, "
+            "capillary_conduction=True, vapor_diffusion_conduction=True, latent_heat_of_fusion=True, "
+            "conductivity_dependent=True)"
+        )
+        assert repr(model.Numerics()) == "Numerics(convergence_tolerance=1e-05, relaxation=1, max_iterations=25)"
+
     def test_settings_defaults(self):
         physics = model.Physics()
         assert physics.thermal and physics.moisture and physics.liquid_transport

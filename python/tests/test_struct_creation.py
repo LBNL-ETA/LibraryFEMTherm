@@ -21,10 +21,7 @@ class TestPointCreation:
         assert abs(pnt.y - 2.71) < TOL
 
     def test_repr(self):
-        pnt = fem.Point(1.0, 2.0)
-        rep = repr(pnt)
-        assert "1.0" in rep
-        assert "2.0" in rep
+        assert repr(fem.Point(1.5, 2.0)) == "Point(1.5, 2)"
 
     def test_field_assignment(self):
         pnt = fem.Point()

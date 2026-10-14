@@ -2,7 +2,9 @@
 #include <pybind11/stl.h>
 
 #include <format>
+#include <optional>
 #include <string>
+#include <string_view>
 
 #include "Model/Archive.hxx"
 #include "Model/Case.hxx"
@@ -26,6 +28,53 @@ namespace
             "__ne__",
             [](const Type & lhs, const Type & rhs) { return !(lhs == rhs); },
             py::is_operator());
+    }
+
+    //! Python's repr of a bound value, so a nested value prints as it does on its own:
+    //! a string quoted, a bool as True/False, a point or a boundary kind by its own repr.
+    template<typename Type>
+    std::string pythonRepr(const Type & value)
+    {
+        return py::repr(py::cast(value)).template cast<std::string>();
+    }
+
+    //! ", label=value" for a field that is set, nothing for one that is not.
+    template<typename Type>
+    std::string optionalField(const std::string_view label, const std::optional<Type> & value)
+    {
+        return value.has_value() ? std::format(", {}={}", label, pythonRepr(*value)) : std::string{};
+    }
+
+    std::string regionRepr(const Region & region)
+    {
+        return std::format(
+          "Region(material={}, points={})", pythonRepr(region.material.Name), pythonRepr(region.points));
+    }
+
+    std::string segmentRepr(const Segment & segment)
+    {
+        return std::format("Segment(kind={}, start={}, end={}{}{}{})",
+                           pythonRepr(segment.kind),
+                           pythonRepr(segment.start),
+                           pythonRepr(segment.end),
+                           optionalField("region", segment.region),
+                           optionalField("color", segment.color),
+                           optionalField("name", segment.name));
+    }
+
+    std::string physicsRepr(const Physics & physics)
+    {
+        return std::format("Physics(thermal={}, moisture={}, liquid_transport={}, heat_of_evaporation={}, "
+                           "capillary_conduction={}, vapor_diffusion_conduction={}, latent_heat_of_fusion={}, "
+                           "conductivity_dependent={})",
+                           pythonRepr(physics.thermal),
+                           pythonRepr(physics.moisture),
+                           pythonRepr(physics.liquidTransport),
+                           pythonRepr(physics.heatOfEvaporation),
+                           pythonRepr(physics.capillaryConduction),
+                           pythonRepr(physics.vaporDiffusionConduction),
+                           pythonRepr(physics.latentHeatOfFusion),
+                           pythonRepr(physics.conductivityDependent));
     }
 
     void bindGeometry(py::module_ & model)
@@ -58,7 +107,8 @@ namespace
                            py::arg("material"),
                            py::arg("points"))
                       .def_readwrite("material", &Region::material)
-                      .def_readwrite("points", &Region::points)};
+                      .def_readwrite("points", &Region::points)
+                      .def("__repr__", &regionRepr)};
         addEquality(region);
 
         auto segment{py::class_<Segment>(model,
@@ -89,7 +139,8 @@ namespace
                        .def_readwrite("end", &Segment::end)
                        .def_readwrite("region", &Segment::region)
                        .def_readwrite("color", &Segment::color)
-                       .def_readwrite("name", &Segment::name)};
+                       .def_readwrite("name", &Segment::name)
+                       .def("__repr__", &segmentRepr)};
         addEquality(segment);
     }
 
@@ -161,7 +212,10 @@ namespace
                             py::arg("temperature"),
                             py::arg("humidity"))
                        .def_readwrite("temperature", &Initial::temperature)
-                       .def_readwrite("humidity", &Initial::humidity)};
+                       .def_readwrite("humidity", &Initial::humidity)
+                       .def("__repr__", [](const Initial & initial) {
+                           return std::format("Initial(temperature={}, humidity={})", initial.temperature, initial.humidity);
+                       })};
         addEquality(initial);
 
         auto schedule{py::class_<Schedule>(model, "Schedule", "The clock: n_steps steps of dtime seconds.")
@@ -172,7 +226,10 @@ namespace
                              py::arg("n_steps"))
                         .def_readwrite("dtime", &Schedule::dtime)
                         .def_readwrite("n_steps", &Schedule::nSteps)
-                        .def_property_readonly("duration", &Schedule::duration)};
+                        .def_property_readonly("duration", &Schedule::duration)
+                        .def("__repr__", [](const Schedule & schedule) {
+                            return std::format("Schedule(dtime={}, n_steps={})", schedule.dtime, schedule.nSteps);
+                        })};
         addEquality(schedule);
 
         auto physics{
@@ -212,7 +269,8 @@ namespace
             .def_readwrite("capillary_conduction", &Physics::capillaryConduction)
             .def_readwrite("vapor_diffusion_conduction", &Physics::vaporDiffusionConduction)
             .def_readwrite("latent_heat_of_fusion", &Physics::latentHeatOfFusion)
-            .def_readwrite("conductivity_dependent", &Physics::conductivityDependent)};
+            .def_readwrite("conductivity_dependent", &Physics::conductivityDependent)
+            .def("__repr__", &physicsRepr)};
         addEquality(physics);
 
         auto numerics{py::class_<Numerics>(model,
@@ -226,7 +284,13 @@ namespace
                              py::arg("max_iterations") = 25)
                         .def_readwrite("convergence_tolerance", &Numerics::convergenceTolerance)
                         .def_readwrite("relaxation", &Numerics::relaxation)
-                        .def_readwrite("max_iterations", &Numerics::maxIterations)};
+                        .def_readwrite("max_iterations", &Numerics::maxIterations)
+                        .def("__repr__", [](const Numerics & numerics) {
+                            return std::format("Numerics(convergence_tolerance={}, relaxation={}, max_iterations={})",
+                                               numerics.convergenceTolerance,
+                                               numerics.relaxation,
+                                               numerics.maxIterations);
+                        })};
         addEquality(numerics);
     }
 
