@@ -79,7 +79,8 @@ void bind_properties(py::module_ & mod)
 
     py::class_<ThermFile::CalculationOptions>(mod, "CalculationOptions")
         .def(py::init<>())
-        .def_readwrite("simulation_engine", &ThermFile::CalculationOptions::simulationEngine)
+        .def_readwrite("simulation_engine", &ThermFile::CalculationOptions::simulationEngine,
+                       "The engine THERM runs this file with. pyhygrotherm always solves with HygroThermFEM.")
         .def_readwrite("calculation_mode", &ThermFile::CalculationOptions::calculationMode)
         .def_readwrite("simulate_moisture", &ThermFile::CalculationOptions::simulateMoisture)
         .def_readwrite("simulate_thermal", &ThermFile::CalculationOptions::simulateThermal)
