@@ -18,6 +18,7 @@ __pycache__/
 *.pyd
 python/Release/
 python/Debug/
+python/*-stubs/
 
 # OS detritus
 .DS_Store

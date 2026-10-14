@@ -427,8 +427,10 @@ namespace
 void bind_case(py::module_ & mod)
 {
     auto model{mod.def_submodule("model", "State a THERM model in physical terms; see pylibraryfemtherm docs.")};
-    bindGeometry(model);
+    // The kinds first: Segment's signatures name them, and a signature uses a type's Python
+    // name only once that type is registered.
     bindBoundaryKinds(model);
+    bindGeometry(model);
     bindSettings(model);
     bindCase(model);
 

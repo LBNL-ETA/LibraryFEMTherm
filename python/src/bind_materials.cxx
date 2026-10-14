@@ -145,9 +145,6 @@ void bind_materials(py::module_ & mod)
             "The record UUID for a material name, the same on every machine and run.");
     mod.def("material_color", &MaterialsLibrary::materialColor, py::arg("name"),
             "THERM's polygon fill colour derived from a material name, 0xRRGGBB, the same in every archive.");
-    mod.def("materials_database", &MaterialsLibrary::materialsDatabase, py::arg("records"),
-            "A materials library holding the given records, one per distinct UUID.");
-
     // --- DB ---
     py::class_<MaterialsLibrary::DB>(mod, "MaterialsDB")
         .def(py::init<>())
@@ -167,4 +164,9 @@ void bind_materials(py::module_ & mod)
         .def("update", &MaterialsLibrary::DB::update, py::arg("material"))
         .def("update_or_add", &MaterialsLibrary::DB::updateOrAdd, py::arg("material"))
         .def("delete_with_uuid", &MaterialsLibrary::DB::deleteWithUUID, py::arg("uuid"));
+
+    // After MaterialsDB: a signature names its types by their Python names only once
+    // they are registered, and the generated type stubs are read from those signatures.
+    mod.def("materials_database", &MaterialsLibrary::materialsDatabase, py::arg("records"),
+            "A materials library holding the given records, one per distinct UUID.");
 }

@@ -25,9 +25,9 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install pytest
+      - name: Install pytest and pybind11-stubgen
         if: matrix.arch == 'x64'
-        run: pip install pytest
+        run: pip install pytest pybind11-stubgen
 
       - name: Configure CMake (with Python bindings)
         if: matrix.arch == 'x64'
@@ -65,8 +65,8 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install pytest
-        run: pip install pytest
+      - name: Install pytest and pybind11-stubgen
+        run: pip install pytest pybind11-stubgen
 
       - name: Configure CMake
         run: >
@@ -109,9 +109,9 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install pytest
+      - name: Install pytest and pybind11-stubgen
         if: matrix.arch == 'x86_64'
-        run: pip install pytest
+        run: pip install pytest pybind11-stubgen
 
       - name: Configure CMake (with Python bindings)
         if: matrix.arch == 'x86_64'
