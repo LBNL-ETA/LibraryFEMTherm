@@ -57,6 +57,18 @@ class TestVocabulary:
         assert model.Segment(model.bc.Adiabatic(), (0.0, 0.0), (1.0, 0.0), region=1).region == 1
         assert model.Segment(model.bc.Adiabatic(), (0.0, 0.0), (1.0, 0.0), name="bottom").name == "bottom"
 
+    def test_points_and_tuples_mix(self):
+        mixed = model.Region(linear_sorption(), [model.Point(0.0, 0.0), (1.0, 0.0), model.Point(x=1.0, y=1.0)])
+        assert mixed.points == [model.Point(0.0, 0.0), model.Point(1.0, 0.0), model.Point(1.0, 1.0)]
+        segment = model.Segment(model.bc.Adiabatic(), model.Point(0.0, 0.0), (1.0, 0.0))
+        assert segment.start == model.Point(0.0, 0.0) and segment.end == model.Point(1.0, 0.0)
+
+    def test_signatures_name_both_point_forms(self):
+        # The type stubs are generated from these signatures, so a type checker accepts a
+        # tuple only if the signature names it.
+        for constructor in (model.Region.__init__, model.Segment.__init__):
+            assert "tuple[float, float]" in constructor.__doc__
+
     def test_a_named_segment_is_named_in_its_issue(self):
         case = sealed_strip()
         segments = list(case.segments)

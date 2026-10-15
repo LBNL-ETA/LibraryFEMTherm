@@ -5,6 +5,11 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <variant>
+#include <vector>
+
+#include <lbnl/algorithm.hxx>
 
 #include "Model/Archive.hxx"
 #include "Model/Case.hxx"
@@ -43,6 +48,20 @@ namespace
     std::string optionalField(const std::string_view label, const std::optional<Type> & value)
     {
         return value.has_value() ? std::format(", {}={}", label, pythonRepr(*value)) : std::string{};
+    }
+
+    //! A point as a constructor takes it: a Point or a 2-tuple of metres. Spelled out as a
+    //! variant so the signature, and the stub generated from it, names both.
+    using PointLike = std::variant<Point, std::pair<double, double>>;
+
+    Point toPoint(const PointLike & given)
+    {
+        if(const auto * pair{std::get_if<std::pair<double, double>>(&given)})
+        {
+            const auto & [xValue, yValue]{*pair};
+            return Point{xValue, yValue};
+        }
+        return std::get<Point>(given);
     }
 
     std::string regionRepr(const Region & region)
@@ -101,8 +120,8 @@ namespace
                                        "once and the polygon closed implicitly, and the material filling it: a "
                                        "pylibraryfemtherm.Material record, built by keyword, taken from a library or "
                                        "a file. Regions that share a material carry the same record.")
-                      .def(py::init([](MaterialsLibrary::Material material, std::vector<Point> points) {
-                               return Region{std::move(material), std::move(points)};
+                      .def(py::init([](MaterialsLibrary::Material material, const std::vector<PointLike> & points) {
+                               return Region{std::move(material), lbnl::transform_to_vector(points, toPoint)};
                            }),
                            py::arg("material"),
                            py::arg("points"))
@@ -121,12 +140,17 @@ namespace
                                          "segment in, 0xRRGGBB; left None, the kind's own colour. `name` is what the "
                                          "caller calls the face, for plots and messages; it is not written to the file.")
                        .def(py::init([](Boundary kind,
-                                        const Point & start,
-                                        const Point & end,
+                                        const PointLike & start,
+                                        const PointLike & end,
                                         const std::optional<std::size_t> region,
                                         std::optional<std::string> color,
                                         std::optional<std::string> name) {
-                                return Segment{std::move(kind), start, end, region, std::move(color), std::move(name)};
+                                return Segment{std::move(kind),
+                                               toPoint(start),
+                                               toPoint(end),
+                                               region,
+                                               std::move(color),
+                                               std::move(name)};
                             }),
                             py::arg("kind"),
                             py::arg("start"),
