@@ -1,3 +1,7 @@
+#include <cstddef>
+#include <format>
+
+#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -27,13 +31,37 @@ void bind_properties(py::module_ & mod)
         .def_readwrite("convergence_tolerance", &ThermFile::EngineParameters::convergenceTolerance)
         .def_readwrite("relaxation_parameter", &ThermFile::EngineParameters::relaxationParameter);
 
-    py::class_<ThermFile::MeshControl>(mod, "MeshControl")
-        .def(py::init<>())
+    py::class_<ThermFile::MeshControl>(mod,
+                                       "MeshControl",
+                                       "THERM's mesh control: the mesher and its parameter, and the error estimator's "
+                                       "target in percent and pass budget.")
+        .def(py::init([](const bool runErrorEstimator,
+                         const double errorEnergyNorm,
+                         const std::size_t maximumIterations,
+                         const std::size_t meshParameter) {
+                 return ThermFile::MeshControl{.meshParameter = meshParameter,
+                                               .runErrorEstimator = runErrorEstimator,
+                                               .errorEnergyNorm = errorEnergyNorm,
+                                               .maximumIterations = maximumIterations};
+             }),
+             py::arg("run_error_estimator") = true,
+             py::arg("error_energy_norm") = 10.0,
+             py::arg("maximum_iterations") = std::size_t{5u},
+             py::arg("mesh_parameter") = std::size_t{6u})
         .def_readwrite("mesh_type", &ThermFile::MeshControl::meshType)
         .def_readwrite("mesh_parameter", &ThermFile::MeshControl::meshParameter)
         .def_readwrite("run_error_estimator", &ThermFile::MeshControl::runErrorEstimator)
         .def_readwrite("error_energy_norm", &ThermFile::MeshControl::errorEnergyNorm)
-        .def_readwrite("maximum_iterations", &ThermFile::MeshControl::maximumIterations);
+        .def_readwrite("maximum_iterations", &ThermFile::MeshControl::maximumIterations)
+        .def(py::self == py::self)
+        .def("__repr__", [](const ThermFile::MeshControl & control) {
+            return std::format("MeshControl(run_error_estimator={}, error_energy_norm={}, maximum_iterations={}, "
+                               "mesh_parameter={})",
+                               control.runErrorEstimator ? "True" : "False",
+                               control.errorEnergyNorm,
+                               control.maximumIterations,
+                               control.meshParameter);
+        });
 
     py::class_<ThermFile::MiscProperties>(mod, "MiscProperties")
         .def(py::init<>())

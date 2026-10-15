@@ -317,6 +317,74 @@ namespace ThermFile::Model
                 found.emplace_back("the schedule needs at least one step");
             }
         }
+
+        //! The radiation a segment states, or nothing.
+        const BCLibrary::RadiationOptions * radiationOf(const Segment & segment)
+        {
+            const auto * convective{std::get_if<Convective>(&segment.kind)};
+            return convective != nullptr && convective->radiation.has_value() ? &convective->radiation.value()
+                                                                              : nullptr;
+        }
+
+        //! Whether any input of the radiation is read from a dataset series.
+        bool readsSeries(const BCLibrary::RadiationOptions & radiation)
+        {
+            const BCLibrary::BoundaryCondition record{.data = BCLibrary::SurfaceExchange{.radiation = radiation}};
+            return !BCLibrary::requiredRoles(record).empty();
+        }
+
+        //! A steady-state archive keeps its conditions in THERM's steady-state library,
+        //! which has no record for a prescribed surface state, and has no datasets to read.
+        void checkSteadyStateSegments(const ModelCase & modelCase, std::vector<std::string> & found)
+        {
+            for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
+            {
+                const auto & segment{modelCase.segments[index]};
+                if(std::holds_alternative<Prescribed>(segment.kind))
+                {
+                    found.push_back(std::format("{} is prescribed, which a steady-state case cannot write; "
+                                                "state it as Convective",
+                                                describe(index, segment)));
+                }
+                if(const auto * radiation{radiationOf(segment)}; radiation != nullptr && readsSeries(*radiation))
+                {
+                    found.push_back(std::format("{} radiates with an input read from a dataset, which a "
+                                                "steady-state case has none of; state it as a constant",
+                                                describe(index, segment)));
+                }
+            }
+        }
+
+        //! A transient case reads every condition from its datasets, which do not carry
+        //! radiation yet.
+        void checkTransientSegments(const ModelCase & modelCase, std::vector<std::string> & found)
+        {
+            for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
+            {
+                if(radiationOf(modelCase.segments[index]) != nullptr)
+                {
+                    found.push_back(std::format("{} radiates, which only a steady-state case can write so far",
+                                                describe(index, modelCase.segments[index])));
+                }
+            }
+        }
+
+        void checkMode(const ModelCase & modelCase, std::vector<std::string> & found)
+        {
+            if(modelCase.mode == ThermFile::CalculationMode::cmTransient)
+            {
+                checkSchedule(modelCase, found);
+                checkTransientSegments(modelCase, found);
+            }
+            else if(isSteadyState(modelCase))
+            {
+                checkSteadyStateSegments(modelCase, found);
+            }
+            else
+            {
+                found.emplace_back("the mode must be transient or steady state");
+            }
+        }
     }   // namespace
 
     std::vector<std::string> issues(const ModelCase & modelCase)
@@ -325,8 +393,13 @@ namespace ThermFile::Model
         checkRegions(modelCase, found);
         checkMaterialNames(modelCase, found);
         checkSegments(modelCase, found);
-        checkSchedule(modelCase, found);
+        checkMode(modelCase, found);
         return found;
+    }
+
+    bool isSteadyState(const ModelCase & modelCase)
+    {
+        return modelCase.mode == ThermFile::CalculationMode::cmSteadyState;
     }
 
     std::optional<std::size_t> segmentRegion(const ModelCase & modelCase, const std::size_t index)

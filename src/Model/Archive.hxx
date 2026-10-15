@@ -40,6 +40,13 @@
 //!   first segment; the adiabatic record ignores the values.
 //! - Gases, Mesh: version headers only, as THERM writes for a model without cavities or a
 //!   stored mesh.
+//!
+//! A steady-state case (ModelCase::mode) has no clock, so it writes no datasets. Each
+//! segment that exchanges something gets a record of its own holding its constants, named
+//! after the segment and drawn in its colour; an adiabatic segment keeps THERM's built-in
+//! record. The records go into the consolidated BoundaryConditions entry only, as in a
+//! transient case: the legacy SteadyStateBC library is not written. The calculation
+//! options carry the case's MeshControl, which drives the error estimator.
 namespace ThermFile::Build
 {
     //! THERM's default drawing origin in page millimetres. The drawing is placed around it,

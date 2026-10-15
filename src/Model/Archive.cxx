@@ -21,6 +21,7 @@ namespace ThermFile::Build
     using Model::Boundary;
     using Model::completed;
     using Model::Convective;
+    using Model::isSteadyState;
     using Model::ModelCase;
     using Model::Point;
     using Model::Prescribed;
@@ -35,8 +36,23 @@ namespace ThermFile::Build
     {
         constexpr double mmPerM{1000.0};
 
-        //! The "use the material's emissivity" marker THERM writes on a boundary.
-        constexpr double globalEmissivityMarker{-1.0};
+        //! THERM's surface emissivity for a material that states none.
+        constexpr double defaultEmissivity{0.9};
+
+        //! The emissivity a boundary carries: the infrared emissivity of the material it
+        //! borders, as THERM resolves "use the material's emissivity" when it saves -- the
+        //! solver reads the stored value, not the flag. THERM's default when the material
+        //! states none.
+        double surfaceEmissivity(const MaterialsLibrary::Material & material)
+        {
+            const auto & optical{material.data.optical};
+            if(optical.has_value() && optical->integrated.has_value()
+               && optical->integrated->IR.EmissivityFront.has_value())
+            {
+                return optical->integrated->IR.EmissivityFront.value();
+            }
+            return defaultEmissivity;
+        }
 
         const std::string emptyGases{"<Gases>\n\t<Version>1</Version>\n</Gases>\n"};
         const std::string emptyMesh{"<Mesh>\n\t<Version>1</Version>\n</Mesh>\n"};
@@ -85,6 +101,70 @@ namespace ThermFile::Build
             exchange.relativeHumidity = fromSeries(TimeSeriesLibrary::SeriesRole::RelativeHumidity);
             exchange.convection = convection;
             return exchange;
+        }
+
+        BCLibrary::Source constant(const double value)
+        {
+            return BCLibrary::Constant{value};
+        }
+
+        //! A convective segment's exchange with its values held on the record itself, as a
+        //! steady-state case writes it.
+        BCLibrary::SurfaceExchange constantExchange(const Convective & convective)
+        {
+            BCLibrary::Convection convection;
+            convection.model = BCLibrary::ConvectionModel::Fixed_Convection_Coefficient;
+            convection.airTemperature = constant(convective.airTemperature);
+            convection.filmCoefficient = constant(convective.filmCoefficient);
+            BCLibrary::SurfaceExchange exchange;
+            exchange.relativeHumidity = constant(convective.humidity);
+            exchange.convection = convection;
+            exchange.radiation = convective.radiation;
+            return exchange;
+        }
+
+        //! The record a steady-state case writes for one segment: THERM's built-in for an
+        //! adiabatic one; otherwise a record of the segment's own, since each holds its own
+        //! constants. issues() has ruled out a prescribed segment.
+        BCLibrary::BoundaryCondition steadyStateRecord(const ModelCase & modelCase, const std::size_t index)
+        {
+            const auto & segment{modelCase.segments[index]};
+            if(std::holds_alternative<Adiabatic>(segment.kind))
+            {
+                return boundaryRecord(segment.kind, modelCase.id);
+            }
+            BCLibrary::BoundaryCondition record;
+            record.Name = std::format("segment {}", index + 1U);
+            record.UUID = caseUuid(modelCase, "record/" + record.Name);
+            record.Color = segmentColor(segment);
+            record.ProjectName = modelCase.id;
+            record.Protected = false;
+            record.data = constantExchange(std::get<Convective>(segment.kind));
+            return record;
+        }
+
+        //! The record a segment refers to: its kind's shared record in a transient case, its
+        //! own in a steady-state one.
+        BCLibrary::BoundaryCondition segmentRecord(const ModelCase & modelCase, const std::size_t index)
+        {
+            return isSteadyState(modelCase) ? steadyStateRecord(modelCase, index)
+                                            : boundaryRecord(modelCase.segments[index].kind, modelCase.id);
+        }
+
+        //! Every record the case's segments refer to, each once, in the order first used.
+        std::vector<BCLibrary::BoundaryCondition> segmentRecords(const ModelCase & modelCase)
+        {
+            std::vector<BCLibrary::BoundaryCondition> records;
+            std::set<std::string> seen;
+            for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
+            {
+                auto record{segmentRecord(modelCase, index)};
+                if(seen.insert(record.Name).second)
+                {
+                    records.push_back(std::move(record));
+                }
+            }
+            return records;
         }
 
         TimeSeriesLibrary::TimeSeriesData dataset(const ModelCase & modelCase,
@@ -140,11 +220,13 @@ namespace ThermFile::Build
                                      const std::optional<std::string> & datasetUuid)
         {
             const auto & segment{modelCase.segments[index]};
+            const auto record{segmentRecord(modelCase, index)};
             ThermFile::Boundary result;
             result.ID = index + 1U;
             result.uuid = caseUuid(modelCase, std::format("segment/{}", index));
-            result.name = recordName(segment.kind);
-            result.bcUUID = recordUuid(result.name);
+            result.name = record.Name;
+            result.bcUUID = record.UUID;
+            result.fluxTag = segment.uFactorTag.value_or(std::string{});
             result.timeSeriesUUID = datasetUuid;
             result.isBlocking = true;
             result.neighborPolygonUUID = polygonUuid;
@@ -153,21 +235,18 @@ namespace ThermFile::Build
             result.surfaceType = SurfaceType::BoundaryCondition;
             result.color = segmentColor(segment);
             result.status = 1;
-            result.thermalEmissionProperties.emissivity = globalEmissivityMarker;
+            result.thermalEmissionProperties.emissivity =
+              surfaceEmissivity(modelCase.regions[segmentRegion(modelCase, index).value()].material);
             result.thermalEmissionProperties.useGlobalEmissivity = true;
             return result;
         }
 
-        void applyCalculationOptions(const ModelCase & modelCase, ThermModel & model)
+        void applyPhysics(const Model::Physics & physics, CalculationOptions & options)
         {
-            auto & options{model.properties.calculationOptions};
-            options.simulationEngine = SimulationEngine::HygroThermFEM;
-            options.calculationMode = CalculationMode::cmTransient;
-            options.simulateThermal = modelCase.physics.thermal;
-            options.simulateMoisture = modelCase.physics.moisture;
+            options.simulateThermal = physics.thermal;
+            options.simulateMoisture = physics.moisture;
 
             auto & switches{options.modelingOptions};
-            const auto & physics{modelCase.physics};
             switches.excludeWaterLiquidTransportation = !physics.liquidTransport;
             switches.excludeHeatOfEvaporation = !physics.heatOfEvaporation;
             switches.excludeCapillaryConduction = !physics.capillaryConduction;
@@ -175,17 +254,36 @@ namespace ThermFile::Build
             switches.excludeLatentHeatOfFusion = !physics.latentHeatOfFusion;
             switches.excludeThermalConductivityMoistureDependent = !physics.conductivityDependent;
             switches.excludeThermalConductivityTemperatureDependent = !physics.conductivityDependent;
+        }
 
+        //! A transient case starts from its uniform initial state and runs no estimator: the
+        //! estimator is a steady-state tool. A steady-state case writes its mesh control,
+        //! which is what drives the estimator.
+        void applyMode(const ModelCase & modelCase, CalculationOptions & options)
+        {
+            options.calculationMode = modelCase.mode;
+            if(isSteadyState(modelCase))
+            {
+                options.meshControl = modelCase.meshControl;
+                return;
+            }
             options.transientCalculationMethodology = TransientCalculationMethodology::icConstantEverywhere;
             options.constantInitialConditionsTransient.temperature = modelCase.initial.temperature;
             options.constantInitialConditionsTransient.humidity = modelCase.initial.humidity;
+            options.meshControl.runErrorEstimator = false;
+        }
+
+        void applyCalculationOptions(const ModelCase & modelCase, ThermModel & model)
+        {
+            auto & options{model.properties.calculationOptions};
+            options.simulationEngine = SimulationEngine::HygroThermFEM;
+            applyPhysics(modelCase.physics, options);
+            applyMode(modelCase, options);
 
             options.engineParameters.convergenceTolerance = modelCase.numerics.convergenceTolerance;
             options.engineParameters.relaxationParameter = modelCase.numerics.relaxation;
             options.heatTransferModelingOptions.maximumIterations =
               static_cast<std::size_t>(modelCase.numerics.maxIterations);
-            // The mesh is handed in by the caller's mesher; the estimator is a steady-state tool.
-            options.meshControl.runErrorEstimator = false;
         }
 
         std::pair<std::string, std::string> datasetEntry(const TimeSeriesLibrary::TimeSeriesData & data)
@@ -261,6 +359,10 @@ namespace ThermFile::Build
     {
         const auto modelCase{completed(stated)};
         std::map<std::size_t, TimeSeriesLibrary::TimeSeriesData> datasets;
+        if(isSteadyState(modelCase))
+        {
+            return datasets;
+        }
         for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
         {
             const auto values{seriesValues(modelCase.segments[index].kind)};
@@ -314,13 +416,9 @@ namespace ThermFile::Build
         }
 
         BCLibrary::DB records;
-        std::set<std::string> seen;
-        for(const auto & segment : modelCase.segments)
+        for(const auto & record : segmentRecords(modelCase))
         {
-            if(seen.insert(recordName(segment.kind)).second)
-            {
-                records.add(boundaryRecord(segment.kind, modelCase.id));
-            }
+            records.add(record);
         }
 
         std::vector<TimeSeriesLibrary::TimeSeriesData> datasets;

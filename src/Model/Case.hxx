@@ -8,7 +8,10 @@
 #include <variant>
 #include <vector>
 
+#include "BoundaryConditions/BoundaryConditions.hxx"
 #include "Materials/Materials.hxx"
+#include "THMZ/Properties/Enumerators.hxx"
+#include "THMZ/Properties/Properties.hxx"
 
 //! A THERM model stated in physical terms, for writing an archive from code.
 //!
@@ -58,11 +61,17 @@ namespace ThermFile::Model
 
     //! Exchange with an environment: air temperature in °C, film coefficient in W/(m² K),
     //! relative humidity as a fraction. Constant in time.
+    //!
+    //! `radiation`, when set, is the surface's radiative exchange as THERM's own records
+    //! state it -- black body, automatic enclosure or a fixed coefficient -- written onto the
+    //! segment's record beside the convection. A steady-state case only, for now: its values
+    //! must be constants, since a steady-state case has no datasets to read.
     struct Convective
     {
         double airTemperature{0.0};
         double filmCoefficient{0.0};
         double humidity{0.5};
+        std::optional<BCLibrary::RadiationOptions> radiation{};
 
         [[nodiscard]] friend bool operator==(const Convective & lhs, const Convective & rhs) = default;
     };
@@ -109,6 +118,10 @@ namespace ThermFile::Model
         //! What the caller calls the face, for plots and messages: "outside", "room side".
         //! Not written to the file, whose segment name is the record's.
         std::optional<std::string> name{};
+        //! The U-factor tag the segment reports under, as THERM's "Frame" or "Edge": the
+        //! solver sums the heat flow over every segment carrying the same tag and reports
+        //! one U-factor per tag. Unset, the segment reports under none.
+        std::optional<std::string> uFactorTag{};
 
         [[nodiscard]] friend bool operator==(const Segment & lhs, const Segment & rhs) = default;
     };
@@ -180,6 +193,12 @@ namespace ThermFile::Model
 
     //! A THERM model stated in code: regions, each carrying its material, segments, start,
     //! clock and settings.
+    //!
+    //! `mode` is the calculation the archive is set up for. A transient case runs through
+    //! its clock: `initial` and `schedule` apply, and every condition is read from a dataset.
+    //! A steady-state case has no clock: `initial` and `schedule` are not written, each
+    //! condition is a constant on its own record, and `meshControl` -- THERM's own error
+    //! target and pass budget -- drives the error estimator.
     struct ModelCase
     {
         std::string id{};
@@ -190,6 +209,8 @@ namespace ThermFile::Model
         Schedule schedule{};
         Physics physics{};
         Numerics numerics{};
+        ThermFile::CalculationMode mode{ThermFile::CalculationMode::cmTransient};
+        ThermFile::MeshControl meshControl{};
 
         [[nodiscard]] friend bool operator==(const ModelCase & lhs, const ModelCase & rhs) = default;
     };
@@ -197,10 +218,16 @@ namespace ThermFile::Model
     //! Everything that stops the case from being written, one line each; empty when it can
     //! be. Checked: at least one region; three points per region; every material named,
     //! and one set of properties per name (the library keeps one record per name); every
-    //! segment attached to one region (see segmentRegion); a positive step and a positive
-    //! number of steps. Segments are not checked while a region has fewer than three
-    //! points, since it has no edges to lie on.
+    //! segment attached to one region (see segmentRegion); a mode that is transient or steady
+    //! state; for a transient case a positive step and a positive number of steps, and no
+    //! radiating segment (its datasets do not carry radiation yet); for a steady-state case
+    //! no prescribed segment, since THERM's steady-state library has no record for a
+    //! prescribed surface state, and no radiation read from a dataset. Segments are not
+    //! checked while a region has fewer than three points, since it has no edges to lie on.
     [[nodiscard]] std::vector<std::string> issues(const ModelCase & modelCase);
+
+    //! Whether the case is set up for a steady-state calculation.
+    [[nodiscard]] bool isSteadyState(const ModelCase & modelCase);
 
     //! The region a segment is attached to: the one it names, provided the segment lies
     //! along one of its edges (both endpoints on the same edge, within a nanometre); or,

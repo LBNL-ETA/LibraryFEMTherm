@@ -44,6 +44,91 @@ def sealed_strip() -> model.ModelCase:
     )
 
 
+def steady_l() -> model.ModelCase:
+    """A low block beside a tall one, cold on the low block's outer face and warm on the tall
+    block's; steady state, so no clock is stated."""
+    return model.ModelCase(
+        id="steady_l",
+        regions=[
+            model.Region(linear_sorption(), [(0.0, 0.0), (0.09, 0.0), (0.09, 0.06), (0.0, 0.06)]),
+            model.Region(linear_sorption(), [(0.09, 0.0), (0.17, 0.0), (0.17, 0.09), (0.09, 0.09)]),
+        ],
+        segments=[
+            model.Segment(model.bc.Convective(air_temperature=-18.0, film_coefficient=26.0, humidity=0.5),
+                          (0.0, 0.06), (0.0, 0.0)),
+            model.Segment(model.bc.Convective(air_temperature=21.0, film_coefficient=8.0, humidity=0.5),
+                          (0.17, 0.0), (0.17, 0.09)),
+        ],
+        physics=model.Physics(moisture=False),
+        mode=fem.CalculationMode.cmSteadyState,
+        mesh_control=fem.MeshControl(error_energy_norm=8.0, maximum_iterations=4),
+    )
+
+
+class TestSteadyState:
+    def test_a_case_is_transient_unless_stated(self):
+        assert sealed_strip().mode == fem.CalculationMode.cmTransient
+        assert not model.is_steady_state(sealed_strip())
+
+    def test_a_steady_case_needs_no_clock(self):
+        assert model.issues(steady_l()) == []
+        assert model.is_steady_state(steady_l())
+
+    def test_mesh_control_by_keyword(self):
+        control = fem.MeshControl(error_energy_norm=8.0, maximum_iterations=4)
+        assert control.run_error_estimator
+        assert control == fem.MeshControl(error_energy_norm=8.0, maximum_iterations=4)
+        assert repr(control).startswith("MeshControl(run_error_estimator=True, error_energy_norm=8")
+
+    def test_steady_entries(self):
+        entries = build.thmz_entries(steady_l())
+        assert "BoundaryConditions.xml" in entries
+        assert "SteadyStateBC.xml" not in entries
+        assert not [name for name in entries if name.startswith("time series/")]
+        options = build.model(steady_l()).properties.calculation_options
+        assert options.calculation_mode == fem.CalculationMode.cmSteadyState
+        assert options.mesh_control.error_energy_norm == pytest.approx(8.0)
+
+    def test_radiation_and_tag_by_keyword(self):
+        radiation = fem.BCBlackBodyRadiation(temperature=-18.0, emissivity=1.0)
+        assert radiation.temperature.value == pytest.approx(-18.0)
+        assert radiation == fem.BCBlackBodyRadiation(temperature=fem.Constant(-18.0), emissivity=1.0)
+        cold = model.bc.Convective(air_temperature=-18.0, film_coefficient=26.0, radiation=radiation)
+        assert "radiation=BCBlackBodyRadiation(temperature=Constant(" in repr(cold)
+        segment = model.Segment(cold, (0.0, 0.06), (0.0, 0.0), u_factor_tag="Frame")
+        assert segment.u_factor_tag == "Frame"
+        assert repr(segment).endswith("u_factor_tag='Frame')")
+
+    def test_steady_radiation_and_tag_are_written(self):
+        case = steady_l()
+        segments = list(case.segments)
+        segments[0] = model.Segment(
+            model.bc.Convective(air_temperature=-18.0, film_coefficient=26.0,
+                                radiation=fem.BCBlackBodyRadiation(temperature=-18.0)),
+            (0.0, 0.06), (0.0, 0.0))
+        segments[1] = model.Segment(segments[1].kind, (0.17, 0.0), (0.17, 0.09), u_factor_tag="Room")
+        case.segments = segments
+        assert model.issues(case) == []
+        written = build.model(case)
+        assert [boundary.flux_tag for boundary in written.boundary_conditions][:2] == ["", "Room"]
+        assert "BoundaryConditions.xml" in build.thmz_entries(case)
+
+    def test_a_transient_case_refuses_radiation(self):
+        case = sealed_strip()
+        segments = list(case.segments)
+        segments[0] = model.Segment(
+            model.bc.Convective(air_temperature=20.0, film_coefficient=8.0,
+                                radiation=fem.BCFixedCoefficientRadiation(temperature=20.0, coefficient=4.0)),
+            (0.0, 0.0), (0.1, 0.0))
+        case.segments = segments
+        assert any("radiates" in issue for issue in model.issues(case))
+
+    def test_a_steady_case_refuses_a_prescribed_segment(self):
+        case = sealed_strip()
+        case.mode = fem.CalculationMode.cmSteadyState
+        assert any("is prescribed" in issue for issue in model.issues(case))
+
+
 class TestVocabulary:
     def test_tuples_become_points(self):
         region = model.Region(linear_sorption(), [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0)])

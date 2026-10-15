@@ -77,6 +77,28 @@ namespace
         };
     }
 
+    //! A steady-state L: a low block beside a tall one, a cold face on the low block's
+    //! outer side and a warm face on the tall block's. Every other face is left to the
+    //! writer, which makes it adiabatic. No clock: a steady-state case does not need one.
+    ModelCase steadyL()
+    {
+        return ModelCase{
+          .id = "steady_l",
+          .regions = {{.material = stucco(), .points = {{0.0, 0.0}, {0.09, 0.0}, {0.09, 0.06}, {0.0, 0.06}}},
+                      {.material = cottaerSandstone(), .points = {{0.09, 0.0}, {0.17, 0.0}, {0.17, 0.09}, {0.09, 0.09}}}},
+          .segments = {{.kind = Convective{.airTemperature = -18.0, .filmCoefficient = 26.0, .humidity = 0.5},
+                        .start = {0.0, 0.06},
+                        .end = {0.0, 0.0},
+                        .color = "0x0080C0"},
+                       {.kind = Convective{.airTemperature = 21.0, .filmCoefficient = 8.0, .humidity = 0.5},
+                        .start = {0.17, 0.0},
+                        .end = {0.17, 0.09}}},
+          .physics = {.moisture = false},
+          .mode = ThermFile::CalculationMode::cmSteadyState,
+          .meshControl = {.errorEnergyNorm = 8.0, .maximumIterations = 4U},
+        };
+    }
+
     std::set<double> offsets(const std::vector<ThermFile::Point> & points, const double origin, const bool xAxis)
     {
         std::set<double> found;
@@ -343,4 +365,122 @@ TEST(Build, WrittenArchiveRoundTrips)
     // Overwrites in place rather than failing on an existing file.
     EXPECT_TRUE(thmz(sealedStrip(), path).has_value());
     std::filesystem::remove(path);
+}
+
+TEST(Build, SteadyStateCaseNeedsNoClock)
+{
+    EXPECT_TRUE(issues(steadyL()).empty());
+    EXPECT_TRUE(isSteadyState(steadyL()));
+    EXPECT_TRUE(libraries(steadyL()).datasets.empty());
+}
+
+TEST(Build, SteadyStateOptionsCarryTheMeshControl)
+{
+    const auto modelCase{steadyL()};
+    const auto & options{model(modelCase).properties.calculationOptions};
+    EXPECT_EQ(options.calculationMode, ThermFile::CalculationMode::cmSteadyState);
+    EXPECT_EQ(options.meshControl, modelCase.meshControl);
+    EXPECT_TRUE(options.meshControl.runErrorEstimator);
+    EXPECT_NEAR(options.meshControl.errorEnergyNorm, 8.0, tolerance);
+    EXPECT_EQ(options.meshControl.maximumIterations, 4U);
+    EXPECT_FALSE(options.simulateMoisture);
+}
+
+TEST(Build, SteadyStateSegmentsHoldTheirConstantsOnRecordsOfTheirOwn)
+{
+    const auto modelCase{steadyL()};
+    auto libs{libraries(modelCase)};
+    auto names{libs.boundaryConditions.getNames()};
+    std::ranges::sort(names);
+    EXPECT_EQ(names, (std::vector<std::string>{"Adiabatic", "segment 1", "segment 2"}));
+
+    const auto cold{libs.boundaryConditions.getByName("segment 1")};
+    ASSERT_TRUE(cold.has_value());
+    EXPECT_EQ(cold->Color, "0x0080C0");
+    const auto & exchange{std::get<BCLibrary::SurfaceExchange>(cold->data)};
+    ASSERT_TRUE(exchange.convection.has_value());
+    EXPECT_EQ(exchange.convection->airTemperature, BCLibrary::Source{BCLibrary::Constant{-18.0}});
+    EXPECT_EQ(exchange.convection->filmCoefficient, BCLibrary::Source{BCLibrary::Constant{26.0}});
+
+    const auto written{model(modelCase)};
+    const auto & first{written.boundaryConditions.front()};
+    EXPECT_EQ(first.bcUUID, cold->UUID);
+    EXPECT_FALSE(first.timeSeriesUUID.has_value());
+}
+
+TEST(Build, SteadyStateEntriesCarryTheUnifiedLibraryOnlyAndNoSeries)
+{
+    const auto entries{thmzEntries(steadyL())};
+    ASSERT_TRUE(entries.has_value()) << entries.error();
+    for(const auto * name : {"Model.xml", "BoundaryConditions.xml"})
+    {
+        EXPECT_TRUE(entries->contains(name)) << name;
+    }
+    EXPECT_FALSE(entries->contains("SteadyStateBC.xml"));
+    EXPECT_FALSE(std::ranges::any_of(entries.value(),
+                                     [](const auto & entry) { return entry.first.starts_with("time series/"); }));
+}
+
+TEST(Build, SteadyStateRefusesAPrescribedSegment)
+{
+    auto modelCase{sealedStrip()};
+    modelCase.mode = ThermFile::CalculationMode::cmSteadyState;
+    const auto found{issues(modelCase)};
+    ASSERT_EQ(found.size(), 2U);
+    EXPECT_NE(found.front().find("is prescribed"), std::string::npos);
+}
+
+TEST(Build, SteadyStateRadiationAndTagsAreWritten)
+{
+    auto modelCase{steadyL()};
+    const BCLibrary::RadiationOptions blackBody{
+      BCLibrary::BlackBodyRadiation{.temperature = BCLibrary::Constant{-18.0}, .emissivity = BCLibrary::Constant{1.0}}};
+    std::get<Convective>(modelCase.segments[0].kind).radiation = blackBody;
+    modelCase.segments[1].uFactorTag = "Room";
+    ASSERT_TRUE(issues(modelCase).empty());
+
+    auto libs{libraries(modelCase)};
+    const auto cold{libs.boundaryConditions.getByName("segment 1")};
+    ASSERT_TRUE(cold.has_value());
+    EXPECT_EQ(std::get<BCLibrary::SurfaceExchange>(cold->data).radiation, blackBody);
+
+    const auto written{model(modelCase)};
+    EXPECT_EQ(written.boundaryConditions[0].fluxTag, "");
+    EXPECT_EQ(written.boundaryConditions[1].fluxTag, "Room");
+
+    // The solver reads the stored emissivity, so the boundary carries the material's, as
+    // THERM saves it, with the flag that says where it came from.
+    const auto & emission{written.boundaryConditions[0].thermalEmissionProperties};
+    EXPECT_NEAR(emission.emissivity, 0.9, tolerance);
+    EXPECT_TRUE(emission.useGlobalEmissivity);
+
+    const auto entries{thmzEntries(modelCase)};
+    ASSERT_TRUE(entries.has_value()) << entries.error();
+}
+
+TEST(Build, SteadyStateRefusesRadiationReadFromADataset)
+{
+    auto modelCase{steadyL()};
+    std::get<Convective>(modelCase.segments[0].kind).radiation = BCLibrary::BlackBodyRadiation{
+      .temperature = BCLibrary::FromTimeSeries{TimeSeriesLibrary::SeriesRole::RadiantTemperature}};
+    const auto found{issues(modelCase)};
+    ASSERT_EQ(found.size(), 1U);
+    EXPECT_NE(found.front().find("read from a dataset"), std::string::npos);
+}
+
+TEST(Build, TransientCaseRefusesRadiation)
+{
+    auto modelCase{twoRegionCase()};
+    std::get<Convective>(modelCase.segments[2].kind).radiation =
+      BCLibrary::FixedCoefficientRadiation{.temperature = BCLibrary::Constant{20.0}, .coefficient = BCLibrary::Constant{4.0}};
+    const auto found{issues(modelCase)};
+    ASSERT_EQ(found.size(), 1U);
+    EXPECT_NE(found.front().find("radiates"), std::string::npos);
+}
+
+TEST(Build, AModeThatIsNeitherIsAnIssue)
+{
+    auto modelCase{sealedStrip()};
+    modelCase.mode = ThermFile::CalculationMode::Unknown;
+    EXPECT_EQ(issues(modelCase), (std::vector<std::string>{"the mode must be transient or steady state"}));
 }

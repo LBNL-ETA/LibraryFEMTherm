@@ -1,3 +1,7 @@
+#include <optional>
+#include <string>
+#include <variant>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -7,6 +11,32 @@
 #include "BoundaryConditions/Utils.hxx"
 
 namespace py = pybind11;
+
+namespace
+{
+    //! A Source as a constructor takes it: a plain number, a Constant or a FromTimeSeries.
+    //! Spelled out as a variant so the signature, and the stub generated from it, names the
+    //! number; the implicit conversion alone would leave a type checker refusing it.
+    using SourceLike = std::variant<double, BCLibrary::Constant, BCLibrary::FromTimeSeries>;
+
+    BCLibrary::Source toSource(const SourceLike & given)
+    {
+        if(const auto * number{std::get_if<double>(&given)})
+        {
+            return BCLibrary::Constant{*number};
+        }
+        if(const auto * fixed{std::get_if<BCLibrary::Constant>(&given)})
+        {
+            return *fixed;
+        }
+        return std::get<BCLibrary::FromTimeSeries>(given);
+    }
+
+    std::string sourceRepr(const BCLibrary::Source & source)
+    {
+        return py::repr(py::cast(source)).cast<std::string>();
+    }
+}   // namespace
 
 //! The consolidated boundary-condition library (BC consolidation): one record shape for
 //! steady-state and transient use. Every scalar input is a Source, either a Constant
@@ -65,24 +95,87 @@ void bind_bc_library(py::module_ & mod)
         .def_readwrite("wind_speed", &BCLibrary::Convection::windSpeed)
         .def_readwrite("wind_direction", &BCLibrary::Convection::windDirection);
 
-    py::class_<BCLibrary::AutomaticEnclosure>(mod, "BCAutomaticEnclosure")
+    py::class_<BCLibrary::AutomaticEnclosure>(
+      mod,
+      "BCAutomaticEnclosure",
+      "Radiation to the other surfaces of the enclosure the solver finds around this one. `temperature` closes "
+      "the enclosure; left None, it follows the convection's air temperature.")
         .def(py::init<>())
+        .def(py::init([](const SourceLike & emissivity, const std::optional<SourceLike> & temperature) {
+                 BCLibrary::AutomaticEnclosure enclosure;
+                 enclosure.emissivity = toSource(emissivity);
+                 if(temperature.has_value())
+                 {
+                     enclosure.temperature = toSource(temperature.value());
+                 }
+                 return enclosure;
+             }),
+             py::arg("emissivity"),
+             py::arg("temperature") = py::none())
         .def_readwrite("emissivity", &BCLibrary::AutomaticEnclosure::emissivity)
-        .def_readwrite("temperature", &BCLibrary::AutomaticEnclosure::temperature);
+        .def_readwrite("temperature", &BCLibrary::AutomaticEnclosure::temperature)
+        .def(
+          "__eq__",
+          [](const BCLibrary::AutomaticEnclosure & lhs, const BCLibrary::AutomaticEnclosure & rhs) { return lhs == rhs; },
+          py::is_operator())
+        .def("__repr__", [](const BCLibrary::AutomaticEnclosure & enclosure) {
+            const std::string temperature{enclosure.temperature.has_value() ? sourceRepr(enclosure.temperature.value())
+                                                                            : std::string{"None"}};
+            return "BCAutomaticEnclosure(emissivity=" + sourceRepr(enclosure.emissivity) + ", temperature=" + temperature
+                   + ")";
+        });
 
     py::class_<BCLibrary::ManualEnclosure>(mod, "BCManualEnclosure")
         .def(py::init<>());
 
-    py::class_<BCLibrary::BlackBodyRadiation>(mod, "BCBlackBodyRadiation")
+    py::class_<BCLibrary::BlackBodyRadiation>(
+      mod,
+      "BCBlackBodyRadiation",
+      "Radiation to black-body surroundings at `temperature`, as THERM's exterior records state it.")
         .def(py::init<>())
+        .def(py::init([](const SourceLike & temperature, const SourceLike & emissivity, const double viewFactor) {
+                 return BCLibrary::BlackBodyRadiation{
+                   .temperature = toSource(temperature), .emissivity = toSource(emissivity), .viewFactor = viewFactor};
+             }),
+             py::arg("temperature"),
+             py::arg("emissivity") = 1.0,
+             py::arg("view_factor") = 1.0)
         .def_readwrite("temperature", &BCLibrary::BlackBodyRadiation::temperature)
         .def_readwrite("emissivity", &BCLibrary::BlackBodyRadiation::emissivity)
-        .def_readwrite("view_factor", &BCLibrary::BlackBodyRadiation::viewFactor);
+        .def_readwrite("view_factor", &BCLibrary::BlackBodyRadiation::viewFactor)
+        .def(
+          "__eq__",
+          [](const BCLibrary::BlackBodyRadiation & lhs, const BCLibrary::BlackBodyRadiation & rhs) { return lhs == rhs; },
+          py::is_operator())
+        .def("__repr__", [](const BCLibrary::BlackBodyRadiation & radiation) {
+            return "BCBlackBodyRadiation(temperature=" + sourceRepr(radiation.temperature)
+                   + ", emissivity=" + sourceRepr(radiation.emissivity)
+                   + ", view_factor=" + py::repr(py::cast(radiation.viewFactor)).cast<std::string>() + ")";
+        });
 
-    py::class_<BCLibrary::FixedCoefficientRadiation>(mod, "BCFixedCoefficientRadiation")
+    py::class_<BCLibrary::FixedCoefficientRadiation>(
+      mod,
+      "BCFixedCoefficientRadiation",
+      "Radiation linearised to a fixed coefficient in W/(m2 K) towards `temperature`.")
         .def(py::init<>())
+        .def(py::init([](const SourceLike & temperature, const SourceLike & coefficient) {
+                 return BCLibrary::FixedCoefficientRadiation{.temperature = toSource(temperature),
+                                                             .coefficient = toSource(coefficient)};
+             }),
+             py::arg("temperature"),
+             py::arg("coefficient"))
         .def_readwrite("temperature", &BCLibrary::FixedCoefficientRadiation::temperature)
-        .def_readwrite("coefficient", &BCLibrary::FixedCoefficientRadiation::coefficient);
+        .def_readwrite("coefficient", &BCLibrary::FixedCoefficientRadiation::coefficient)
+        .def(
+          "__eq__",
+          [](const BCLibrary::FixedCoefficientRadiation & lhs, const BCLibrary::FixedCoefficientRadiation & rhs) {
+              return lhs == rhs;
+          },
+          py::is_operator())
+        .def("__repr__", [](const BCLibrary::FixedCoefficientRadiation & radiation) {
+            return "BCFixedCoefficientRadiation(temperature=" + sourceRepr(radiation.temperature)
+                   + ", coefficient=" + sourceRepr(radiation.coefficient) + ")";
+        });
 
     py::class_<BCLibrary::Solar>(mod, "BCSolar")
         .def(py::init<>())

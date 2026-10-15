@@ -72,13 +72,14 @@ namespace
 
     std::string segmentRepr(const Segment & segment)
     {
-        return std::format("Segment(kind={}, start={}, end={}{}{}{})",
+        return std::format("Segment(kind={}, start={}, end={}{}{}{}{})",
                            pythonRepr(segment.kind),
                            pythonRepr(segment.start),
                            pythonRepr(segment.end),
                            optionalField("region", segment.region),
                            optionalField("color", segment.color),
-                           optionalField("name", segment.name));
+                           optionalField("name", segment.name),
+                           optionalField("u_factor_tag", segment.uFactorTag));
     }
 
     std::string physicsRepr(const Physics & physics)
@@ -138,32 +139,38 @@ namespace
                                          "found: a segment on the outline lies on exactly one region's edge. It must "
                                          "be given where two regions share the edge. `color` is what THERM draws the "
                                          "segment in, 0xRRGGBB; left None, the kind's own colour. `name` is what the "
-                                         "caller calls the face, for plots and messages; it is not written to the file.")
+                                         "caller calls the face, for plots and messages; it is not written to the file. "
+                                         "`u_factor_tag` is the U-factor tag the segment reports under, as THERM's "
+                                         "\"Frame\" or \"Edge\": one U-factor per tag, over every segment carrying it.")
                        .def(py::init([](Boundary kind,
                                         const PointLike & start,
                                         const PointLike & end,
                                         const std::optional<std::size_t> region,
                                         std::optional<std::string> color,
-                                        std::optional<std::string> name) {
-                                return Segment{std::move(kind),
-                                               toPoint(start),
-                                               toPoint(end),
-                                               region,
-                                               std::move(color),
-                                               std::move(name)};
+                                        std::optional<std::string> name,
+                                        std::optional<std::string> uFactorTag) {
+                                return Segment{.kind = std::move(kind),
+                                               .start = toPoint(start),
+                                               .end = toPoint(end),
+                                               .region = region,
+                                               .color = std::move(color),
+                                               .name = std::move(name),
+                                               .uFactorTag = std::move(uFactorTag)};
                             }),
                             py::arg("kind"),
                             py::arg("start"),
                             py::arg("end"),
                             py::arg("region") = py::none(),
                             py::arg("color") = py::none(),
-                            py::arg("name") = py::none())
+                            py::arg("name") = py::none(),
+                            py::arg("u_factor_tag") = py::none())
                        .def_readwrite("kind", &Segment::kind)
                        .def_readwrite("start", &Segment::start)
                        .def_readwrite("end", &Segment::end)
                        .def_readwrite("region", &Segment::region)
                        .def_readwrite("color", &Segment::color)
                        .def_readwrite("name", &Segment::name)
+                       .def_readwrite("u_factor_tag", &Segment::uFactorTag)
                        .def("__repr__", &segmentRepr)};
         addEquality(segment);
     }
@@ -205,21 +212,33 @@ namespace
           py::class_<Convective>(bc,
                                  "Convective",
                                  "Exchange with an environment: air temperature in degrees C, film coefficient in "
-                                 "W/(m2 K), relative humidity as a fraction. Constant in time.")
-            .def(py::init([](const double airTemperature, const double filmCoefficient, const double humidity) {
-                     return Convective{airTemperature, filmCoefficient, humidity};
+                                 "W/(m2 K), relative humidity as a fraction. Constant in time. `radiation`, when "
+                                 "set, is the surface's radiative exchange as THERM's records state it "
+                                 "(BCBlackBodyRadiation, BCAutomaticEnclosure, BCFixedCoefficientRadiation); a "
+                                 "steady-state case only, for now.")
+            .def(py::init([](const double airTemperature,
+                             const double filmCoefficient,
+                             const double humidity,
+                             std::optional<BCLibrary::RadiationOptions> radiation) {
+                     return Convective{.airTemperature = airTemperature,
+                                       .filmCoefficient = filmCoefficient,
+                                       .humidity = humidity,
+                                       .radiation = std::move(radiation)};
                  }),
                  py::arg("air_temperature"),
                  py::arg("film_coefficient"),
-                 py::arg("humidity") = 0.5)
+                 py::arg("humidity") = 0.5,
+                 py::arg("radiation") = py::none())
             .def_readwrite("air_temperature", &Convective::airTemperature)
             .def_readwrite("film_coefficient", &Convective::filmCoefficient)
             .def_readwrite("humidity", &Convective::humidity)
+            .def_readwrite("radiation", &Convective::radiation)
             .def("__repr__", [](const Convective & kind) {
-                return std::format("Convective(air_temperature={}, film_coefficient={}, humidity={})",
+                return std::format("Convective(air_temperature={}, film_coefficient={}, humidity={}{})",
                                    kind.airTemperature,
                                    kind.filmCoefficient,
-                                   kind.humidity);
+                                   kind.humidity,
+                                   optionalField("radiation", kind.radiation));
             })};
         addEquality(convective);
     }
@@ -324,7 +343,10 @@ namespace
           py::class_<ModelCase>(model,
                                 "ModelCase",
                                 "A THERM model stated in code: regions, each carrying its material, segments, "
-                                "start, clock and settings.")
+                                "start, clock and settings. `mode` is the calculation the archive is set up for: "
+                                "a transient case runs through its clock (`initial`, `schedule`); a steady-state "
+                                "case has no clock, holds each condition as a constant, and `mesh_control` drives "
+                                "its error estimator.")
             .def(py::init([](std::string id,
                              std::vector<Region> regions,
                              std::vector<Segment> segments,
@@ -332,24 +354,30 @@ namespace
                              const Schedule & schedule,
                              const Physics & physics,
                              const Numerics & numerics,
-                             std::string title) {
-                     return ModelCase{std::move(id),
-                                      std::move(title),
-                                      std::move(regions),
-                                      std::move(segments),
-                                      initial,
-                                      schedule,
-                                      physics,
-                                      numerics};
+                             std::string title,
+                             const ThermFile::CalculationMode mode,
+                             const ThermFile::MeshControl & meshControl) {
+                     return ModelCase{.id = std::move(id),
+                                      .title = std::move(title),
+                                      .regions = std::move(regions),
+                                      .segments = std::move(segments),
+                                      .initial = initial,
+                                      .schedule = schedule,
+                                      .physics = physics,
+                                      .numerics = numerics,
+                                      .mode = mode,
+                                      .meshControl = meshControl};
                  }),
                  py::arg("id"),
                  py::arg("regions"),
                  py::arg("segments"),
-                 py::arg("initial"),
-                 py::arg("schedule"),
+                 py::arg("initial") = Initial{},
+                 py::arg("schedule") = Schedule{},
                  py::arg("physics") = Physics{},
                  py::arg("numerics") = Numerics{},
-                 py::arg("title") = std::string{})
+                 py::arg("title") = std::string{},
+                 py::arg("mode") = ThermFile::CalculationMode::cmTransient,
+                 py::arg("mesh_control") = ThermFile::MeshControl{})
             .def_readwrite("id", &ModelCase::id)
             .def_readwrite("title", &ModelCase::title)
             .def_readwrite("regions", &ModelCase::regions)
@@ -357,11 +385,15 @@ namespace
             .def_readwrite("initial", &ModelCase::initial)
             .def_readwrite("schedule", &ModelCase::schedule)
             .def_readwrite("physics", &ModelCase::physics)
-            .def_readwrite("numerics", &ModelCase::numerics)};
+            .def_readwrite("numerics", &ModelCase::numerics)
+            .def_readwrite("mode", &ModelCase::mode)
+            .def_readwrite("mesh_control", &ModelCase::meshControl)};
         addEquality(modelCase);
 
         model.def("issues", &issues, py::arg("model_case"),
                       "Everything that stops the case from being written, one line each; empty when it can be.");
+        model.def("is_steady_state", &isSteadyState, py::arg("model_case"),
+                  "Whether the case is set up for a steady-state calculation.");
         model.def("region_material", &regionMaterial, py::arg("model_case"), py::arg("index"),
                       "The material filling the region at the given index, or None when there is no such region.");
         model.def("segment_region", &segmentRegion, py::arg("model_case"), py::arg("index"),

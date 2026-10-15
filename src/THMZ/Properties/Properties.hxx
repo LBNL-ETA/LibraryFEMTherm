@@ -90,6 +90,8 @@ namespace ThermFile
         bool runErrorEstimator{true};
         double errorEnergyNorm{10};
         size_t maximumIterations{5};
+
+        [[nodiscard]] friend bool operator==(const MeshControl & lhs, const MeshControl & rhs) = default;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////
