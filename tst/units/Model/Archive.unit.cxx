@@ -621,9 +621,10 @@ TEST(Build, DatasetAxisFollowsTheScheduleStart)
 {
     auto modelCase{weatherWall(ramp(48U))};
     modelCase.schedule.start = {.month = 2U, .day = 10U, .hour = 6U, .minute = 0U};
-    const auto & axis{libraries(modelCase).datasets.front().axis};
-    EXPECT_EQ(axis, (TimeSeriesLibrary::TimeAxis{.month = 2U, .day = 10U, .hour = 6U, .minute = 0U, .stepSeconds = 3600.0}));
-    EXPECT_EQ(scheduleOf(libraries(modelCase).datasets), modelCase.schedule);
+    const auto built{libraries(modelCase)};
+    EXPECT_EQ(built.datasets.front().axis,
+              (TimeSeriesLibrary::TimeAxis{.month = 2U, .day = 10U, .hour = 6U, .minute = 0U, .stepSeconds = 3600.0}));
+    EXPECT_EQ(scheduleOf(built.datasets), modelCase.schedule);
 }
 
 TEST(Build, TransientCaseWritesFixedRadiation)
