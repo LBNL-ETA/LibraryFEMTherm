@@ -134,4 +134,13 @@ namespace BCLibrary
       requiredRoles(const BoundaryCondition & boundaryCondition);
 
     [[nodiscard]] bool isSteadyCapable(const BoundaryCondition & boundaryCondition);
+
+    //! The roles the record reads that the dataset does not provide, in the record's order:
+    //! the check a segment's pairing of record and dataset must pass before a run. With no
+    //! dataset, every role read is missing. One allowance, the engine's own: a missing
+    //! RadiantTemperature is taken as the air temperature when the dataset carries one, so
+    //! it is not reported then.
+    [[nodiscard]] std::vector<TimeSeriesLibrary::SeriesRole>
+      missingRoles(const BoundaryCondition & boundaryCondition,
+                   const std::optional<TimeSeriesLibrary::TimeSeriesData> & dataset);
 }   // namespace BCLibrary

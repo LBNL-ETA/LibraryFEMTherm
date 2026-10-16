@@ -1,13 +1,15 @@
+#include <algorithm>
 #include <filesystem>
 #include <format>
-#include <set>
+
+#include <lbnl/algorithm.hxx>
 
 #include "BoundaryConditions/Definitions.hxx"
 #include "LibraryUtilities/StableUuid.hxx"
 #include "THMZ/Model/DB.hxx"
 #include "THMZ/ZipModule/ZipModule.hxx"
+#include "TimeSeriesData/ContentHash.hxx"
 #include "TimeSeriesData/DB.hxx"
-#include "TimeSeriesData/Tags.hxx"
 
 #include "Materials/FromValues.hxx"
 
@@ -21,16 +23,21 @@ namespace ThermFile::Build
     using Model::Boundary;
     using Model::completed;
     using Model::Convective;
+    using Model::FixedRadiation;
+    using Model::Input;
     using Model::isSteadyState;
     using Model::ModelCase;
     using Model::Point;
     using Model::Prescribed;
+    using Model::Radiation;
     using Model::Schedule;
     using Model::issues;
-    using Model::recordName;
     using Model::segmentColor;
     using Model::segmentRegion;
     using Model::kindColor;
+    using TimeSeriesLibrary::Series;
+    using TimeSeriesLibrary::SeriesRole;
+    using TimeSeriesLibrary::TimeSeriesData;
 
     namespace
     {
@@ -72,119 +79,219 @@ namespace ThermFile::Build
         }
 
         // --------------------------------------------------------------------------------
-        // Boundary-condition records and datasets
+        // Lowering: boundary kinds to record data and series
         // --------------------------------------------------------------------------------
 
-        BCLibrary::Source fromSeries(const TimeSeriesLibrary::SeriesRole role)
+        //! A constant input stays a constant; a series input is read from its role.
+        BCLibrary::Source sourceOf(const SeriesRole role, const Input & input)
         {
+            if(const auto * constant{std::get_if<double>(&input)})
+            {
+                return BCLibrary::Constant{*constant};
+            }
             return BCLibrary::FromTimeSeries{role};
         }
 
-        BCLibrary::PrescribedState prescribedRecord(const bool withHumidity)
+        std::optional<BCLibrary::Source> sourceOf(const SeriesRole role, const std::optional<Input> & input)
         {
-            BCLibrary::PrescribedState state;
-            state.temperature = fromSeries(TimeSeriesLibrary::SeriesRole::PrescribedTemperature);
-            if(withHumidity)
+            return input.has_value() ? std::optional{sourceOf(role, input.value())} : std::nullopt;
+        }
+
+        //! Fixed radiation lowers like every other input; THERM's own models pass through.
+        BCLibrary::RadiationOptions radiationOf(const Radiation & radiation)
+        {
+            return std::visit(
+              [](const auto & model) -> BCLibrary::RadiationOptions {
+                  if constexpr(std::is_same_v<std::decay_t<decltype(model)>, FixedRadiation>)
+                  {
+                      return BCLibrary::FixedCoefficientRadiation{
+                        .temperature = sourceOf(SeriesRole::RadiantTemperature, model.temperature),
+                        .coefficient = sourceOf(SeriesRole::RadiativeCoefficient, model.coefficient)};
+                  }
+                  else
+                  {
+                      return model;
+                  }
+              },
+              radiation);
+        }
+
+        BCLibrary::SurfaceExchange exchangeOf(const Convective & convective)
+        {
+            const BCLibrary::Convection convection{
+              .model = convective.model,
+              .airTemperature = sourceOf(SeriesRole::AirTemperature, convective.airTemperature),
+              .filmCoefficient = sourceOf(SeriesRole::ConvectiveCoefficient, convective.filmCoefficient),
+              .windSpeed = sourceOf(SeriesRole::WindSpeed, convective.windSpeed),
+              .windDirection = sourceOf(SeriesRole::WindDirection, convective.windDirection)};
+            return BCLibrary::SurfaceExchange{
+              .relativeHumidity = sourceOf(SeriesRole::RelativeHumidity, convective.humidity),
+              .convection = convection,
+              .radiation = convective.radiation.has_value() ? std::optional{radiationOf(convective.radiation.value())}
+                                                            : std::nullopt,
+              .flux = sourceOf(SeriesRole::HeatFlux, convective.flux)};
+        }
+
+        BCLibrary::PrescribedState stateOf(const Prescribed & prescribed)
+        {
+            return BCLibrary::PrescribedState{
+              .temperature = sourceOf(SeriesRole::PrescribedTemperature, prescribed.temperature),
+              .relativeHumidity = sourceOf(SeriesRole::PrescribedHumidity, prescribed.humidity)};
+        }
+
+        RecordData dataOf(const Boundary & boundary)
+        {
+            if(const auto * convective{std::get_if<Convective>(&boundary)})
             {
-                state.relativeHumidity = fromSeries(TimeSeriesLibrary::SeriesRole::PrescribedHumidity);
+                return exchangeOf(*convective);
             }
-            return state;
-        }
-
-        BCLibrary::SurfaceExchange convectiveRecord()
-        {
-            BCLibrary::Convection convection;
-            convection.model = BCLibrary::ConvectionModel::Fixed_Convection_Coefficient;
-            convection.airTemperature = fromSeries(TimeSeriesLibrary::SeriesRole::AirTemperature);
-            convection.filmCoefficient = fromSeries(TimeSeriesLibrary::SeriesRole::ConvectiveCoefficient);
-            BCLibrary::SurfaceExchange exchange;
-            exchange.relativeHumidity = fromSeries(TimeSeriesLibrary::SeriesRole::RelativeHumidity);
-            exchange.convection = convection;
-            return exchange;
-        }
-
-        BCLibrary::Source constant(const double value)
-        {
-            return BCLibrary::Constant{value};
-        }
-
-        //! A convective segment's exchange with its values held on the record itself, as a
-        //! steady-state case writes it.
-        BCLibrary::SurfaceExchange constantExchange(const Convective & convective)
-        {
-            BCLibrary::Convection convection;
-            convection.model = BCLibrary::ConvectionModel::Fixed_Convection_Coefficient;
-            convection.airTemperature = constant(convective.airTemperature);
-            convection.filmCoefficient = constant(convective.filmCoefficient);
-            BCLibrary::SurfaceExchange exchange;
-            exchange.relativeHumidity = constant(convective.humidity);
-            exchange.convection = convection;
-            exchange.radiation = convective.radiation;
-            return exchange;
-        }
-
-        //! The record a steady-state case writes for one segment: THERM's built-in for an
-        //! adiabatic one; otherwise a record of the segment's own, since each holds its own
-        //! constants. issues() has ruled out a prescribed segment.
-        BCLibrary::BoundaryCondition steadyStateRecord(const ModelCase & modelCase, const std::size_t index)
-        {
-            const auto & segment{modelCase.segments[index]};
-            if(std::holds_alternative<Adiabatic>(segment.kind))
+            if(const auto * prescribed{std::get_if<Prescribed>(&boundary)})
             {
-                return boundaryRecord(segment.kind, modelCase.id);
+                return stateOf(*prescribed);
             }
-            BCLibrary::BoundaryCondition record;
-            record.Name = std::format("segment {}", index + 1U);
-            record.UUID = caseUuid(modelCase, "record/" + record.Name);
-            record.Color = segmentColor(segment);
-            record.ProjectName = modelCase.id;
-            record.Protected = false;
-            record.data = constantExchange(std::get<Convective>(segment.kind));
-            return record;
+            return BCLibrary::NoExchange{};
         }
 
-        //! The record a segment refers to: its kind's shared record in a transient case, its
-        //! own in a steady-state one.
-        BCLibrary::BoundaryCondition segmentRecord(const ModelCase & modelCase, const std::size_t index)
+        std::vector<Series> seriesOf(const Boundary & boundary)
         {
-            return isSteadyState(modelCase) ? steadyStateRecord(modelCase, index)
-                                            : boundaryRecord(modelCase.segments[index].kind, modelCase.id);
-        }
-
-        //! Every record the case's segments refer to, each once, in the order first used.
-        std::vector<BCLibrary::BoundaryCondition> segmentRecords(const ModelCase & modelCase)
-        {
-            std::vector<BCLibrary::BoundaryCondition> records;
-            std::set<std::string> seen;
-            for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
+            std::vector<Series> found;
+            for(const auto & [role, value] : Model::inputs(boundary))
             {
-                auto record{segmentRecord(modelCase, index)};
-                if(seen.insert(record.Name).second)
+                if(const auto * values{std::get_if<std::vector<double>>(&value)})
                 {
-                    records.push_back(std::move(record));
+                    found.push_back(Series{.role = role, .values = *values});
                 }
             }
-            return records;
+            return found;
         }
 
-        TimeSeriesLibrary::TimeSeriesData dataset(const ModelCase & modelCase,
-                                                  const std::string & key,
-                                                  const std::vector<std::pair<std::string, double>> & values)
+        // --------------------------------------------------------------------------------
+        // Records and datasets per segment
+        // --------------------------------------------------------------------------------
+
+        //! THERM's own record, as it ships: protected, owned by no project.
+        BCLibrary::BoundaryCondition adiabaticRecord()
         {
-            TimeSeriesLibrary::TimeSeriesData data;
-            data.UUID = caseUuid(modelCase, "dataset/" + key);
-            // THERM displays project-scoped records as "project:Name", so the name itself
-            // carries only the segment; the case id is the record's project name.
-            data.Name = key;
-            data.ProjectName = modelCase.id;
-            data.Protected = false;
-            data.axis.stepSeconds = modelCase.schedule.dtime;
-            for(const auto & [role, value] : values)
+            return BCLibrary::BoundaryCondition{.UUID = std::string{adiabaticRecordUuid},
+                                                .Name = "Adiabatic",
+                                                .Protected = true,
+                                                .Color = kindColor(Adiabatic{}),
+                                                .data = BCLibrary::NoExchange{}};
+        }
+
+        bool hasName(const std::vector<BCLibrary::BoundaryCondition> & records, const std::string & name)
+        {
+            return std::ranges::any_of(records, [&name](const auto & record) { return record.Name == name; });
+        }
+
+        //! The segment's own name, or "segment N", kept apart from the names already taken
+        //! by a record of different content: "outside", "outside (2)", ...
+        std::string uniqueRecordName(const ModelCase & modelCase,
+                                     const std::size_t index,
+                                     const std::vector<BCLibrary::BoundaryCondition> & records)
+        {
+            const auto base{modelCase.segments[index].name.value_or(std::format("segment {}", index + 1U))};
+            std::string name{base};
+            for(std::size_t suffix = 2U; hasName(records, name); ++suffix)
             {
-                data.series.push_back(TimeSeriesLibrary::Series{TimeSeriesLibrary::seriesRoleFromString(role),
-                                                                std::vector<double>(modelCase.schedule.nSteps, value)});
+                name = std::format("{} ({})", base, suffix);
             }
+            return name;
+        }
+
+        //! A record of the project's own for a segment's lowered condition, named and
+        //! coloured after the segment.
+        BCLibrary::BoundaryCondition newRecord(const ModelCase & modelCase,
+                                               const std::size_t index,
+                                               const RecordData & data,
+                                               const std::vector<BCLibrary::BoundaryCondition> & records)
+        {
+            const auto name{uniqueRecordName(modelCase, index, records)};
+            return BCLibrary::BoundaryCondition{.UUID = caseUuid(modelCase, "record/" + name),
+                                                .Name = name,
+                                                .Protected = false,
+                                                .Color = segmentColor(modelCase.segments[index]),
+                                                .data = data,
+                                                .ProjectName = modelCase.id};
+        }
+
+        //! The record of every segment of the completed case: segments whose conditions
+        //! lower to the same data share the record of the first of them.
+        std::vector<BCLibrary::BoundaryCondition> recordPerSegment(const ModelCase & modelCase)
+        {
+            std::vector<BCLibrary::BoundaryCondition> records;
+            std::vector<BCLibrary::BoundaryCondition> perSegment;
+            for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
+            {
+                const auto data{dataOf(modelCase.segments[index].kind)};
+                if(std::holds_alternative<BCLibrary::NoExchange>(data))
+                {
+                    perSegment.push_back(adiabaticRecord());
+                    continue;
+                }
+                const auto shared{lbnl::find_element(records, [&data](const auto & record) { return record.data == data; })};
+                if(!shared.has_value())
+                {
+                    records.push_back(newRecord(modelCase, index, data, records));
+                }
+                perSegment.push_back(shared.value_or(records.back()));
+            }
+            return perSegment;
+        }
+
+        //! The dataset a record reads, named after it. Its UUID is its content, so two
+        //! segments reading the same series share one.
+        TimeSeriesData seriesDataset(const ModelCase & modelCase,
+                                     const std::string & recordName,
+                                     std::vector<Series> series)
+        {
+            TimeSeriesData data{.Name = recordName + " series",
+                                .ProjectName = modelCase.id,
+                                .Protected = false,
+                                .Source = "Generated",
+                                .axis = Model::axisOf(modelCase.schedule),
+                                .series = std::move(series)};
+            data.UUID = TimeSeriesLibrary::contentUuid(data);
             return data;
+        }
+
+        //! The clock of a model in which no segment reads a series: the initial temperature
+        //! on every step, under a role the Adiabatic record ignores.
+        TimeSeriesData clockDataset(const ModelCase & modelCase)
+        {
+            return TimeSeriesData{
+              .UUID = caseUuid(modelCase, "dataset/clock"),
+              .Name = "clock",
+              .ProjectName = modelCase.id,
+              .Protected = false,
+              .axis = Model::axisOf(modelCase.schedule),
+              .series = {Series{.role = SeriesRole::AirTemperature,
+                                .values = std::vector<double>(modelCase.schedule.nSteps, modelCase.initial.temperature)}}};
+        }
+
+        //! The dataset of every segment of the completed case: one for each segment whose
+        //! condition reads series, the clock on the first segment when none does, nothing
+        //! for a steady-state case.
+        std::vector<std::optional<TimeSeriesData>> datasetPerSegment(const ModelCase & modelCase,
+                                                                     const std::vector<BCLibrary::BoundaryCondition> & records)
+        {
+            std::vector<std::optional<TimeSeriesData>> perSegment(modelCase.segments.size());
+            if(isSteadyState(modelCase))
+            {
+                return perSegment;
+            }
+            for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
+            {
+                if(auto series{seriesOf(modelCase.segments[index].kind)}; !series.empty())
+                {
+                    perSegment[index] = seriesDataset(modelCase, records[index].Name, std::move(series));
+                }
+            }
+            if(!perSegment.empty() && std::ranges::none_of(perSegment, &std::optional<TimeSeriesData>::has_value))
+            {
+                perSegment.front() = clockDataset(modelCase);
+            }
+            return perSegment;
         }
 
         // --------------------------------------------------------------------------------
@@ -217,10 +324,10 @@ namespace ThermFile::Build
         ThermFile::Boundary boundary(const ModelCase & modelCase,
                                      const std::size_t index,
                                      const std::string & polygonUuid,
+                                     const BCLibrary::BoundaryCondition & record,
                                      const std::optional<std::string> & datasetUuid)
         {
             const auto & segment{modelCase.segments[index]};
-            const auto record{segmentRecord(modelCase, index)};
             ThermFile::Boundary result;
             result.ID = index + 1U;
             result.uuid = caseUuid(modelCase, std::format("segment/{}", index));
@@ -299,89 +406,60 @@ namespace ThermFile::Build
         return LibraryCommon::stableUuid(modelCase.id, key);
     }
 
-    std::string recordUuid(const std::string_view name)
+    Lowered lower(const Boundary & boundary)
     {
-        if(name == recordName(Adiabatic{}))
-        {
-            return std::string{adiabaticRecordUuid};
-        }
-        return LibraryCommon::stableUuid("boundary-condition", name);
+        return Lowered{.data = dataOf(boundary), .series = seriesOf(boundary)};
     }
 
-    BCLibrary::BoundaryCondition boundaryRecord(const Boundary & boundary, const std::string_view project)
+    std::vector<BCLibrary::BoundaryCondition> segmentRecords(const ModelCase & stated)
     {
-        const auto name{recordName(boundary)};
-        BCLibrary::BoundaryCondition record;
-        record.UUID = recordUuid(name);
-        record.Name = name;
-        record.Color = kindColor(boundary);
-        if(std::holds_alternative<Adiabatic>(boundary))
+        std::vector<BCLibrary::BoundaryCondition> records;
+        for(const auto & record : recordPerSegment(completed(stated)))
         {
-            // THERM's own record, as it ships: protected, owned by no project.
-            record.Protected = true;
-            record.data = BCLibrary::NoExchange{};
-            return record;
-        }
-        record.ProjectName = std::string{project};
-        record.Protected = false;
-        if(const auto * prescribed{std::get_if<Prescribed>(&boundary)})
-        {
-            record.data = prescribedRecord(prescribed->humidity.has_value());
-        }
-        else
-        {
-            record.data = convectiveRecord();
-        }
-        return record;
-    }
-
-    std::vector<std::pair<std::string, double>> seriesValues(const Boundary & boundary)
-    {
-        std::vector<std::pair<std::string, double>> values;
-        if(const auto * prescribed{std::get_if<Prescribed>(&boundary)})
-        {
-            values.emplace_back("PrescribedTemperature", prescribed->temperature);
-            if(prescribed->humidity.has_value())
+            if(!std::ranges::any_of(records, [&record](const auto & known) { return known.UUID == record.UUID; }))
             {
-                values.emplace_back("PrescribedHumidity", prescribed->humidity.value());
+                records.push_back(record);
             }
         }
-        else if(const auto * convective{std::get_if<Convective>(&boundary)})
-        {
-            values.emplace_back("AirTemperature", convective->airTemperature);
-            values.emplace_back("ConvectiveCoefficient", convective->filmCoefficient);
-            values.emplace_back("RelativeHumidity", convective->humidity);
-        }
-        return values;
+        return records;
     }
 
-    std::map<std::size_t, TimeSeriesLibrary::TimeSeriesData> boundaryDatasets(const ModelCase & stated)
+    std::vector<Binding> segmentBindings(const ModelCase & stated)
     {
         const auto modelCase{completed(stated)};
-        std::map<std::size_t, TimeSeriesLibrary::TimeSeriesData> datasets;
-        if(isSteadyState(modelCase))
+        const auto records{recordPerSegment(modelCase)};
+        const auto datasets{datasetPerSegment(modelCase, records)};
+        std::vector<Binding> bindings;
+        for(std::size_t index = 0U; index < records.size(); ++index)
         {
-            return datasets;
+            bindings.push_back(Binding{.recordUuid = records[index].UUID,
+                                       .datasetUuid = datasets[index].has_value()
+                                                        ? std::optional{datasets[index]->UUID}
+                                                        : std::nullopt});
         }
-        for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
+        return bindings;
+    }
+
+    std::map<std::size_t, TimeSeriesData> boundaryDatasets(const ModelCase & stated)
+    {
+        const auto modelCase{completed(stated)};
+        const auto datasets{datasetPerSegment(modelCase, recordPerSegment(modelCase))};
+        std::map<std::size_t, TimeSeriesData> found;
+        for(std::size_t index = 0U; index < datasets.size(); ++index)
         {
-            const auto values{seriesValues(modelCase.segments[index].kind)};
-            if(!values.empty())
+            if(datasets[index].has_value())
             {
-                datasets.emplace(index, dataset(modelCase, std::format("segment {}", index + 1U), values));
+                found.emplace(index, datasets[index].value());
             }
         }
-        if(datasets.empty())
-        {
-            datasets.emplace(0U, dataset(modelCase, "clock", {{"AirTemperature", modelCase.initial.temperature}}));
-        }
-        return datasets;
+        return found;
     }
 
     ThermModel model(const ModelCase & stated)
     {
         const auto modelCase{completed(stated)};
-        const auto datasets{boundaryDatasets(modelCase)};
+        const auto records{recordPerSegment(modelCase)};
+        const auto datasets{datasetPerSegment(modelCase, records)};
         ThermModel result;
         result.calculationReady = true;
         result.preferences.settings.origin = drawingOriginMm;
@@ -396,12 +474,12 @@ namespace ThermFile::Build
         }
         for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
         {
-            const auto bound{datasets.find(index)};
             result.boundaryConditions.push_back(
               boundary(modelCase,
                        index,
                        result.polygons[segmentRegion(modelCase, index).value()].uuid,
-                       bound == datasets.end() ? std::nullopt : std::optional<std::string>{bound->second.UUID}));
+                       records[index],
+                       datasets[index].has_value() ? std::optional{datasets[index]->UUID} : std::nullopt));
         }
         return result;
     }
@@ -421,10 +499,13 @@ namespace ThermFile::Build
             records.add(record);
         }
 
-        std::vector<TimeSeriesLibrary::TimeSeriesData> datasets;
+        std::vector<TimeSeriesData> datasets;
         for(const auto & [index, data] : boundaryDatasets(modelCase))
         {
-            datasets.push_back(data);
+            if(!std::ranges::any_of(datasets, [&data](const auto & known) { return known.UUID == data.UUID; }))
+            {
+                datasets.push_back(data);
+            }
         }
         return Libraries{.materials = MaterialsLibrary::materialsDatabase(used),
                          .boundaryConditions = std::move(records),
@@ -472,9 +553,8 @@ namespace ThermFile::Build
         return path;
     }
 
-    Schedule scheduleOf(const std::vector<TimeSeriesLibrary::TimeSeriesData> & datasets)
+    Schedule scheduleOf(const std::vector<TimeSeriesData> & datasets)
     {
-        const auto & first{datasets.front()};
-        return Schedule{.dtime = first.axis.stepSeconds, .nSteps = TimeSeriesLibrary::steps(first)};
+        return Model::scheduleFor(datasets.front());
     }
 }   // namespace ThermFile::Build

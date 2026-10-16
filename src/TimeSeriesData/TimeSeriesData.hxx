@@ -94,6 +94,11 @@ namespace TimeSeriesLibrary
 
     [[nodiscard]] double startSecondsIntoYear(const TimeAxis & axis);
 
+    //! The axis `steps` rows later: the start moved by steps * stepSeconds through the
+    //! nominal year, wrapping at its end, the step kept. Rounded to the minute, which is
+    //! as fine as an axis is stated.
+    [[nodiscard]] TimeAxis axisAfter(const TimeAxis & axis, size_t steps);
+
     //! "1 Jan 00:00"
     [[nodiscard]] std::string startLabel(const TimeAxis & axis);
 

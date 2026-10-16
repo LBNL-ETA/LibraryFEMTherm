@@ -113,15 +113,23 @@ class TestSteadyState:
         assert [boundary.flux_tag for boundary in written.boundary_conditions][:2] == ["", "Room"]
         assert "BoundaryConditions.xml" in build.thmz_entries(case)
 
-    def test_a_transient_case_refuses_radiation(self):
+    def test_a_transient_case_writes_fixed_radiation_and_refuses_enclosures(self):
         case = sealed_strip()
         segments = list(case.segments)
         segments[0] = model.Segment(
             model.bc.Convective(air_temperature=20.0, film_coefficient=8.0,
-                                radiation=fem.BCFixedCoefficientRadiation(temperature=20.0, coefficient=4.0)),
+                                radiation=model.bc.FixedRadiation(temperature=[-10.0] * 300, coefficient=4.0)),
             (0.0, 0.0), (0.1, 0.0))
         case.segments = segments
-        assert any("radiates" in issue for issue in model.issues(case))
+        assert model.issues(case) == []
+        record = build.segment_records(case)[0]
+        assert fem.required_roles(record) == [fem.SeriesRole.RadiantTemperature]
+
+        segments[0] = model.Segment(
+            model.bc.Convective(air_temperature=20.0, film_coefficient=8.0, radiation=fem.BCAutomaticEnclosure(emissivity=0.9)),
+            (0.0, 0.0), (0.1, 0.0))
+        case.segments = segments
+        assert any("enclosure" in issue for issue in model.issues(case))
 
     def test_a_steady_case_refuses_a_prescribed_segment(self):
         case = sealed_strip()
@@ -188,22 +196,31 @@ class TestVocabulary:
         assert model.bc.Prescribed(20.0, 0.8).humidity == 0.8
         assert model.bc.Convective(20.0, 8.0).humidity == 0.5
         assert repr(model.bc.Adiabatic()) == "Adiabatic()"
-        assert build.record_name(model.bc.Adiabatic()) == "Adiabatic"
-        assert build.record_name(model.bc.Prescribed(20.0)) == "Prescribed temperature"
-        assert build.record_name(model.bc.Prescribed(20.0, 0.8)) == "Prescribed temperature and humidity"
-        assert build.record_name(model.bc.Convective(20.0, 8.0)) == "Convective exchange"
+        convective = model.bc.Convective(20.0)
+        assert convective.film_coefficient is None
+        assert convective.model == fem.BCConvectionModel.Fixed_Convection_Coefficient
+        assert convective.wind_speed is None and convective.flux is None and convective.radiation is None
+        assert any("needs a film coefficient" in issue for issue in model.issues(model.ModelCase(
+            id="probe",
+            regions=[model.Region(linear_sorption(), [(0.0, 0.0), (0.1, 0.0), (0.1, 0.01), (0.0, 0.01)])],
+            segments=[model.Segment(convective, (0.1, 0.0), (0.1, 0.01))],
+            schedule=model.Schedule(dtime=3600.0, n_steps=1))))
 
     def test_reprs(self):
         region = model.Region(linear_sorption(), [(0.0, 0.0), (0.2, 0.0), (0.2, 3.0)])
         assert repr(region) == "Region(material='linear-sorption', points=[Point(0, 0), Point(0.2, 0), Point(0.2, 3)])"
         segment = model.Segment(model.bc.Prescribed(temperature=20.0), (0.0, 3.0), (0.0, 0.0))
-        assert repr(segment) == "Segment(kind=Prescribed(temperature=20), start=Point(0, 3), end=Point(0, 0))"
+        assert repr(segment) == "Segment(kind=Prescribed(temperature=20.0), start=Point(0, 3), end=Point(0, 0))"
+        weather = model.bc.Convective(air_temperature=[1.0, 2.0], film_coefficient=8.0, model=fem.BCConvectionModel.TARP)
+        assert repr(weather) == (
+            "Convective(air_temperature=[1.0, 2.0], film_coefficient=8.0, humidity=0.5, "
+            "model=BCConvectionModel.TARP)")
         named = model.Segment(model.bc.Adiabatic(), (0.0, 0.0), (0.2, 0.0), region=1, color="0x1E5A96", name="bottom")
         assert repr(named) == (
             "Segment(kind=Adiabatic(), start=Point(0, 0), end=Point(0.2, 0), region=1, color='0x1E5A96', name='bottom')"
         )
         assert repr(model.Initial(temperature=20.0, humidity=0.5)) == "Initial(temperature=20, humidity=0.5)"
-        assert repr(model.Schedule(dtime=3600.0, n_steps=24)) == "Schedule(dtime=3600, n_steps=24)"
+        assert repr(model.Schedule(dtime=3600.0, n_steps=24)) == "Schedule(dtime=3600.0, n_steps=24)"
         assert repr(model.Physics(moisture=False)) == (
             "Physics(thermal=True, moisture=False, liquid_transport=True, heat_of_evaporation=True, "
             "capillary_conduction=True, vapor_diffusion_conduction=True, latent_heat_of_fusion=True, "
@@ -288,7 +305,7 @@ class TestOutline:
 
         therm_model = build.model(case)
         assert [boundary.name for boundary in therm_model.boundary_conditions] == [
-            "Prescribed temperature", "Prescribed temperature", "Adiabatic", "Adiabatic"
+            "segment 1", "segment 2", "Adiabatic", "Adiabatic"
         ]
 
 
@@ -344,23 +361,44 @@ class TestLibraryRecords:
         assert abs(hygro.bulk_density - 1000.0) < TOL
         assert [(p.x, p.y) for p in hygro.moisture_storage_function] == [(0.0, 0.0), (1.0, 100.0)]
 
-    def test_convective_record_reads_three_roles(self):
-        record = build.boundary_record(model.bc.Convective(20.0, 8.0, 0.5), "probe")
-        assert isinstance(record, fem.BoundaryCondition)
-        assert record.project_name == "probe"
-        assert fem.required_roles(record) == [
-            fem.SeriesRole.RelativeHumidity,
-            fem.SeriesRole.AirTemperature,
-            fem.SeriesRole.ConvectiveCoefficient,
+    def test_constants_lower_to_constant_sources_and_no_series(self):
+        lowered = build.lower(model.bc.Convective(20.0, 8.0, 0.5))
+        assert isinstance(lowered.data, fem.SurfaceExchange)
+        assert lowered.data.convection.air_temperature == fem.Constant(20.0)
+        assert lowered.data.convection.film_coefficient == fem.Constant(8.0)
+        assert lowered.data.relative_humidity == fem.Constant(0.5)
+        assert lowered.series == []
+        record = fem.BoundaryCondition()
+        record.data = lowered.data
+        assert fem.is_steady_capable(record)
+        assert isinstance(build.lower(model.bc.Adiabatic()).data, fem.NoExchange)
+
+    def test_series_lower_to_roles_in_the_record_and_the_series_list(self):
+        outdoor = [-5.0 + 0.5 * hour for hour in range(4)]
+        lowered = build.lower(model.bc.Convective(outdoor, 8.0, 0.5))
+        assert lowered.data.convection.air_temperature == fem.FromTimeSeries(fem.SeriesRole.AirTemperature)
+        assert lowered.data.convection.film_coefficient == fem.Constant(8.0)
+        assert [series.role for series in lowered.series] == [fem.SeriesRole.AirTemperature]
+        assert lowered.series[0].values == outdoor
+        # Temperature before humidity, as the record states them.
+        prescribed = build.lower(model.bc.Prescribed(outdoor, 0.8))
+        assert prescribed.data.temperature == fem.FromTimeSeries(fem.SeriesRole.PrescribedTemperature)
+        assert prescribed.data.relative_humidity == fem.Constant(0.8)
+        assert [(input.role, input.value) for input in model.inputs(model.bc.Prescribed(20.0, 0.8))] == [
+            (fem.SeriesRole.PrescribedTemperature, 20.0),
+            (fem.SeriesRole.PrescribedHumidity, 0.8),
         ]
-        assert build.series_values(model.bc.Convective(20.0, 8.0, 0.5)) == [
-            ("AirTemperature", 20.0),
-            ("ConvectiveCoefficient", 8.0),
-            ("RelativeHumidity", 0.5),
-        ]
-        # Temperature before humidity, as THERM writes a prescribed-state dataset.
-        assert build.series_values(model.bc.Prescribed(20.0, 0.8)) == [("PrescribedTemperature", 20.0), ("PrescribedHumidity", 0.8)]
-        assert build.series_values(model.bc.Adiabatic()) == []
+        assert model.inputs(model.bc.Adiabatic()) == []
+
+    def test_a_series_input_accepts_a_list_and_a_numpy_array(self):
+        numpy = pytest.importorskip("numpy")
+        as_list = model.bc.Convective(air_temperature=[1.0, 2.0, 3.0], film_coefficient=8.0)
+        as_array = model.bc.Convective(air_temperature=numpy.array([1.0, 2.0, 3.0]), film_coefficient=8.0)
+        assert as_list == as_array
+        assert as_list.air_temperature == [1.0, 2.0, 3.0]
+        assert model.series_length(as_list.air_temperature) == 3
+        assert model.is_constant(as_list.humidity)
+        assert "air_temperature=[1.0, 2.0, 3.0]" in repr(as_list)
 
     def test_model_and_libraries(self):
         case = sealed_strip()
@@ -379,22 +417,75 @@ class TestLibraryRecords:
 
         libraries = build.libraries(case)
         assert libraries.materials.get_names() == ["linear-sorption"]
-        assert sorted(libraries.boundary_conditions.get_names()) == ["Adiabatic", "Prescribed temperature"]
-        assert len(libraries.datasets) == 2
+        assert sorted(libraries.boundary_conditions.get_names()) == ["Adiabatic", "segment 2", "segment 4"]
+        # Constants everywhere: the clock dataset alone.
+        assert len(libraries.datasets) == 1
         schedule = build.schedule_of(libraries.datasets)
         assert schedule.n_steps == 300
         assert abs(schedule.dtime - 36000.0) < TOL
 
         datasets = build.boundary_datasets(case)
-        assert sorted(datasets) == [1, 3]
-        assert fem.time_series_steps(datasets[1]) == 300
+        assert sorted(datasets) == [0]
+        assert fem.time_series_steps(datasets[0]) == 300
+        bindings = build.segment_bindings(case)
+        assert [bound.dataset_uuid is not None for bound in bindings] == [True, False, False, False]
+        assert bindings[1].record_uuid == libraries.boundary_conditions.get_by_name("segment 2").uuid
+
+    def test_segments_reading_the_same_weather_share_a_record_and_a_dataset(self):
+        outdoor = [-5.0 + 0.5 * hour for hour in range(48)]
+        outside = model.bc.Convective(air_temperature=outdoor, film_coefficient=25.0, humidity=0.8)
+        case = model.ModelCase(
+            id="weather_wall",
+            regions=[model.Region(linear_sorption(), [(0.0, 0.0), (0.3, 0.0), (0.3, 0.3), (0.0, 0.3)])],
+            segments=[
+                model.Segment(outside, (0.0, 0.3), (0.0, 0.0), name="outside"),
+                model.Segment(model.bc.Convective(20.0, 8.0), (0.3, 0.0), (0.3, 0.3), name="room side"),
+                model.Segment(outside, (0.3, 0.3), (0.0, 0.3), name="top"),
+            ],
+            schedule=model.Schedule(dtime=3600.0, n_steps=48),
+        )
+        assert model.issues(case) == []
+        records = build.segment_records(case)
+        assert [record.name for record in records] == ["outside", "room side", "Adiabatic"]
+        libraries = build.libraries(case)
+        assert len(libraries.datasets) == 1
+        dataset = libraries.datasets[0]
+        assert dataset.uuid == fem.content_uuid(dataset)
+        assert dataset.name == "outside series"
+        assert fem.values_for_role(dataset, fem.SeriesRole.AirTemperature) == outdoor
+        bindings = build.segment_bindings(case)
+        assert bindings[0].dataset_uuid == dataset.uuid == bindings[2].dataset_uuid
+        assert bindings[1].dataset_uuid is None
+        assert bindings[0].record_uuid == bindings[2].record_uuid != bindings[1].record_uuid
+
+    def test_a_series_must_be_as_long_as_the_schedule(self):
+        case = sealed_strip()
+        segments = list(case.segments)
+        segments[1] = model.Segment(model.bc.Prescribed(temperature=[20.0] * 10), (0.1, 0.0), (0.1, 0.005))
+        case.segments = segments
+        issues = model.issues(case)
+        assert len(issues) == 1
+        assert "PrescribedTemperature has 10 values, the schedule has 300 steps" in issues[0]
+
+    def test_the_schedule_follows_a_dataset(self):
+        weather = fem.TimeSeriesData(
+            name="january",
+            axis=fem.TimeAxis(month=1, day=1, hour=0, minute=0, step_seconds=1800.0),
+            series=[fem.Series(fem.SeriesRole.AirTemperature, [0.0] * 48)],
+        )
+        schedule = model.schedule_for(weather)
+        assert schedule == model.Schedule(dtime=1800.0, n_steps=48)
+        assert model.axis_of(schedule) == weather.axis
+        shifted = model.Schedule(dtime=3600.0, n_steps=24, start=model.Start(month=2, day=10, hour=6))
+        assert repr(shifted) == "Schedule(dtime=3600.0, n_steps=24, start=Start(month=2, day=10, hour=6, minute=0))"
+        assert model.axis_of(shifted) == fem.TimeAxis(month=2, day=10, hour=6, minute=0, step_seconds=3600.0)
 
 
 class TestArchive:
     def test_entries(self):
         entries = build.thmz_entries(sealed_strip())
         assert {"Model.xml", "Materials.xml", "BoundaryConditions.xml", "Gases.xml", "Mesh.xml"} <= set(entries)
-        assert sum(name.startswith("time series/") for name in entries) == 2
+        assert sum(name.startswith("time series/") for name in entries) == 1
 
     def test_written_archive_round_trips(self, tmp_path):
         path = str(tmp_path / "nested" / "strip.thmz")
@@ -408,8 +499,8 @@ class TestArchive:
 
         records = fem.BoundaryConditionsDB()
         records.load(path)
-        assert sorted(records.get_names()) == ["Adiabatic", "Prescribed temperature"]
-        assert len(fem.load_datasets(path)) == 2
+        assert sorted(records.get_names()) == ["Adiabatic", "segment 2", "segment 4"]
+        assert len(fem.load_datasets(path)) == 1
 
         materials = fem.MaterialsDB()
         materials.load_from_string(fem.thmz.read_entries(path, ["Materials.xml"])["Materials.xml"])
@@ -422,15 +513,16 @@ class TestArchive:
         case = sealed_strip()
         assert build.case_uuid(case, "region/0") == build.case_uuid(sealed_strip(), "region/0")
         assert build.case_uuid(case, "region/0") != build.case_uuid(case, "region/1")
-        assert build.record_uuid("Convective exchange") == build.boundary_record(model.bc.Convective(20.0, 8.0), "x").uuid
+        assert [record.uuid for record in build.segment_records(case)] == [
+            record.uuid for record in build.segment_records(sealed_strip())
+        ]
         first = build.thmz_entries(case)
         second = build.thmz_entries(sealed_strip())
         assert first.keys() == second.keys()
 
     def test_adiabatic_is_therms_built_in_record(self):
-        record = build.boundary_record(model.bc.Adiabatic(), "x")
-        assert record.uuid == "61d7bd1c-22c6-4ea0-8720-0696e8c194ad"
-        assert record.name == "Adiabatic"
+        record = next(record for record in build.segment_records(sealed_strip()) if record.name == "Adiabatic")
+        assert record.uuid == "61d7bd1c-22c6-4ea0-8720-0696e8c194ad" == build.ADIABATIC_RECORD_UUID
         assert record.protected_ is True
         assert record.project_name is None
-        assert build.record_uuid("Adiabatic") == record.uuid
+        assert isinstance(record.data, fem.NoExchange)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -28,25 +29,27 @@
 //!   faces that exchange something. The calculation options are the case's Physics, Initial and
 //!   Numerics written as the file's switches.
 //! - Materials: the regions' materials, converted by Materials.hxx.
-//! - BoundaryConditions: the consolidated records the segments refer to. They are the same
-//!   in every generated file: THERM's own built-in Adiabatic record, by its shipped UUID,
-//!   so THERM recognises it rather than importing a duplicate; and two prescribed kinds and
-//!   a convective kind, marked as the project's own and reading their values from the
-//!   segment's dataset.
-//! - time series/<uuid>: one dataset per segment that reads values, holding the constant
-//!   boundary values repeated for every timestep. The datasets also set the clock: their
-//!   row count is the number of timesteps and their step length is Schedule::dtime. A model
-//!   whose segments are all adiabatic still needs a clock, so it binds one dataset to its
-//!   first segment; the adiabatic record ignores the values.
+//! - BoundaryConditions: the consolidated records the segments refer to. Each segment's
+//!   condition is lowered to a record: a constant input stays a constant on the record, a
+//!   series input becomes a source reading a dataset role. Segments whose records come out
+//!   the same share one record, named after the first segment that uses it (its own name,
+//!   or "segment N") and drawn in that segment's colour; an adiabatic segment uses THERM's
+//!   own built-in Adiabatic record, by its shipped UUID, so THERM recognises it rather than
+//!   importing a duplicate. Records are marked as the project's own.
+//! - time series/<uuid>: one dataset per distinct bundle of series inputs, holding each
+//!   series under its role on the schedule's axis. Its UUID is the content hash, so segments
+//!   reading the same weather share one dataset. A segment whose inputs are all constants
+//!   binds no dataset. The datasets also set the clock: their row count is the number of
+//!   timesteps and their step length is Schedule::dtime. A model in which no segment reads a
+//!   series still needs a clock, so it binds one dataset to its first segment; the record
+//!   ignores the values.
 //! - Gases, Mesh: version headers only, as THERM writes for a model without cavities or a
 //!   stored mesh.
 //!
-//! A steady-state case (ModelCase::mode) has no clock, so it writes no datasets. Each
-//! segment that exchanges something gets a record of its own holding its constants, named
-//! after the segment and drawn in its colour; an adiabatic segment keeps THERM's built-in
-//! record. The records go into the consolidated BoundaryConditions entry only, as in a
-//! transient case: the legacy SteadyStateBC library is not written. The calculation
-//! options carry the case's MeshControl, which drives the error estimator.
+//! A steady-state case (ModelCase::mode) has no clock, so it writes no datasets; issues()
+//! has refused any series input. The records go into the consolidated BoundaryConditions
+//! entry only, as in a transient case: the legacy SteadyStateBC library is not written. The
+//! calculation options carry the case's MeshControl, which drives the error estimator.
 namespace ThermFile::Build
 {
     //! THERM's default drawing origin in page millimetres. The drawing is placed around it,
@@ -69,26 +72,41 @@ namespace ThermFile::Build
     //! its transient and steady-state libraries.
     constexpr std::string_view adiabaticRecordUuid{"61d7bd1c-22c6-4ea0-8720-0696e8c194ad"};
 
-    //! The UUID of a boundary-condition record, the same in every generated file. The
-    //! built-in Adiabatic record keeps THERM's UUID; every other record derives one from its
-    //! name.
-    [[nodiscard]] std::string recordUuid(std::string_view recordName);
+    //! The data of a boundary-condition record: what a boundary kind lowers to.
+    using RecordData = decltype(BCLibrary::BoundaryCondition::data);
 
-    //! The library record for a boundary kind. Values live in the dataset, not here.
-    //! ``project`` is written as the record's project name: THERM imports an archive's
-    //! records into its library only when they are marked as the project's own. The
-    //! Adiabatic record is THERM's built-in and carries no project name.
-    [[nodiscard]] BCLibrary::BoundaryCondition boundaryRecord(const Model::Boundary & boundary,
-                                                              std::string_view project);
+    //! A boundary kind lowered to the file's terms: the record data, with a constant input
+    //! as a constant source and a series input as a source reading its role, and the series
+    //! the record reads, each under that role.
+    struct Lowered
+    {
+        RecordData data{};
+        std::vector<TimeSeriesLibrary::Series> series{};
+    };
 
-    //! (role name, constant value) pairs, one per series the segment's dataset carries, in
-    //! the order the dataset writes them: temperature before humidity for a prescribed
-    //! state; air temperature, film coefficient, humidity for an exchange. Empty for a
-    //! sealed segment.
-    [[nodiscard]] std::vector<std::pair<std::string, double>> seriesValues(const Model::Boundary & boundary);
+    [[nodiscard]] Lowered lower(const Model::Boundary & boundary);
 
-    //! Segment index -> dataset for every segment that reads values, plus a clock on the
-    //! first segment when none does.
+    //! What a segment refers to by UUID: its record, and its dataset when the record reads
+    //! series (or when the segment carries the clock).
+    struct Binding
+    {
+        std::string recordUuid{};
+        std::optional<std::string> datasetUuid{};
+
+        [[nodiscard]] friend bool operator==(const Binding & lhs, const Binding & rhs) = default;
+    };
+
+    //! Every record the case's segments refer to, each once, in the order first used:
+    //! THERM's built-in Adiabatic record, and one record per distinct lowered condition.
+    [[nodiscard]] std::vector<BCLibrary::BoundaryCondition> segmentRecords(const Model::ModelCase & modelCase);
+
+    //! The record and dataset each segment of the completed case refers to, one entry per
+    //! segment in the completed case's order.
+    [[nodiscard]] std::vector<Binding> segmentBindings(const Model::ModelCase & modelCase);
+
+    //! Segment index -> dataset for every segment of the completed case that reads series,
+    //! plus a clock on the first segment when none does. Segments sharing a dataset repeat
+    //! it under each index.
     [[nodiscard]] std::map<std::size_t, TimeSeriesLibrary::TimeSeriesData>
       boundaryDatasets(const Model::ModelCase & modelCase);
 

@@ -126,4 +126,23 @@ namespace BCLibrary
     {
         return requiredRoles(boundaryCondition).empty();
     }
+
+    std::vector<TimeSeriesLibrary::SeriesRole>
+      missingRoles(const BoundaryCondition & boundaryCondition,
+                   const std::optional<TimeSeriesLibrary::TimeSeriesData> & dataset)
+    {
+        using TimeSeriesLibrary::SeriesRole;
+        const auto required{requiredRoles(boundaryCondition)};
+        if(!dataset.has_value())
+        {
+            return required;
+        }
+        const auto provided{TimeSeriesLibrary::providedRoles(dataset.value())};
+        const auto coveredByAir{[&provided](const SeriesRole role) {
+            return role == SeriesRole::RadiantTemperature && lbnl::contains(provided, SeriesRole::AirTemperature);
+        }};
+        return lbnl::filter(required, [&](const SeriesRole role) {
+            return !lbnl::contains(provided, role) && !coveredByAir(role);
+        });
+    }
 }   // namespace BCLibrary

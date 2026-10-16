@@ -308,12 +308,99 @@ entry = fem.thmz.time_series_entry_name(weather.uuid)   # "time series/<uuid>.xm
 ```
 
 A boundary binds a dataset through `Boundary.timeSeries_uuid`; the dataset must supply
-every role its record reads (`fem.required_roles(record)`). A record whose inputs are all
-constant needs no dataset, but a transient model still needs one somewhere for the clock.
+every role its record reads. `fem.missing_roles(record, dataset)` is that check: the roles
+read and not provided, empty when the pairing is complete (a missing `RadiantTemperature`
+is taken as the air temperature when the dataset carries one, as the engine does). A
+record whose inputs are all constant needs no dataset, but a transient model still needs
+one somewhere for the clock. `fem.capability_issues(record, engine, mode)` says whether a
+record can run at all under an engine and calculation mode.
 
 `series` is copied out as a Python list, so build the list and assign it; appending to
 the returned list does not change the dataset. The same holds for every list-valued
 field in these bindings.
+
+### Where datasets come from
+
+```python
+# An EnergyPlus weather file: AirTemperature, RelativeHumidity, WindSpeed, WindDirection and
+# RadiantTemperature (the sky temperature, from the horizontal infrared). Solar columns are
+# reported in unmapped_columns: what a surface receives depends on its tilt and the sun.
+weather = fem.read_epw("city.epw")                         # an EnergyPlusWeatherFile
+year = weather.data
+print(weather.location.city, fem.describe_axis(year))      # "1 Jan 00:00, step 1 h, 8760 rows"
+
+# One month of it: a dataset of its own, its axis moved, its UUID its content
+outdoor = fem.time_series_window(year, 0, 744)
+
+# An interior climate generated from the exterior per standard, on the same axis
+indoor = fem.generate_interior(outdoor, fem.InteriorStandard.EN_15026_DIN_4108, fem.MoistureLoad.Normal)
+
+# A CSV whose headers name roles ("Air Temperature" or "AirTemperature"); a Time column
+# sets the axis. Columns that name no role are listed in ignored_headers.
+measured = fem.read_csv("measured.csv").data
+fem.write_csv_file(indoor, "indoor.csv")
+
+# Whatever the file is, by its extension (.epw, .csv, or a .zip of either)
+for imported in fem.import_datasets("weather.zip").datasets:
+    print(imported.data.name, imported.skipped_columns)
+
+# Or stated outright
+stated = fem.TimeSeriesData(
+    name="Constant 30 C, 95 %",
+    axis=fem.TimeAxis(step_seconds=3600.0),
+    series=[fem.Series(fem.SeriesRole.PrescribedTemperature, [30.0] * 24),
+            fem.Series(fem.SeriesRole.PrescribedHumidity, [0.95] * 24)],
+)
+stated.uuid = fem.content_uuid(stated)
+```
+
+Every reader raises `ValueError` with the library's message when it cannot read.
+
+## A model stated in Python
+
+`pylibraryfemtherm.model` states a THERM model in physical terms -- regions in metres with
+their material, segments with their condition, a start, a clock -- and
+`pylibraryfemtherm.build` writes it as the archive THERM would have saved. Every boundary
+input is a constant or one value per step of the schedule, so a weather dataset feeds a
+face directly:
+
+```python
+from pylibraryfemtherm import build, model
+
+outside = model.bc.Convective(
+    air_temperature=fem.series_values(outdoor, fem.SeriesRole.AirTemperature),
+    film_coefficient=25.0,
+    humidity=fem.series_values(outdoor, fem.SeriesRole.RelativeHumidity),
+    radiation=model.bc.FixedRadiation(
+        temperature=fem.series_values(outdoor, fem.SeriesRole.RadiantTemperature), coefficient=4.5),
+)
+room = model.bc.Convective(
+    air_temperature=fem.series_values(indoor, fem.SeriesRole.AirTemperature),
+    film_coefficient=8.0,
+    humidity=fem.series_values(indoor, fem.SeriesRole.RelativeHumidity),
+)
+case = model.ModelCase(
+    id="wall",
+    regions=[model.Region(brick, [(0.0, 0.0), (0.3, 0.0), (0.3, 0.3), (0.0, 0.3)])],
+    segments=[model.Segment(outside, (0.0, 0.3), (0.0, 0.0), name="outside"),
+              model.Segment(room, (0.3, 0.0), (0.3, 0.3), name="room side")],
+    schedule=model.schedule_for(outdoor),      # the file's step, row count and start
+)
+print(model.issues(case))                      # [] -- every series as long as the schedule
+build.thmz(case, "wall.thmz")
+```
+
+The writer *lowers* each segment: a constant stays a `Constant` on the segment's record, a
+series becomes a `FromTimeSeries` role on the record and a series in a dataset the record
+reads. Segments whose conditions come out the same share one record, named after the first
+segment that uses it (`name`, or "segment N"); segments reading the same series share one
+dataset, by content. A segment of constants binds no dataset; a model in which nothing
+reads a series binds a clock dataset to its first segment. `build.lower(kind)`,
+`build.segment_records(case)` and `build.segment_bindings(case)` show each step.
+`Convective` also takes a convection `model` with `wind_speed` and `wind_direction` for the
+correlations, an imposed `flux`, and THERM's own radiation records; `model.issues(case)`
+refuses what the engine cannot run (enclosures in a transient case, a black body read from
+a series, a series input in a steady-state case).
 
 ## Gases
 

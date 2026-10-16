@@ -38,6 +38,7 @@ add_custom_command(TARGET pylibraryfemtherm POST_BUILD
             --enum-class-locations "FileFormat:pylibraryfemtherm"
             --enum-class-locations "RunType:pylibraryfemtherm"
             --enum-class-locations "CalculationMode:pylibraryfemtherm"
+            --enum-class-locations "BCConvectionModel:pylibraryfemtherm"
     COMMENT "Generating type stubs for pylibraryfemtherm"
     VERBATIM)
 

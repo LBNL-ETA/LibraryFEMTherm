@@ -4,12 +4,98 @@
 
 #include "Case.hxx"
 #include "Common/PlanarGeometry.hxx"
+#include "TimeSeriesData/Tags.hxx"
 
 namespace ThermFile::Model
 {
+    using TimeSeriesLibrary::SeriesRole;
+
     double Schedule::duration() const
     {
         return dtime * static_cast<double>(nSteps);
+    }
+
+    bool isConstant(const Input & input)
+    {
+        return std::holds_alternative<double>(input);
+    }
+
+    std::optional<std::size_t> seriesLength(const Input & input)
+    {
+        const auto * series{std::get_if<std::vector<double>>(&input)};
+        return series == nullptr ? std::nullopt : std::optional{series->size()};
+    }
+
+    TimeSeriesLibrary::TimeAxis axisOf(const Schedule & schedule)
+    {
+        return TimeSeriesLibrary::TimeAxis{.month = schedule.start.month,
+                                           .day = schedule.start.day,
+                                           .hour = schedule.start.hour,
+                                           .minute = schedule.start.minute,
+                                           .stepSeconds = schedule.dtime};
+    }
+
+    Schedule scheduleFor(const TimeSeriesLibrary::TimeSeriesData & dataset)
+    {
+        const auto & axis{dataset.axis};
+        return Schedule{.dtime = axis.stepSeconds,
+                        .nSteps = TimeSeriesLibrary::steps(dataset),
+                        .start = Start{.month = axis.month, .day = axis.day, .hour = axis.hour, .minute = axis.minute}};
+    }
+
+    namespace
+    {
+        void appendInput(std::vector<RoleInput> & found, const SeriesRole role, const std::optional<Input> & input)
+        {
+            if(input.has_value())
+            {
+                found.push_back(RoleInput{.role = role, .value = input.value()});
+            }
+        }
+
+        void appendRadiationInputs(std::vector<RoleInput> & found, const std::optional<Radiation> & radiation)
+        {
+            const auto * fixed{radiation.has_value() ? std::get_if<FixedRadiation>(&radiation.value()) : nullptr};
+            if(fixed != nullptr)
+            {
+                appendInput(found, SeriesRole::RadiantTemperature, fixed->temperature);
+                appendInput(found, SeriesRole::RadiativeCoefficient, fixed->coefficient);
+            }
+        }
+
+        std::vector<RoleInput> convectiveInputs(const Convective & convective)
+        {
+            std::vector<RoleInput> found;
+            appendInput(found, SeriesRole::RelativeHumidity, convective.humidity);
+            appendInput(found, SeriesRole::AirTemperature, convective.airTemperature);
+            appendInput(found, SeriesRole::ConvectiveCoefficient, convective.filmCoefficient);
+            appendInput(found, SeriesRole::WindSpeed, convective.windSpeed);
+            appendInput(found, SeriesRole::WindDirection, convective.windDirection);
+            appendRadiationInputs(found, convective.radiation);
+            appendInput(found, SeriesRole::HeatFlux, convective.flux);
+            return found;
+        }
+
+        std::vector<RoleInput> prescribedInputs(const Prescribed & prescribed)
+        {
+            std::vector<RoleInput> found;
+            appendInput(found, SeriesRole::PrescribedTemperature, prescribed.temperature);
+            appendInput(found, SeriesRole::PrescribedHumidity, prescribed.humidity);
+            return found;
+        }
+    }   // namespace
+
+    std::vector<RoleInput> inputs(const Boundary & boundary)
+    {
+        if(const auto * convective{std::get_if<Convective>(&boundary)})
+        {
+            return convectiveInputs(*convective);
+        }
+        if(const auto * prescribed{std::get_if<Prescribed>(&boundary)})
+        {
+            return prescribedInputs(*prescribed);
+        }
+        return {};
     }
 
     namespace
@@ -319,18 +405,96 @@ namespace ThermFile::Model
         }
 
         //! The radiation a segment states, or nothing.
-        const BCLibrary::RadiationOptions * radiationOf(const Segment & segment)
+        const Radiation * radiationOf(const Segment & segment)
         {
             const auto * convective{std::get_if<Convective>(&segment.kind)};
             return convective != nullptr && convective->radiation.has_value() ? &convective->radiation.value()
                                                                               : nullptr;
         }
 
-        //! Whether any input of the radiation is read from a dataset series.
-        bool readsSeries(const BCLibrary::RadiationOptions & radiation)
+        //! Whether a black body reads any input from a dataset series.
+        bool blackBodyReadsSeries(const Radiation & radiation)
         {
-            const BCLibrary::BoundaryCondition record{.data = BCLibrary::SurfaceExchange{.radiation = radiation}};
-            return !BCLibrary::requiredRoles(record).empty();
+            const auto * blackBody{std::get_if<BCLibrary::BlackBodyRadiation>(&radiation)};
+            return blackBody != nullptr
+                   && (BCLibrary::isFromTimeSeries(blackBody->temperature)
+                       || BCLibrary::isFromTimeSeries(blackBody->emissivity));
+        }
+
+        //! The series inputs of a segment, by role, with their lengths.
+        std::vector<std::pair<SeriesRole, std::size_t>> seriesInputs(const Segment & segment)
+        {
+            std::vector<std::pair<SeriesRole, std::size_t>> found;
+            for(const auto & [role, value] : inputs(segment.kind))
+            {
+                if(const auto length{seriesLength(value)})
+                {
+                    found.emplace_back(role, length.value());
+                }
+            }
+            return found;
+        }
+
+        //! The wind a convection model reads: the correlations for an outside surface need
+        //! the speed, and those that distinguish windward from leeward need the direction.
+        struct WindInputs
+        {
+            bool speed{false};
+            bool direction{false};
+        };
+
+        WindInputs windInputsOf(const BCLibrary::ConvectionModel model)
+        {
+            using Model = BCLibrary::ConvectionModel;
+            switch(model)
+            {
+                case Model::ASHRAE_NFRC_Outside:
+                    return {.speed = true, .direction = false};
+                case Model::Yazdanian_Klems:
+                case Model::Kimura:
+                case Model::Montazeri:
+                    return {.speed = true, .direction = true};
+                default:
+                    return {};
+            }
+        }
+
+        //! The input a convection model reads but the segment does not give, if any.
+        std::optional<std::string> missingConvectionInput(const Convective & convective)
+        {
+            const auto wind{windInputsOf(convective.model)};
+            if(convective.model == BCLibrary::ConvectionModel::Fixed_Convection_Coefficient
+               && !convective.filmCoefficient.has_value())
+            {
+                return "a film coefficient";
+            }
+            if(wind.speed && !convective.windSpeed.has_value())
+            {
+                return "the wind speed";
+            }
+            if(wind.direction && !convective.windDirection.has_value())
+            {
+                return "the wind direction";
+            }
+            return std::nullopt;
+        }
+
+        void checkConvectionInputs(const ModelCase & modelCase, std::vector<std::string> & found)
+        {
+            for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
+            {
+                const auto & segment{modelCase.segments[index]};
+                const auto * convective{std::get_if<Convective>(&segment.kind)};
+                if(convective == nullptr)
+                {
+                    continue;
+                }
+                if(const auto missing{missingConvectionInput(*convective)})
+                {
+                    found.push_back(std::format(
+                      "{} needs {} for its convection model", describe(index, segment), missing.value()));
+                }
+            }
         }
 
         //! A steady-state archive keeps its conditions in THERM's steady-state library,
@@ -346,7 +510,14 @@ namespace ThermFile::Model
                                                 "state it as Convective",
                                                 describe(index, segment)));
                 }
-                if(const auto * radiation{radiationOf(segment)}; radiation != nullptr && readsSeries(*radiation))
+                for(const auto & [role, length] : seriesInputs(segment))
+                {
+                    found.push_back(std::format("{} reads {} from a series, which a steady-state case has "
+                                                "no datasets for; state it as a constant",
+                                                describe(index, segment),
+                                                TimeSeriesLibrary::seriesRoleToString(role)));
+                }
+                if(const auto * radiation{radiationOf(segment)}; radiation != nullptr && blackBodyReadsSeries(*radiation))
                 {
                     found.push_back(std::format("{} radiates with an input read from a dataset, which a "
                                                 "steady-state case has none of; state it as a constant",
@@ -355,16 +526,58 @@ namespace ThermFile::Model
             }
         }
 
-        //! A transient case reads every condition from its datasets, which do not carry
-        //! radiation yet.
-        void checkTransientSegments(const ModelCase & modelCase, std::vector<std::string> & found)
+        //! Every series input runs over the schedule: one value per step, no more, no less.
+        //! The engine would otherwise repeat a short series' last value without a word.
+        void checkSeriesLengths(const ModelCase & modelCase, std::vector<std::string> & found)
+        {
+            const auto nSteps{modelCase.schedule.nSteps};
+            for(std::size_t index = 0U; nSteps > 0U && index < modelCase.segments.size(); ++index)
+            {
+                const auto & segment{modelCase.segments[index]};
+                for(const auto & [role, length] : seriesInputs(segment))
+                {
+                    if(length != nSteps)
+                    {
+                        found.push_back(std::format("{}: {} has {} values, the schedule has {} steps",
+                                                    describe(index, segment),
+                                                    TimeSeriesLibrary::seriesRoleToString(role),
+                                                    length,
+                                                    nSteps));
+                    }
+                }
+            }
+        }
+
+        //! The radiation the engine runs through a clock: fixed radiation, step by step, and
+        //! a black body held at constants. An enclosure is not run at all in a transient run.
+        std::optional<std::string> transientRadiationIssue(const Radiation & radiation)
+        {
+            if(std::holds_alternative<BCLibrary::AutomaticEnclosure>(radiation)
+               || std::holds_alternative<BCLibrary::ManualEnclosure>(radiation))
+            {
+                return "radiates into an enclosure, which a transient run does not model; state fixed "
+                       "radiation or a black body";
+            }
+            if(blackBodyReadsSeries(radiation))
+            {
+                return "radiates as a black body read from a series, which a transient run holds constant; "
+                       "state constants, or FixedRadiation for a series";
+            }
+            return std::nullopt;
+        }
+
+        void checkTransientRadiation(const ModelCase & modelCase, std::vector<std::string> & found)
         {
             for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
             {
-                if(radiationOf(modelCase.segments[index]) != nullptr)
+                const auto * radiation{radiationOf(modelCase.segments[index])};
+                if(radiation == nullptr)
                 {
-                    found.push_back(std::format("{} radiates, which only a steady-state case can write so far",
-                                                describe(index, modelCase.segments[index])));
+                    continue;
+                }
+                if(const auto issue{transientRadiationIssue(*radiation)})
+                {
+                    found.push_back(std::format("{} {}", describe(index, modelCase.segments[index]), issue.value()));
                 }
             }
         }
@@ -374,7 +587,8 @@ namespace ThermFile::Model
             if(modelCase.mode == ThermFile::CalculationMode::cmTransient)
             {
                 checkSchedule(modelCase, found);
-                checkTransientSegments(modelCase, found);
+                checkSeriesLengths(modelCase, found);
+                checkTransientRadiation(modelCase, found);
             }
             else if(isSteadyState(modelCase))
             {
@@ -393,6 +607,7 @@ namespace ThermFile::Model
         checkRegions(modelCase, found);
         checkMaterialNames(modelCase, found);
         checkSegments(modelCase, found);
+        checkConvectionInputs(modelCase, found);
         checkMode(modelCase, found);
         return found;
     }
@@ -469,27 +684,5 @@ namespace ThermFile::Model
             return std::nullopt;
         }
         return modelCase.regions[index].material;
-    }
-
-    std::string recordName(const Boundary & boundary)
-    {
-        return std::visit(
-          [](const auto & kind) -> std::string {
-              using Kind = std::decay_t<decltype(kind)>;
-              if constexpr(std::is_same_v<Kind, Adiabatic>)
-              {
-                  return "Adiabatic";
-              }
-              else if constexpr(std::is_same_v<Kind, Prescribed>)
-              {
-                  return kind.humidity.has_value() ? "Prescribed temperature and humidity"
-                                                   : "Prescribed temperature";
-              }
-              else
-              {
-                  return "Convective exchange";
-              }
-          },
-          boundary);
     }
 }   // namespace ThermFile::Model

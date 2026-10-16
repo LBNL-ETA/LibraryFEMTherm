@@ -67,6 +67,22 @@ namespace TimeSeriesLibrary
         return secondsIntoYear(axis.month, axis.day, axis.hour, axis.minute);
     }
 
+    TimeAxis axisAfter(const TimeAxis & axis, const size_t steps)
+    {
+        constexpr double minutesPerDay{24.0 * 60.0};
+        const double total{startSecondsIntoYear(axis) + static_cast<double>(steps) * axis.stepSeconds};
+        const auto minutes{static_cast<size_t>(std::llround(std::fmod(total, secondsPerNominalYear()) / 60.0))};
+        const auto days{static_cast<size_t>(static_cast<double>(minutes) / minutesPerDay)};
+        // The first month whose start lies past the day is the one after the day's month.
+        const auto monthAfter{std::ranges::upper_bound(daysBeforeMonth, days)};
+        const auto month{static_cast<size_t>(monthAfter - daysBeforeMonth.begin())};
+        return TimeAxis{.month = month,
+                        .day = days - daysBeforeMonth[month - 1U] + 1U,
+                        .hour = (minutes / 60U) % 24U,
+                        .minute = minutes % 60U,
+                        .stepSeconds = axis.stepSeconds};
+    }
+
     std::string startLabel(const TimeAxis & axis)
     {
         return std::format(

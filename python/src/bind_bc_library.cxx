@@ -6,6 +6,7 @@
 #include <pybind11/stl.h>
 
 #include "BoundaryConditions/BoundaryConditions.hxx"
+#include "BoundaryConditions/Capability.hxx"
 #include "BoundaryConditions/DB.hxx"
 #include "BoundaryConditions/Definitions.hxx"
 #include "BoundaryConditions/Utils.hxx"
@@ -14,10 +15,13 @@ namespace py = pybind11;
 
 namespace
 {
-    //! A Source as a constructor takes it: a plain number, a Constant or a FromTimeSeries.
-    //! Spelled out as a variant so the signature, and the stub generated from it, names the
-    //! number; the implicit conversion alone would leave a type checker refusing it.
-    using SourceLike = std::variant<double, BCLibrary::Constant, BCLibrary::FromTimeSeries>;
+    //! A Source as a constructor takes it: a Constant, a FromTimeSeries (or the SeriesRole
+    //! that converts to one), or a plain number. Spelled out as a variant so the signature,
+    //! and the stub generated from it, names the number; the implicit conversion alone would
+    //! leave a type checker refusing it. The number comes LAST: pybind11 tries the
+    //! alternatives in order, and a SeriesRole, being an enum, would convert to a number
+    //! before FromTimeSeries got its turn.
+    using SourceLike = std::variant<BCLibrary::Constant, BCLibrary::FromTimeSeries, double>;
 
     BCLibrary::Source toSource(const SourceLike & given)
     {
@@ -64,8 +68,9 @@ void bind_bc_library(py::module_ & mod)
         .def(py::init<>())
         .def(py::init<double>(), py::arg("value"))
         .def_readwrite("value", &BCLibrary::Constant::value)
+        .def("__eq__", [](const BCLibrary::Constant & lhs, const BCLibrary::Constant & rhs) { return lhs == rhs; }, py::is_operator())
         .def("__repr__", [](const BCLibrary::Constant & constant) {
-            return "Constant(" + std::to_string(constant.value) + ")";
+            return "Constant(" + py::repr(py::cast(constant.value)).cast<std::string>() + ")";
         });
     // Guarded by the Python type, not by convertibility: a pybind11 enum converts to int,
     // so a looser rule would turn a SeriesRole into Constant before FromTimeSeries is tried
@@ -78,6 +83,7 @@ void bind_bc_library(py::module_ & mod)
         .def(py::init<>())
         .def(py::init<TimeSeriesLibrary::SeriesRole>(), py::arg("role"))
         .def_readwrite("role", &BCLibrary::FromTimeSeries::role)
+        .def("__eq__", [](const BCLibrary::FromTimeSeries & lhs, const BCLibrary::FromTimeSeries & rhs) { return lhs == rhs; }, py::is_operator())
         .def("__repr__", [](const BCLibrary::FromTimeSeries & source) {
             return "FromTimeSeries(SeriesRole." + std::string(py::str(py::cast(source.role))) + ")";
         });
@@ -225,6 +231,24 @@ void bind_bc_library(py::module_ & mod)
     mod.def("required_roles", &BCLibrary::requiredRoles, py::arg("boundary_condition"),
             "The dataset roles the record reads; empty means steady-state capable.");
     mod.def("is_steady_capable", &BCLibrary::isSteadyCapable, py::arg("boundary_condition"));
+    mod.def("missing_roles", &BCLibrary::missingRoles, py::arg("boundary_condition"), py::arg("dataset") = py::none(),
+            "The roles the record reads that the dataset does not provide: the check a segment's pairing of "
+            "record and dataset must pass before a run. With no dataset, every role read. A missing "
+            "RadiantTemperature is taken as the air temperature when the dataset carries one.");
+
+    py::class_<BCLibrary::CapabilityIssue>(mod, "CapabilityIssue",
+                                           "One reason a record cannot run under an engine and mode, anchored to the "
+                                           "feature at fault.")
+        .def_readonly("feature", &BCLibrary::CapabilityIssue::feature)
+        .def_readonly("reason", &BCLibrary::CapabilityIssue::reason)
+        .def("__repr__", [](const BCLibrary::CapabilityIssue & issue) {
+            return "CapabilityIssue(feature=" + py::repr(py::cast(issue.feature)).cast<std::string>()
+                   + ", reason=" + py::repr(py::cast(issue.reason)).cast<std::string>() + ")";
+        });
+    mod.def("capability_issues", &BCLibrary::capabilityIssues, py::arg("boundary_condition"), py::arg("engine"), py::arg("mode"),
+            "Every reason the record cannot run under the engine and calculation mode; empty when it can. "
+            "The one gate THERM's assignment, engine switch and simulate pre-flight all go through.");
+    mod.def("usable", &BCLibrary::usable, py::arg("boundary_condition"), py::arg("engine"), py::arg("mode"));
     mod.def("is_adiabatic", &BCLibrary::isAdiabatic, py::arg("boundary_condition"));
     mod.def("is_convective", &BCLibrary::isConvective, py::arg("boundary_condition"));
     mod.def("is_radiation_bc", &BCLibrary::isRadiationBC, py::arg("boundary_condition"));
