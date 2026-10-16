@@ -287,7 +287,8 @@ namespace ThermFile::Build
                     perSegment[index] = seriesDataset(modelCase, records[index].Name, std::move(series));
                 }
             }
-            if(!perSegment.empty() && std::ranges::none_of(perSegment, &std::optional<TimeSeriesData>::has_value))
+            const auto bound{[](const std::optional<TimeSeriesData> & dataset) { return dataset.has_value(); }};
+            if(!perSegment.empty() && std::ranges::none_of(perSegment, bound))
             {
                 perSegment.front() = clockDataset(modelCase);
             }
