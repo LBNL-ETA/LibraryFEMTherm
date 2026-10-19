@@ -46,6 +46,9 @@ namespace BCLibrary
         void deleteWithUUID(std::string_view uuid);
 
         void deleteRecordsWithProjectName(std::string_view projectName);
+        //! Re-tags the project records of a renamed document. Glazing-system surface
+        //! records keep their project name: they belong to the glazing system, not the file.
+        void renameRecordsWithProjectName(std::string_view oldName, std::string_view newName);
         void deleteTemporaryRecords();
 
         //! True once a mutator has effectively changed the records since load or the last

@@ -221,6 +221,18 @@ namespace BCLibrary
         m_Dirty = m_Dirty || m_BoundaryConditions.size() != sizeBefore;
     }
 
+    void DB::renameRecordsWithProjectName(std::string_view oldName, std::string_view newName)
+    {
+        for(auto & record : m_BoundaryConditions)
+        {
+            if(record.ProjectName == oldName && !record.isIGUSurface)
+            {
+                record.ProjectName = std::string{newName};
+                m_Dirty = true;
+            }
+        }
+    }
+
     void DB::deleteTemporaryRecords()
     {
         const size_t sizeBefore{m_BoundaryConditions.size()};

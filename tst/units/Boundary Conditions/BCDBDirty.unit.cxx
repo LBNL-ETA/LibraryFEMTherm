@@ -108,3 +108,29 @@ TEST(TestBCDBDirty, UnifiedEffectiveMutations)
     database.updateOrAdd(renamed);
     EXPECT_TRUE(database.isDirty());
 }
+
+TEST(TestBCDBDirty, UnifiedRenameSkipsIGUSurfaces)
+{
+    const BCLibrary::BoundaryCondition regular{
+      .UUID = sampleUuid, .Name = "Exterior", .ProjectName = "Old project"};
+    const BCLibrary::BoundaryCondition surface{.UUID = "ffffffff-0000-1111-2222-333333333333",
+                                               .Name = "Glazing surface",
+                                               .ProjectName = "Old project",
+                                               .isIGUSurface = true};
+
+    BCLibrary::DB source;
+    source.add(regular);
+    source.add(surface);
+
+    BCLibrary::DB database;
+    database.loadFromString(source.saveToString());
+
+    database.renameRecordsWithProjectName("No such project", "New project");
+    EXPECT_FALSE(database.isDirty());
+
+    database.renameRecordsWithProjectName("Old project", "New project");
+    EXPECT_TRUE(database.isDirty());
+
+    EXPECT_EQ(database.getByUUID(regular.UUID)->ProjectName, "New project");
+    EXPECT_EQ(database.getByUUID(surface.UUID)->ProjectName, "Old project");
+}
