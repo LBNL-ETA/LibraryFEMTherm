@@ -30,8 +30,10 @@ namespace Geometry
     //! first point extended into it becomes the whole box.
     struct BoundingBox
     {
-        double minX{std::numeric_limits<double>::max()};
-        double minY{std::numeric_limits<double>::max()};
+        // Parenthesized, like the (std::min)/(std::max) calls below: the header is included
+        // after <windows.h>, whose min/max macros would otherwise expand here.
+        double minX{(std::numeric_limits<double>::max)()};
+        double minY{(std::numeric_limits<double>::max)()};
         double maxX{std::numeric_limits<double>::lowest()};
         double maxY{std::numeric_limits<double>::lowest()};
 
