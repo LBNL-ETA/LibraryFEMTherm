@@ -44,7 +44,8 @@ if(hasParent)
     endif()
 else()
     option(BUILD_LibraryFEMTHERM_TESTING "Build testing targets" ON)
-    set(DOWNLOAD_GTEST ON)
+    # Only the tests need google test; without them it would be installed into the wheel.
+    set(DOWNLOAD_GTEST ${BUILD_LibraryFEMTHERM_TESTING})
 endif()
 
 # Download external projects automatically
