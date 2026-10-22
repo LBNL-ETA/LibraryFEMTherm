@@ -3032,7 +3032,7 @@
 					<Infrared>
 						<Transmittance>0</Transmittance>
 						<Emissivity-Front>0.2</Emissivity-Front>
-						<Emissivity-Back>0.9</Emissivity-Back>
+						<Emissivity-Back>0.2</Emissivity-Back>
 					</Infrared>
 				</Integrated>
 			</Optical>
