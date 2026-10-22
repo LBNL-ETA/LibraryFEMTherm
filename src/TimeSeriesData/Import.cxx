@@ -25,8 +25,10 @@ namespace TimeSeriesLibrary::Import
             return extension;
         }
 
-        lbnl::ExpectedExt<ImportedDataset, std::string>
-          importContent(const std::string & content, const std::string & extension, const std::string & datasetName)
+        lbnl::ExpectedExt<ImportedDataset, std::string> importContent(const std::string & content,
+                                                                      const std::string & extension,
+                                                                      const std::string & datasetName,
+                                                                      const Csv::StepChoice & stepChoice)
         {
             if(extension == weatherExtension)
             {
@@ -36,15 +38,17 @@ namespace TimeSeriesLibrary::Import
             }
             if(extension == csvExtension)
             {
-                return Csv::readFromString(content, datasetName).transform([](const Csv::ImportResult & result) {
-                    return ImportedDataset{.data = result.data, .skippedColumns = result.ignoredHeaders};
-                });
+                return Csv::readFromString(content, datasetName, stepChoice)
+                  .transform([](const Csv::ImportResult & result) {
+                      return ImportedDataset{.data = result.data, .skippedColumns = result.ignoredHeaders};
+                  });
             }
             return lbnl::Unexpected<std::string>{"Unsupported entry type: " + datasetName + extension};
         }
 
         lbnl::ExpectedExt<ImportedDataset, std::string> importFile(const std::filesystem::path & file,
-                                                                   const std::string & extension)
+                                                                   const std::string & extension,
+                                                                   const Csv::StepChoice & stepChoice)
         {
             if(extension == weatherExtension)
             {
@@ -52,16 +56,17 @@ namespace TimeSeriesLibrary::Import
                     return ImportedDataset{.data = result.data, .skippedColumns = {}};
                 });
             }
-            return Csv::read(file.string()).transform([](const Csv::ImportResult & result) {
+            return Csv::read(file.string(), stepChoice).transform([](const Csv::ImportResult & result) {
                 return ImportedDataset{.data = result.data, .skippedColumns = result.ignoredHeaders};
             });
         }
 
-        lbnl::ExpectedExt<ImportOutcome, std::string> importZip(const std::filesystem::path & file)
+        lbnl::ExpectedExt<ImportOutcome, std::string> importZip(const std::filesystem::path & file,
+                                                                const Csv::StepChoice & stepChoice)
         {
             try
             {
-                return importDatasetsFromEntries(ThermZip::unzipFiles(file.string()));
+                return importDatasetsFromEntries(ThermZip::unzipFiles(file.string()), stepChoice);
             }
             catch(const std::runtime_error &)
             {
@@ -131,16 +136,17 @@ namespace TimeSeriesLibrary::Import
         return lbnl::Unexpected<std::string>{"A weather file is an EnergyPlus weather file (*.epw) or a zip holding one."};
     }
 
-    lbnl::ExpectedExt<ImportOutcome, std::string> importDatasets(const std::filesystem::path & file)
+    lbnl::ExpectedExt<ImportOutcome, std::string> importDatasets(const std::filesystem::path & file,
+                                                                 const Csv::StepChoice & stepChoice)
     {
         const auto extension{lowercaseExtension(file)};
         if(extension == zipExtension)
         {
-            return importZip(file);
+            return importZip(file, stepChoice);
         }
         if(extension == weatherExtension || extension == csvExtension)
         {
-            return importFile(file, extension).transform([](ImportedDataset imported) {
+            return importFile(file, extension, stepChoice).transform([](ImportedDataset imported) {
                 return ImportOutcome{.datasets = {std::move(imported)}, .failedEntries = {}};
             });
         }
@@ -150,7 +156,7 @@ namespace TimeSeriesLibrary::Import
     }
 
     lbnl::ExpectedExt<ImportOutcome, std::string>
-      importDatasetsFromEntries(const std::map<std::string, std::string> & entries)
+      importDatasetsFromEntries(const std::map<std::string, std::string> & entries, const Csv::StepChoice & stepChoice)
     {
         ImportOutcome outcome;
         for(const auto & [entryName, content] : entries)
@@ -161,7 +167,7 @@ namespace TimeSeriesLibrary::Import
             {
                 continue;
             }
-            const auto imported{importContent(content, extension, entryPath.stem().string())};
+            const auto imported{importContent(content, extension, entryPath.stem().string(), stepChoice)};
             if(imported.has_value())
             {
                 outcome.datasets.push_back(imported.value());

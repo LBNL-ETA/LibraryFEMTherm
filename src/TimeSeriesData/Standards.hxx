@@ -36,8 +36,9 @@ namespace TimeSeriesLibrary::Standards
     [[nodiscard]] std::string moistureLoadToString(MoistureLoad load);
 
     //! Derives indoor AirTemperature and RelativeHumidity from the exterior dataset, one
-    //! value per exterior step. The exterior must carry AirTemperature; a missing
-    //! RelativeHumidity is taken as 0.7 (only ISO 13788 reads it). The result's UUID is
+    //! value per exterior step. The exterior must carry AirTemperature and be evenly
+    //! stepped (a daily mean is a block of stepsPerDay rows); a missing RelativeHumidity
+    //! is taken as 0.7 (only ISO 13788 reads it). The result's UUID is
     //! the deterministic content hash and its name follows the library convention:
     //! "<exterior> interior (<standard>, <load>)", with a trailing " exterior" on the
     //! source name replaced rather than repeated.

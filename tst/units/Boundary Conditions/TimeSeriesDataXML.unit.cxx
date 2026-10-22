@@ -235,6 +235,7 @@ TEST(TestTimeSeriesData, AxisLabels)
     EXPECT_EQ(TimeSeriesLibrary::stepLabel(axis), "30 min");
     EXPECT_EQ(TimeSeriesLibrary::stepLabel({.stepSeconds = 90.0}), "90 s");
     EXPECT_EQ(TimeSeriesLibrary::stepLabel({.stepSeconds = 7200.0}), "2 h");
+    EXPECT_EQ(TimeSeriesLibrary::stepLabel({.stepSeconds = 900.0, .stepLengths = {900.0, 7200.0, 1800.0}}), "15 min to 2 h");
 
     EXPECT_NEAR(TimeSeriesLibrary::secondsIntoYear(1U, 1U, 0U, 0U), 0.0, 1e-9);
     EXPECT_NEAR(TimeSeriesLibrary::secondsIntoYear(2U, 1U, 0U, 0U), 31.0 * 86400.0, 1e-9);
@@ -313,4 +314,37 @@ TEST(TestTimeSeriesData, JSONRoundTripWithCommaSeparatedValues)
     ASSERT_EQ(record->series.size(), 3U);
     ASSERT_EQ(record->series[0].values.size(), 3U);
     EXPECT_NEAR(record->series[0].values[2], 20.8, 1e-9);
+}
+
+TEST(TestTimeSeriesData, ContentUuidChangesWithStepLengths)
+{
+    auto data{makeSample()};
+    const auto baseline{TimeSeriesLibrary::contentUuid(data)};
+
+    data.axis.stepLengths = {3600.0, 1800.0, 3600.0};
+    EXPECT_NE(TimeSeriesLibrary::contentUuid(data), baseline);
+}
+
+TEST(TestTimeSeriesData, StepLengthsRoundTripOnlyWhenUneven)
+{
+    auto even{makeSample()};
+    TimeSeriesLibrary::DB evenSource;
+    evenSource.add(even);
+    EXPECT_EQ(evenSource.saveToString().find("<StepLengths>"), std::string::npos);
+
+    auto uneven{makeSample()};
+    uneven.axis.stepSeconds = 600.0;
+    uneven.axis.stepLengths = {600.0, 1200.0, 600.0};
+    TimeSeriesLibrary::DB source;
+    source.add(uneven);
+    const auto content{source.saveToString()};
+    EXPECT_NE(content.find("<StepLengths>600,1200,600</StepLengths>"), std::string::npos);
+
+    TimeSeriesLibrary::DB loaded;
+    loaded.loadFromString(content);
+    const auto record{loaded.getByUUID(uneven.UUID)};
+    ASSERT_TRUE(record.has_value());
+    EXPECT_EQ(record->axis, uneven.axis);
+    EXPECT_FALSE(TimeSeriesLibrary::evenlyStepped(record->axis));
+    EXPECT_EQ(TimeSeriesLibrary::describeAxis(record.value()), "1 Jan 00:00, steps 10 min to 20 min, 3 rows");
 }

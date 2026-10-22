@@ -30,6 +30,10 @@ namespace TimeSeriesLibrary
         }
         auto result{data};
         result.axis = axisAfter(data.axis, firstStep);
+        if(!evenlyStepped(result.axis))
+        {
+            result.axis.stepLengths = stepLengths(result.axis, count);
+        }
         result.series = lbnl::transform_to_vector(
           data.series, [firstStep, count](const Series & series) { return rows(series, firstStep, count); });
         result.UUID = contentUuid(result);

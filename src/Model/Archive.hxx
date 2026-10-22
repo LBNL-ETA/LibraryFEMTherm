@@ -40,8 +40,9 @@
 //!   series under its role on the schedule's axis. Its UUID is the content hash, so segments
 //!   reading the same weather share one dataset. A segment whose inputs are all constants
 //!   binds no dataset. The datasets also set the clock: their row count is the number of
-//!   timesteps and their step length is Schedule::dtime. A model in which no segment reads a
-//!   series still needs a clock, so it binds one dataset to its first segment; the record
+//!   timesteps and their step lengths are Schedule::stepLengths, stated on the axis one by
+//!   one when uneven. A model in which no segment reads a series still needs a clock, so it
+//!   binds one dataset to its first segment; the record
 //!   ignores the values.
 //! - Gases, Mesh: version headers only, as THERM writes for a model without cavities or a
 //!   stored mesh.

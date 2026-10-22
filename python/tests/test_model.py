@@ -480,6 +480,19 @@ class TestLibraryRecords:
         assert repr(shifted) == "Schedule(dtime=3600.0, n_steps=24, start=Start(month=2, day=10, hour=6, minute=0))"
         assert model.axis_of(shifted) == fem.TimeAxis(month=2, day=10, hour=6, minute=0, step_seconds=3600.0)
 
+    def test_an_uneven_schedule_states_every_step(self):
+        uneven = model.Schedule(step_lengths=[900.0, 1800.0], start=model.Start(month=2))
+        assert uneven.n_steps == 2
+        assert abs(uneven.duration - 2700.0) < TOL
+        with pytest.raises(ValueError):
+            uneven.dtime
+        assert repr(uneven) == "Schedule(step_lengths=[900.0, 1800.0], start=Start(month=2, day=1, hour=0, minute=0))"
+        assert model.axis_of(uneven) == fem.TimeAxis(month=2, step_seconds=900.0, step_lengths=[900.0, 1800.0])
+        weather = fem.TimeSeriesData(axis=model.axis_of(uneven),
+                                     series=[fem.Series(fem.SeriesRole.AirTemperature, [0.0, 1.0])])
+        assert model.schedule_for(weather) == uneven
+        assert model.Schedule(step_lengths=[3600.0] * 3) == model.Schedule(dtime=3600.0, n_steps=3)
+
 
 class TestArchive:
     def test_entries(self):

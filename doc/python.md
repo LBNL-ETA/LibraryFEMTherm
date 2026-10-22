@@ -287,8 +287,10 @@ transient segment additionally names the dataset its record reads from
 A dataset is the per-timestep environment a transient boundary reads: one series per
 role (air temperature, relative humidity, film coefficient, prescribed temperature, ...),
 one value per timestep. The dataset's time axis also sets the simulation clock: the number
-of rows is the number of timesteps and `step_seconds` the step length. Each dataset is its
-own archive entry, `time series/<uuid>.xml`.
+of rows is the number of timesteps and `step_seconds` the step length. Steps need not be
+even: `axis.step_lengths` states one length per step when they are not, and
+`fem.step_lengths(data)` gives them either way. Each dataset is its own archive entry,
+`time series/<uuid>.xml`.
 
 ```python
 weather = fem.TimeSeriesData()
@@ -337,11 +339,16 @@ indoor = fem.generate_interior(outdoor, fem.InteriorStandard.EN_15026_DIN_4108, 
 
 # A CSV whose headers name roles ("Air Temperature" or "AirTemperature"); a Time column
 # sets the axis. Columns that name no role are listed in ignored_headers.
-measured = fem.read_csv("measured.csv").data
+# How rows become steps is the caller's call: the Time column (a row's value drives the
+# step ending at its time; the first row is only the start), the Timestep column (one
+# length in seconds per row), or a fixed step for every row. A column the choice asks
+# for and the file lacks raises ValueError.
+measured = fem.read_csv("measured.csv", steps=fem.StepColumn.Time).data
+logged = fem.read_csv("logger.csv", steps=fem.FixedStep(seconds=900.0)).data
 fem.write_csv_file(indoor, "indoor.csv")
 
 # Whatever the file is, by its extension (.epw, .csv, or a .zip of either)
-for imported in fem.import_datasets("weather.zip").datasets:
+for imported in fem.import_datasets("weather.zip", steps=fem.StepColumn.Time).datasets:
     print(imported.data.name, imported.skipped_columns)
 
 # Or stated outright

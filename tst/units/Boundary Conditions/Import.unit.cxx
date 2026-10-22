@@ -12,6 +12,10 @@
 using TimeSeriesLibrary::SeriesRole;
 
 namespace Import = TimeSeriesLibrary::Import;
+namespace Csv = TimeSeriesLibrary::Csv;
+
+//! Every CSV row is one hourly step; how rows become steps is the readers' business, not the dispatcher's.
+constexpr Csv::FixedStep hourly{};
 
 namespace
 {
@@ -67,14 +71,14 @@ namespace
 
 TEST(TestImport, DispatchesByExtensionWhateverItsCase)
 {
-    const auto csv{Import::importDatasets(written("import-sample.CSV", csvContent))};
+    const auto csv{Import::importDatasets(written("import-sample.CSV", csvContent), hourly)};
     ASSERT_TRUE(csv.has_value()) << csv.error();
     ASSERT_EQ(csv->datasets.size(), 1U);
     EXPECT_EQ(csv->datasets[0].data.Name, "import-sample");
     EXPECT_EQ(csv->datasets[0].skippedColumns, (std::vector<std::string>{"Comfort Index"}));
     EXPECT_TRUE(TimeSeriesLibrary::hasRole(csv->datasets[0].data, SeriesRole::RelativeHumidity));
 
-    const auto weather{Import::importDatasets(written("import-sample.epw", epwContent()))};
+    const auto weather{Import::importDatasets(written("import-sample.epw", epwContent()), hourly)};
     ASSERT_TRUE(weather.has_value()) << weather.error();
     ASSERT_EQ(weather->datasets.size(), 1U);
     EXPECT_TRUE(weather->datasets[0].skippedColumns.empty());
@@ -85,7 +89,7 @@ TEST(TestImport, DispatchesByExtensionWhateverItsCase)
 
 TEST(TestImport, UnsupportedExtensionIsAnError)
 {
-    const auto result{Import::importDatasets(written("import-sample.txt", csvContent))};
+    const auto result{Import::importDatasets(written("import-sample.txt", csvContent), hourly)};
     ASSERT_FALSE(result.has_value());
     EXPECT_NE(result.error().find("Unsupported file type"), std::string::npos);
     EXPECT_EQ(Import::supportedExtensions(), (std::vector<std::string>{".epw", ".csv", ".zip"}));
@@ -95,7 +99,7 @@ TEST(TestImport, ZipYieldsEveryWeatherAndCsvEntry)
 {
     const auto path{scratch("import-sample.zip").string()};
     ThermZip::zipFiles({{"city.epw", epwContent()}, {"indoor.csv", csvContent}, {"city.stat", "not a dataset"}}, path);
-    const auto result{Import::importDatasets(path)};
+    const auto result{Import::importDatasets(path, hourly)};
     ASSERT_TRUE(result.has_value()) << result.error();
     ASSERT_EQ(result->datasets.size(), 2U);
     std::vector<std::string> names;
@@ -132,13 +136,13 @@ TEST(TestImport, ReadWeatherTakesTheOneWeatherFileOfAZip)
 TEST(TestImport, FailedZipEntriesAreListedBesideTheGoodOnes)
 {
     const std::map<std::string, std::string> entries{{"indoor.csv", csvContent}, {"broken.csv", "nothing,here\n1,2\n"}};
-    const auto result{Import::importDatasetsFromEntries(entries)};
+    const auto result{Import::importDatasetsFromEntries(entries, hourly)};
     ASSERT_TRUE(result.has_value()) << result.error();
     EXPECT_EQ(result->datasets.size(), 1U);
     ASSERT_EQ(result->failedEntries.size(), 1U);
     EXPECT_EQ(result->failedEntries[0].rfind("broken.csv: ", 0U), 0U);
 
-    const auto nothing{Import::importDatasetsFromEntries({{"city.stat", "not a dataset"}})};
+    const auto nothing{Import::importDatasetsFromEntries({{"city.stat", "not a dataset"}}, hourly)};
     ASSERT_FALSE(nothing.has_value());
     EXPECT_NE(nothing.error().find("no EnergyPlus weather"), std::string::npos);
 }

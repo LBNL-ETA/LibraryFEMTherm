@@ -266,7 +266,7 @@ namespace ThermFile::Build
               .Protected = false,
               .axis = Model::axisOf(modelCase.schedule),
               .series = {Series{.role = SeriesRole::AirTemperature,
-                                .values = std::vector<double>(modelCase.schedule.nSteps, modelCase.initial.temperature)}}};
+                                .values = std::vector<double>(Model::nSteps(modelCase.schedule), modelCase.initial.temperature)}}};
         }
 
         //! The dataset of every segment of the completed case: one for each segment whose

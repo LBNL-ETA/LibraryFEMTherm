@@ -36,6 +36,10 @@
 			<xs:element name="Hour" type="xs:unsignedInt"/>
 			<xs:element name="Minute" type="xs:unsignedInt"/>
 			<xs:element name="StepSeconds" type="xs:double"/>
+			<!-- Present only when the steps are uneven: one length in seconds per step, as a
+			     comma-separated list like Series/Values, StepSeconds then being the first of
+			     them. Absent, every step is StepSeconds. -->
+			<xs:element name="StepLengths" type="xs:string" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
 

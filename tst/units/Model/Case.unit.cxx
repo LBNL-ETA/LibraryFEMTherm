@@ -28,7 +28,7 @@ namespace
                         .end = {0.1, 0.01}},
                        {.kind = Adiabatic{}, .start = {0.1, 0.01}, .end = {0.0, 0.01}}},
           .initial = {.temperature = 20.0, .humidity = 0.5},
-          .schedule = {.dtime = 3600.0, .nSteps = 24U},
+          .schedule = uniformSchedule(3600.0, 24U),
         };
     }
 
@@ -204,14 +204,15 @@ TEST(Model, OneNameWithTwoRecordsIsAnIssue)
     EXPECT_TRUE(issues(modelCase).empty());
 }
 
-TEST(Model, BadScheduleIsTwoIssues)
+TEST(Model, ANonPositiveStepIsAnIssue)
 {
     auto modelCase{strip()};
-    modelCase.schedule = {.dtime = 0.0, .nSteps = 0U};
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 2U);
-    EXPECT_EQ(found[0], "the time step must be positive");
-    EXPECT_EQ(found[1], "the schedule needs at least one step");
+    modelCase.schedule = uniformSchedule(0.0, 3U);
+    EXPECT_EQ(issues(modelCase), (std::vector<std::string>{"the schedule's step 1 must be positive"}));
+    modelCase.schedule.stepLengths = {3600.0, -1.0, 3600.0};
+    EXPECT_EQ(issues(modelCase), (std::vector<std::string>{"the schedule's step 2 must be positive"}));
+    modelCase.schedule = {};
+    EXPECT_EQ(issues(modelCase), (std::vector<std::string>{"the schedule needs at least one step"}));
 }
 
 TEST(Model, IssuesAccumulate)
@@ -219,7 +220,7 @@ TEST(Model, IssuesAccumulate)
     auto modelCase{strip()};
     modelCase.regions[0].material.Name.clear();
     modelCase.segments[0].region = 9U;
-    modelCase.schedule.nSteps = 0U;
+    modelCase.schedule.stepLengths.clear();
     EXPECT_EQ(issues(modelCase).size(), 3U);
 }
 
@@ -394,7 +395,7 @@ TEST(Model, EachMismatchedSeriesIsOneIssue)
 TEST(Model, ASchedulWithNoStepsReportsItselfNotEverySeries)
 {
     auto modelCase{strip()};
-    modelCase.schedule.nSteps = 0U;
+    modelCase.schedule.stepLengths.clear();
     convectiveEnd(modelCase).airTemperature = hours(10U);
     EXPECT_EQ(issues(modelCase), (std::vector<std::string>{"the schedule needs at least one step"}));
 }
@@ -483,6 +484,22 @@ TEST(Model, ScheduleForDatasetCopiesTheAxis)
       .axis = {.month = 3U, .day = 2U, .hour = 6U, .minute = 30U, .stepSeconds = 1800.0},
       .series = {{.role = SeriesRole::AirTemperature, .values = hours(48U)}}};
     const auto schedule{scheduleFor(dataset)};
-    EXPECT_EQ(schedule, (Schedule{.dtime = 1800.0, .nSteps = 48U, .start = {.month = 3U, .day = 2U, .hour = 6U, .minute = 30U}}));
+    EXPECT_EQ(schedule, uniformSchedule(1800.0, 48U, {.month = 3U, .day = 2U, .hour = 6U, .minute = 30U}));
+    EXPECT_EQ(nSteps(schedule), 48U);
+    EXPECT_EQ(uniformStep(schedule), std::optional{1800.0});
     EXPECT_EQ(axisOf(schedule), dataset.axis);
+}
+
+TEST(Model, AnUnevenScheduleStatesEveryStep)
+{
+    const TimeSeriesLibrary::TimeSeriesData dataset{
+      .axis = {.month = 3U, .day = 2U, .stepSeconds = 900.0, .stepLengths = {900.0, 1800.0}},
+      .series = {{.role = SeriesRole::AirTemperature, .values = hours(2U)}}};
+    const auto schedule{scheduleFor(dataset)};
+    EXPECT_EQ(schedule, (Schedule{.start = {.month = 3U, .day = 2U}, .stepLengths = {900.0, 1800.0}}));
+    EXPECT_EQ(uniformStep(schedule), std::nullopt);
+    EXPECT_NEAR(schedule.duration(), 2700.0, 1e-9);
+    EXPECT_EQ(axisOf(schedule), dataset.axis);
+    // Stated evenly, the axis is the plain even one.
+    EXPECT_EQ(axisOf(Schedule{.stepLengths = {3600.0, 3600.0}}), TimeSeriesLibrary::TimeAxis{});
 }

@@ -216,18 +216,49 @@ class TestCreation:
         assert fem.read_epw(zipped).location.city == "Sydney"
 
     def test_read_and_write_csv(self, tmp_path):
-        result = fem.read_csv_string(CSV_TEXT, "indoor")
-        assert result.had_time_column
+        result = fem.read_csv_string(CSV_TEXT, "indoor", steps=fem.FixedStep(seconds=3600.0))
+        assert result.had_time_column and not result.had_timestep_column
         assert result.ignored_headers == ["Comfort Index"]
         assert fem.values_for_role(result.data, fem.SeriesRole.RelativeHumidity) == [0.52, 0.55]
+        # A stamp is the end of its step: the run starts one step before the first stamp.
+        assert fem.describe_axis(result.data) == "31 Dec 23:00, step 1 h, 2 rows"
         text = fem.write_csv(result.data)
-        assert text.splitlines()[0].startswith("Time,")
+        assert text.splitlines()[0].startswith("Time,Timestep,")
         assert fem.csv_header_for_role(fem.SeriesRole.AirTemperature) in text.splitlines()[0]
         path = tmp_path / "again.csv"
         fem.write_csv_file(result.data, path)
-        again = fem.read_csv(path)
+        again = fem.read_csv(path, fem.StepColumn.Timestep)
+        assert again.had_timestep_column
         assert again.data.series == result.data.series
         assert again.data.axis == result.data.axis
+
+    def test_the_time_rule_ends_a_step_at_each_stamp(self):
+        result = fem.read_csv_string(CSV_TEXT, "indoor", fem.StepColumn.Time)
+        assert result.first_row_was_start
+        assert fem.values_for_role(result.data, fem.SeriesRole.AirTemperature) == [21.1]
+        assert fem.describe_axis(result.data) == "1 Jan 00:00, step 1 h, 1 rows"
+        uneven = fem.read_csv_string(
+            "Time,Air Temperature\n2026-01-01 00:00,1\n2026-01-01 00:15,2\n2026-01-01 02:15,3\n",
+            "uneven", fem.StepColumn.Time)
+        assert not fem.evenly_stepped(uneven.data)
+        assert fem.step_lengths(uneven.data) == [900.0, 7200.0]
+        assert uneven.data.axis == fem.TimeAxis(step_lengths=[900.0, 7200.0])
+        assert fem.describe_axis(uneven.data) == "1 Jan 00:00, steps 15 min to 2 h, 2 rows"
+        with pytest.raises(ValueError, match="has no Time column"):
+            fem.read_csv_string("Air Temperature\n1\n2\n", "bare", fem.StepColumn.Time)
+
+    def test_the_timestep_column_states_every_step(self):
+        result = fem.read_csv_string("dt,Air Temperature\n900,1\n900,2\n1800,3\n", "logger", fem.StepColumn.Timestep)
+        assert result.had_timestep_column and not result.first_row_was_start
+        assert fem.values_for_role(result.data, fem.SeriesRole.AirTemperature) == [1.0, 2.0, 3.0]
+        assert result.data.axis == fem.TimeAxis(step_seconds=900.0, step_lengths=[900.0, 900.0, 1800.0])
+        assert repr(result.data.axis) == (
+            "TimeAxis(month=1, day=1, hour=0, minute=0, step_seconds=900.0, step_lengths=[900.0, 900.0, 1800.0])")
+        assert repr(fem.FixedStep(900.0)) == "FixedStep(seconds=900.0)"
+        with pytest.raises(ValueError, match="has no Timestep column"):
+            fem.read_csv_string(CSV_TEXT, "indoor", fem.StepColumn.Timestep)
+        with pytest.raises(ValueError, match="must be positive"):
+            fem.read_csv_string("Step,Air Temperature\n0,1\n", "zero", fem.StepColumn.Timestep)
 
     def test_generate_interior_inherits_the_axis(self):
         exterior = fem.read_epw_string(_epw_text(["-5"] * 48), "city").data
@@ -255,18 +286,18 @@ class TestCreation:
     def test_import_datasets_by_extension_and_from_a_zip(self, tmp_path):
         csv_path = tmp_path / "indoor.csv"
         csv_path.write_text(CSV_TEXT)
-        outcome = fem.import_datasets(csv_path)
+        outcome = fem.import_datasets(csv_path, fem.FixedStep(3600.0))
         assert [imported.data.name for imported in outcome.datasets] == ["indoor"]
         assert outcome.datasets[0].skipped_columns == ["Comfort Index"]
 
         zip_path = str(tmp_path / "weather.zip")
         fem.thmz.write_entries({"city.epw": _epw_text(["1", "2"]), "indoor.csv": CSV_TEXT, "city.stat": "x"}, zip_path)
-        from_zip = fem.import_datasets(zip_path)
+        from_zip = fem.import_datasets(zip_path, steps=fem.StepColumn.Time)
         assert sorted(imported.data.name for imported in from_zip.datasets) == ["city", "indoor"]
         assert from_zip.failed_entries == []
         assert fem.supported_import_extensions() == [".epw", ".csv", ".zip"]
         with pytest.raises(ValueError):
-            fem.import_datasets(tmp_path / "notes.txt")
+            fem.import_datasets(tmp_path / "notes.txt", fem.StepColumn.Time)
 
 
 class TestRolePairing:

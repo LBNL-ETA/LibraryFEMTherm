@@ -44,7 +44,8 @@ namespace TimeSeriesLibrary
         }
 
         //! The axis is content: the same values a month apart, or at a different step, are
-        //! different data and must not converge to one dataset.
+        //! different data and must not converge to one dataset. Uneven step lengths follow
+        //! the step; an even axis has none, so its hash is what it was before they existed.
         void consumeAxis(Fnv1a & hasher, const TimeAxis & axis)
         {
             hasher.consume(static_cast<uint64_t>(axis.month));
@@ -52,6 +53,10 @@ namespace TimeSeriesLibrary
             hasher.consume(static_cast<uint64_t>(axis.hour));
             hasher.consume(static_cast<uint64_t>(axis.minute));
             hasher.consume(std::bit_cast<uint64_t>(axis.stepSeconds));
+            for(const double length : axis.stepLengths)
+            {
+                hasher.consume(std::bit_cast<uint64_t>(length));
+            }
         }
 
         //! Strings are length-prefixed so adjacent fields cannot alias ("ab"+"c" vs

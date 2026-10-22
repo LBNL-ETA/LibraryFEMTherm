@@ -105,6 +105,11 @@ namespace TimeSeriesLibrary
         return stepSeconds_;
     }
 
+    std::string Tags::stepLengths() const
+    {
+        return stepLengths_;
+    }
+
     std::string Tags::series() const
     {
         return series_;

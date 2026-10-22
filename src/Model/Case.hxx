@@ -209,24 +209,32 @@ namespace ThermFile::Model
         [[nodiscard]] friend bool operator==(const Start & lhs, const Start & rhs) = default;
     };
 
-    //! The clock: nSteps steps of dtime seconds, from `start`. Every series input of the
-    //! case has one value per step.
+    //! The clock: one length in seconds per step, from `start`. Every series input of the
+    //! case has one value per step. The steps need not be even.
     struct Schedule
     {
-        double dtime{3600.0};
-        std::size_t nSteps{0U};
         Start start{};
+        std::vector<double> stepLengths;
 
         [[nodiscard]] double duration() const;
 
         [[nodiscard]] friend bool operator==(const Schedule & lhs, const Schedule & rhs) = default;
     };
 
-    //! The schedule as the axis of the datasets the writer makes.
+    //! The usual clock: `nSteps` steps of `dtime` seconds.
+    [[nodiscard]] Schedule uniformSchedule(double dtime, std::size_t nSteps, Start start = {});
+
+    [[nodiscard]] std::size_t nSteps(const Schedule & schedule);
+
+    //! The one length every step has, or nothing when the steps differ or there are none.
+    [[nodiscard]] std::optional<double> uniformStep(const Schedule & schedule);
+
+    //! The schedule as the axis of the datasets the writer makes: even when every step has
+    //! the same length, otherwise with the lengths stated one by one.
     [[nodiscard]] TimeSeriesLibrary::TimeAxis axisOf(const Schedule & schedule);
 
-    //! The schedule a dataset dictates: its step, its row count and its start, so a case
-    //! driven by a weather file runs exactly over the file.
+    //! The schedule a dataset dictates: its steps and their lengths, and its start, so a
+    //! case driven by a weather file runs exactly over the file.
     [[nodiscard]] Schedule scheduleFor(const TimeSeriesLibrary::TimeSeriesData & dataset);
 
     //! Which terms are simulated, stated positively. Each switch is written to the file's

@@ -198,6 +198,13 @@ namespace TimeSeriesLibrary::Standards
         {
             return lbnl::Unexpected{std::string{"The exterior dataset carries no air temperature."}};
         }
+        // A daily mean is a block of stepsPerDay rows, which only an even axis makes a day.
+        if(!evenlyStepped(exterior.axis))
+        {
+            return lbnl::Unexpected{std::string{
+              "The exterior dataset's steps are uneven; a standard's interior follows daily means and needs evenly "
+              "stepped weather."}};
+        }
         auto humidities{valuesForRole(exterior, SeriesRole::RelativeHumidity)
                           .value_or(std::vector<double>(temperatures->size(), defaultOutdoorHumidity))};
         humidities.resize(temperatures->size(), defaultOutdoorHumidity);

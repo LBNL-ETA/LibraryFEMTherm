@@ -57,7 +57,7 @@ namespace
                         .end = {0.0, 0.0},
                         .region = 0U}},
           .initial = {.temperature = 20.0, .humidity = 0.5},
-          .schedule = {.dtime = 3600.0, .nSteps = 24U},
+          .schedule = uniformSchedule(3600.0, 24U),
         };
     }
 
@@ -74,7 +74,7 @@ namespace
                        {.kind = Adiabatic{}, .start = {0.1, 0.005}, .end = {0.0, 0.005}},
                        {.kind = Prescribed{.temperature = 40.0}, .start = {0.0, 0.005}, .end = {0.0, 0.0}}},
           .initial = {.temperature = 30.0, .humidity = 0.4},
-          .schedule = {.dtime = 36000.0, .nSteps = 300U},
+          .schedule = uniformSchedule(36000.0, 300U),
           .physics = {.liquidTransport = false, .heatOfEvaporation = false},
         };
     }
@@ -117,7 +117,7 @@ namespace
                         .name = "room side"},
                        {.kind = outside, .start = {0.3, 0.3}, .end = {0.0, 0.3}, .name = "top"}},
           .initial = {.temperature = 20.0, .humidity = 0.5},
-          .schedule = {.dtime = 3600.0, .nSteps = static_cast<std::size_t>(outdoor.size())},
+          .schedule = uniformSchedule(3600.0, outdoor.size()),
         };
     }
 
@@ -326,8 +326,8 @@ TEST(Build, DatasetsSetTheClock)
     const auto libs{libraries(sealedStrip())};
     ASSERT_EQ(libs.datasets.size(), 1U);   // constants everywhere: the clock alone
     const auto schedule{scheduleOf(libs.datasets)};
-    EXPECT_EQ(schedule.nSteps, 300U);
-    EXPECT_NEAR(schedule.dtime, 36000.0, tolerance);
+    EXPECT_EQ(nSteps(schedule), 300U);
+    EXPECT_NEAR(uniformStep(schedule).value(), 36000.0, tolerance);
     EXPECT_TRUE(TimeSeriesLibrary::alignmentIssues(libs.datasets).empty());
     for(const auto & data : libs.datasets)
     {
@@ -352,7 +352,7 @@ TEST(Build, AnInvalidCaseIsRefusedWithItsIssues)
 {
     auto modelCase{sealedStrip()};
     modelCase.regions[0].material.Name.clear();
-    modelCase.schedule.nSteps = 0U;
+    modelCase.schedule.stepLengths.clear();
 
     const auto entries{thmzEntries(modelCase)};
     ASSERT_FALSE(entries.has_value());
@@ -624,6 +624,18 @@ TEST(Build, DatasetAxisFollowsTheScheduleStart)
     const auto built{libraries(modelCase)};
     EXPECT_EQ(built.datasets.front().axis,
               (TimeSeriesLibrary::TimeAxis{.month = 2U, .day = 10U, .hour = 6U, .minute = 0U, .stepSeconds = 3600.0}));
+    EXPECT_EQ(scheduleOf(built.datasets), modelCase.schedule);
+}
+
+TEST(Build, UnevenScheduleWritesStepLengths)
+{
+    auto modelCase{weatherWall(ramp(3U))};
+    modelCase.schedule.stepLengths = {900.0, 1800.0, 3600.0};
+    ASSERT_TRUE(issues(modelCase).empty());
+    const auto built{libraries(modelCase)};
+    const auto & axis{built.datasets.front().axis};
+    EXPECT_NEAR(axis.stepSeconds, 900.0, tolerance);
+    EXPECT_EQ(axis.stepLengths, (std::vector<double>{900.0, 1800.0, 3600.0}));
     EXPECT_EQ(scheduleOf(built.datasets), modelCase.schedule);
 }
 

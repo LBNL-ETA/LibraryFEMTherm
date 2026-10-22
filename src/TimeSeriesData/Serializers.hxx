@@ -1,6 +1,8 @@
 #pragma once
 
+#include <optional>
 #include <string>
+#include <vector>
 
 #include <fileParse/Enum.hxx>
 #include <fileParse/Optional.hxx>
@@ -56,7 +58,9 @@ namespace TimeSeriesLibrary
     }
 
     //! A missing TimeAxis element leaves the defaults (1 January 00:00, hourly): datasets
-    //! saved before the axis existed keep the meaning they always had.
+    //! saved before the axis existed keep the meaning they always had. StepLengths is
+    //! written only for uneven steps, as the comma-separated list Series/Values uses, so an
+    //! evenly stepped axis reads and writes exactly as it did before uneven steps existed.
     template<typename NodeAdapter>
         requires SerializerNode<NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, TimeAxis & axis)
@@ -67,6 +71,9 @@ namespace TimeSeriesLibrary
         node >> FileParse::Child{tag.hour(), axis.hour};
         node >> FileParse::Child{tag.minute(), axis.minute};
         node >> FileParse::Child{tag.stepSeconds(), axis.stepSeconds};
+        std::optional<std::string> lengthsText;
+        node >> FileParse::Child{tag.stepLengths(), lengthsText};
+        axis.stepLengths = lengthsText.has_value() ? parseSeriesValues(lengthsText.value()) : std::vector<double>{};
         return node;
     }
 
@@ -80,6 +87,11 @@ namespace TimeSeriesLibrary
         node << FileParse::Child{tag.hour(), axis.hour};
         node << FileParse::Child{tag.minute(), axis.minute};
         node << FileParse::Child{tag.stepSeconds(), axis.stepSeconds};
+        if(!axis.stepLengths.empty())
+        {
+            const std::string lengthsText{formatSeriesValues(axis.stepLengths)};
+            node << FileParse::Child{tag.stepLengths(), lengthsText};
+        }
         return node;
     }
 

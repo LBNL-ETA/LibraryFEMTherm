@@ -71,28 +71,46 @@ namespace
         py::class_<TimeAxis>(mod,
                              "TimeAxis",
                              "Where row zero sits in the year and how far apart the rows are: a calendar "
-                             "position with no year, and a step in seconds.")
-            .def(py::init([](const std::size_t month, const std::size_t day, const std::size_t hour, const std::size_t minute, const double stepSeconds) {
-                     return TimeAxis{.month = month, .day = day, .hour = hour, .minute = minute, .stepSeconds = stepSeconds};
+                             "position with no year, and a step in seconds. Steps are even unless "
+                             "`step_lengths` states one length per step, `step_seconds` then being the "
+                             "first of them.")
+            .def(py::init([](const std::size_t month,
+                             const std::size_t day,
+                             const std::size_t hour,
+                             const std::size_t minute,
+                             const double stepSeconds,
+                             const std::vector<double> & stepLengths) {
+                     return TimeAxis{.month = month,
+                                     .day = day,
+                                     .hour = hour,
+                                     .minute = minute,
+                                     .stepSeconds = stepLengths.empty() ? stepSeconds : stepLengths.front(),
+                                     .stepLengths = stepLengths};
                  }),
                  py::arg("month") = 1U,
                  py::arg("day") = 1U,
                  py::arg("hour") = 0U,
                  py::arg("minute") = 0U,
-                 py::arg("step_seconds") = 3600.0)
+                 py::arg("step_seconds") = 3600.0,
+                 py::arg("step_lengths") = std::vector<double>{})
             .def_readwrite("month", &TimeAxis::month)
             .def_readwrite("day", &TimeAxis::day)
             .def_readwrite("hour", &TimeAxis::hour)
             .def_readwrite("minute", &TimeAxis::minute)
             .def_readwrite("step_seconds", &TimeAxis::stepSeconds)
+            .def_readwrite("step_lengths", &TimeAxis::stepLengths, "Seconds per step when uneven; empty when even.")
             .def("__eq__", [](const TimeAxis & lhs, const TimeAxis & rhs) { return lhs == rhs; }, py::is_operator())
             .def("__repr__", [](const TimeAxis & axis) {
-                return std::format("TimeAxis(month={}, day={}, hour={}, minute={}, step_seconds={})",
+                const std::string lengths{axis.stepLengths.empty()
+                                            ? std::string{}
+                                            : ", step_lengths=" + py::repr(py::cast(axis.stepLengths)).cast<std::string>()};
+                return std::format("TimeAxis(month={}, day={}, hour={}, minute={}, step_seconds={}{})",
                                    axis.month,
                                    axis.day,
                                    axis.hour,
                                    axis.minute,
-                                   py::repr(py::cast(axis.stepSeconds)).cast<std::string>());
+                                   py::repr(py::cast(axis.stepSeconds)).cast<std::string>(),
+                                   lengths);
             });
 
         py::class_<TimeSeriesData>(mod,
@@ -179,7 +197,16 @@ namespace
                 "The deterministic UUID of the dataset's content (roles, values and axis): the same data "
                 "imported twice lands on one record. Name, colour and the other metadata play no part.");
         mod.def("axis_after", &TimeSeriesLibrary::axisAfter, py::arg("axis"), py::arg("steps"),
-                "The axis `steps` rows later, wrapping at the end of the nominal year.");
+                "The axis `steps` rows later, wrapping at the end of the nominal year, the remaining steps kept.");
+        mod.def("axis_at", &TimeSeriesLibrary::axisAt, py::arg("seconds_into_year"),
+                "The calendar position that many seconds into the nominal year, wrapping at either end, hourly.");
+        mod.def("evenly_stepped", [](const TimeSeriesData & data) { return TimeSeriesLibrary::evenlyStepped(data.axis); },
+                py::arg("data"), "Whether every step of the dataset is axis.step_seconds.");
+        mod.def(
+          "step_lengths",
+          [](const TimeSeriesData & data) { return TimeSeriesLibrary::stepLengths(data.axis, TimeSeriesLibrary::steps(data)); },
+          py::arg("data"),
+          "One length in seconds per step of the dataset, even or not.");
         mod.def(
           "time_series_window",
           [](const TimeSeriesData & data, const std::size_t firstStep, const std::size_t count) {
@@ -268,28 +295,58 @@ namespace
           py::arg("name"),
           "The same from the file's text, under the given dataset name.");
 
+        py::enum_<Csv::StepColumn>(mod, "StepColumn", "Which CSV column states the steps.")
+            .value("Time", Csv::StepColumn::Time,
+                   "The Time column: a row's value belongs to the step ending at its time, so the first row is only "
+                   "the start of the run and n rows make n-1 steps.")
+            .value("Timestep", Csv::StepColumn::Timestep,
+                   "The Timestep column (Timestep, Step, Step Seconds or dt): row i is step i, of the length in "
+                   "seconds the row states. A Time column, if present, places the start one step before the first "
+                   "stamp.");
+        py::class_<Csv::FixedStep>(mod, "FixedStep",
+                                   "Every row is one step of this many seconds. A Time column, if present, places the "
+                                   "start one step before the first stamp.")
+            .def(py::init([](const double seconds) { return Csv::FixedStep{.seconds = seconds}; }), py::arg("seconds"))
+            .def_readwrite("seconds", &Csv::FixedStep::seconds)
+            .def("__eq__", [](const Csv::FixedStep & lhs, const Csv::FixedStep & rhs) { return lhs == rhs; }, py::is_operator())
+            .def("__repr__", [](const Csv::FixedStep & fixed) {
+                return std::format("FixedStep(seconds={})", py::repr(py::cast(fixed.seconds)).cast<std::string>());
+            });
+
         py::class_<Csv::ImportResult>(mod,
                                       "CsvImportResult",
-                                      "A CSV read: the dataset, the headers that named no role and were skipped, and "
-                                      "whether a time column set the axis.")
+                                      "A CSV read: the dataset, the headers that named no role and were skipped, which "
+                                      "clock columns the file had, and whether the first row was only the start.")
             .def_readonly("data", &Csv::ImportResult::data)
             .def_readonly("ignored_headers", &Csv::ImportResult::ignoredHeaders)
-            .def_readonly("had_time_column", &Csv::ImportResult::hadTimeColumn);
+            .def_readonly("had_time_column", &Csv::ImportResult::hadTimeColumn)
+            .def_readonly("had_timestep_column", &Csv::ImportResult::hadTimestepColumn)
+            .def_readonly("first_row_was_start", &Csv::ImportResult::firstRowWasStart,
+                          "Under StepColumn.Time the first row was the start, not a step: its values were dropped.");
         mod.def(
           "read_csv",
-          [](const std::filesystem::path & path) { return unwrap(Csv::read(path.string())); },
+          [](const std::filesystem::path & path, const Csv::StepChoice & steps) { return unwrap(Csv::read(path.string(), steps)); },
           py::arg("path"),
-          "Reads a CSV whose headers name series roles, in either spelling (AirTemperature or Air Temperature). A "
-          "Time, Date, Datetime or Timestamp column sets the axis; evenly spaced rows are required. Blank cells "
-          "carry the last reading forward. Raises ValueError when nothing can be read.");
+          py::arg("steps"),
+          "Reads a CSV whose headers name series roles, in either spelling (AirTemperature or Air Temperature). "
+          "`steps` says how rows become steps: StepColumn.Time reads the Time column, each row's value driving the "
+          "step that ends at its time (the first row is only the start); StepColumn.Timestep reads one length in "
+          "seconds per row from the Timestep column; FixedStep(seconds) makes every row one step of that length. "
+          "Steps may be uneven. A column the choice asks for and the file lacks raises ValueError, as does anything "
+          "unreadable. Blank value cells carry the last reading forward.");
         mod.def(
           "read_csv_string",
-          [](const std::string & content, const std::string & name) { return unwrap(Csv::readFromString(content, name)); },
+          [](const std::string & content, const std::string & name, const Csv::StepChoice & steps) {
+              return unwrap(Csv::readFromString(content, name, steps));
+          },
           py::arg("content"),
           py::arg("name"),
+          py::arg("steps"),
           "The same from the CSV text, under the given dataset name.");
         mod.def("write_csv", &Csv::writeToString, py::arg("data"),
-                "The dataset as the CSV read_csv accepts: a time column on its axis, then one column per role.");
+                "The dataset as the CSV read_csv accepts: a Time column stamping the end of each step, a Timestep "
+                "column of the step lengths in seconds, then one column per role. Read back with StepColumn.Timestep "
+                "it is the same dataset; with StepColumn.Time it is one step shorter.");
         mod.def(
           "write_csv_file",
           [](const TimeSeriesData & data, const std::filesystem::path & path) { Csv::writeToFile(data, path.string()); },
@@ -326,15 +383,22 @@ namespace
             .def_readonly("failed_entries", &Import::ImportOutcome::failedEntries);
         mod.def(
           "import_datasets",
-          [](const std::filesystem::path & path) { return unwrap(Import::importDatasets(path)); },
+          [](const std::filesystem::path & path, const Csv::StepChoice & steps) {
+              return unwrap(Import::importDatasets(path, steps));
+          },
           py::arg("path"),
+          py::arg("steps"),
           "Datasets from a file by its extension: .epw, .csv, or a .zip holding any number of either (each "
-          "under its entry's stem). Raises ValueError for an unsupported extension, an unreadable file or a zip "
-          "with nothing importable.");
+          "under its entry's stem). `steps` is how a CSV's rows become steps, as for read_csv; a weather file has "
+          "its own clock and ignores it. Raises ValueError for an unsupported extension, an unreadable file or a "
+          "zip with nothing importable.");
         mod.def(
           "import_datasets_from_entries",
-          [](const std::map<std::string, std::string> & entries) { return unwrap(Import::importDatasetsFromEntries(entries)); },
+          [](const std::map<std::string, std::string> & entries, const Csv::StepChoice & steps) {
+              return unwrap(Import::importDatasetsFromEntries(entries, steps));
+          },
           py::arg("entries"),
+          py::arg("steps"),
           "The zip case on its contents: entry name -> text.");
         mod.def("supported_import_extensions", &Import::supportedExtensions);
     }

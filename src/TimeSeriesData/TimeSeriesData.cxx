@@ -2,6 +2,7 @@
 #include <array>
 #include <cmath>
 #include <format>
+#include <numeric>
 #include <ranges>
 
 #include <lbnl/algorithm.hxx>
@@ -67,11 +68,15 @@ namespace TimeSeriesLibrary
         return secondsIntoYear(axis.month, axis.day, axis.hour, axis.minute);
     }
 
-    TimeAxis axisAfter(const TimeAxis & axis, const size_t steps)
+    TimeAxis axisAt(const double secondsIntoYear)
     {
         constexpr double minutesPerDay{24.0 * 60.0};
-        const double total{startSecondsIntoYear(axis) + static_cast<double>(steps) * axis.stepSeconds};
-        const auto minutes{static_cast<size_t>(std::llround(std::fmod(total, secondsPerNominalYear()) / 60.0))};
+        double wrapped{std::fmod(secondsIntoYear, secondsPerNominalYear())};
+        if(wrapped < 0.0)
+        {
+            wrapped += secondsPerNominalYear();
+        }
+        const auto minutes{static_cast<size_t>(std::llround(wrapped / 60.0))};
         const auto days{static_cast<size_t>(static_cast<double>(minutes) / minutesPerDay)};
         // The first month whose start lies past the day is the one after the day's month.
         const auto monthAfter{std::ranges::upper_bound(daysBeforeMonth, days)};
@@ -79,8 +84,47 @@ namespace TimeSeriesLibrary
         return TimeAxis{.month = month,
                         .day = days - daysBeforeMonth[month - 1U] + 1U,
                         .hour = (minutes / 60U) % 24U,
-                        .minute = minutes % 60U,
-                        .stepSeconds = axis.stepSeconds};
+                        .minute = minutes % 60U};
+    }
+
+    bool evenlyStepped(const TimeAxis & axis)
+    {
+        return axis.stepLengths.empty();
+    }
+
+    std::vector<double> stepLengths(const TimeAxis & axis, const size_t steps)
+    {
+        if(evenlyStepped(axis))
+        {
+            return std::vector<double>(steps, axis.stepSeconds);
+        }
+        auto lengths{axis.stepLengths};
+        lengths.resize(steps, lengths.back());
+        return lengths;
+    }
+
+    double stepSecondsAt(const TimeAxis & axis, const size_t index)
+    {
+        if(evenlyStepped(axis))
+        {
+            return axis.stepSeconds;
+        }
+        return axis.stepLengths[std::min(index, axis.stepLengths.size() - 1U)];
+    }
+
+    TimeAxis axisAfter(const TimeAxis & axis, const size_t steps)
+    {
+        const auto lengths{stepLengths(axis, steps)};
+        const double elapsed{std::accumulate(lengths.begin(), lengths.end(), 0.0)};
+        auto moved{axisAt(startSecondsIntoYear(axis) + elapsed)};
+        moved.stepSeconds = axis.stepSeconds;
+        if(!evenlyStepped(axis) && steps < axis.stepLengths.size())
+        {
+            moved.stepLengths.assign(axis.stepLengths.begin() + static_cast<std::ptrdiff_t>(steps),
+                                     axis.stepLengths.end());
+            moved.stepSeconds = moved.stepLengths.front();
+        }
+        return moved;
     }
 
     std::string startLabel(const TimeAxis & axis)
@@ -89,23 +133,43 @@ namespace TimeSeriesLibrary
           "{} {} {:02}:{:02}", axis.day, monthNames[monthIndex(axis.month)], axis.hour, axis.minute);
     }
 
+    namespace
+    {
+        std::string lengthLabel(const double seconds)
+        {
+            if(divides(seconds, 3600.0))
+            {
+                return std::format("{:g} h", seconds / 3600.0);
+            }
+            if(divides(seconds, 60.0))
+            {
+                return std::format("{:g} min", seconds / 60.0);
+            }
+            return std::format("{:g} s", seconds);
+        }
+    }   // namespace
+
     std::string stepLabel(const TimeAxis & axis)
     {
-        if(divides(axis.stepSeconds, 3600.0))
+        if(evenlyStepped(axis))
         {
-            return std::format("{:g} h", axis.stepSeconds / 3600.0);
+            return lengthLabel(axis.stepSeconds);
         }
-        if(divides(axis.stepSeconds, 60.0))
+        const auto [shortest, longest]{std::ranges::minmax_element(axis.stepLengths)};
+        if(*shortest == *longest)
         {
-            return std::format("{:g} min", axis.stepSeconds / 60.0);
+            return lengthLabel(*shortest);
         }
-        return std::format("{:g} s", axis.stepSeconds);
+        return std::format("{} to {}", lengthLabel(*shortest), lengthLabel(*longest));
     }
 
     std::string describeAxis(const TimeSeriesData & data)
     {
-        return std::format(
-          "{}, step {}, {} rows", startLabel(data.axis), stepLabel(data.axis), steps(data));
+        return std::format("{}, {} {}, {} rows",
+                           startLabel(data.axis),
+                           evenlyStepped(data.axis) ? "step" : "steps",
+                           stepLabel(data.axis),
+                           steps(data));
     }
 
     bool aligned(const TimeSeriesData & lhs, const TimeSeriesData & rhs)

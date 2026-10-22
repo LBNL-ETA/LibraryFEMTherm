@@ -73,3 +73,26 @@ TEST(TestWindow, WindowPastTheEndOrEmptyIsAnError)
     const auto tooLong{TimeSeriesLibrary::window(hourlyFromNewYear(72U), 60U, 24U)};
     EXPECT_NE(tooLong.error().find("72 rows"), std::string::npos);
 }
+
+TEST(TestWindow, AxisAfterKeepsTheRemainingUnevenSteps)
+{
+    const TimeAxis uneven{.stepSeconds = 900.0, .stepLengths = {900.0, 1800.0, 3600.0}};
+    EXPECT_EQ(TimeSeriesLibrary::axisAfter(uneven, 0U), uneven);
+    EXPECT_EQ(TimeSeriesLibrary::axisAfter(uneven, 1U),
+              (TimeAxis{.minute = 15U, .stepSeconds = 1800.0, .stepLengths = {1800.0, 3600.0}}));
+    EXPECT_EQ(TimeSeriesLibrary::axisAfter(uneven, 2U), (TimeAxis{.minute = 45U, .stepSeconds = 3600.0, .stepLengths = {3600.0}}));
+    EXPECT_EQ(TimeSeriesLibrary::stepLengths(uneven, 5U), (std::vector<double>{900.0, 1800.0, 3600.0, 3600.0, 3600.0}));
+    EXPECT_EQ(TimeSeriesLibrary::stepLengths(TimeAxis{}, 2U), (std::vector<double>{3600.0, 3600.0}));
+    EXPECT_NEAR(TimeSeriesLibrary::stepSecondsAt(uneven, 1U), 1800.0, 1e-12);
+    EXPECT_NEAR(TimeSeriesLibrary::stepSecondsAt(TimeAxis{}, 7U), 3600.0, 1e-12);
+}
+
+TEST(TestWindow, WindowOfUnevenStepsKeepsTheirLengths)
+{
+    auto data{hourlyFromNewYear(4U)};
+    data.axis = TimeAxis{.stepSeconds = 900.0, .stepLengths = {900.0, 1800.0, 3600.0, 900.0}};
+    const auto result{TimeSeriesLibrary::window(data, 1U, 2U)};
+    ASSERT_TRUE(result.has_value()) << result.error();
+    EXPECT_EQ(result->axis, (TimeAxis{.minute = 15U, .stepSeconds = 1800.0, .stepLengths = {1800.0, 3600.0}}));
+    EXPECT_EQ(TimeSeriesLibrary::steps(result.value()), 2U);
+}

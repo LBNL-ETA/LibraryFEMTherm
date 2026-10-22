@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <format>
+#include <numeric>
 
 #include "Case.hxx"
 #include "Common/PlanarGeometry.hxx"
@@ -12,7 +13,25 @@ namespace ThermFile::Model
 
     double Schedule::duration() const
     {
-        return dtime * static_cast<double>(nSteps);
+        return std::accumulate(stepLengths.begin(), stepLengths.end(), 0.0);
+    }
+
+    Schedule uniformSchedule(const double dtime, const std::size_t nSteps, const Start start)
+    {
+        return Schedule{.start = start, .stepLengths = std::vector<double>(nSteps, dtime)};
+    }
+
+    std::size_t nSteps(const Schedule & schedule)
+    {
+        return schedule.stepLengths.size();
+    }
+
+    std::optional<double> uniformStep(const Schedule & schedule)
+    {
+        const auto & lengths{schedule.stepLengths};
+        const bool uniform{!lengths.empty()
+                           && std::ranges::all_of(lengths, [&lengths](const double length) { return length == lengths.front(); })};
+        return uniform ? std::optional{lengths.front()} : std::nullopt;
     }
 
     bool isConstant(const Input & input)
@@ -28,19 +47,27 @@ namespace ThermFile::Model
 
     TimeSeriesLibrary::TimeAxis axisOf(const Schedule & schedule)
     {
-        return TimeSeriesLibrary::TimeAxis{.month = schedule.start.month,
-                                           .day = schedule.start.day,
-                                           .hour = schedule.start.hour,
-                                           .minute = schedule.start.minute,
-                                           .stepSeconds = schedule.dtime};
+        TimeSeriesLibrary::TimeAxis axis{.month = schedule.start.month,
+                                         .day = schedule.start.day,
+                                         .hour = schedule.start.hour,
+                                         .minute = schedule.start.minute};
+        if(schedule.stepLengths.empty())
+        {
+            return axis;
+        }
+        axis.stepSeconds = schedule.stepLengths.front();
+        if(!uniformStep(schedule).has_value())
+        {
+            axis.stepLengths = schedule.stepLengths;
+        }
+        return axis;
     }
 
     Schedule scheduleFor(const TimeSeriesLibrary::TimeSeriesData & dataset)
     {
         const auto & axis{dataset.axis};
-        return Schedule{.dtime = axis.stepSeconds,
-                        .nSteps = TimeSeriesLibrary::steps(dataset),
-                        .start = Start{.month = axis.month, .day = axis.day, .hour = axis.hour, .minute = axis.minute}};
+        return Schedule{.start = Start{.month = axis.month, .day = axis.day, .hour = axis.hour, .minute = axis.minute},
+                        .stepLengths = TimeSeriesLibrary::stepLengths(axis, TimeSeriesLibrary::steps(dataset))};
     }
 
     namespace
@@ -394,13 +421,16 @@ namespace ThermFile::Model
 
         void checkSchedule(const ModelCase & modelCase, std::vector<std::string> & found)
         {
-            if(modelCase.schedule.dtime <= 0.0)
-            {
-                found.emplace_back("the time step must be positive");
-            }
-            if(modelCase.schedule.nSteps == 0U)
+            const auto & lengths{modelCase.schedule.stepLengths};
+            if(lengths.empty())
             {
                 found.emplace_back("the schedule needs at least one step");
+                return;
+            }
+            const auto bad{std::ranges::find_if(lengths, [](const double length) { return length <= 0.0; })};
+            if(bad != lengths.end())
+            {
+                found.push_back(std::format("the schedule's step {} must be positive", bad - lengths.begin() + 1));
             }
         }
 
@@ -530,19 +560,19 @@ namespace ThermFile::Model
         //! The engine would otherwise repeat a short series' last value without a word.
         void checkSeriesLengths(const ModelCase & modelCase, std::vector<std::string> & found)
         {
-            const auto nSteps{modelCase.schedule.nSteps};
-            for(std::size_t index = 0U; nSteps > 0U && index < modelCase.segments.size(); ++index)
+            const auto stepCount{nSteps(modelCase.schedule)};
+            for(std::size_t index = 0U; stepCount > 0U && index < modelCase.segments.size(); ++index)
             {
                 const auto & segment{modelCase.segments[index]};
                 for(const auto & [role, length] : seriesInputs(segment))
                 {
-                    if(length != nSteps)
+                    if(length != stepCount)
                     {
                         found.push_back(std::format("{}: {} has {} values, the schedule has {} steps",
                                                     describe(index, segment),
                                                     TimeSeriesLibrary::seriesRoleToString(role),
                                                     length,
-                                                    nSteps));
+                                                    stepCount));
                     }
                 }
             }

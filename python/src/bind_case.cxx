@@ -374,28 +374,53 @@ namespace
 
         auto schedule{py::class_<Schedule>(model,
                                            "Schedule",
-                                           "The clock: n_steps steps of dtime seconds, from `start`. Every series "
-                                           "input of the case has one value per step.")
+                                           "The clock: one length in seconds per step, from `start`; the steps need "
+                                           "not be even. Every series input of the case has one value per step. "
+                                           "Schedule(dtime, n_steps) is the usual even clock, "
+                                           "Schedule(step_lengths=[...]) states every step.")
                         .def(py::init([](const double dtime, const std::size_t nSteps, const Start & startAt) {
-                                 return Schedule{.dtime = dtime, .nSteps = nSteps, .start = startAt};
+                                 return uniformSchedule(dtime, nSteps, startAt);
                              }),
                              py::arg("dtime"),
                              py::arg("n_steps"),
                              py::arg("start") = Start{})
-                        .def_readwrite("dtime", &Schedule::dtime)
-                        .def_readwrite("n_steps", &Schedule::nSteps)
+                        .def(py::init([](const std::vector<double> & stepLengths, const Start & startAt) {
+                                 return Schedule{.start = startAt, .stepLengths = stepLengths};
+                             }),
+                             py::arg("step_lengths"),
+                             py::arg("start") = Start{})
+                        .def_property_readonly(
+                          "dtime",
+                          [](const Schedule & schedule) {
+                              const auto step{uniformStep(schedule)};
+                              if(!step.has_value())
+                              {
+                                  throw py::value_error("the schedule has no single step length; read step_lengths");
+                              }
+                              return step.value();
+                          },
+                          "The length every step has. Raises ValueError when the steps differ or there are none.")
+                        .def_property_readonly("n_steps", &nSteps)
+                        .def_readwrite("step_lengths", &Schedule::stepLengths, "Seconds per step.")
                         .def_readwrite("start", &Schedule::start)
                         .def_property_readonly("duration", &Schedule::duration)
                         .def("__repr__", [](const Schedule & schedule) {
                             const std::string startField{schedule.start == Start{} ? std::string{}
                                                                                     : std::format(", start={}", pythonRepr(schedule.start))};
-                            return std::format("Schedule(dtime={}, n_steps={}{})", pythonRepr(schedule.dtime), schedule.nSteps, startField);
+                            const auto step{uniformStep(schedule)};
+                            if(step.has_value())
+                            {
+                                return std::format("Schedule(dtime={}, n_steps={}{})", pythonRepr(step.value()), nSteps(schedule), startField);
+                            }
+                            return std::format("Schedule(step_lengths={}{})", pythonRepr(schedule.stepLengths), startField);
                         })};
         addEquality(schedule);
-        model.def("axis_of", &axisOf, py::arg("schedule"), "The schedule as the axis of the datasets the writer makes.");
+        model.def("axis_of", &axisOf, py::arg("schedule"),
+                  "The schedule as the axis of the datasets the writer makes: even when every step has the same "
+                  "length, otherwise with the lengths stated one by one.");
         model.def("schedule_for", &scheduleFor, py::arg("dataset"),
-                  "The schedule a dataset dictates: its step, its row count and its start, so a case driven by a "
-                  "weather file runs exactly over the file.");
+                  "The schedule a dataset dictates: its steps and their lengths, and its start, so a case driven by "
+                  "a weather file runs exactly over the file.");
 
         auto physics{
           py::class_<Physics>(model,

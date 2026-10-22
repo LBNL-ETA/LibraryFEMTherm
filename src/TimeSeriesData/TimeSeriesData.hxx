@@ -41,6 +41,11 @@ namespace TimeSeriesLibrary
     //! weather file and an interior generated from it. Two datasets line up when their axes
     //! and their step counts are equal; nothing is ever interpolated. Datasets written before
     //! the axis existed read as 1 January 00:00 with hourly steps, which is what they were.
+    //!
+    //! Steps are even unless `stepLengths` says otherwise: empty means every step is
+    //! `stepSeconds`; otherwise it holds one length per step and `stepSeconds` is the first
+    //! of them. An evenly stepped axis is therefore stored, hashed and compared exactly as
+    //! it was before uneven steps existed.
     struct TimeAxis
     {
         size_t month{1U};    //!< 1..12
@@ -48,6 +53,7 @@ namespace TimeSeriesLibrary
         size_t hour{0U};     //!< 0..23, the start of the first interval
         size_t minute{0U};   //!< 0..59
         double stepSeconds{3600.0};
+        std::vector<double> stepLengths;   //!< seconds per step when uneven; empty when even
 
         [[nodiscard]] bool operator==(const TimeAxis & other) const = default;
     };
@@ -94,18 +100,32 @@ namespace TimeSeriesLibrary
 
     [[nodiscard]] double startSecondsIntoYear(const TimeAxis & axis);
 
-    //! The axis `steps` rows later: the start moved by steps * stepSeconds through the
-    //! nominal year, wrapping at its end, the step kept. Rounded to the minute, which is
-    //! as fine as an axis is stated.
+    //! The calendar position `secondsIntoYear` into the nominal year, wrapping at either end
+    //! and rounded to the minute, which is as fine as an axis is stated. The step is hourly.
+    [[nodiscard]] TimeAxis axisAt(double secondsIntoYear);
+
+    //! Whether every step is `stepSeconds`.
+    [[nodiscard]] bool evenlyStepped(const TimeAxis & axis);
+
+    //! One length per step, `steps` of them, even or not. An uneven axis stating fewer
+    //! lengths than steps repeats its last one.
+    [[nodiscard]] std::vector<double> stepLengths(const TimeAxis & axis, size_t steps);
+
+    //! The length of step `index`.
+    [[nodiscard]] double stepSecondsAt(const TimeAxis & axis, size_t index);
+
+    //! The axis `steps` rows later: the start moved through the first `steps` steps of the
+    //! nominal year, wrapping at its end, the remaining steps kept. Rounded to the minute.
     [[nodiscard]] TimeAxis axisAfter(const TimeAxis & axis, size_t steps);
 
     //! "1 Jan 00:00"
     [[nodiscard]] std::string startLabel(const TimeAxis & axis);
 
-    //! "1 h", "30 min", "90 s" - whichever unit divides the step exactly.
+    //! "1 h", "30 min", "90 s" - whichever unit divides the step exactly; "15 min to 2 h"
+    //! for uneven steps.
     [[nodiscard]] std::string stepLabel(const TimeAxis & axis);
 
-    //! "1 Jan 00:00, step 1 h, 8760 rows"
+    //! "1 Jan 00:00, step 1 h, 8760 rows", or "..., steps 15 min to 2 h, ..." when uneven.
     [[nodiscard]] std::string describeAxis(const TimeSeriesData & data);
 
     //! Same axis and same step count: the two can drive one simulation.

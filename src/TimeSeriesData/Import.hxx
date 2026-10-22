@@ -7,6 +7,7 @@
 
 #include <lbnl/expected.hxx>
 
+#include "CsvSeries.hxx"
 #include "Epw.hxx"
 #include "TimeSeriesData.hxx"
 
@@ -41,11 +42,15 @@ namespace TimeSeriesLibrary::Import
     [[nodiscard]] lbnl::ExpectedExt<Epw::ImportResult, std::string> readWeather(const std::filesystem::path & file);
 
     //! Every dataset the file holds. A zip with no importable entry, an unreadable file
-    //! and an unsupported extension all fail with a message that says so.
-    [[nodiscard]] lbnl::ExpectedExt<ImportOutcome, std::string> importDatasets(const std::filesystem::path & file);
+    //! and an unsupported extension all fail with a message that says so. `stepChoice`
+    //! says how a CSV's rows become steps (Csv::StepChoice); a weather file has its own
+    //! clock and ignores it.
+    [[nodiscard]] lbnl::ExpectedExt<ImportOutcome, std::string>
+      importDatasets(const std::filesystem::path & file, const Csv::StepChoice & stepChoice);
 
     //! The zip case on its contents: entry name -> content, each .epw or .csv entry
     //! imported under its stem, every other entry ignored.
     [[nodiscard]] lbnl::ExpectedExt<ImportOutcome, std::string>
-      importDatasetsFromEntries(const std::map<std::string, std::string> & entries);
+      importDatasetsFromEntries(const std::map<std::string, std::string> & entries,
+                                const Csv::StepChoice & stepChoice);
 }   // namespace TimeSeriesLibrary::Import
