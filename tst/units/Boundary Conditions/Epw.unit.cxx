@@ -129,7 +129,7 @@ TEST(TestEpw, ImportDetectsSubHourlyRecords)
 
     const auto result{Epw::readFromString(content, "half hourly")};
     ASSERT_TRUE(result.has_value());
-    EXPECT_NEAR(result->data.axis.stepSeconds, 1800.0, 1e-9);
+    EXPECT_EQ(result->data.axis.stepSeconds, TimeSeriesLibrary::StepSeconds{1800.0});
     EXPECT_EQ(result->data.axis.hour, 0U);
 }
 

@@ -46,7 +46,9 @@ namespace
                        .points = {{0.02, 0.05}, {0.02, 0.0}, {0.10, 0.0}, {0.10, 0.05}}}},
           .segments = {{.kind = Adiabatic{}, .start = {0.0, 0.0}, .end = {0.02, 0.0}, .region = 0U},
                        {.kind = Adiabatic{}, .start = {0.02, 0.0}, .end = {0.10, 0.0}, .region = 1U},
-                       {.kind = Convective{.airTemperature = 20.0, .filmCoefficient = 8.0, .humidity = 0.5},
+                       {.kind = Convective{.airTemperature = 20.0,
+                                           .filmCoefficient = 8.0,
+                                           .humidity = 0.5},
                         .start = {0.10, 0.0},
                         .end = {0.10, 0.05},
                         .region = 1U},
@@ -88,36 +90,20 @@ namespace
           .id = "steady_l",
           .regions = {{.material = stucco(), .points = {{0.0, 0.0}, {0.09, 0.0}, {0.09, 0.06}, {0.0, 0.06}}},
                       {.material = cottaerSandstone(), .points = {{0.09, 0.0}, {0.17, 0.0}, {0.17, 0.09}, {0.09, 0.09}}}},
-          .segments = {{.kind = Convective{.airTemperature = -18.0, .filmCoefficient = 26.0, .humidity = 0.5},
+          .segments = {{.kind = Convective{.airTemperature = -18.0,
+                                           .filmCoefficient = 26.0,
+                                           .humidity = 0.5},
                         .start = {0.0, 0.06},
                         .end = {0.0, 0.0},
                         .color = "0x0080C0"},
-                       {.kind = Convective{.airTemperature = 21.0, .filmCoefficient = 8.0, .humidity = 0.5},
+                       {.kind = Convective{.airTemperature = 21.0,
+                                           .filmCoefficient = 8.0,
+                                           .humidity = 0.5},
                         .start = {0.17, 0.0},
                         .end = {0.17, 0.09}}},
           .physics = {.moisture = false},
           .mode = ThermFile::CalculationMode::cmSteadyState,
           .meshControl = {.errorEnergyNorm = 8.0, .maximumIterations = 4U},
-        };
-    }
-
-    //! A wall of one material between two faces that read the same weather series: the
-    //! room side at a constant temperature, the outside following `outdoor` with a fixed
-    //! film coefficient, and a second outside face reading the same series.
-    ModelCase weatherWall(const std::vector<double> & outdoor)
-    {
-        const Convective outside{.airTemperature = outdoor, .filmCoefficient = 25.0, .humidity = 0.8};
-        return ModelCase{
-          .id = "weather_wall",
-          .regions = {{.material = stucco(), .points = {{0.0, 0.0}, {0.3, 0.0}, {0.3, 0.3}, {0.0, 0.3}}}},
-          .segments = {{.kind = outside, .start = {0.0, 0.3}, .end = {0.0, 0.0}, .name = "outside"},
-                       {.kind = Convective{.airTemperature = 20.0, .filmCoefficient = 8.0, .humidity = 0.5},
-                        .start = {0.3, 0.0},
-                        .end = {0.3, 0.3},
-                        .name = "room side"},
-                       {.kind = outside, .start = {0.3, 0.3}, .end = {0.0, 0.3}, .name = "top"}},
-          .initial = {.temperature = 20.0, .humidity = 0.5},
-          .schedule = uniformSchedule(3600.0, outdoor.size()),
         };
     }
 
@@ -129,6 +115,43 @@ namespace
             values[index] = -5.0 + static_cast<double>(index) * 0.5;
         }
         return values;
+    }
+
+    //! An outdoor dataset as a weather file gives it: its own UUID, name and axis, and the
+    //! roles the given values stand for.
+    TimeSeriesLibrary::TimeSeriesData weather(const std::vector<SeriesRole> & roles,
+                                             const std::size_t count,
+                                             const TimeSeriesLibrary::TimeAxis & axis = {})
+    {
+        TimeSeriesLibrary::TimeSeriesData data{.UUID = "weather-uuid", .Name = "weather", .axis = axis};
+        for(const auto role : roles)
+        {
+            data.series.push_back({.role = role, .values = ramp(count)});
+        }
+        return data;
+    }
+
+    //! A wall of one material between two faces that bind the same weather: the room side
+    //! at a constant temperature, the outside reading the weather's air temperature with a
+    //! fixed film coefficient, and a second outside face binding the same dataset.
+    ModelCase weatherWall(const TimeSeriesLibrary::TimeSeriesData & outdoor)
+    {
+        const Convective outside{.airTemperature = SeriesRole::AirTemperature,
+                                 .filmCoefficient = 25.0,
+                                 .humidity = 0.8};
+        return ModelCase{
+          .id = "weather_wall",
+          .regions = {{.material = stucco(), .points = {{0.0, 0.0}, {0.3, 0.0}, {0.3, 0.3}, {0.0, 0.3}}}},
+          .segments = {{.kind = outside, .start = {0.0, 0.3}, .end = {0.0, 0.0}, .name = "outside", .dataset = outdoor},
+                       {.kind = Convective{.airTemperature = 20.0,
+                                           .filmCoefficient = 8.0,
+                                           .humidity = 0.5},
+                        .start = {0.3, 0.0},
+                        .end = {0.3, 0.3},
+                        .name = "room side"},
+                       {.kind = outside, .start = {0.3, 0.3}, .end = {0.0, 0.3}, .name = "top", .dataset = outdoor}},
+          .initial = {.temperature = 20.0, .humidity = 0.5},
+        };
     }
 
     std::set<double> offsets(const std::vector<ThermFile::Point> & points, const double origin, const bool xAxis)
@@ -421,8 +444,8 @@ TEST(Build, SteadyStateSegmentsHoldTheirConstantsOnRecordsOfTheirOwn)
     const auto cold{libs.boundaryConditions.getByName("segment 1")};
     ASSERT_TRUE(cold.has_value());
     EXPECT_EQ(cold->Color, "0x0080C0");
-    EXPECT_EQ(convectionOf(cold.value()).airTemperature, BCLibrary::Source{BCLibrary::Constant{-18.0}});
-    EXPECT_EQ(convectionOf(cold.value()).filmCoefficient, BCLibrary::Source{BCLibrary::Constant{26.0}});
+    EXPECT_EQ(convectionOf(cold.value()).airTemperature, BCLibrary::Source{-18.0});
+    EXPECT_EQ(convectionOf(cold.value()).filmCoefficient, BCLibrary::Source{26.0});
 
     const auto written{model(modelCase)};
     const auto & first{written.boundaryConditions.front()};
@@ -455,8 +478,8 @@ TEST(Build, SteadyStateRefusesAPrescribedSegment)
 TEST(Build, SteadyStateRadiationAndTagsAreWritten)
 {
     auto modelCase{steadyL()};
-    const BCLibrary::BlackBodyRadiation blackBody{.temperature = BCLibrary::Constant{-18.0},
-                                                  .emissivity = BCLibrary::Constant{1.0}};
+    const BCLibrary::BlackBodyRadiation blackBody{.temperature = -18.0,
+                                                  .emissivity = 1.0};
     std::get<Convective>(modelCase.segments[0].kind).radiation = blackBody;
     modelCase.segments[1].uFactorTag = "Room";
     ASSERT_TRUE(issues(modelCase).empty());
@@ -484,10 +507,10 @@ TEST(Build, SteadyStateRefusesRadiationReadFromADataset)
 {
     auto modelCase{steadyL()};
     std::get<Convective>(modelCase.segments[0].kind).radiation = BCLibrary::BlackBodyRadiation{
-      .temperature = BCLibrary::FromTimeSeries{SeriesRole::RadiantTemperature}};
+      .temperature = SeriesRole::RadiantTemperature};
     const auto found{issues(modelCase)};
     ASSERT_EQ(found.size(), 1U);
-    EXPECT_NE(found.front().find("read from a dataset"), std::string::npos);
+    EXPECT_NE(found.front().find("reads RadiantTemperature from a dataset"), std::string::npos);
 }
 
 TEST(Build, AModeThatIsNeitherIsAnIssue)
@@ -498,7 +521,8 @@ TEST(Build, AModeThatIsNeitherIsAnIssue)
 }
 
 // ------------------------------------------------------------------------------------------
-// Lowering: constants stay on the record, series go to a dataset
+// Records and datasets: constants and roles stay on the record, a bound dataset is written
+// as given
 // ------------------------------------------------------------------------------------------
 
 TEST(Build, ConstantsStayOnTheRecordAndBindNoDataset)
@@ -509,8 +533,8 @@ TEST(Build, ConstantsStayOnTheRecordAndBindNoDataset)
     const auto records{libraries(modelCase).boundaryConditions};
     const auto convective{records.getByUUID(bindings[2].recordUuid)};
     ASSERT_TRUE(convective.has_value());
-    EXPECT_EQ(convectionOf(convective.value()).airTemperature, BCLibrary::Source{BCLibrary::Constant{20.0}});
-    EXPECT_EQ(convectionOf(convective.value()).filmCoefficient, BCLibrary::Source{BCLibrary::Constant{8.0}});
+    EXPECT_EQ(convectionOf(convective.value()).airTemperature, BCLibrary::Source{20.0});
+    EXPECT_EQ(convectionOf(convective.value()).filmCoefficient, BCLibrary::Source{8.0});
     EXPECT_TRUE(BCLibrary::isSteadyCapable(convective.value()));
     EXPECT_FALSE(bindings[2].datasetUuid.has_value());
     EXPECT_FALSE(bindings[5].datasetUuid.has_value());
@@ -518,59 +542,32 @@ TEST(Build, ConstantsStayOnTheRecordAndBindNoDataset)
     EXPECT_TRUE(bindings[0].datasetUuid.has_value());
 }
 
-TEST(Build, SeriesBecomeRolesInADataset)
+TEST(Build, ARoleIsReadFromTheDatasetWrittenAsGiven)
 {
     auto modelCase{twoRegionCase()};
-    const auto outdoor{ramp(24U)};
-    std::get<Convective>(modelCase.segments[2].kind).airTemperature = outdoor;
+    const auto outdoor{weather({SeriesRole::AirTemperature}, 24U)};
+    std::get<Convective>(modelCase.segments[2].kind).airTemperature = SeriesRole::AirTemperature;
+    modelCase.segments[2].dataset = outdoor;
     ASSERT_TRUE(issues(modelCase).empty());
 
     const auto bindings{segmentBindings(modelCase)};
     const auto libs{libraries(modelCase)};
     const auto record{libs.boundaryConditions.getByUUID(bindings[2].recordUuid)};
     ASSERT_TRUE(record.has_value());
-    EXPECT_EQ(convectionOf(record.value()).airTemperature,
-              BCLibrary::Source{BCLibrary::FromTimeSeries{SeriesRole::AirTemperature}});
-    EXPECT_EQ(convectionOf(record.value()).filmCoefficient, BCLibrary::Source{BCLibrary::Constant{8.0}});
+    EXPECT_EQ(convectionOf(record.value()).airTemperature, BCLibrary::Source{SeriesRole::AirTemperature});
+    EXPECT_EQ(convectionOf(record.value()).filmCoefficient, BCLibrary::Source{8.0});
     EXPECT_EQ(BCLibrary::requiredRoles(record.value()), (std::vector<SeriesRole>{SeriesRole::AirTemperature}));
 
-    ASSERT_EQ(libs.datasets.size(), 1U);   // the series dataset sets the clock; no clock dataset beside it
-    const auto & data{libs.datasets.front()};
-    EXPECT_EQ(bindings[2].datasetUuid, std::optional{data.UUID});
-    EXPECT_EQ(data.UUID, TimeSeriesLibrary::contentUuid(data));
-    EXPECT_EQ(data.Name, "segment 3 series");
-    EXPECT_EQ(data.ProjectName, std::optional<std::string>{"two_regions"});
-    EXPECT_EQ(data.Source, std::optional<std::string>{"Generated"});
-    EXPECT_NEAR(data.axis.stepSeconds, 3600.0, tolerance);
-    EXPECT_EQ(TimeSeriesLibrary::providedRoles(data), (std::vector<SeriesRole>{SeriesRole::AirTemperature}));
-    EXPECT_EQ(TimeSeriesLibrary::valuesForRole(data, SeriesRole::AirTemperature), std::optional{outdoor});
-    EXPECT_FALSE(bindings[0].datasetUuid.has_value());   // no clock dataset when a segment reads series
+    // The dataset sets the clock, so no clock dataset beside it; it is the caller's, unchanged.
+    ASSERT_EQ(libs.datasets.size(), 1U);
+    EXPECT_EQ(libs.datasets.front(), outdoor);
+    EXPECT_EQ(bindings[2].datasetUuid, std::optional{outdoor.UUID});
+    EXPECT_FALSE(bindings[0].datasetUuid.has_value());
 }
 
-TEST(Build, PrescribedSeriesLowerToTheirRoles)
+TEST(Build, SegmentsBindingOneDatasetShareIt)
 {
-    const auto lowered{lower(Prescribed{.temperature = ramp(24U), .humidity = 0.8})};
-    const auto & state{std::get<BCLibrary::PrescribedState>(lowered.data)};
-    EXPECT_EQ(state.temperature, std::optional{BCLibrary::Source{BCLibrary::FromTimeSeries{SeriesRole::PrescribedTemperature}}});
-    EXPECT_EQ(state.relativeHumidity, std::optional{BCLibrary::Source{BCLibrary::Constant{0.8}}});
-    ASSERT_EQ(lowered.series.size(), 1U);
-    EXPECT_EQ(lowered.series[0].role, SeriesRole::PrescribedTemperature);
-    EXPECT_EQ(lowered.series[0].values, ramp(24U));
-    EXPECT_TRUE(std::holds_alternative<BCLibrary::NoExchange>(lower(Adiabatic{}).data));
-}
-
-TEST(Build, ConvectiveRecordReadsThreeRolesWhenEveryInputIsASeries)
-{
-    const auto lowered{lower(Convective{.airTemperature = ramp(4U), .filmCoefficient = ramp(4U), .humidity = ramp(4U)})};
-    const BCLibrary::BoundaryCondition record{.data = lowered.data};
-    EXPECT_EQ(BCLibrary::requiredRoles(record),
-              (std::vector<SeriesRole>{SeriesRole::RelativeHumidity, SeriesRole::AirTemperature, SeriesRole::ConvectiveCoefficient}));
-    EXPECT_EQ(lowered.series.size(), 3U);
-}
-
-TEST(Build, SegmentsReadingTheSameSeriesShareOneDataset)
-{
-    const auto modelCase{weatherWall(ramp(48U))};
+    const auto modelCase{weatherWall(weather({SeriesRole::AirTemperature}, 48U))};
     ASSERT_TRUE(issues(modelCase).empty());
     const auto libs{libraries(modelCase)};
     ASSERT_EQ(libs.datasets.size(), 1U);
@@ -578,15 +575,21 @@ TEST(Build, SegmentsReadingTheSameSeriesShareOneDataset)
     EXPECT_EQ(bindings[0].datasetUuid, std::optional{libs.datasets.front().UUID});
     EXPECT_EQ(bindings[2].datasetUuid, bindings[0].datasetUuid);
     EXPECT_FALSE(bindings[1].datasetUuid.has_value());
-    // The same values a month apart are different data, so a shifted clock gives a new dataset.
-    auto shifted{modelCase};
-    shifted.schedule.start.month = 2U;
-    EXPECT_NE(libraries(shifted).datasets.front().UUID, libs.datasets.front().UUID);
+
+    // Another dataset on the top face is a second dataset, under the same record.
+    auto twoDatasets{modelCase};
+    auto other{weather({SeriesRole::AirTemperature}, 48U)};
+    other.UUID = "other-uuid";
+    twoDatasets.segments[2].dataset = other;
+    EXPECT_EQ(libraries(twoDatasets).datasets.size(), 2U);
+    const auto twoBindings{segmentBindings(twoDatasets)};
+    EXPECT_EQ(twoBindings[0].recordUuid, twoBindings[2].recordUuid);
+    EXPECT_NE(twoBindings[0].datasetUuid, twoBindings[2].datasetUuid);
 }
 
 TEST(Build, IdenticalSegmentsShareOneRecordNamedAfterTheFirst)
 {
-    const auto modelCase{weatherWall(ramp(48U))};
+    const auto modelCase{weatherWall(weather({SeriesRole::AirTemperature}, 48U))};
     const auto records{segmentRecords(modelCase)};
     std::vector<std::string> names;
     for(const auto & record : records)
@@ -603,7 +606,7 @@ TEST(Build, IdenticalSegmentsShareOneRecordNamedAfterTheFirst)
 
 TEST(Build, ANameTakenByDifferentContentGetsASuffix)
 {
-    auto modelCase{weatherWall(ramp(48U))};
+    auto modelCase{weatherWall(weather({SeriesRole::AirTemperature}, 48U))};
     modelCase.segments[2].name = "outside";
     std::get<Convective>(modelCase.segments[2].kind).filmCoefficient = 10.0;
     const auto records{segmentRecords(modelCase)};
@@ -613,43 +616,55 @@ TEST(Build, ANameTakenByDifferentContentGetsASuffix)
         names.push_back(record.Name);
     }
     EXPECT_EQ(names, (std::vector<std::string>{"outside", "room side", "outside (2)", "Adiabatic"}));
-    // Different records, but the same series: still one dataset.
+    // Different records, but the same dataset: still one dataset.
     EXPECT_EQ(libraries(modelCase).datasets.size(), 1U);
 }
 
-TEST(Build, DatasetAxisFollowsTheScheduleStart)
+TEST(Build, TheDatasetKeepsItsOwnAxis)
 {
-    auto modelCase{weatherWall(ramp(48U))};
-    modelCase.schedule.start = {.month = 2U, .day = 10U, .hour = 6U, .minute = 0U};
-    const auto built{libraries(modelCase)};
-    EXPECT_EQ(built.datasets.front().axis,
-              (TimeSeriesLibrary::TimeAxis{.month = 2U, .day = 10U, .hour = 6U, .minute = 0U, .stepSeconds = 3600.0}));
-    EXPECT_EQ(scheduleOf(built.datasets), modelCase.schedule);
-}
-
-TEST(Build, UnevenScheduleWritesStepLengths)
-{
-    auto modelCase{weatherWall(ramp(3U))};
-    modelCase.schedule.stepLengths = {900.0, 1800.0, 3600.0};
+    // The 8 January logger read against 1 January weather was the case where the writer
+    // stamped the schedule's axis on everything; a bound dataset now keeps its own.
+    const TimeSeriesLibrary::TimeAxis february{.month = 2U, .day = 10U, .hour = 6U, .minute = 0U, .stepSeconds = 3600.0};
+    const auto modelCase{weatherWall(weather({SeriesRole::AirTemperature}, 48U, february))};
     ASSERT_TRUE(issues(modelCase).empty());
     const auto built{libraries(modelCase)};
-    const auto & axis{built.datasets.front().axis};
-    EXPECT_NEAR(axis.stepSeconds, 900.0, tolerance);
-    EXPECT_EQ(axis.stepLengths, (std::vector<double>{900.0, 1800.0, 3600.0}));
-    EXPECT_EQ(scheduleOf(built.datasets), modelCase.schedule);
+    EXPECT_EQ(built.datasets.front().axis, february);
+    EXPECT_EQ(scheduleOf(built.datasets), scheduleFor(modelCase.segments[0].dataset.value()));
+}
+
+TEST(Build, AnUnevenDatasetIsWrittenAsGiven)
+{
+    const TimeSeriesLibrary::TimeAxis uneven{.stepSeconds = std::vector<double>{900.0, 1800.0, 3600.0}};
+    const auto modelCase{weatherWall(weather({SeriesRole::AirTemperature}, 3U, uneven))};
+    ASSERT_TRUE(issues(modelCase).empty());
+    const auto built{libraries(modelCase)};
+    EXPECT_EQ(built.datasets.front().axis, uneven);
+    EXPECT_EQ(scheduleOf(built.datasets).stepLengths, (std::vector<double>{900.0, 1800.0, 3600.0}));
+}
+
+TEST(Build, TheClockFollowsAnUnevenSchedule)
+{
+    auto modelCase{twoRegionCase()};
+    modelCase.schedule.stepLengths = {900.0, 1800.0, 3600.0};
+    ASSERT_TRUE(issues(modelCase).empty());
+    const auto datasets{boundaryDatasets(modelCase)};
+    ASSERT_TRUE(datasets.contains(0U));
+    EXPECT_EQ(datasets.at(0U).axis.stepSeconds, (TimeSeriesLibrary::StepSeconds{std::vector<double>{900.0, 1800.0, 3600.0}}));
 }
 
 TEST(Build, TransientCaseWritesFixedRadiation)
 {
     auto modelCase{twoRegionCase()};
-    std::get<Convective>(modelCase.segments[2].kind).radiation = FixedRadiation{.temperature = ramp(24U), .coefficient = 4.0};
+    std::get<Convective>(modelCase.segments[2].kind).radiation = BCLibrary::FixedCoefficientRadiation{
+      .temperature = SeriesRole::RadiantTemperature, .coefficient = 4.0};
+    modelCase.segments[2].dataset = weather({SeriesRole::RadiantTemperature}, 24U);
     ASSERT_TRUE(issues(modelCase).empty());
     const auto bindings{segmentBindings(modelCase)};
     const auto record{libraries(modelCase).boundaryConditions.getByUUID(bindings[2].recordUuid)};
     ASSERT_TRUE(record.has_value());
     const auto & radiation{std::get<BCLibrary::SurfaceExchange>(record->data).radiation};
     const BCLibrary::FixedCoefficientRadiation expected{
-      .temperature = BCLibrary::FromTimeSeries{SeriesRole::RadiantTemperature}, .coefficient = BCLibrary::Constant{4.0}};
+      .temperature = SeriesRole::RadiantTemperature, .coefficient = 4.0};
     EXPECT_EQ(radiation, std::optional{BCLibrary::RadiationOptions{expected}});
     EXPECT_EQ(BCLibrary::requiredRoles(record.value()), (std::vector<SeriesRole>{SeriesRole::RadiantTemperature}));
 }

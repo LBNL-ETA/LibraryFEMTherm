@@ -209,7 +209,7 @@ TEST(TestCsvSeries, UnevenTimesBecomeStepLengths)
 
     const auto result{Csv::readFromString(content, "uneven", byTime)};
     ASSERT_TRUE(result.has_value()) << result.error();
-    EXPECT_EQ(result->data.axis, (TimeAxis{.stepSeconds = 3600.0, .stepLengths = {3600.0, 7200.0}}));
+    EXPECT_EQ(result->data.axis, (TimeAxis{.stepSeconds = std::vector<double>{3600.0, 7200.0}}));
     EXPECT_EQ(temperatures(result.value()), (std::vector<double>{2.0, 3.0}));
     EXPECT_EQ(TimeSeriesLibrary::describeAxis(result->data), "1 Jan 00:00, steps 1 h to 2 h, 2 rows");
 }
@@ -252,7 +252,7 @@ TEST(TestCsvSeries, TimestepColumnStatesEveryStep)
     EXPECT_TRUE(result->hadTimestepColumn);
     EXPECT_FALSE(result->hadTimeColumn);
     EXPECT_FALSE(result->firstRowWasStart);
-    EXPECT_EQ(result->data.axis, (TimeAxis{.stepSeconds = 900.0, .stepLengths = {900.0, 900.0, 1800.0}}));
+    EXPECT_EQ(result->data.axis, (TimeAxis{.stepSeconds = std::vector<double>{900.0, 900.0, 1800.0}}));
     EXPECT_EQ(temperatures(result.value()), (std::vector<double>{1.0, 2.0, 3.0}));
     EXPECT_EQ(TimeSeriesLibrary::stepLabel(result->data.axis), "15 min to 30 min");
 }
@@ -329,7 +329,7 @@ TEST(TestCsvSeries, ExportStampsTheEndOfEachStep)
 TEST(TestCsvSeries, ExportWritesUnevenLengthsAndReadsThemBack)
 {
     TimeSeriesData data;
-    data.axis = TimeAxis{.month = 7U, .day = 4U, .hour = 12U, .stepSeconds = 900.0, .stepLengths = {900.0, 1800.0, 3600.0}};
+    data.axis = TimeAxis{.month = 7U, .day = 4U, .hour = 12U, .stepSeconds = std::vector<double>{900.0, 1800.0, 3600.0}};
     data.series = {Series{SeriesRole::AirTemperature, {30.0, 31.0, 32.0}}};
 
     const auto content{Csv::writeToString(data)};
@@ -345,7 +345,7 @@ TEST(TestCsvSeries, ExportWritesUnevenLengthsAndReadsThemBack)
     const auto shorter{Csv::readFromString(content, "uneven", byTime)};
     ASSERT_TRUE(shorter.has_value()) << shorter.error();
     EXPECT_EQ(shorter->data.axis,
-              (TimeAxis{.month = 7U, .day = 4U, .hour = 12U, .minute = 15U, .stepSeconds = 1800.0, .stepLengths = {1800.0, 3600.0}}));
+              (TimeAxis{.month = 7U, .day = 4U, .hour = 12U, .minute = 15U, .stepSeconds = std::vector<double>{1800.0, 3600.0}}));
     EXPECT_EQ(temperatures(shorter.value()), (std::vector<double>{31.0, 32.0}));
 }
 

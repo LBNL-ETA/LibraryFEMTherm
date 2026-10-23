@@ -42,16 +42,10 @@ namespace ThermFile::Model
     // Boundary kinds
     // ------------------------------------------------------------------------------------
 
-    //! A boundary input: one value that holds for the whole run, or one value per step of
-    //! the schedule. A transient case accepts either; a steady-state case, having no clock,
-    //! accepts constants only. The writer keeps a constant on the segment's record and
-    //! puts a series in a dataset the record reads, so THERM sees the file as one of its own.
-    using Input = std::variant<double, std::vector<double>>;
-
-    [[nodiscard]] bool isConstant(const Input & input);
-
-    //! The number of values a series input carries; nothing for a constant.
-    [[nodiscard]] std::optional<std::size_t> seriesLength(const Input & input);
+    // Every input of a boundary kind is a BCLibrary::Source, as on THERM's own records: a
+    // Constant that holds for the whole run, or FromTimeSeries{role}, read step by step
+    // from the dataset the segment binds (Segment::dataset). A steady-state case, having no
+    // datasets, accepts constants only.
 
     //! No exchange at all: no heat and no moisture crosses the surface (flux zero). Named
     //! as THERM names its built-in record for exactly this, so the word is the same in the
@@ -65,31 +59,18 @@ namespace ThermFile::Model
     //! humidity as a fraction.
     struct Prescribed
     {
-        Input temperature{0.0};
-        std::optional<Input> humidity{};
+        BCLibrary::Source temperature{0.0};
+        std::optional<BCLibrary::Source> humidity{};
 
         [[nodiscard]] friend bool operator==(const Prescribed & lhs, const Prescribed & rhs) = default;
     };
 
-    //! Radiative exchange with a surrounding at a radiant temperature in °C through a fixed
-    //! coefficient in W/(m² K): the one radiation model the engine reads step by step, and
-    //! the one a weather file feeds (its sky temperature is a radiant temperature).
-    struct FixedRadiation
-    {
-        Input temperature{0.0};
-        Input coefficient{0.0};
-
-        [[nodiscard]] friend bool operator==(const FixedRadiation & lhs, const FixedRadiation & rhs) = default;
-    };
-
-    //! A surface's radiative exchange: fixed radiation with inputs of its own, or one of
-    //! THERM's other models as its records state them. A black body must hold constants;
-    //! the enclosures are steady-state only, since the engine does not run them through a
-    //! clock.
-    using Radiation = std::variant<FixedRadiation,
-                                   BCLibrary::BlackBodyRadiation,
-                                   BCLibrary::AutomaticEnclosure,
-                                   BCLibrary::ManualEnclosure>;
+    //! A surface's radiative exchange, as THERM's records state it. Fixed-coefficient
+    //! radiation is the one model the engine reads step by step, and the one a weather file
+    //! feeds (its sky temperature is a radiant temperature); a black body must hold
+    //! constants; the enclosures are steady-state only, since the engine does not run them
+    //! through a clock.
+    using Radiation = BCLibrary::RadiationOptions;
 
     //! Exchange with an environment: air temperature in °C, relative humidity as a fraction,
     //! and a convection model. The fixed model takes its film coefficient in W/(m² K) from
@@ -98,13 +79,13 @@ namespace ThermFile::Model
     //! heat flux in W/m² on top of the exchange.
     struct Convective
     {
-        Input airTemperature{0.0};
-        std::optional<Input> filmCoefficient{};
-        Input humidity{0.5};
+        BCLibrary::Source airTemperature{0.0};
+        std::optional<BCLibrary::Source> filmCoefficient{};
+        BCLibrary::Source humidity{0.5};
         BCLibrary::ConvectionModel model{BCLibrary::ConvectionModel::Fixed_Convection_Coefficient};
-        std::optional<Input> windSpeed{};
-        std::optional<Input> windDirection{};
-        std::optional<Input> flux{};
+        std::optional<BCLibrary::Source> windSpeed{};
+        std::optional<BCLibrary::Source> windDirection{};
+        std::optional<BCLibrary::Source> flux{};
         std::optional<Radiation> radiation{};
 
         [[nodiscard]] friend bool operator==(const Convective & lhs, const Convective & rhs) = default;
@@ -112,20 +93,13 @@ namespace ThermFile::Model
 
     using Boundary = std::variant<Adiabatic, Prescribed, Convective>;
 
-    //! One input of a boundary kind and the dataset role it is written under.
-    struct RoleInput
-    {
-        TimeSeriesLibrary::SeriesRole role{TimeSeriesLibrary::SeriesRole::AirTemperature};
-        Input value{0.0};
+    //! The data of a boundary-condition record: what a boundary kind is in the file.
+    using RecordData = decltype(BCLibrary::BoundaryCondition::data);
 
-        [[nodiscard]] friend bool operator==(const RoleInput & lhs, const RoleInput & rhs) = default;
-    };
-
-    //! Every input a boundary kind carries, each under its role, in the order the record
-    //! states them. The one place that pairs an input with a role: the writer puts a series
-    //! input in a dataset under this role, and issues() checks it against the schedule.
-    //! Empty for an adiabatic segment.
-    [[nodiscard]] std::vector<RoleInput> inputs(const Boundary & boundary);
+    //! The boundary kind as THERM's record data: a Convective as a surface exchange, a
+    //! Prescribed as a prescribed state, Adiabatic as no exchange. The inputs carry over as
+    //! they are, constants and roles alike.
+    [[nodiscard]] RecordData recordData(const Boundary & boundary);
 
     // ------------------------------------------------------------------------------------
     // Geometry
@@ -155,6 +129,10 @@ namespace ThermFile::Model
     //! the region is found: a segment on the model's outline lies on exactly one region's
     //! edge. It must be stated where regions touch, since the same line is then the edge
     //! of two of them and the condition belongs to one.
+    //!
+    //! `dataset` is what the condition's FromTimeSeries inputs read, as in THERM, where a
+    //! segment binds one dataset beside its record. It is written to the archive as it is
+    //! given, its own axis included, so the run's clock is the datasets' clock.
     struct Segment
     {
         Boundary kind{Adiabatic{}};
@@ -171,6 +149,7 @@ namespace ThermFile::Model
         //! solver sums the heat flow over every segment carrying the same tag and reports
         //! one U-factor per tag. Unset, the segment reports under none.
         std::optional<std::string> uFactorTag{};
+        std::optional<TimeSeriesLibrary::TimeSeriesData> dataset{};
 
         [[nodiscard]] friend bool operator==(const Segment & lhs, const Segment & rhs) = default;
     };
@@ -209,8 +188,9 @@ namespace ThermFile::Model
         [[nodiscard]] friend bool operator==(const Start & lhs, const Start & rhs) = default;
     };
 
-    //! The clock: one length in seconds per step, from `start`. Every series input of the
-    //! case has one value per step. The steps need not be even.
+    //! The clock of a case whose segments bind no dataset: one length in seconds per step,
+    //! from `start`. The steps need not be even. A case whose segments bind datasets runs on
+    //! the datasets' clock; a schedule stated beside them must agree with them.
     struct Schedule
     {
         Start start{};
@@ -229,8 +209,9 @@ namespace ThermFile::Model
     //! The one length every step has, or nothing when the steps differ or there are none.
     [[nodiscard]] std::optional<double> uniformStep(const Schedule & schedule);
 
-    //! The schedule as the axis of the datasets the writer makes: even when every step has
-    //! the same length, otherwise with the lengths stated one by one.
+    //! The schedule as the axis of the clock dataset the writer makes when no segment binds
+    //! one: even when every step has the same length, otherwise with the lengths stated one
+    //! by one.
     [[nodiscard]] TimeSeriesLibrary::TimeAxis axisOf(const Schedule & schedule);
 
     //! The schedule a dataset dictates: its steps and their lengths, and its start, so a
@@ -273,10 +254,10 @@ namespace ThermFile::Model
     //! clock and settings.
     //!
     //! `mode` is the calculation the archive is set up for. A transient case runs through
-    //! its clock: `initial` and `schedule` apply, and every condition is read from a dataset.
-    //! A steady-state case has no clock: `initial` and `schedule` are not written, each
-    //! condition is a constant on its own record, and `meshControl` -- THERM's own error
-    //! target and pass budget -- drives the error estimator.
+    //! its clock -- the datasets its segments bind, or `schedule` when they bind none -- from
+    //! `initial`. A steady-state case has no clock: `initial` and `schedule` are not
+    //! written, each condition is a constant on its own record, and `meshControl` --
+    //! THERM's own error target and pass budget -- drives the error estimator.
     struct ModelCase
     {
         std::string id{};
@@ -298,13 +279,17 @@ namespace ThermFile::Model
     //! and one set of properties per name (the library keeps one record per name); every
     //! segment attached to one region (see segmentRegion); a mode that is transient or steady
     //! state; a convection model given the inputs it reads (a film coefficient for the fixed
-    //! model, the wind for the correlations); for a transient case a positive step and a
-    //! positive number of steps, every series input as long as the schedule, and radiation
-    //! the engine runs through a clock (fixed radiation, or a black body of constants); for a
+    //! model, the wind for the correlations); for a transient case a dataset on every segment
+    //! whose condition reads a role, providing every role it reads (BCLibrary::missingRoles),
+    //! a schedule of positive steps when no segment binds a dataset, a schedule that agrees
+    //! with every bound dataset's axis when one is stated beside them, and radiation the
+    //! engine runs through a clock (fixed coefficient, or a black body of constants); for a
     //! steady-state case no prescribed segment, since THERM's steady-state library has no
-    //! record for a prescribed surface state, and no series input, since it has no datasets.
-    //! Segments are not checked while a region has fewer than three points, since it has
-    //! no edges to lie on.
+    //! record for a prescribed surface state, and no role read and no dataset bound, since it
+    //! has no datasets. Whether the datasets of a case agree with one another is not checked
+    //! here: TimeSeriesLibrary::alignmentIssues says, and HygroTherm refuses a misaligned
+    //! archive before it solves. Segments are not checked while a region has fewer than three
+    //! points, since it has no edges to lie on.
     [[nodiscard]] std::vector<std::string> issues(const ModelCase & modelCase);
 
     //! Whether the case is set up for a steady-state calculation.

@@ -58,9 +58,11 @@ namespace TimeSeriesLibrary
     }
 
     //! A missing TimeAxis element leaves the defaults (1 January 00:00, hourly): datasets
-    //! saved before the axis existed keep the meaning they always had. StepLengths is
-    //! written only for uneven steps, as the comma-separated list Series/Values uses, so an
-    //! evenly stepped axis reads and writes exactly as it did before uneven steps existed.
+    //! saved before the axis existed keep the meaning they always had. The file states the
+    //! steps as StepSeconds, the one length or the first of the list, and StepLengths, the
+    //! list as the comma-separated text Series/Values uses, written only when the steps
+    //! differ: an evenly stepped axis reads and writes exactly as it did before uneven
+    //! steps existed.
     template<typename NodeAdapter>
         requires SerializerNode<NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, TimeAxis & axis)
@@ -70,10 +72,12 @@ namespace TimeSeriesLibrary
         node >> FileParse::Child{tag.day(), axis.day};
         node >> FileParse::Child{tag.hour(), axis.hour};
         node >> FileParse::Child{tag.minute(), axis.minute};
-        node >> FileParse::Child{tag.stepSeconds(), axis.stepSeconds};
+        double every{stepSecondsAt(axis, 0U)};
+        node >> FileParse::Child{tag.stepSeconds(), every};
         std::optional<std::string> lengthsText;
         node >> FileParse::Child{tag.stepLengths(), lengthsText};
-        axis.stepLengths = lengthsText.has_value() ? parseSeriesValues(lengthsText.value()) : std::vector<double>{};
+        auto lengths{lengthsText.has_value() ? parseSeriesValues(lengthsText.value()) : std::vector<double>{}};
+        axis.stepSeconds = lengths.empty() ? StepSeconds{every} : StepSeconds{std::move(lengths)};
         return node;
     }
 
@@ -86,10 +90,11 @@ namespace TimeSeriesLibrary
         node << FileParse::Child{tag.day(), axis.day};
         node << FileParse::Child{tag.hour(), axis.hour};
         node << FileParse::Child{tag.minute(), axis.minute};
-        node << FileParse::Child{tag.stepSeconds(), axis.stepSeconds};
-        if(!axis.stepLengths.empty())
+        double first{stepSecondsAt(axis, 0U)};
+        node << FileParse::Child{tag.stepSeconds(), first};
+        if(const auto * lengths{std::get_if<std::vector<double>>(&axis.stepSeconds)})
         {
-            const std::string lengthsText{formatSeriesValues(axis.stepLengths)};
+            const std::string lengthsText{formatSeriesValues(*lengths)};
             node << FileParse::Child{tag.stepLengths(), lengthsText};
         }
         return node;

@@ -161,7 +161,7 @@ TEST(TestStandardsGeneration, MissingAirTemperatureIsAnError)
 TEST(TestStandardsGeneration, UnevenExteriorIsRefused)
 {
     auto exterior{makeExterior({-5.0, 15.0, 25.0}, {0.8, 0.8, 0.8})};
-    exterior.axis = TimeSeriesLibrary::TimeAxis{.stepSeconds = 900.0, .stepLengths = {900.0, 3600.0, 3600.0}};
+    exterior.axis = TimeSeriesLibrary::TimeAxis{.stepSeconds = std::vector<double>{900.0, 3600.0, 3600.0}};
     const auto result{Standards::generateInterior(exterior, Standards::Standard::ISO_13788, Standards::MoistureLoad::Normal)};
     ASSERT_FALSE(result.has_value());
     EXPECT_NE(result.error().find("uneven"), std::string::npos);

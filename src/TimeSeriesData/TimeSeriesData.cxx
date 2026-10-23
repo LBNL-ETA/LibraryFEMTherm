@@ -89,27 +89,40 @@ namespace TimeSeriesLibrary
 
     bool evenlyStepped(const TimeAxis & axis)
     {
-        return axis.stepLengths.empty();
+        return std::holds_alternative<double>(axis.stepSeconds);
     }
 
     std::vector<double> stepLengths(const TimeAxis & axis, const size_t steps)
     {
-        if(evenlyStepped(axis))
+        if(const auto * every{std::get_if<double>(&axis.stepSeconds)})
         {
-            return std::vector<double>(steps, axis.stepSeconds);
+            return std::vector<double>(steps, *every);
         }
-        auto lengths{axis.stepLengths};
+        auto lengths{std::get<std::vector<double>>(axis.stepSeconds)};
         lengths.resize(steps, lengths.back());
         return lengths;
     }
 
     double stepSecondsAt(const TimeAxis & axis, const size_t index)
     {
-        if(evenlyStepped(axis))
+        if(const auto * every{std::get_if<double>(&axis.stepSeconds)})
         {
-            return axis.stepSeconds;
+            return *every;
         }
-        return axis.stepLengths[std::min(index, axis.stepLengths.size() - 1U)];
+        const auto & lengths{std::get<std::vector<double>>(axis.stepSeconds)};
+        return lengths[std::min(index, lengths.size() - 1U)];
+    }
+
+    StepSeconds stepSecondsOf(const std::vector<double> & lengths)
+    {
+        constexpr double sameWithin{0.5};
+        const bool even{std::ranges::all_of(
+          lengths, [&lengths](const double length) { return std::abs(length - lengths.front()) <= sameWithin; })};
+        if(even)
+        {
+            return lengths.empty() ? StepSeconds{3600.0} : StepSeconds{lengths.front()};
+        }
+        return lengths;
     }
 
     TimeAxis axisAfter(const TimeAxis & axis, const size_t steps)
@@ -118,11 +131,9 @@ namespace TimeSeriesLibrary
         const double elapsed{std::accumulate(lengths.begin(), lengths.end(), 0.0)};
         auto moved{axisAt(startSecondsIntoYear(axis) + elapsed)};
         moved.stepSeconds = axis.stepSeconds;
-        if(!evenlyStepped(axis) && steps < axis.stepLengths.size())
+        if(const auto * stated{std::get_if<std::vector<double>>(&axis.stepSeconds)}; stated != nullptr && steps < stated->size())
         {
-            moved.stepLengths.assign(axis.stepLengths.begin() + static_cast<std::ptrdiff_t>(steps),
-                                     axis.stepLengths.end());
-            moved.stepSeconds = moved.stepLengths.front();
+            moved.stepSeconds = std::vector<double>(stated->begin() + static_cast<std::ptrdiff_t>(steps), stated->end());
         }
         return moved;
     }
@@ -151,11 +162,11 @@ namespace TimeSeriesLibrary
 
     std::string stepLabel(const TimeAxis & axis)
     {
-        if(evenlyStepped(axis))
+        if(const auto * every{std::get_if<double>(&axis.stepSeconds)})
         {
-            return lengthLabel(axis.stepSeconds);
+            return lengthLabel(*every);
         }
-        const auto [shortest, longest]{std::ranges::minmax_element(axis.stepLengths)};
+        const auto [shortest, longest]{std::ranges::minmax_element(std::get<std::vector<double>>(axis.stepSeconds))};
         if(*shortest == *longest)
         {
             return lengthLabel(*shortest);

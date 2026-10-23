@@ -191,6 +191,17 @@ class TestKeywordConstruction:
         assert repr(data).startswith("TimeSeriesData(name='Two steps', 15 Mar 06:30")
         assert fem.TimeAxis() == fem.TimeAxis(month=1, day=1)
 
+    def test_steps_are_one_length_or_one_per_step(self):
+        uneven: fem.TimeAxis = fem.TimeAxis(step_seconds=[900.0, 1800.0, 3600.0])
+        assert uneven.step_seconds == [900.0, 1800.0, 3600.0]
+        assert repr(uneven) == "TimeAxis(month=1, day=1, hour=0, minute=0, step_seconds=[900.0, 1800.0, 3600.0])"
+        # Lengths that are all the same are one length, whichever way they were given.
+        assert fem.TimeAxis(step_seconds=[1800.0, 1800.0]) == fem.TimeAxis(step_seconds=1800.0)
+        uneven.step_seconds = [600.0, 600.0]
+        assert uneven.step_seconds == 600.0
+        with pytest.raises(ValueError, match="at least one length"):
+            fem.TimeAxis(step_seconds=[])
+
 
 class TestCreation:
     def test_read_epw_maps_five_roles_and_the_station(self, tmp_path):
@@ -242,7 +253,7 @@ class TestCreation:
             "uneven", fem.StepColumn.Time)
         assert not fem.evenly_stepped(uneven.data)
         assert fem.step_lengths(uneven.data) == [900.0, 7200.0]
-        assert uneven.data.axis == fem.TimeAxis(step_lengths=[900.0, 7200.0])
+        assert uneven.data.axis == fem.TimeAxis(step_seconds=[900.0, 7200.0])
         assert fem.describe_axis(uneven.data) == "1 Jan 00:00, steps 15 min to 2 h, 2 rows"
         with pytest.raises(ValueError, match="has no Time column"):
             fem.read_csv_string("Air Temperature\n1\n2\n", "bare", fem.StepColumn.Time)
@@ -251,9 +262,9 @@ class TestCreation:
         result = fem.read_csv_string("dt,Air Temperature\n900,1\n900,2\n1800,3\n", "logger", fem.StepColumn.Timestep)
         assert result.had_timestep_column and not result.first_row_was_start
         assert fem.values_for_role(result.data, fem.SeriesRole.AirTemperature) == [1.0, 2.0, 3.0]
-        assert result.data.axis == fem.TimeAxis(step_seconds=900.0, step_lengths=[900.0, 900.0, 1800.0])
+        assert result.data.axis == fem.TimeAxis(step_seconds=[900.0, 900.0, 1800.0])
         assert repr(result.data.axis) == (
-            "TimeAxis(month=1, day=1, hour=0, minute=0, step_seconds=900.0, step_lengths=[900.0, 900.0, 1800.0])")
+            "TimeAxis(month=1, day=1, hour=0, minute=0, step_seconds=[900.0, 900.0, 1800.0])")
         assert repr(fem.FixedStep(900.0)) == "FixedStep(seconds=900.0)"
         with pytest.raises(ValueError, match="has no Timestep column"):
             fem.read_csv_string(CSV_TEXT, "indoor", fem.StepColumn.Timestep)

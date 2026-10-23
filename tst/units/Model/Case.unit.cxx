@@ -5,6 +5,7 @@
 
 using namespace ThermFile::Model;
 using TimeSeriesLibrary::SeriesRole;
+using TimeSeriesLibrary::TimeSeriesData;
 
 namespace
 {
@@ -23,7 +24,9 @@ namespace
                         .start = {0.0, 0.01},
                         .end = {0.0, 0.0}},
                        {.kind = Adiabatic{}, .start = {0.0, 0.0}, .end = {0.1, 0.0}},
-                       {.kind = Convective{.airTemperature = -5.0, .filmCoefficient = 8.0, .humidity = 0.9},
+                       {.kind = Convective{.airTemperature = -5.0,
+                                           .filmCoefficient = 8.0,
+                                           .humidity = 0.9},
                         .start = {0.1, 0.0},
                         .end = {0.1, 0.01}},
                        {.kind = Adiabatic{}, .start = {0.1, 0.01}, .end = {0.0, 0.01}}},
@@ -42,6 +45,17 @@ namespace
         return values;
     }
 
+    //! A dataset named "weather" of `count` hourly steps from 1 January, one series per role.
+    TimeSeriesData providing(const std::vector<SeriesRole> & roles, const std::size_t count = 24U)
+    {
+        TimeSeriesData data{.UUID = "weather-uuid", .Name = "weather"};
+        for(const auto role : roles)
+        {
+            data.series.push_back({.role = role, .values = hours(count)});
+        }
+        return data;
+    }
+
     Convective & convectiveEnd(ModelCase & modelCase)
     {
         return std::get<Convective>(modelCase.segments[2].kind);
@@ -49,12 +63,7 @@ namespace
 
     std::vector<SeriesRole> rolesOf(const Boundary & boundary)
     {
-        std::vector<SeriesRole> roles;
-        for(const auto & input : inputs(boundary))
-        {
-            roles.push_back(input.role);
-        }
-        return roles;
+        return BCLibrary::requiredRoles(BCLibrary::BoundaryCondition{.data = recordData(boundary)});
     }
 }   // namespace
 
@@ -318,10 +327,17 @@ TEST(Model, DefaultsMatchTheEngineSettings)
     EXPECT_NEAR(numerics.relaxation, 1.0, 1e-15);
     EXPECT_EQ(numerics.maxIterations, 25);
 
-    EXPECT_EQ(Convective{}.humidity, Input{0.5});
-    EXPECT_EQ(Convective{}.model, BCLibrary::ConvectionModel::Fixed_Convection_Coefficient);
-    EXPECT_TRUE(std::holds_alternative<Adiabatic>(Segment{}.kind));
-    EXPECT_EQ(Schedule{}.start, (Start{.month = 1U, .day = 1U, .hour = 0U, .minute = 0U}));
+    // What a caller gets for every field it leaves out.
+    const Convective convective;
+    EXPECT_EQ(convective.humidity, BCLibrary::Source{0.5});
+    EXPECT_EQ(convective.model, BCLibrary::ConvectionModel::Fixed_Convection_Coefficient);
+
+    const Segment segment;
+    EXPECT_TRUE(std::holds_alternative<Adiabatic>(segment.kind));
+    EXPECT_FALSE(segment.dataset.has_value());
+
+    const Schedule schedule;
+    EXPECT_EQ(schedule.start, (Start{.month = 1U, .day = 1U, .hour = 0U, .minute = 0U}));
 }
 
 TEST(Model, CasesCompareByValue)
@@ -333,26 +349,20 @@ TEST(Model, CasesCompareByValue)
 }
 
 // ------------------------------------------------------------------------------------------
-// Inputs: constants and series
+// Inputs: constants and roles, and the dataset a segment binds
 // ------------------------------------------------------------------------------------------
 
-TEST(Model, AnInputIsAConstantOrASeries)
+TEST(Model, RecordDataCarriesTheInputsAsStated)
 {
-    EXPECT_TRUE(isConstant(Input{20.0}));
-    EXPECT_FALSE(seriesLength(Input{20.0}).has_value());
-    EXPECT_FALSE(isConstant(Input{hours(24U)}));
-    EXPECT_EQ(seriesLength(Input{hours(24U)}), std::optional{std::size_t{24U}});
-}
-
-TEST(Model, InputsListEveryRoleOnce)
-{
-    const Convective everything{.airTemperature = -5.0,
-                                .filmCoefficient = 8.0,
-                                .humidity = 0.9,
-                                .windSpeed = 3.0,
-                                .windDirection = 180.0,
-                                .flux = 50.0,
-                                .radiation = FixedRadiation{.temperature = -10.0, .coefficient = 4.5}};
+    const Convective everything{
+      .airTemperature = SeriesRole::AirTemperature,
+      .filmCoefficient = SeriesRole::ConvectiveCoefficient,
+      .humidity = SeriesRole::RelativeHumidity,
+      .windSpeed = SeriesRole::WindSpeed,
+      .windDirection = SeriesRole::WindDirection,
+      .flux = SeriesRole::HeatFlux,
+      .radiation = BCLibrary::FixedCoefficientRadiation{.temperature = SeriesRole::RadiantTemperature,
+                                                        .coefficient = SeriesRole::RadiativeCoefficient}};
     EXPECT_EQ(rolesOf(everything),
               (std::vector<SeriesRole>{SeriesRole::RelativeHumidity,
                                        SeriesRole::AirTemperature,
@@ -362,41 +372,71 @@ TEST(Model, InputsListEveryRoleOnce)
                                        SeriesRole::RadiantTemperature,
                                        SeriesRole::RadiativeCoefficient,
                                        SeriesRole::HeatFlux}));
-    EXPECT_EQ(rolesOf(Convective{.airTemperature = -5.0, .filmCoefficient = 8.0}),
-              (std::vector<SeriesRole>{SeriesRole::RelativeHumidity, SeriesRole::AirTemperature, SeriesRole::ConvectiveCoefficient}));
-    EXPECT_EQ(rolesOf(Prescribed{.temperature = 20.0, .humidity = 0.8}),
-              (std::vector<SeriesRole>{SeriesRole::PrescribedTemperature, SeriesRole::PrescribedHumidity}));
-    EXPECT_EQ(rolesOf(Prescribed{.temperature = 20.0}), (std::vector<SeriesRole>{SeriesRole::PrescribedTemperature}));
-    EXPECT_TRUE(inputs(Adiabatic{}).empty());
-    EXPECT_EQ(inputs(everything)[1].value, Input{-5.0});
+    const auto exchange{std::get<BCLibrary::SurfaceExchange>(recordData(everything))};
+    EXPECT_EQ(exchange.convection->airTemperature, std::optional{BCLibrary::Source{SeriesRole::AirTemperature}});
+
+    // Constants read nothing; the kinds map to THERM's record shapes.
+    EXPECT_TRUE(rolesOf(Convective{.airTemperature = -5.0, .filmCoefficient = 8.0}).empty());
+    EXPECT_EQ(rolesOf(Prescribed{.temperature = SeriesRole::PrescribedTemperature, .humidity = 0.8}),
+              (std::vector<SeriesRole>{SeriesRole::PrescribedTemperature}));
+    EXPECT_TRUE(std::holds_alternative<BCLibrary::PrescribedState>(recordData(Prescribed{})));
+    EXPECT_TRUE(std::holds_alternative<BCLibrary::NoExchange>(recordData(Adiabatic{})));
 }
 
-TEST(Model, SeriesInputMustMatchTheSchedule)
+TEST(Model, ASegmentReadingARoleNeedsADataset)
 {
     auto modelCase{strip()};
-    convectiveEnd(modelCase).airTemperature = hours(10U);
+    convectiveEnd(modelCase).airTemperature = SeriesRole::AirTemperature;
     const auto found{issues(modelCase)};
     ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0], "segment 2 from (0.1, 0) to (0.1, 0.01): AirTemperature has 10 values, the schedule has 24 steps");
+    EXPECT_EQ(found[0], "segment 2 from (0.1, 0) to (0.1, 0.01) reads AirTemperature from a dataset but binds none");
 
-    convectiveEnd(modelCase).airTemperature = hours(24U);
+    modelCase.segments[2].dataset = providing({SeriesRole::AirTemperature});
     EXPECT_TRUE(issues(modelCase).empty());
 }
 
-TEST(Model, EachMismatchedSeriesIsOneIssue)
+TEST(Model, TheDatasetMustProvideEveryRoleRead)
 {
     auto modelCase{strip()};
-    convectiveEnd(modelCase).airTemperature = hours(10U);
-    convectiveEnd(modelCase).humidity = hours(5U);
-    std::get<Prescribed>(modelCase.segments[0].kind).temperature = hours(24U);   // this one fits
-    EXPECT_EQ(issues(modelCase).size(), 2U);
+    convectiveEnd(modelCase).airTemperature = SeriesRole::AirTemperature;
+    convectiveEnd(modelCase).humidity = SeriesRole::RelativeHumidity;
+    modelCase.segments[2].dataset = providing({SeriesRole::AirTemperature});
+    const auto found{issues(modelCase)};
+    ASSERT_EQ(found.size(), 1U);
+    EXPECT_EQ(found[0], "segment 2 from (0.1, 0) to (0.1, 0.01): its dataset 'weather' provides no RelativeHumidity");
 }
 
-TEST(Model, ASchedulWithNoStepsReportsItselfNotEverySeries)
+TEST(Model, AStatedScheduleMustAgreeWithTheDatasets)
+{
+    auto modelCase{strip()};
+    convectiveEnd(modelCase).airTemperature = SeriesRole::AirTemperature;
+    modelCase.segments[2].dataset = providing({SeriesRole::AirTemperature}, 10U);
+    const auto found{issues(modelCase)};
+    ASSERT_EQ(found.size(), 1U);
+    EXPECT_NE(found[0].find("the stated schedule differs from the axis of its dataset 'weather'"), std::string::npos);
+
+    // Left unstated, the schedule is the datasets'.
+    modelCase.schedule = Schedule{};
+    EXPECT_TRUE(issues(modelCase).empty());
+}
+
+TEST(Model, DatasetsAreNotComparedWithOneAnother)
+{
+    // Two datasets that do not align are for TimeSeriesLibrary::alignmentIssues, and for
+    // HygroTherm before it solves; the case states what it binds.
+    auto modelCase{strip()};
+    modelCase.schedule = Schedule{};
+    std::get<Prescribed>(modelCase.segments[0].kind).temperature = SeriesRole::PrescribedTemperature;
+    modelCase.segments[0].dataset = providing({SeriesRole::PrescribedTemperature}, 24U);
+    convectiveEnd(modelCase).airTemperature = SeriesRole::AirTemperature;
+    modelCase.segments[2].dataset = providing({SeriesRole::AirTemperature}, 10U);
+    EXPECT_TRUE(issues(modelCase).empty());
+}
+
+TEST(Model, ASchedulWithNoStepsIsReportedWhenNoDatasetIsBound)
 {
     auto modelCase{strip()};
     modelCase.schedule.stepLengths.clear();
-    convectiveEnd(modelCase).airTemperature = hours(10U);
     EXPECT_EQ(issues(modelCase), (std::vector<std::string>{"the schedule needs at least one step"}));
 }
 
@@ -421,7 +461,8 @@ TEST(Model, TheConvectionModelMustBeGivenItsInputs)
     ASSERT_EQ(found.size(), 1U);
     EXPECT_NE(found[0].find("needs the wind direction"), std::string::npos);
 
-    convectiveEnd(modelCase).windDirection = hours(24U);
+    convectiveEnd(modelCase).windDirection = SeriesRole::WindDirection;
+    modelCase.segments[2].dataset = providing({SeriesRole::WindDirection});
     EXPECT_TRUE(issues(modelCase).empty());
 
     // The inside correlations read no wind at all.
@@ -429,49 +470,58 @@ TEST(Model, TheConvectionModelMustBeGivenItsInputs)
     EXPECT_TRUE(issues(modelCase).empty());
 }
 
-TEST(Model, TransientAllowsFixedRadiationFromSeries)
+TEST(Model, TransientAllowsFixedRadiationFromADataset)
 {
     auto modelCase{strip()};
-    convectiveEnd(modelCase).radiation = FixedRadiation{.temperature = hours(24U), .coefficient = 4.5};
+    convectiveEnd(modelCase).radiation = BCLibrary::FixedCoefficientRadiation{
+      .temperature = SeriesRole::RadiantTemperature, .coefficient = 4.5};
+    modelCase.segments[2].dataset = providing({SeriesRole::RadiantTemperature});
     EXPECT_TRUE(issues(modelCase).empty());
 
-    convectiveEnd(modelCase).radiation = FixedRadiation{.temperature = hours(12U), .coefficient = 4.5};
+    modelCase.segments[2].dataset = providing({SeriesRole::RelativeHumidity});
     const auto found{issues(modelCase)};
     ASSERT_EQ(found.size(), 1U);
-    EXPECT_NE(found[0].find("RadiantTemperature has 12 values"), std::string::npos);
+    EXPECT_NE(found[0].find("provides no RadiantTemperature"), std::string::npos);
 }
 
 TEST(Model, TransientRefusesWhatTheEngineDoesNotRunThroughAClock)
 {
     auto modelCase{strip()};
+    modelCase.segments[2].dataset = providing({SeriesRole::RadiantTemperature});
     convectiveEnd(modelCase).radiation = BCLibrary::AutomaticEnclosure{};
     auto found{issues(modelCase)};
     ASSERT_EQ(found.size(), 1U);
     EXPECT_NE(found[0].find("radiates into an enclosure"), std::string::npos);
 
     convectiveEnd(modelCase).radiation = BCLibrary::BlackBodyRadiation{
-      .temperature = BCLibrary::FromTimeSeries{SeriesRole::RadiantTemperature}};
+      .temperature = SeriesRole::RadiantTemperature};
     found = issues(modelCase);
     ASSERT_EQ(found.size(), 1U);
     EXPECT_NE(found[0].find("black body read from a series"), std::string::npos);
 
-    convectiveEnd(modelCase).radiation = BCLibrary::BlackBodyRadiation{.temperature = BCLibrary::Constant{-10.0}};
+    convectiveEnd(modelCase).radiation = BCLibrary::BlackBodyRadiation{.temperature = -10.0};
     EXPECT_TRUE(issues(modelCase).empty());
 }
 
-TEST(Model, SteadyStateRefusesAnySeriesInput)
+TEST(Model, SteadyStateRefusesAnyRoleAndAnyDataset)
 {
     auto modelCase{strip()};
     modelCase.mode = ThermFile::CalculationMode::cmSteadyState;
     modelCase.segments[0].kind = Convective{.airTemperature = 20.0, .filmCoefficient = 8.0};
     EXPECT_TRUE(issues(modelCase).empty());
 
-    convectiveEnd(modelCase).airTemperature = hours(24U);
-    const auto found{issues(modelCase)};
+    convectiveEnd(modelCase).airTemperature = SeriesRole::AirTemperature;
+    auto found{issues(modelCase)};
     ASSERT_EQ(found.size(), 1U);
     EXPECT_EQ(found[0],
-              "segment 2 from (0.1, 0) to (0.1, 0.01) reads AirTemperature from a series, which a steady-state case "
-              "has no datasets for; state it as a constant");
+              "segment 2 from (0.1, 0) to (0.1, 0.01) reads AirTemperature from a dataset, which a steady-state case "
+              "has none of; state it as a constant");
+
+    convectiveEnd(modelCase).airTemperature = -5.0;
+    modelCase.segments[2].dataset = providing({SeriesRole::AirTemperature});
+    found = issues(modelCase);
+    ASSERT_EQ(found.size(), 1U);
+    EXPECT_NE(found[0].find("binds a dataset, which a steady-state case does not write"), std::string::npos);
 }
 
 // ------------------------------------------------------------------------------------------
@@ -493,7 +543,7 @@ TEST(Model, ScheduleForDatasetCopiesTheAxis)
 TEST(Model, AnUnevenScheduleStatesEveryStep)
 {
     const TimeSeriesLibrary::TimeSeriesData dataset{
-      .axis = {.month = 3U, .day = 2U, .stepSeconds = 900.0, .stepLengths = {900.0, 1800.0}},
+      .axis = {.month = 3U, .day = 2U, .stepSeconds = std::vector<double>{900.0, 1800.0}},
       .series = {{.role = SeriesRole::AirTemperature, .values = hours(2U)}}};
     const auto schedule{scheduleFor(dataset)};
     EXPECT_EQ(schedule, (Schedule{.start = {.month = 3U, .day = 2U}, .stepLengths = {900.0, 1800.0}}));

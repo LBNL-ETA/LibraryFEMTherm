@@ -40,6 +40,21 @@ namespace
         return result.value();
     }
 
+    //! The steps as the axis keeps them; an empty list states no step at all.
+    TimeSeriesLibrary::StepSeconds checkedSteps(const TimeSeriesLibrary::StepSeconds & stepSeconds)
+    {
+        const auto * lengths{std::get_if<std::vector<double>>(&stepSeconds)};
+        if(lengths == nullptr)
+        {
+            return stepSeconds;
+        }
+        if(lengths->empty())
+        {
+            throw py::value_error("step_seconds needs at least one length");
+        }
+        return TimeSeriesLibrary::stepSecondsOf(*lengths);
+    }
+
     void bindDataModel(py::module_ & mod)
     {
         py::enum_<SeriesRole>(mod, "SeriesRole")
@@ -71,46 +86,41 @@ namespace
         py::class_<TimeAxis>(mod,
                              "TimeAxis",
                              "Where row zero sits in the year and how far apart the rows are: a calendar "
-                             "position with no year, and a step in seconds. Steps are even unless "
-                             "`step_lengths` states one length per step, `step_seconds` then being the "
-                             "first of them.")
+                             "position with no year, and `step_seconds`, one length in seconds for every step "
+                             "or a list of one length per step. A list whose lengths are all the same is kept "
+                             "as that one length.")
             .def(py::init([](const std::size_t month,
                              const std::size_t day,
                              const std::size_t hour,
                              const std::size_t minute,
-                             const double stepSeconds,
-                             const std::vector<double> & stepLengths) {
-                     return TimeAxis{.month = month,
-                                     .day = day,
-                                     .hour = hour,
-                                     .minute = minute,
-                                     .stepSeconds = stepLengths.empty() ? stepSeconds : stepLengths.front(),
-                                     .stepLengths = stepLengths};
+                             const TimeSeriesLibrary::StepSeconds & stepSeconds) {
+                     return TimeAxis{
+                       .month = month, .day = day, .hour = hour, .minute = minute, .stepSeconds = checkedSteps(stepSeconds)};
                  }),
                  py::arg("month") = 1U,
                  py::arg("day") = 1U,
                  py::arg("hour") = 0U,
                  py::arg("minute") = 0U,
-                 py::arg("step_seconds") = 3600.0,
-                 py::arg("step_lengths") = std::vector<double>{})
+                 py::arg("step_seconds") = 3600.0)
             .def_readwrite("month", &TimeAxis::month)
             .def_readwrite("day", &TimeAxis::day)
             .def_readwrite("hour", &TimeAxis::hour)
             .def_readwrite("minute", &TimeAxis::minute)
-            .def_readwrite("step_seconds", &TimeAxis::stepSeconds)
-            .def_readwrite("step_lengths", &TimeAxis::stepLengths, "Seconds per step when uneven; empty when even.")
+            .def_property(
+              "step_seconds",
+              [](const TimeAxis & axis) { return axis.stepSeconds; },
+              [](TimeAxis & axis, const TimeSeriesLibrary::StepSeconds & stepSeconds) {
+                  axis.stepSeconds = checkedSteps(stepSeconds);
+              },
+              "One length in seconds for every step, or a list of one length per step.")
             .def("__eq__", [](const TimeAxis & lhs, const TimeAxis & rhs) { return lhs == rhs; }, py::is_operator())
             .def("__repr__", [](const TimeAxis & axis) {
-                const std::string lengths{axis.stepLengths.empty()
-                                            ? std::string{}
-                                            : ", step_lengths=" + py::repr(py::cast(axis.stepLengths)).cast<std::string>()};
-                return std::format("TimeAxis(month={}, day={}, hour={}, minute={}, step_seconds={}{})",
+                return std::format("TimeAxis(month={}, day={}, hour={}, minute={}, step_seconds={})",
                                    axis.month,
                                    axis.day,
                                    axis.hour,
                                    axis.minute,
-                                   py::repr(py::cast(axis.stepSeconds)).cast<std::string>(),
-                                   lengths);
+                                   py::repr(py::cast(axis.stepSeconds)).cast<std::string>());
             });
 
         py::class_<TimeSeriesData>(mod,
@@ -201,7 +211,7 @@ namespace
         mod.def("axis_at", &TimeSeriesLibrary::axisAt, py::arg("seconds_into_year"),
                 "The calendar position that many seconds into the nominal year, wrapping at either end, hourly.");
         mod.def("evenly_stepped", [](const TimeSeriesData & data) { return TimeSeriesLibrary::evenlyStepped(data.axis); },
-                py::arg("data"), "Whether every step of the dataset is axis.step_seconds.");
+                py::arg("data"), "Whether the dataset's axis states one length for every step.");
         mod.def(
           "step_lengths",
           [](const TimeSeriesData & data) { return TimeSeriesLibrary::stepLengths(data.axis, TimeSeriesLibrary::steps(data)); },

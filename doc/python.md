@@ -287,10 +287,10 @@ transient segment additionally names the dataset its record reads from
 A dataset is the per-timestep environment a transient boundary reads: one series per
 role (air temperature, relative humidity, film coefficient, prescribed temperature, ...),
 one value per timestep. The dataset's time axis also sets the simulation clock: the number
-of rows is the number of timesteps and `step_seconds` the step length. Steps need not be
-even: `axis.step_lengths` states one length per step when they are not, and
-`fem.step_lengths(data)` gives them either way. Each dataset is its own archive entry,
-`time series/<uuid>.xml`.
+of rows is the number of timesteps and `axis.step_seconds` the step length: one length
+for every step, or a list of one length per step when they are not even
+(`fem.TimeAxis(step_seconds=[900.0, 3600.0])`). `fem.step_lengths(data)` gives one length
+per step either way. Each dataset is its own archive entry, `time series/<uuid>.xml`.
 
 ```python
 weather = fem.TimeSeriesData()
@@ -385,47 +385,50 @@ Every reader raises `ValueError` with the library's message when it cannot read.
 
 `pylibraryfemtherm.model` states a THERM model in physical terms -- regions in metres with
 their material, segments with their condition, a start, a clock -- and
-`pylibraryfemtherm.build` writes it as the archive THERM would have saved. Every boundary
-input is a constant or one value per step of the schedule, so a weather dataset feeds a
-face directly:
+`pylibraryfemtherm.build` writes it as the archive THERM would have saved. A segment carries
+the same two things a THERM segment does: a condition, whose every input is a number held
+for the whole run or a `SeriesRole` read step by step, and the dataset those roles are read
+from:
 
 ```python
 from pylibraryfemtherm import build, model
 
+Role = fem.SeriesRole
 outside = model.bc.Convective(
-    air_temperature=fem.series_values(outdoor, fem.SeriesRole.AirTemperature),
+    air_temperature=Role.AirTemperature,
     film_coefficient=25.0,
-    humidity=fem.series_values(outdoor, fem.SeriesRole.RelativeHumidity),
-    radiation=model.bc.FixedRadiation(
-        temperature=fem.series_values(outdoor, fem.SeriesRole.RadiantTemperature), coefficient=4.5),
+    humidity=Role.RelativeHumidity,
+    radiation=fem.BCFixedCoefficientRadiation(temperature=Role.RadiantTemperature, coefficient=4.5),
 )
-room = model.bc.Convective(
-    air_temperature=fem.series_values(indoor, fem.SeriesRole.AirTemperature),
-    film_coefficient=8.0,
-    humidity=fem.series_values(indoor, fem.SeriesRole.RelativeHumidity),
-)
+room = model.bc.Convective(air_temperature=Role.AirTemperature, film_coefficient=8.0,
+                           humidity=Role.RelativeHumidity)
 case = model.ModelCase(
     id="wall",
-    regions=[model.Region(brick, [(0.0, 0.0), (0.3, 0.0), (0.3, 0.3), (0.0, 0.3)])],
-    segments=[model.Segment(outside, (0.0, 0.3), (0.0, 0.0), name="outside"),
-              model.Segment(room, (0.3, 0.0), (0.3, 0.3), name="room side")],
-    schedule=model.schedule_for(outdoor),      # the file's step, row count and start
+    regions=[model.Region(material=brick, points=[(0.0, 0.0), (0.3, 0.0), (0.3, 0.3), (0.0, 0.3)])],
+    segments=[model.Segment(kind=outside, start=(0.0, 0.3), end=(0.0, 0.0), name="outside", dataset=outdoor),
+              model.Segment(kind=room, start=(0.3, 0.0), end=(0.3, 0.3), name="room side", dataset=indoor)],
 )
-print(model.issues(case))                      # [] -- every series as long as the schedule
+print(model.issues(case))                      # [] -- every role read is provided
 build.thmz(case, "wall.thmz")
 ```
 
-The writer *lowers* each segment: a constant stays a `Constant` on the segment's record, a
-series becomes a `FromTimeSeries` role on the record and a series in a dataset the record
-reads. Segments whose conditions come out the same share one record, named after the first
-segment that uses it (`name`, or "segment N"); segments reading the same series share one
-dataset, by content. A segment of constants binds no dataset; a model in which nothing
-reads a series binds a clock dataset to its first segment. `build.lower(kind)`,
-`build.segment_records(case)` and `build.segment_bindings(case)` show each step.
-`Convective` also takes a convection `model` with `wind_speed` and `wind_direction` for the
-correlations, an imposed `flux`, and THERM's own radiation records; `model.issues(case)`
-refuses what the engine cannot run (enclosures in a transient case, a black body read from
-a series, a series input in a steady-state case).
+The condition becomes the segment's record as stated (`model.record_data(kind)`): a number
+a `Constant`, a role a `FromTimeSeries`. Segments whose conditions come out the same share
+one record, named after the first segment that uses it (`name`, or "segment N"), whatever
+datasets they bind. Each bound dataset is written as given -- its UUID, name and time axis
+-- and once however many segments bind it, and the run's clock is the datasets' own. A case
+in which no segment binds a dataset runs on its `schedule`, which the writer turns into a
+clock dataset on the first segment. `build.segment_records(case)` and
+`build.segment_bindings(case)` show the result.
+
+`model.issues(case)` checks that every segment whose condition reads a role binds a dataset
+providing it (`fem.missing_roles`), that a schedule stated beside datasets agrees with
+them, and refuses what the engine cannot run (enclosures in a transient case, a black body
+read from a dataset, a role or a dataset in a steady-state case). Whether the datasets of a
+case agree with one another is `fem.time_series_alignment_issues(datasets)`; HygroTherm
+refuses a misaligned archive before it solves. `Convective` also takes a convection `model`
+with `wind_speed` and `wind_direction` for the correlations, an imposed `flux`, and THERM's
+other radiation records.
 
 ## Gases
 

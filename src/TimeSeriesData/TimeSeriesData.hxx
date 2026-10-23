@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace TimeSeriesLibrary
@@ -42,18 +43,19 @@ namespace TimeSeriesLibrary
     //! and their step counts are equal; nothing is ever interpolated. Datasets written before
     //! the axis existed read as 1 January 00:00 with hourly steps, which is what they were.
     //!
-    //! Steps are even unless `stepLengths` says otherwise: empty means every step is
-    //! `stepSeconds`; otherwise it holds one length per step and `stepSeconds` is the first
-    //! of them. An evenly stepped axis is therefore stored, hashed and compared exactly as
-    //! it was before uneven steps existed.
+    //! The steps are one length in seconds for every step, or one length per step, never an
+    //! empty list. The file writes the single length, or the first of the list, as
+    //! StepSeconds and the list, when there is one, as StepLengths: an evenly stepped axis
+    //! is stored and hashed exactly as it was before uneven steps existed.
+    using StepSeconds = std::variant<double, std::vector<double>>;
+
     struct TimeAxis
     {
         size_t month{1U};    //!< 1..12
         size_t day{1U};      //!< 1..31
         size_t hour{0U};     //!< 0..23, the start of the first interval
         size_t minute{0U};   //!< 0..59
-        double stepSeconds{3600.0};
-        std::vector<double> stepLengths;   //!< seconds per step when uneven; empty when even
+        StepSeconds stepSeconds{3600.0};
 
         [[nodiscard]] bool operator==(const TimeAxis & other) const = default;
     };
@@ -104,15 +106,20 @@ namespace TimeSeriesLibrary
     //! and rounded to the minute, which is as fine as an axis is stated. The step is hourly.
     [[nodiscard]] TimeAxis axisAt(double secondsIntoYear);
 
-    //! Whether every step is `stepSeconds`.
+    //! Whether the axis states one length for every step.
     [[nodiscard]] bool evenlyStepped(const TimeAxis & axis);
 
     //! One length per step, `steps` of them, even or not. An uneven axis stating fewer
     //! lengths than steps repeats its last one.
     [[nodiscard]] std::vector<double> stepLengths(const TimeAxis & axis, size_t steps);
 
-    //! The length of step `index`.
+    //! The length of step `index`; step 0's is what the file writes as StepSeconds.
     [[nodiscard]] double stepSecondsAt(const TimeAxis & axis, size_t index);
+
+    //! The steps as an axis states them: one length when every length is the same, the list
+    //! otherwise. Lengths within half a second count as the same; no lengths, the hourly
+    //! default.
+    [[nodiscard]] StepSeconds stepSecondsOf(const std::vector<double> & lengths);
 
     //! The axis `steps` rows later: the start moved through the first `steps` steps of the
     //! nominal year, wrapping at its end, the remaining steps kept. Rounded to the minute.

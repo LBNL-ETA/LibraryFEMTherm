@@ -422,18 +422,10 @@ namespace TimeSeriesLibrary::Csv
             return TimeAxis{.month = moment.month, .day = moment.day, .hour = moment.hour, .minute = moment.minute};
         }
 
-        //! Even steps stay one stepSeconds; uneven ones are stated per step, the first of
-        //! them doubling as stepSeconds. Lengths within half a second count as equal.
         TimeAxis axisWith(const TimeAxis & start, const std::vector<double> & lengths)
         {
             TimeAxis axis{start};
-            axis.stepSeconds = lengths.front();
-            const bool even{std::ranges::all_of(
-              lengths, [&lengths](const double length) { return std::abs(length - lengths.front()) <= 0.5; })};
-            if(!even)
-            {
-                axis.stepLengths = lengths;
-            }
+            axis.stepSeconds = stepSecondsOf(lengths);
             return axis;
         }
 

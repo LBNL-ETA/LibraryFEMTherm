@@ -34,33 +34,13 @@ namespace ThermFile::Model
         return uniform ? std::optional{lengths.front()} : std::nullopt;
     }
 
-    bool isConstant(const Input & input)
-    {
-        return std::holds_alternative<double>(input);
-    }
-
-    std::optional<std::size_t> seriesLength(const Input & input)
-    {
-        const auto * series{std::get_if<std::vector<double>>(&input)};
-        return series == nullptr ? std::nullopt : std::optional{series->size()};
-    }
-
     TimeSeriesLibrary::TimeAxis axisOf(const Schedule & schedule)
     {
-        TimeSeriesLibrary::TimeAxis axis{.month = schedule.start.month,
-                                         .day = schedule.start.day,
-                                         .hour = schedule.start.hour,
-                                         .minute = schedule.start.minute};
-        if(schedule.stepLengths.empty())
-        {
-            return axis;
-        }
-        axis.stepSeconds = schedule.stepLengths.front();
-        if(!uniformStep(schedule).has_value())
-        {
-            axis.stepLengths = schedule.stepLengths;
-        }
-        return axis;
+        return TimeSeriesLibrary::TimeAxis{.month = schedule.start.month,
+                                           .day = schedule.start.day,
+                                           .hour = schedule.start.hour,
+                                           .minute = schedule.start.minute,
+                                           .stepSeconds = TimeSeriesLibrary::stepSecondsOf(schedule.stepLengths)};
     }
 
     Schedule scheduleFor(const TimeSeriesLibrary::TimeSeriesData & dataset)
@@ -72,57 +52,32 @@ namespace ThermFile::Model
 
     namespace
     {
-        void appendInput(std::vector<RoleInput> & found, const SeriesRole role, const std::optional<Input> & input)
+        BCLibrary::SurfaceExchange exchangeOf(const Convective & convective)
         {
-            if(input.has_value())
-            {
-                found.push_back(RoleInput{.role = role, .value = input.value()});
-            }
-        }
-
-        void appendRadiationInputs(std::vector<RoleInput> & found, const std::optional<Radiation> & radiation)
-        {
-            const auto * fixed{radiation.has_value() ? std::get_if<FixedRadiation>(&radiation.value()) : nullptr};
-            if(fixed != nullptr)
-            {
-                appendInput(found, SeriesRole::RadiantTemperature, fixed->temperature);
-                appendInput(found, SeriesRole::RadiativeCoefficient, fixed->coefficient);
-            }
-        }
-
-        std::vector<RoleInput> convectiveInputs(const Convective & convective)
-        {
-            std::vector<RoleInput> found;
-            appendInput(found, SeriesRole::RelativeHumidity, convective.humidity);
-            appendInput(found, SeriesRole::AirTemperature, convective.airTemperature);
-            appendInput(found, SeriesRole::ConvectiveCoefficient, convective.filmCoefficient);
-            appendInput(found, SeriesRole::WindSpeed, convective.windSpeed);
-            appendInput(found, SeriesRole::WindDirection, convective.windDirection);
-            appendRadiationInputs(found, convective.radiation);
-            appendInput(found, SeriesRole::HeatFlux, convective.flux);
-            return found;
-        }
-
-        std::vector<RoleInput> prescribedInputs(const Prescribed & prescribed)
-        {
-            std::vector<RoleInput> found;
-            appendInput(found, SeriesRole::PrescribedTemperature, prescribed.temperature);
-            appendInput(found, SeriesRole::PrescribedHumidity, prescribed.humidity);
-            return found;
+            return BCLibrary::SurfaceExchange{
+              .relativeHumidity = convective.humidity,
+              .convection = BCLibrary::Convection{.model = convective.model,
+                                                  .airTemperature = convective.airTemperature,
+                                                  .filmCoefficient = convective.filmCoefficient,
+                                                  .windSpeed = convective.windSpeed,
+                                                  .windDirection = convective.windDirection},
+              .radiation = convective.radiation,
+              .flux = convective.flux};
         }
     }   // namespace
 
-    std::vector<RoleInput> inputs(const Boundary & boundary)
+    RecordData recordData(const Boundary & boundary)
     {
         if(const auto * convective{std::get_if<Convective>(&boundary)})
         {
-            return convectiveInputs(*convective);
+            return exchangeOf(*convective);
         }
         if(const auto * prescribed{std::get_if<Prescribed>(&boundary)})
         {
-            return prescribedInputs(*prescribed);
+            return BCLibrary::PrescribedState{.temperature = prescribed->temperature,
+                                              .relativeHumidity = prescribed->humidity};
         }
-        return {};
+        return BCLibrary::NoExchange{};
     }
 
     namespace
@@ -434,6 +389,54 @@ namespace ThermFile::Model
             }
         }
 
+        bool bindsDataset(const Segment & segment)
+        {
+            return segment.dataset.has_value();
+        }
+
+        //! A stated schedule beside bound datasets must be their clock; an unstated one is
+        //! taken from them. Without datasets, the schedule is the clock and must be one.
+        void checkClock(const ModelCase & modelCase, std::vector<std::string> & found)
+        {
+            if(std::ranges::none_of(modelCase.segments, bindsDataset))
+            {
+                checkSchedule(modelCase, found);
+                return;
+            }
+            if(modelCase.schedule.stepLengths.empty())
+            {
+                return;
+            }
+            for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
+            {
+                const auto & segment{modelCase.segments[index]};
+                if(bindsDataset(segment) && scheduleFor(segment.dataset.value()) != modelCase.schedule)
+                {
+                    found.push_back(std::format("{}: the stated schedule differs from the axis of its dataset '{}' "
+                                                "({}); leave the schedule out to run on the datasets' clock",
+                                                describe(index, segment),
+                                                segment.dataset->Name,
+                                                TimeSeriesLibrary::describeAxis(segment.dataset.value())));
+                }
+            }
+        }
+
+        //! The roles a segment's condition reads from its dataset, in the record's order.
+        std::vector<SeriesRole> rolesRead(const Segment & segment)
+        {
+            return BCLibrary::requiredRoles(BCLibrary::BoundaryCondition{.data = recordData(segment.kind)});
+        }
+
+        std::string roleNames(const std::vector<SeriesRole> & roles)
+        {
+            std::string names;
+            for(const auto role : roles)
+            {
+                names += (names.empty() ? "" : ", ") + TimeSeriesLibrary::seriesRoleToString(role);
+            }
+            return names;
+        }
+
         //! The radiation a segment states, or nothing.
         const Radiation * radiationOf(const Segment & segment)
         {
@@ -449,20 +452,6 @@ namespace ThermFile::Model
             return blackBody != nullptr
                    && (BCLibrary::isFromTimeSeries(blackBody->temperature)
                        || BCLibrary::isFromTimeSeries(blackBody->emissivity));
-        }
-
-        //! The series inputs of a segment, by role, with their lengths.
-        std::vector<std::pair<SeriesRole, std::size_t>> seriesInputs(const Segment & segment)
-        {
-            std::vector<std::pair<SeriesRole, std::size_t>> found;
-            for(const auto & [role, value] : inputs(segment.kind))
-            {
-                if(const auto length{seriesLength(value)})
-                {
-                    found.emplace_back(role, length.value());
-                }
-            }
-            return found;
         }
 
         //! The wind a convection model reads: the correlations for an outside surface need
@@ -540,40 +529,47 @@ namespace ThermFile::Model
                                                 "state it as Convective",
                                                 describe(index, segment)));
                 }
-                for(const auto & [role, length] : seriesInputs(segment))
+                if(const auto roles{rolesRead(segment)}; !roles.empty())
                 {
-                    found.push_back(std::format("{} reads {} from a series, which a steady-state case has "
-                                                "no datasets for; state it as a constant",
+                    found.push_back(std::format("{} reads {} from a dataset, which a steady-state case has "
+                                                "none of; state it as a constant",
                                                 describe(index, segment),
-                                                TimeSeriesLibrary::seriesRoleToString(role)));
+                                                roleNames(roles)));
                 }
-                if(const auto * radiation{radiationOf(segment)}; radiation != nullptr && blackBodyReadsSeries(*radiation))
+                if(bindsDataset(segment))
                 {
-                    found.push_back(std::format("{} radiates with an input read from a dataset, which a "
-                                                "steady-state case has none of; state it as a constant",
+                    found.push_back(std::format("{} binds a dataset, which a steady-state case does not write",
                                                 describe(index, segment)));
                 }
             }
         }
 
-        //! Every series input runs over the schedule: one value per step, no more, no less.
-        //! The engine would otherwise repeat a short series' last value without a word.
-        void checkSeriesLengths(const ModelCase & modelCase, std::vector<std::string> & found)
+        //! A segment whose condition reads roles needs a dataset that provides every one of
+        //! them: the pairing THERM's assignment dialog checks. The engine would otherwise
+        //! leave the condition out of the run.
+        void checkSegmentDatasets(const ModelCase & modelCase, std::vector<std::string> & found)
         {
-            const auto stepCount{nSteps(modelCase.schedule)};
-            for(std::size_t index = 0U; stepCount > 0U && index < modelCase.segments.size(); ++index)
+            for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
             {
                 const auto & segment{modelCase.segments[index]};
-                for(const auto & [role, length] : seriesInputs(segment))
+                const auto roles{rolesRead(segment)};
+                if(roles.empty())
                 {
-                    if(length != stepCount)
-                    {
-                        found.push_back(std::format("{}: {} has {} values, the schedule has {} steps",
-                                                    describe(index, segment),
-                                                    TimeSeriesLibrary::seriesRoleToString(role),
-                                                    length,
-                                                    stepCount));
-                    }
+                    continue;
+                }
+                if(!bindsDataset(segment))
+                {
+                    found.push_back(std::format(
+                      "{} reads {} from a dataset but binds none", describe(index, segment), roleNames(roles)));
+                    continue;
+                }
+                const BCLibrary::BoundaryCondition record{.data = recordData(segment.kind)};
+                if(const auto missing{BCLibrary::missingRoles(record, segment.dataset)}; !missing.empty())
+                {
+                    found.push_back(std::format("{}: its dataset '{}' provides no {}",
+                                                describe(index, segment),
+                                                segment.dataset->Name,
+                                                roleNames(missing)));
                 }
             }
         }
@@ -591,7 +587,7 @@ namespace ThermFile::Model
             if(blackBodyReadsSeries(radiation))
             {
                 return "radiates as a black body read from a series, which a transient run holds constant; "
-                       "state constants, or FixedRadiation for a series";
+                       "state constants, or fixed-coefficient radiation to read a dataset";
             }
             return std::nullopt;
         }
@@ -616,8 +612,8 @@ namespace ThermFile::Model
         {
             if(modelCase.mode == ThermFile::CalculationMode::cmTransient)
             {
-                checkSchedule(modelCase, found);
-                checkSeriesLengths(modelCase, found);
+                checkClock(modelCase, found);
+                checkSegmentDatasets(modelCase, found);
                 checkTransientRadiation(modelCase, found);
             }
             else if(isSteadyState(modelCase))

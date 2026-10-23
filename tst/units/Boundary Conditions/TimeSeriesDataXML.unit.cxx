@@ -235,7 +235,7 @@ TEST(TestTimeSeriesData, AxisLabels)
     EXPECT_EQ(TimeSeriesLibrary::stepLabel(axis), "30 min");
     EXPECT_EQ(TimeSeriesLibrary::stepLabel({.stepSeconds = 90.0}), "90 s");
     EXPECT_EQ(TimeSeriesLibrary::stepLabel({.stepSeconds = 7200.0}), "2 h");
-    EXPECT_EQ(TimeSeriesLibrary::stepLabel({.stepSeconds = 900.0, .stepLengths = {900.0, 7200.0, 1800.0}}), "15 min to 2 h");
+    EXPECT_EQ(TimeSeriesLibrary::stepLabel({.stepSeconds = std::vector<double>{900.0, 7200.0, 1800.0}}), "15 min to 2 h");
 
     EXPECT_NEAR(TimeSeriesLibrary::secondsIntoYear(1U, 1U, 0U, 0U), 0.0, 1e-9);
     EXPECT_NEAR(TimeSeriesLibrary::secondsIntoYear(2U, 1U, 0U, 0U), 31.0 * 86400.0, 1e-9);
@@ -321,8 +321,36 @@ TEST(TestTimeSeriesData, ContentUuidChangesWithStepLengths)
     auto data{makeSample()};
     const auto baseline{TimeSeriesLibrary::contentUuid(data)};
 
-    data.axis.stepLengths = {3600.0, 1800.0, 3600.0};
+    data.axis.stepSeconds = std::vector<double>{3600.0, 1800.0, 3600.0};
     EXPECT_NE(TimeSeriesLibrary::contentUuid(data), baseline);
+}
+
+//! The axis's two forms reach the file, and the hash, exactly as the two fields they
+//! replace did: these UUIDs and this text are what earlier releases produced, so no
+//! dataset already saved changes its identity.
+TEST(TestTimeSeriesData, StepFormsKeepTheirFileAndIdentity)
+{
+    using TimeSeriesLibrary::TimeAxis;
+    const auto probe{[](const TimeAxis & axis) {
+        return TimeSeriesLibrary::TimeSeriesData{
+          .UUID = "probe",
+          .Name = "probe",
+          .axis = axis,
+          .series = {{.role = TimeSeriesLibrary::SeriesRole::AirTemperature, .values = {1.0, 2.0, 3.0}}}};
+    }};
+    const auto even{probe({.month = 3U, .day = 15U, .hour = 6U, .minute = 30U, .stepSeconds = 1800.0})};
+    const auto uneven{probe({.month = 3U,
+                             .day = 15U,
+                             .hour = 6U,
+                             .minute = 30U,
+                             .stepSeconds = std::vector<double>{900.0, 1800.0, 3600.0}})};
+    EXPECT_EQ(TimeSeriesLibrary::contentUuid(even), "43c0ee7d-28a3-e19f-19d3-bd5dfc96f48f");
+    EXPECT_EQ(TimeSeriesLibrary::contentUuid(uneven), "6d73a981-e5da-021b-a194-aa6bf7225c4b");
+
+    TimeSeriesLibrary::DB library;
+    library.add(uneven);
+    EXPECT_NE(library.saveToString().find("<StepSeconds>900</StepSeconds>\n\t\t\t<StepLengths>900,1800,3600</StepLengths>"),
+              std::string::npos);
 }
 
 TEST(TestTimeSeriesData, StepLengthsRoundTripOnlyWhenUneven)
@@ -333,8 +361,7 @@ TEST(TestTimeSeriesData, StepLengthsRoundTripOnlyWhenUneven)
     EXPECT_EQ(evenSource.saveToString().find("<StepLengths>"), std::string::npos);
 
     auto uneven{makeSample()};
-    uneven.axis.stepSeconds = 600.0;
-    uneven.axis.stepLengths = {600.0, 1200.0, 600.0};
+    uneven.axis.stepSeconds = std::vector<double>{600.0, 1200.0, 600.0};
     TimeSeriesLibrary::DB source;
     source.add(uneven);
     const auto content{source.saveToString()};

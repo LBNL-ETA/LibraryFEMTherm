@@ -11,36 +11,13 @@
 #include "BoundaryConditions/Definitions.hxx"
 #include "BoundaryConditions/Utils.hxx"
 
+#include "SourceLike.hxx"
+
 namespace py = pybind11;
 
-namespace
-{
-    //! A Source as a constructor takes it: a Constant, a FromTimeSeries (or the SeriesRole
-    //! that converts to one), or a plain number. Spelled out as a variant so the signature,
-    //! and the stub generated from it, names the number; the implicit conversion alone would
-    //! leave a type checker refusing it. The number comes LAST: pybind11 tries the
-    //! alternatives in order, and a SeriesRole, being an enum, would convert to a number
-    //! before FromTimeSeries got its turn.
-    using SourceLike = std::variant<BCLibrary::Constant, BCLibrary::FromTimeSeries, double>;
-
-    BCLibrary::Source toSource(const SourceLike & given)
-    {
-        if(const auto * number{std::get_if<double>(&given)})
-        {
-            return BCLibrary::Constant{*number};
-        }
-        if(const auto * fixed{std::get_if<BCLibrary::Constant>(&given)})
-        {
-            return *fixed;
-        }
-        return std::get<BCLibrary::FromTimeSeries>(given);
-    }
-
-    std::string sourceRepr(const BCLibrary::Source & source)
-    {
-        return py::repr(py::cast(source)).cast<std::string>();
-    }
-}   // namespace
+using SourceBinding::SourceLike;
+using SourceBinding::sourceRepr;
+using SourceBinding::toSource;
 
 //! The consolidated boundary-condition library (BC consolidation): one record shape for
 //! steady-state and transient use. Every scalar input is a Source, either a Constant
@@ -85,7 +62,7 @@ void bind_bc_library(py::module_ & mod)
         .def_readwrite("role", &BCLibrary::FromTimeSeries::role)
         .def("__eq__", [](const BCLibrary::FromTimeSeries & lhs, const BCLibrary::FromTimeSeries & rhs) { return lhs == rhs; }, py::is_operator())
         .def("__repr__", [](const BCLibrary::FromTimeSeries & source) {
-            return "FromTimeSeries(SeriesRole." + std::string(py::str(py::cast(source.role))) + ")";
+            return "FromTimeSeries(" + std::string(py::str(py::cast(source.role))) + ")";
         });
     py::implicitly_convertible<TimeSeriesLibrary::SeriesRole, BCLibrary::FromTimeSeries>();
 

@@ -14,10 +14,14 @@
 #include "Model/Archive.hxx"
 #include "Model/Case.hxx"
 
+#include "SourceLike.hxx"
+
 namespace py = pybind11;
 
 using namespace ThermFile::Model;
 using namespace ThermFile::Build;
+using SourceBinding::SourceLike;
+using SourceBinding::toSource;
 
 namespace
 {
@@ -50,24 +54,17 @@ namespace
         return value.has_value() ? std::format(", {}={}", label, pythonRepr(*value)) : std::string{};
     }
 
-    //! A series input prints its first values and its length rather than every value:
-    //! a month of weather is 744 numbers, and a repr is for reading.
-    std::string inputRepr(const Input & input)
+    //! An input as a kind's constructor takes it: the number, or the role it reads.
+    std::string inputRepr(const BCLibrary::Source & source)
     {
-        const auto * series{std::get_if<std::vector<double>>(&input)};
-        constexpr std::size_t shownInFull{6U};
-        if(series == nullptr || series->size() <= shownInFull)
+        if(const auto * constant{std::get_if<BCLibrary::Constant>(&source)})
         {
-            return pythonRepr(input);
+            return pythonRepr(constant->value);
         }
-        const std::vector<double> head(series->begin(), series->begin() + 3);
-        return std::format("[{}, ..., {} ({} values)]",
-                           pythonRepr(head).substr(1, pythonRepr(head).size() - 2),
-                           pythonRepr(series->back()),
-                           series->size());
+        return py::str(py::cast(std::get<BCLibrary::FromTimeSeries>(source).role)).cast<std::string>();
     }
 
-    std::string optionalInput(const std::string_view label, const std::optional<Input> & value)
+    std::string optionalInput(const std::string_view label, const std::optional<BCLibrary::Source> & value)
     {
         return value.has_value() ? std::format(", {}={}", label, inputRepr(*value)) : std::string{};
     }
@@ -94,14 +91,15 @@ namespace
 
     std::string segmentRepr(const Segment & segment)
     {
-        return std::format("Segment(kind={}, start={}, end={}{}{}{}{})",
+        return std::format("Segment(kind={}, start={}, end={}{}{}{}{}{})",
                            pythonRepr(segment.kind),
                            pythonRepr(segment.start),
                            pythonRepr(segment.end),
                            optionalField("region", segment.region),
                            optionalField("color", segment.color),
                            optionalField("name", segment.name),
-                           optionalField("u_factor_tag", segment.uFactorTag));
+                           optionalField("u_factor_tag", segment.uFactorTag),
+                           optionalField("dataset", segment.dataset));
     }
 
     std::string convectiveRepr(const Convective & kind)
@@ -179,21 +177,26 @@ namespace
                                          "segment in, 0xRRGGBB; left None, the kind's own colour. `name` is what the "
                                          "caller calls the face, for plots and messages; it is not written to the file. "
                                          "`u_factor_tag` is the U-factor tag the segment reports under, as THERM's "
-                                         "\"Frame\" or \"Edge\": one U-factor per tag, over every segment carrying it.")
+                                         "\"Frame\" or \"Edge\": one U-factor per tag, over every segment carrying it. "
+                                         "`dataset` is what the condition's role inputs read, step by step, as in THERM, "
+                                         "where a segment binds one dataset beside its record; it is written to the "
+                                         "archive as given, its own time axis included.")
                        .def(py::init([](Boundary kind,
                                         const PointLike & start,
                                         const PointLike & end,
                                         const std::optional<std::size_t> region,
                                         std::optional<std::string> color,
                                         std::optional<std::string> name,
-                                        std::optional<std::string> uFactorTag) {
+                                        std::optional<std::string> uFactorTag,
+                                        std::optional<TimeSeriesLibrary::TimeSeriesData> dataset) {
                                 return Segment{.kind = std::move(kind),
                                                .start = toPoint(start),
                                                .end = toPoint(end),
                                                .region = region,
                                                .color = std::move(color),
                                                .name = std::move(name),
-                                               .uFactorTag = std::move(uFactorTag)};
+                                               .uFactorTag = std::move(uFactorTag),
+                                               .dataset = std::move(dataset)};
                             }),
                             py::arg("kind"),
                             py::arg("start"),
@@ -201,7 +204,8 @@ namespace
                             py::arg("region") = py::none(),
                             py::arg("color") = py::none(),
                             py::arg("name") = py::none(),
-                            py::arg("u_factor_tag") = py::none())
+                            py::arg("u_factor_tag") = py::none(),
+                            py::arg("dataset") = py::none())
                        .def_readwrite("kind", &Segment::kind)
                        .def_readwrite("start", &Segment::start)
                        .def_readwrite("end", &Segment::end)
@@ -209,6 +213,7 @@ namespace
                        .def_readwrite("color", &Segment::color)
                        .def_readwrite("name", &Segment::name)
                        .def_readwrite("u_factor_tag", &Segment::uFactorTag)
+                       .def_readwrite("dataset", &Segment::dataset)
                        .def("__repr__", &segmentRepr)};
         addEquality(segment);
     }
@@ -217,7 +222,8 @@ namespace
     {
         auto bc{model.def_submodule("bc",
                                     "The boundary conditions a segment can carry: Adiabatic, Prescribed or "
-                                    "Convective. Each is constant in time.")};
+                                    "Convective. Every input is a number, held for the whole run, or a SeriesRole, "
+                                    "read step by step from the dataset the segment binds.")};
 
         auto adiabatic{py::class_<Adiabatic>(bc,
                                              "Adiabatic",
@@ -231,10 +237,10 @@ namespace
           py::class_<Prescribed>(bc,
                                  "Prescribed",
                                  "The surface state itself is imposed: a temperature in degrees C and optionally a "
-                                 "relative humidity as a fraction. Each is a constant, or one value per step of "
-                                 "the schedule.")
-            .def(py::init([](Input temperature, std::optional<Input> humidity) {
-                     return Prescribed{.temperature = std::move(temperature), .humidity = std::move(humidity)};
+                                 "relative humidity as a fraction. Each is a number, or a SeriesRole read from the "
+                                 "segment's dataset.")
+            .def(py::init([](const SourceLike & temperature, const std::optional<SourceLike> & humidity) {
+                     return Prescribed{.temperature = toSource(temperature), .humidity = toSource(humidity)};
                  }),
                  py::arg("temperature"),
                  py::arg("humidity") = py::none())
@@ -247,27 +253,6 @@ namespace
             })};
         addEquality(prescribed);
 
-        auto fixedRadiation{
-          py::class_<FixedRadiation>(bc,
-                                     "FixedRadiation",
-                                     "Radiative exchange with a surrounding at a radiant temperature in degrees C "
-                                     "through a fixed coefficient in W/(m2 K): the one radiation model the engine "
-                                     "reads step by step, and the one a weather file feeds (its sky temperature is "
-                                     "a radiant temperature). Each input is a constant or one value per step.")
-            .def(py::init([](Input temperature, Input coefficient) {
-                     return FixedRadiation{.temperature = std::move(temperature), .coefficient = std::move(coefficient)};
-                 }),
-                 py::arg("temperature"),
-                 py::arg("coefficient"))
-            .def_readwrite("temperature", &FixedRadiation::temperature)
-            .def_readwrite("coefficient", &FixedRadiation::coefficient)
-            .def("__repr__", [](const FixedRadiation & radiation) {
-                return std::format("FixedRadiation(temperature={}, coefficient={})",
-                                   inputRepr(radiation.temperature),
-                                   inputRepr(radiation.coefficient));
-            })};
-        addEquality(fixedRadiation);
-
         auto convective{
           py::class_<Convective>(bc,
                                  "Convective",
@@ -275,30 +260,31 @@ namespace
                                  "fraction, and a convection model. The fixed model takes `film_coefficient` in "
                                  "W/(m2 K); the correlations compute theirs and read `wind_speed` (m/s) and, those "
                                  "that tell windward from leeward, `wind_direction` (degrees). `flux` is an imposed "
-                                 "heat flux in W/m2. `radiation` is FixedRadiation, or one of THERM's own models "
-                                 "(BCBlackBodyRadiation with constants; BCAutomaticEnclosure and BCManualEnclosure in "
-                                 "a steady-state case only). Every input is a constant or one value per step of the "
-                                 "schedule.")
-            .def(py::init([](Input airTemperature,
-                             std::optional<Input> filmCoefficient,
-                             Input humidity,
+                                 "heat flux in W/m2. `radiation` is one of THERM's radiation models: "
+                                 "BCFixedCoefficientRadiation, the one the engine reads step by step; "
+                                 "BCBlackBodyRadiation with constants; BCAutomaticEnclosure and BCManualEnclosure in "
+                                 "a steady-state case only. Every input is a number, or a SeriesRole read from the "
+                                 "segment's dataset.")
+            .def(py::init([](const SourceLike & airTemperature,
+                             const std::optional<SourceLike> & filmCoefficient,
+                             const SourceLike & humidity,
                              const BCLibrary::ConvectionModel model,
-                             std::optional<Input> windSpeed,
-                             std::optional<Input> windDirection,
-                             std::optional<Input> flux,
+                             const std::optional<SourceLike> & windSpeed,
+                             const std::optional<SourceLike> & windDirection,
+                             const std::optional<SourceLike> & flux,
                              std::optional<Radiation> radiation) {
-                     return Convective{.airTemperature = std::move(airTemperature),
-                                       .filmCoefficient = std::move(filmCoefficient),
-                                       .humidity = std::move(humidity),
+                     return Convective{.airTemperature = toSource(airTemperature),
+                                       .filmCoefficient = toSource(filmCoefficient),
+                                       .humidity = toSource(humidity),
                                        .model = model,
-                                       .windSpeed = std::move(windSpeed),
-                                       .windDirection = std::move(windDirection),
-                                       .flux = std::move(flux),
+                                       .windSpeed = toSource(windSpeed),
+                                       .windDirection = toSource(windDirection),
+                                       .flux = toSource(flux),
                                        .radiation = std::move(radiation)};
                  }),
                  py::arg("air_temperature"),
                  py::arg("film_coefficient") = py::none(),
-                 py::arg("humidity") = Input{0.5},
+                 py::arg("humidity") = 0.5,
                  py::arg("model") = BCLibrary::ConvectionModel::Fixed_Convection_Coefficient,
                  py::arg("wind_speed") = py::none(),
                  py::arg("wind_direction") = py::none(),
@@ -315,23 +301,10 @@ namespace
             .def("__repr__", &convectiveRepr)};
         addEquality(convective);
 
-        auto roleInput{py::class_<RoleInput>(model,
-                                             "RoleInput",
-                                             "One input of a boundary kind and the dataset role it is written under.")
-                         .def_readonly("role", &RoleInput::role)
-                         .def_readonly("value", &RoleInput::value)
-                         .def("__repr__", [](const RoleInput & input) {
-                             return std::format("RoleInput(role={}, value={})",
-                                                py::str(py::cast(input.role)).cast<std::string>(),
-                                                pythonRepr(input.value));
-                         })};
-        addEquality(roleInput);
-        model.def("inputs", &inputs, py::arg("boundary"),
-                  "Every input a boundary kind carries, each under its role, in the order the record states "
-                  "them: the one place that pairs an input with a role. Empty for Adiabatic.");
-        model.def("is_constant", &isConstant, py::arg("input"), "Whether the input is one value for the whole run.");
-        model.def("series_length", &seriesLength, py::arg("input"),
-                  "The number of values a series input carries; None for a constant.");
+        model.def("record_data", &recordData, py::arg("boundary"),
+                  "The boundary kind as THERM's record data: a SurfaceExchange for Convective, a PrescribedState for "
+                  "Prescribed, NoExchange for Adiabatic, with the inputs as stated. pylibraryfemtherm.required_roles "
+                  "on a record holding it lists the roles the kind reads.");
     }
 
     void bindSettings(py::module_ & model)
@@ -374,9 +347,10 @@ namespace
 
         auto schedule{py::class_<Schedule>(model,
                                            "Schedule",
-                                           "The clock: one length in seconds per step, from `start`; the steps need "
-                                           "not be even. Every series input of the case has one value per step. "
-                                           "Schedule(dtime, n_steps) is the usual even clock, "
+                                           "The clock of a case whose segments bind no dataset: one length in seconds "
+                                           "per step, from `start`; the steps need not be even. A case whose segments "
+                                           "bind datasets runs on the datasets' clock, and a schedule stated beside them "
+                                           "must agree with them. Schedule(dtime, n_steps) is the usual even clock, "
                                            "Schedule(step_lengths=[...]) states every step.")
                         .def(py::init([](const double dtime, const std::size_t nSteps, const Start & startAt) {
                                  return uniformSchedule(dtime, nSteps, startAt);
@@ -416,8 +390,8 @@ namespace
                         })};
         addEquality(schedule);
         model.def("axis_of", &axisOf, py::arg("schedule"),
-                  "The schedule as the axis of the datasets the writer makes: even when every step has the same "
-                  "length, otherwise with the lengths stated one by one.");
+                  "The schedule as the axis of the clock dataset the writer makes when no segment binds one: even "
+                  "when every step has the same length, otherwise with the lengths stated one by one.");
         model.def("schedule_for", &scheduleFor, py::arg("dataset"),
                   "The schedule a dataset dictates: its steps and their lengths, and its start, so a case driven by "
                   "a weather file runs exactly over the file.");
@@ -491,9 +465,9 @@ namespace
                                 "ModelCase",
                                 "A THERM model stated in code: regions, each carrying its material, segments, "
                                 "start, clock and settings. `mode` is the calculation the archive is set up for: "
-                                "a transient case runs through its clock (`initial`, `schedule`); a steady-state "
-                                "case has no clock, holds each condition as a constant, and `mesh_control` drives "
-                                "its error estimator.")
+                                "a transient case runs from `initial` through its clock, the datasets its segments "
+                                "bind or `schedule` when they bind none; a steady-state case has no clock, holds "
+                                "each condition as a constant, and `mesh_control` drives its error estimator.")
             .def(py::init([](std::string id,
                              std::vector<Region> regions,
                              std::vector<Segment> segments,
@@ -572,19 +546,10 @@ namespace
                   "A UUID that depends on the case id and a key, stable across runs.");
         build.attr("ADIABATIC_RECORD_UUID") = std::string{adiabaticRecordUuid};
 
-        py::class_<Lowered>(build,
-                            "Lowered",
-                            "A boundary kind in the file's terms: the record data, a constant input as a constant "
-                            "source and a series input as a source reading its role, and the series the record "
-                            "reads, each under that role.")
-          .def_readonly("data", &Lowered::data)
-          .def_readonly("series", &Lowered::series);
-        build.def("lower", &lower, py::arg("boundary"), "The boundary kind lowered to record data and series.");
-
         auto binding{py::class_<Binding>(build,
                                          "Binding",
-                                         "What a segment refers to by UUID: its record, and its dataset when the "
-                                         "record reads series (or the segment carries the clock).")
+                                         "What a segment refers to by UUID: its record, and its dataset when it "
+                                         "binds one (or carries the clock).")
                        .def_readonly("record_uuid", &Binding::recordUuid)
                        .def_readonly("dataset_uuid", &Binding::datasetUuid)
                        .def("__repr__", [](const Binding & bound) {
@@ -601,8 +566,8 @@ namespace
                   "The record and dataset each segment of the completed case refers to, in the completed "
                   "case's order.");
         build.def("boundary_datasets", &boundaryDatasets, py::arg("model_case"),
-                  "Segment index -> dataset for every segment of the completed case that reads series, plus a "
-                  "clock on the first segment when none does. Segments sharing a dataset repeat it.");
+                  "Segment index -> dataset for every segment of the completed case that binds one, or a clock "
+                  "on the first segment when none does. Segments sharing a dataset repeat it.");
         build.def("model", &model, py::arg("model_case"),
                   "The THERM model of the case: polygons, boundary segments and calculation options. The case "
                   "must have no issues.");

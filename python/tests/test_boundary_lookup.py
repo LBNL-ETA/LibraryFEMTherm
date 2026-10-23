@@ -21,18 +21,20 @@ def linear_sorption() -> fem.Material:
 
 
 def weather_strip() -> model.ModelCase:
-    """One rectangle: a series of air temperatures on the left face, a constant room on the
-    right, the rest left for the writer to fill adiabatic."""
+    """One rectangle: the left face reads its air temperature from three hours of weather, a
+    constant room on the right, the rest left for the writer to fill adiabatic."""
+    weather: fem.TimeSeriesData = fem.TimeSeriesData(
+        name="weather", uuid="weather",
+        series=[fem.Series(role=fem.SeriesRole.AirTemperature, values=[-5.0, -3.0, 0.0])])
     return model.ModelCase(
         id="weather_strip",
         regions=[model.Region(material=linear_sorption(), points=[(0.0, 0.0), (0.1, 0.0), (0.1, 0.05), (0.0, 0.05)])],
         segments=[
-            model.Segment(kind=model.bc.Convective(air_temperature=[-5.0, -3.0, 0.0], film_coefficient=25.0),
-                          start=(0.0, 0.05), end=(0.0, 0.0), name="outside"),
+            model.Segment(kind=model.bc.Convective(air_temperature=fem.SeriesRole.AirTemperature, film_coefficient=25.0),
+                          start=(0.0, 0.05), end=(0.0, 0.0), name="outside", dataset=weather),
             model.Segment(kind=model.bc.Convective(air_temperature=20.0, film_coefficient=8.0),
                           start=(0.1, 0.0), end=(0.1, 0.05), name="room side"),
         ],
-        schedule=model.Schedule(dtime=3600.0, n_steps=3),
         physics=model.Physics(moisture=False),
     )
 
