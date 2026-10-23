@@ -3,6 +3,8 @@
 #include <format>
 #include <numeric>
 
+#include <lbnl/optional.hxx>
+
 #include "Case.hxx"
 #include "Common/PlanarGeometry.hxx"
 #include "TimeSeriesData/Tags.hxx"
@@ -241,31 +243,29 @@ namespace ThermFile::Model
             return found;
         }
 
-        void checkRegions(const ModelCase & modelCase, std::vector<std::string> & found)
+        void checkRegions(const ModelCase & modelCase, std::vector<Issue> & found)
         {
             if(modelCase.regions.empty())
             {
-                found.emplace_back("a model needs at least one region");
+                found.push_back(Issue{.kind = IssueKind::NoRegions});
             }
             for(std::size_t index = 0U; index < modelCase.regions.size(); ++index)
             {
-                const auto & region{modelCase.regions[index]};
-                if(region.points.size() < 3U)
+                const auto & [material, points]{modelCase.regions[index]};
+                if(points.size() < 3U)
                 {
-                    found.push_back(std::format("region {} has {} points; a region needs at least three",
-                                                index,
-                                                region.points.size()));
+                    found.push_back(Issue{.kind = IssueKind::TooFewPoints, .region = index});
                 }
-                if(region.material.Name.empty())
+                if(material.Name.empty())
                 {
-                    found.push_back(std::format("region {} has a material with no name", index));
+                    found.push_back(Issue{.kind = IssueKind::UnnamedMaterial, .region = index});
                 }
             }
         }
 
         //! The archive's library keeps one record per UUID and THERM finds records by name,
         //! so two regions whose materials share a name must carry the same record.
-        void checkMaterialNames(const ModelCase & modelCase, std::vector<std::string> & found)
+        void checkMaterialNames(const ModelCase & modelCase, std::vector<Issue> & found)
         {
             const auto & regions{modelCase.regions};
             for(std::size_t first = 0U; first < regions.size(); ++first)
@@ -276,11 +276,7 @@ namespace ThermFile::Model
                     const auto & theirs{regions[second].material};
                     if(mine.Name == theirs.Name && mine.UUID != theirs.UUID)
                     {
-                        found.push_back(std::format("regions {} and {} carry two different materials both named "
-                                                    "'{}'; the library keeps one record per name",
-                                                    first,
-                                                    second,
-                                                    mine.Name));
+                        found.push_back(Issue{.kind = IssueKind::MaterialNameClash, .region = first, .otherRegion = second});
                     }
                 }
             }
@@ -300,54 +296,38 @@ namespace ThermFile::Model
             return along;
         }
 
-        std::string describe(const std::size_t index, const Segment & segment)
-        {
-            const std::string who{segment.name.has_value() ? std::format("segment {} '{}'", index, segment.name.value())
-                                                           : std::format("segment {}", index)};
-            return std::format("{} from ({}, {}) to ({}, {})",
-                               who,
-                               segment.start.x,
-                               segment.start.y,
-                               segment.end.x,
-                               segment.end.y);
-        }
-
         //! The issue with a segment that names its region, if any.
-        std::optional<std::string> namedRegionIssue(const ModelCase & modelCase, const std::size_t index)
+        std::optional<Issue> namedRegionIssue(const ModelCase & modelCase, const std::size_t index)
         {
             const auto & segment{modelCase.segments[index]};
             const auto region{segment.region.value()};
             if(region >= modelCase.regions.size())
             {
-                return std::format("segment {} borders region {}, which does not exist", index, region);
+                return Issue{.kind = IssueKind::RegionMissing, .region = region, .segment = index};
             }
             if(!liesOnAnEdge(modelCase.regions[region], segment))
             {
-                return std::format("{} does not lie along an edge of region {}", describe(index, segment), region);
+                return Issue{.kind = IssueKind::OffRegion, .region = region, .segment = index};
             }
             return std::nullopt;
         }
 
         //! The issue with a segment that leaves its region to be found, if any.
-        std::optional<std::string> foundRegionIssue(const ModelCase & modelCase, const std::size_t index)
+        std::optional<Issue> foundRegionIssue(const ModelCase & modelCase, const std::size_t index)
         {
-            const auto & segment{modelCase.segments[index]};
-            const auto along{regionsAlong(modelCase, segment)};
+            const auto along{regionsAlong(modelCase, modelCase.segments[index])};
             if(along.empty())
             {
-                return std::format("{} does not lie along an edge of any region", describe(index, segment));
+                return Issue{.kind = IssueKind::OffEveryRegion, .segment = index};
             }
             if(along.size() > 1U)
             {
-                return std::format("{} lies on an edge shared by regions {} and {}; state which with region",
-                                   describe(index, segment),
-                                   along[0],
-                                   along[1]);
+                return Issue{.kind = IssueKind::SharedEdge, .region = along[0], .otherRegion = along[1], .segment = index};
             }
             return std::nullopt;
         }
 
-        std::optional<std::string> segmentIssue(const ModelCase & modelCase, const std::size_t index)
+        std::optional<Issue> segmentIssue(const ModelCase & modelCase, const std::size_t index)
         {
             return modelCase.segments[index].region.has_value() ? namedRegionIssue(modelCase, index)
                                                                 : foundRegionIssue(modelCase, index);
@@ -359,7 +339,7 @@ namespace ThermFile::Model
                                        [](const Region & region) { return region.points.size() >= 3U; });
         }
 
-        void checkSegments(const ModelCase & modelCase, std::vector<std::string> & found)
+        void checkSegments(const ModelCase & modelCase, std::vector<Issue> & found)
         {
             if(!everyRegionHasEdges(modelCase))
             {
@@ -374,18 +354,19 @@ namespace ThermFile::Model
             }
         }
 
-        void checkSchedule(const ModelCase & modelCase, std::vector<std::string> & found)
+        void checkSchedule(const ModelCase & modelCase, std::vector<Issue> & found)
         {
             const auto & lengths{modelCase.schedule.stepLengths};
             if(lengths.empty())
             {
-                found.emplace_back("the schedule needs at least one step");
+                found.push_back(Issue{.kind = IssueKind::NoSteps});
                 return;
             }
             const auto bad{std::ranges::find_if(lengths, [](const double length) { return length <= 0.0; })};
             if(bad != lengths.end())
             {
-                found.push_back(std::format("the schedule's step {} must be positive", bad - lengths.begin() + 1));
+                found.push_back(Issue{.kind = IssueKind::NonPositiveStep,
+                                      .step = static_cast<std::size_t>(bad - lengths.begin())});
             }
         }
 
@@ -396,7 +377,7 @@ namespace ThermFile::Model
 
         //! A stated schedule beside bound datasets must be their clock; an unstated one is
         //! taken from them. Without datasets, the schedule is the clock and must be one.
-        void checkClock(const ModelCase & modelCase, std::vector<std::string> & found)
+        void checkClock(const ModelCase & modelCase, std::vector<Issue> & found)
         {
             if(std::ranges::none_of(modelCase.segments, bindsDataset))
             {
@@ -412,11 +393,7 @@ namespace ThermFile::Model
                 const auto & segment{modelCase.segments[index]};
                 if(bindsDataset(segment) && scheduleFor(segment.dataset.value()) != modelCase.schedule)
                 {
-                    found.push_back(std::format("{}: the stated schedule differs from the axis of its dataset '{}' "
-                                                "({}); leave the schedule out to run on the datasets' clock",
-                                                describe(index, segment),
-                                                segment.dataset->Name,
-                                                TimeSeriesLibrary::describeAxis(segment.dataset.value())));
+                    found.push_back(Issue{.kind = IssueKind::ScheduleDisagrees, .segment = index});
                 }
             }
         }
@@ -425,16 +402,6 @@ namespace ThermFile::Model
         std::vector<SeriesRole> rolesRead(const Segment & segment)
         {
             return BCLibrary::requiredRoles(BCLibrary::BoundaryCondition{.data = recordData(segment.kind)});
-        }
-
-        std::string roleNames(const std::vector<SeriesRole> & roles)
-        {
-            std::string names;
-            for(const auto role : roles)
-            {
-                names += (names.empty() ? "" : ", ") + TimeSeriesLibrary::seriesRoleToString(role);
-            }
-            return names;
         }
 
         //! The radiation a segment states, or nothing.
@@ -479,120 +446,114 @@ namespace ThermFile::Model
         }
 
         //! The input a convection model reads but the segment does not give, if any.
-        std::optional<std::string> missingConvectionInput(const Convective & convective)
+        std::optional<ConvectionInput> missingConvectionInput(const Convective & convective)
         {
             const auto wind{windInputsOf(convective.model)};
             if(convective.model == BCLibrary::ConvectionModel::Fixed_Convection_Coefficient
                && !convective.filmCoefficient.has_value())
             {
-                return "a film coefficient";
+                return ConvectionInput::FilmCoefficient;
             }
             if(wind.speed && !convective.windSpeed.has_value())
             {
-                return "the wind speed";
+                return ConvectionInput::WindSpeed;
             }
             if(wind.direction && !convective.windDirection.has_value())
             {
-                return "the wind direction";
+                return ConvectionInput::WindDirection;
             }
             return std::nullopt;
         }
 
-        void checkConvectionInputs(const ModelCase & modelCase, std::vector<std::string> & found)
+        void checkConvectionInputs(const ModelCase & modelCase, std::vector<Issue> & found)
         {
             for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
             {
-                const auto & segment{modelCase.segments[index]};
-                const auto * convective{std::get_if<Convective>(&segment.kind)};
+                const auto * convective{std::get_if<Convective>(&modelCase.segments[index].kind)};
                 if(convective == nullptr)
                 {
                     continue;
                 }
                 if(const auto missing{missingConvectionInput(*convective)})
                 {
-                    found.push_back(std::format(
-                      "{} needs {} for its convection model", describe(index, segment), missing.value()));
+                    found.push_back(Issue{.kind = IssueKind::ConvectionInputMissing, .segment = index, .input = missing});
                 }
             }
         }
 
         //! A steady-state archive keeps its conditions in THERM's steady-state library,
         //! which has no record for a prescribed surface state, and has no datasets to read.
-        void checkSteadyStateSegments(const ModelCase & modelCase, std::vector<std::string> & found)
+        void checkSteadyStateSegments(const ModelCase & modelCase, std::vector<Issue> & found)
         {
             for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
             {
                 const auto & segment{modelCase.segments[index]};
                 if(std::holds_alternative<Prescribed>(segment.kind))
                 {
-                    found.push_back(std::format("{} is prescribed, which a steady-state case cannot write; "
-                                                "state it as Convective",
-                                                describe(index, segment)));
+                    found.push_back(Issue{.kind = IssueKind::PrescribedInSteadyState, .segment = index});
                 }
-                if(const auto roles{rolesRead(segment)}; !roles.empty())
+                if(auto roles{rolesRead(segment)}; !roles.empty())
                 {
-                    found.push_back(std::format("{} reads {} from a dataset, which a steady-state case has "
-                                                "none of; state it as a constant",
-                                                describe(index, segment),
-                                                roleNames(roles)));
+                    found.push_back(Issue{.kind = IssueKind::RoleInSteadyState, .segment = index, .roles = std::move(roles)});
                 }
                 if(bindsDataset(segment))
                 {
-                    found.push_back(std::format("{} binds a dataset, which a steady-state case does not write",
-                                                describe(index, segment)));
+                    found.push_back(Issue{.kind = IssueKind::DatasetInSteadyState, .segment = index});
                 }
             }
         }
 
-        //! A segment whose condition reads roles needs a dataset that provides every one of
-        //! them: the pairing THERM's assignment dialog checks. The engine would otherwise
-        //! leave the condition out of the run.
-        void checkSegmentDatasets(const ModelCase & modelCase, std::vector<std::string> & found)
+        //! The issue with a segment's pairing of condition and dataset, if any: every role
+        //! the condition reads needs a dataset that provides it, the pairing THERM's
+        //! assignment dialog checks. The engine would otherwise leave the condition out.
+        std::optional<Issue> pairingIssue(const Segment & segment, const std::size_t index)
+        {
+            auto roles{rolesRead(segment)};
+            if(roles.empty())
+            {
+                return std::nullopt;
+            }
+            if(!bindsDataset(segment))
+            {
+                return Issue{.kind = IssueKind::RoleWithoutDataset, .segment = index, .roles = std::move(roles)};
+            }
+            auto missing{BCLibrary::missingRoles(BCLibrary::BoundaryCondition{.data = recordData(segment.kind)},
+                                                 segment.dataset)};
+            if(missing.empty())
+            {
+                return std::nullopt;
+            }
+            return Issue{.kind = IssueKind::RoleNotProvided, .segment = index, .roles = std::move(missing)};
+        }
+
+        void checkSegmentDatasets(const ModelCase & modelCase, std::vector<Issue> & found)
         {
             for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
             {
-                const auto & segment{modelCase.segments[index]};
-                const auto roles{rolesRead(segment)};
-                if(roles.empty())
+                if(auto issue{pairingIssue(modelCase.segments[index], index)})
                 {
-                    continue;
-                }
-                if(!bindsDataset(segment))
-                {
-                    found.push_back(std::format(
-                      "{} reads {} from a dataset but binds none", describe(index, segment), roleNames(roles)));
-                    continue;
-                }
-                const BCLibrary::BoundaryCondition record{.data = recordData(segment.kind)};
-                if(const auto missing{BCLibrary::missingRoles(record, segment.dataset)}; !missing.empty())
-                {
-                    found.push_back(std::format("{}: its dataset '{}' provides no {}",
-                                                describe(index, segment),
-                                                segment.dataset->Name,
-                                                roleNames(missing)));
+                    found.push_back(std::move(issue.value()));
                 }
             }
         }
 
         //! The radiation the engine runs through a clock: fixed radiation, step by step, and
         //! a black body held at constants. An enclosure is not run at all in a transient run.
-        std::optional<std::string> transientRadiationIssue(const Radiation & radiation)
+        std::optional<IssueKind> transientRadiationIssue(const Radiation & radiation)
         {
             if(std::holds_alternative<BCLibrary::AutomaticEnclosure>(radiation)
                || std::holds_alternative<BCLibrary::ManualEnclosure>(radiation))
             {
-                return "radiates into an enclosure, which a transient run does not model; state fixed "
-                       "radiation or a black body";
+                return IssueKind::EnclosureInTransient;
             }
             if(blackBodyReadsSeries(radiation))
             {
-                return "radiates as a black body read from a series, which a transient run holds constant; "
-                       "state constants, or fixed-coefficient radiation to read a dataset";
+                return IssueKind::BlackBodyFromDataset;
             }
             return std::nullopt;
         }
 
-        void checkTransientRadiation(const ModelCase & modelCase, std::vector<std::string> & found)
+        void checkTransientRadiation(const ModelCase & modelCase, std::vector<Issue> & found)
         {
             for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
             {
@@ -601,14 +562,14 @@ namespace ThermFile::Model
                 {
                     continue;
                 }
-                if(const auto issue{transientRadiationIssue(*radiation)})
+                if(const auto kind{transientRadiationIssue(*radiation)})
                 {
-                    found.push_back(std::format("{} {}", describe(index, modelCase.segments[index]), issue.value()));
+                    found.push_back(Issue{.kind = kind.value(), .segment = index});
                 }
             }
         }
 
-        void checkMode(const ModelCase & modelCase, std::vector<std::string> & found)
+        void checkMode(const ModelCase & modelCase, std::vector<Issue> & found)
         {
             if(modelCase.mode == ThermFile::CalculationMode::cmTransient)
             {
@@ -622,14 +583,162 @@ namespace ThermFile::Model
             }
             else
             {
-                found.emplace_back("the mode must be transient or steady state");
+                found.push_back(Issue{.kind = IssueKind::UnsupportedMode});
+            }
+        }
+        // --------------------------------------------------------------------------------
+        // The default wording
+        // --------------------------------------------------------------------------------
+
+        std::string segmentLabel(const ModelCase & modelCase, const std::size_t index)
+        {
+            const auto & segment{modelCase.segments[index]};
+            const std::string who{segment.name.has_value() ? std::format("segment {} '{}'", index, segment.name.value())
+                                                           : std::format("segment {}", index)};
+            return std::format(
+              "{} from ({}, {}) to ({}, {})", who, segment.start.x, segment.start.y, segment.end.x, segment.end.y);
+        }
+
+        std::string roleNames(const std::vector<SeriesRole> & roles)
+        {
+            std::string names;
+            for(const auto role : roles)
+            {
+                names += (names.empty() ? "" : ", ") + TimeSeriesLibrary::seriesRoleToString(role);
+            }
+            return names;
+        }
+
+        std::string inputName(const ConvectionInput input)
+        {
+            switch(input)
+            {
+                case ConvectionInput::WindSpeed:
+                    return "the wind speed";
+                case ConvectionInput::WindDirection:
+                    return "the wind direction";
+                default:
+                    return "a film coefficient";
+            }
+        }
+
+        //! The wording of an issue that is not about one segment's condition.
+        std::optional<std::string> caseText(const ModelCase & modelCase, const Issue & issue)
+        {
+            switch(issue.kind)
+            {
+                case IssueKind::NoRegions:
+                    return "a model needs at least one region";
+                case IssueKind::TooFewPoints:
+                    return std::format("region {} has {} points; a region needs at least three",
+                                       issue.region.value(),
+                                       modelCase.regions[issue.region.value()].points.size());
+                case IssueKind::UnnamedMaterial:
+                    return std::format("region {} has a material with no name", issue.region.value());
+                case IssueKind::MaterialNameClash:
+                    return std::format("regions {} and {} carry two different materials both named '{}'; the "
+                                       "library keeps one record per name",
+                                       issue.region.value(),
+                                       issue.otherRegion.value(),
+                                       modelCase.regions[issue.region.value()].material.Name);
+                case IssueKind::RegionMissing:
+                    return std::format(
+                      "segment {} borders region {}, which does not exist", issue.segment.value(), issue.region.value());
+                case IssueKind::NoSteps:
+                    return "the schedule needs at least one step";
+                case IssueKind::NonPositiveStep:
+                    return std::format("the schedule's step {} must be positive", issue.step.value() + 1U);
+                case IssueKind::UnsupportedMode:
+                    return "the mode must be transient or steady state";
+                default:
+                    return std::nullopt;
+            }
+        }
+
+        //! What follows the segment's label when the segment does not lie where it should.
+        std::optional<std::string> placementText(const Issue & issue)
+        {
+            switch(issue.kind)
+            {
+                case IssueKind::OffRegion:
+                    return std::format(" does not lie along an edge of region {}", issue.region.value());
+                case IssueKind::OffEveryRegion:
+                    return " does not lie along an edge of any region";
+                case IssueKind::SharedEdge:
+                    return std::format(" lies on an edge shared by regions {} and {}; state which with region",
+                                       issue.region.value(),
+                                       issue.otherRegion.value());
+                default:
+                    return std::nullopt;
+            }
+        }
+
+        //! What follows the segment's label when its condition and its dataset do not pair.
+        std::optional<std::string> pairingText(const ModelCase & modelCase, const Issue & issue)
+        {
+            const auto & dataset{modelCase.segments[issue.segment.value()].dataset};
+            switch(issue.kind)
+            {
+                case IssueKind::ScheduleDisagrees:
+                    return std::format(": the stated schedule differs from the axis of its dataset '{}' ({}); leave "
+                                       "the schedule out to run on the datasets' clock",
+                                       dataset->Name,
+                                       TimeSeriesLibrary::describeAxis(dataset.value()));
+                case IssueKind::ConvectionInputMissing:
+                    return std::format(" needs {} for its convection model", inputName(issue.input.value()));
+                case IssueKind::RoleWithoutDataset:
+                    return std::format(" reads {} from a dataset but binds none", roleNames(issue.roles));
+                case IssueKind::RoleNotProvided:
+                    return std::format(": its dataset '{}' provides no {}", dataset->Name, roleNames(issue.roles));
+                default:
+                    return std::nullopt;
+            }
+        }
+
+        //! What follows the segment's label when its condition does not suit the case's mode.
+        std::optional<std::string> modeText(const Issue & issue)
+        {
+            switch(issue.kind)
+            {
+                case IssueKind::EnclosureInTransient:
+                    return " radiates into an enclosure, which a transient run does not model; state fixed "
+                           "radiation or a black body";
+                case IssueKind::BlackBodyFromDataset:
+                    return " radiates as a black body read from a series, which a transient run holds constant; "
+                           "state constants, or fixed-coefficient radiation to read a dataset";
+                case IssueKind::PrescribedInSteadyState:
+                    return " is prescribed, which a steady-state case cannot write; state it as Convective";
+                case IssueKind::RoleInSteadyState:
+                    return std::format(" reads {} from a dataset, which a steady-state case has none of; state it "
+                                       "as a constant",
+                                       roleNames(issue.roles));
+                case IssueKind::DatasetInSteadyState:
+                    return " binds a dataset, which a steady-state case does not write";
+                default:
+                    return std::nullopt;
             }
         }
     }   // namespace
 
-    std::vector<std::string> issues(const ModelCase & modelCase)
+    std::string describe(const ModelCase & modelCase, const Issue & issue)
     {
-        std::vector<std::string> found;
+        return lbnl::extend(caseText(modelCase, issue))
+          .or_else([&modelCase, &issue] {
+              return lbnl::extend(placementText(issue))
+                .or_else([&modelCase, &issue] { return pairingText(modelCase, issue); })
+                .or_else([&issue] { return modeText(issue); })
+                .transform([&modelCase, &issue](const std::string & tail) {
+                    return segmentLabel(modelCase, issue.segment.value()) + tail;
+                })
+                .raw();
+          })
+          .raw()
+          .value_or(std::string{});
+    }
+
+    std::vector<Issue> issues(const ModelCase & modelCase)
+    {
+        std::vector<Issue> found;
         checkRegions(modelCase, found);
         checkMaterialNames(modelCase, found);
         checkSegments(modelCase, found);

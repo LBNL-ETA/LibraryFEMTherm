@@ -42,8 +42,14 @@ namespace SourceBinding
         return given.has_value() ? std::optional{toSource(given.value())} : std::nullopt;
     }
 
+    //! An input as every constructor takes it: the number, or the role it reads, so a
+    //! record prints as it would be written.
     [[nodiscard]] inline std::string sourceRepr(const BCLibrary::Source & source)
     {
-        return pybind11::repr(pybind11::cast(source)).cast<std::string>();
+        if(const auto * constant{std::get_if<BCLibrary::Constant>(&source)})
+        {
+            return pybind11::repr(pybind11::cast(constant->value)).cast<std::string>();
+        }
+        return pybind11::str(pybind11::cast(std::get<BCLibrary::FromTimeSeries>(source).role)).cast<std::string>();
     }
 }   // namespace SourceBinding

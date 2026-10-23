@@ -274,7 +274,61 @@ namespace ThermFile::Model
         [[nodiscard]] friend bool operator==(const ModelCase & lhs, const ModelCase & rhs) = default;
     };
 
-    //! Everything that stops the case from being written, one line each; empty when it can
+    //! What is wrong with a case, one kind per check issues() makes.
+    enum class IssueKind
+    {
+        NoRegions,                 //!< the case states no region
+        TooFewPoints,              //!< `region` has fewer than three corners
+        UnnamedMaterial,           //!< `region`'s material has no name
+        MaterialNameClash,         //!< `region` and `otherRegion` carry different materials of one name
+        RegionMissing,             //!< `segment` names a region that does not exist
+        OffRegion,                 //!< `segment` does not lie along an edge of the region it names
+        OffEveryRegion,            //!< `segment` lies along no region's edge
+        SharedEdge,                //!< `segment` lies on the edge `region` and `otherRegion` share; it must name one
+        NoSteps,                   //!< the schedule has no step, and no segment binds a dataset
+        NonPositiveStep,           //!< the schedule's `step` is not positive
+        ScheduleDisagrees,         //!< the stated schedule differs from the axis of `segment`'s dataset
+        ConvectionInputMissing,    //!< `segment`'s convection model reads `input`, which it does not give
+        RoleWithoutDataset,        //!< `segment` reads `roles` but binds no dataset
+        RoleNotProvided,           //!< `segment`'s dataset provides none of `roles`, which it reads
+        EnclosureInTransient,      //!< `segment` radiates into an enclosure in a transient case
+        BlackBodyFromDataset,      //!< `segment`'s black body reads a dataset in a transient case
+        PrescribedInSteadyState,   //!< `segment` is prescribed in a steady-state case
+        RoleInSteadyState,         //!< `segment` reads `roles` in a steady-state case
+        DatasetInSteadyState,      //!< `segment` binds a dataset in a steady-state case
+        UnsupportedMode            //!< the mode is neither transient nor steady state
+    };
+
+    //! The input a convection model reads.
+    enum class ConvectionInput
+    {
+        FilmCoefficient,
+        WindSpeed,
+        WindDirection
+    };
+
+    //! One thing wrong with a case: its kind and what it is about, as indices into the case
+    //! and the roles or input concerned. Only the fields the kind names are set. describe()
+    //! words it; a caller wanting its own words, or to point at the region or segment,
+    //! reads the fields instead.
+    struct Issue
+    {
+        IssueKind kind{IssueKind::NoRegions};
+        std::optional<std::size_t> region{};
+        std::optional<std::size_t> otherRegion{};
+        std::optional<std::size_t> segment{};
+        std::optional<std::size_t> step{};
+        std::vector<TimeSeriesLibrary::SeriesRole> roles{};
+        std::optional<ConvectionInput> input{};
+
+        [[nodiscard]] friend bool operator==(const Issue & lhs, const Issue & rhs) = default;
+    };
+
+    //! LibraryFEMTherm's wording of an issue of the case it was found in, as THERM and the
+    //! Python bindings show it.
+    [[nodiscard]] std::string describe(const ModelCase & modelCase, const Issue & issue);
+
+    //! Everything that stops the case from being written, one issue each; empty when it can
     //! be. Checked: at least one region; three points per region; every material named,
     //! and one set of properties per name (the library keeps one record per name); every
     //! segment attached to one region (see segmentRegion); a mode that is transient or steady
@@ -290,7 +344,7 @@ namespace ThermFile::Model
     //! here: TimeSeriesLibrary::alignmentIssues says, and HygroTherm refuses a misaligned
     //! archive before it solves. Segments are not checked while a region has fewer than three
     //! points, since it has no edges to lie on.
-    [[nodiscard]] std::vector<std::string> issues(const ModelCase & modelCase);
+    [[nodiscard]] std::vector<Issue> issues(const ModelCase & modelCase);
 
     //! Whether the case is set up for a steady-state calculation.
     [[nodiscard]] bool isSteadyState(const ModelCase & modelCase);

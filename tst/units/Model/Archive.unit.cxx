@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include <lbnl/algorithm.hxx>
+
 #include "Model/Archive.hxx"
 #include "Materials/FromValues.hxx"
 #include "THMZ/Model/DB.hxx"
@@ -379,8 +381,15 @@ TEST(Build, AnInvalidCaseIsRefusedWithItsIssues)
 
     const auto entries{thmzEntries(modelCase)};
     ASSERT_FALSE(entries.has_value());
-    EXPECT_NE(entries.error().find("material with no name"), std::string::npos);
-    EXPECT_NE(entries.error().find("at least one step"), std::string::npos);
+    EXPECT_EQ(entries.error(),
+              (std::vector<Issue>{Issue{.kind = IssueKind::UnnamedMaterial, .region = 0U}, Issue{.kind = IssueKind::NoSteps}}));
+
+    // A caller that wants words takes LibraryFEMTherm's, or its own, from the same failure.
+    const auto worded{entries.transform_error([&modelCase](const std::vector<Issue> & found) {
+        return lbnl::transform_to_vector(found, [&modelCase](const Issue & issue) { return describe(modelCase, issue); });
+    })};
+    EXPECT_EQ(worded.error(),
+              (std::vector<std::string>{"region 0 has a material with no name", "the schedule needs at least one step"}));
 
     const auto written{thmz(modelCase, "should-not-exist.thmz")};
     EXPECT_FALSE(written.has_value());
@@ -391,7 +400,7 @@ TEST(Build, WrittenArchiveRoundTrips)
 {
     const auto path{(std::filesystem::temp_directory_path() / "authoring-sealed-strip.thmz").string()};
     const auto written{thmz(sealedStrip(), path)};
-    ASSERT_TRUE(written.has_value()) << written.error();
+    ASSERT_TRUE(written.has_value());
     EXPECT_EQ(written.value(), path);
     ASSERT_TRUE(std::filesystem::exists(path));
 
@@ -456,7 +465,7 @@ TEST(Build, SteadyStateSegmentsHoldTheirConstantsOnRecordsOfTheirOwn)
 TEST(Build, SteadyStateEntriesCarryTheUnifiedLibraryOnlyAndNoSeries)
 {
     const auto entries{thmzEntries(steadyL())};
-    ASSERT_TRUE(entries.has_value()) << entries.error();
+    ASSERT_TRUE(entries.has_value());
     for(const auto * name : {"Model.xml", "BoundaryConditions.xml"})
     {
         EXPECT_TRUE(entries->contains(name)) << name;
@@ -472,7 +481,10 @@ TEST(Build, SteadyStateRefusesAPrescribedSegment)
     modelCase.mode = ThermFile::CalculationMode::cmSteadyState;
     const auto found{issues(modelCase)};
     ASSERT_EQ(found.size(), 2U);
-    EXPECT_NE(found.front().find("is prescribed"), std::string::npos);
+    EXPECT_EQ(found.front(), (Issue{.kind = IssueKind::PrescribedInSteadyState, .segment = 1U}));
+    EXPECT_EQ(describe(modelCase, found.front()),
+              "segment 1 from (0.1, 0) to (0.1, 0.005) is prescribed, which a steady-state case cannot write; state it "
+              "as Convective");
 }
 
 TEST(Build, SteadyStateRadiationAndTagsAreWritten)
@@ -500,7 +512,7 @@ TEST(Build, SteadyStateRadiationAndTagsAreWritten)
     EXPECT_TRUE(emission.useGlobalEmissivity);
 
     const auto entries{thmzEntries(modelCase)};
-    ASSERT_TRUE(entries.has_value()) << entries.error();
+    ASSERT_TRUE(entries.has_value());
 }
 
 TEST(Build, SteadyStateRefusesRadiationReadFromADataset)
@@ -508,16 +520,18 @@ TEST(Build, SteadyStateRefusesRadiationReadFromADataset)
     auto modelCase{steadyL()};
     std::get<Convective>(modelCase.segments[0].kind).radiation = BCLibrary::BlackBodyRadiation{
       .temperature = SeriesRole::RadiantTemperature};
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_NE(found.front().find("reads RadiantTemperature from a dataset"), std::string::npos);
+    EXPECT_EQ(issues(modelCase),
+              (std::vector<Issue>{
+                Issue{.kind = IssueKind::RoleInSteadyState, .segment = 0U, .roles = {SeriesRole::RadiantTemperature}}}));
 }
 
 TEST(Build, AModeThatIsNeitherIsAnIssue)
 {
     auto modelCase{sealedStrip()};
     modelCase.mode = ThermFile::CalculationMode::Unknown;
-    EXPECT_EQ(issues(modelCase), (std::vector<std::string>{"the mode must be transient or steady state"}));
+    const auto found{issues(modelCase)};
+    EXPECT_EQ(found, (std::vector<Issue>{Issue{.kind = IssueKind::UnsupportedMode}}));
+    EXPECT_EQ(describe(modelCase, found.front()), "the mode must be transient or steady state");
 }
 
 // ------------------------------------------------------------------------------------------

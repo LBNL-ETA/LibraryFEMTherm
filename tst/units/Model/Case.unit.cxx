@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <lbnl/algorithm.hxx>
+
 #include "Model/Case.hxx"
 #include "Materials/FromValues.hxx"
 
@@ -65,6 +67,20 @@ namespace
     {
         return BCLibrary::requiredRoles(BCLibrary::BoundaryCondition{.data = recordData(boundary)});
     }
+
+    //! The case has exactly the one issue, and LibraryFEMTherm words it as given.
+    void expectOneIssue(const ModelCase & modelCase, const Issue & expected, const std::string & wording)
+    {
+        const auto found{issues(modelCase)};
+        ASSERT_EQ(found.size(), 1U);
+        EXPECT_EQ(found[0], expected);
+        EXPECT_EQ(describe(modelCase, found[0]), wording);
+    }
+
+    std::vector<IssueKind> kindsOf(const std::vector<Issue> & found)
+    {
+        return lbnl::transform_to_vector(found, [](const Issue & issue) { return issue.kind; });
+    }
 }   // namespace
 
 TEST(Model, WellFormedCaseHasNoIssues)
@@ -82,36 +98,34 @@ TEST(Model, NoRegionsIsAnIssue)
     auto modelCase{strip()};
     modelCase.regions.clear();
     modelCase.segments.clear();
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0], "a model needs at least one region");
+    expectOneIssue(modelCase, Issue{.kind = IssueKind::NoRegions}, "a model needs at least one region");
 }
 
 TEST(Model, TwoPointRegionIsAnIssue)
 {
     auto modelCase{strip()};
     modelCase.regions[0].points = {{0.0, 0.0}, {0.1, 0.0}};
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0], "region 0 has 2 points; a region needs at least three");
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::TooFewPoints, .region = 0U},
+                   "region 0 has 2 points; a region needs at least three");
 }
 
 TEST(Model, SegmentOnMissingRegionIsAnIssue)
 {
     auto modelCase{strip()};
     modelCase.segments[1].region = 3U;
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0], "segment 1 borders region 3, which does not exist");
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::RegionMissing, .region = 3U, .segment = 1U},
+                   "segment 1 borders region 3, which does not exist");
 }
 
 TEST(Model, SegmentOffTheOutlineIsAnIssue)
 {
     auto modelCase{strip()};
     modelCase.segments[1].end = {0.1, 0.002};   // lifted off the bottom edge
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0], "segment 1 from (0, 0) to (0.1, 0.002) does not lie along an edge of any region");
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::OffEveryRegion, .segment = 1U},
+                   "segment 1 from (0, 0) to (0.1, 0.002) does not lie along an edge of any region");
 }
 
 TEST(Model, ANamedSegmentIsNamedInItsIssue)
@@ -119,9 +133,9 @@ TEST(Model, ANamedSegmentIsNamedInItsIssue)
     auto modelCase{strip()};
     modelCase.segments[1].name = "bottom";
     modelCase.segments[1].end = {0.1, 0.002};
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0], "segment 1 'bottom' from (0, 0) to (0.1, 0.002) does not lie along an edge of any region");
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::OffEveryRegion, .segment = 1U},
+                   "segment 1 'bottom' from (0, 0) to (0.1, 0.002) does not lie along an edge of any region");
 }
 
 TEST(Model, NamedRegionIsCheckedAsNamed)
@@ -129,9 +143,9 @@ TEST(Model, NamedRegionIsCheckedAsNamed)
     auto modelCase{strip()};
     modelCase.segments[1].region = 0U;
     modelCase.segments[1].end = {0.1, 0.002};
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0], "segment 1 from (0, 0) to (0.1, 0.002) does not lie along an edge of region 0");
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::OffRegion, .region = 0U, .segment = 1U},
+                   "segment 1 from (0, 0) to (0.1, 0.002) does not lie along an edge of region 0");
 }
 
 TEST(Model, UnnamedSegmentOnTheOutlineIsAttachedToItsRegion)
@@ -150,10 +164,10 @@ TEST(Model, SharedEdgeMustNameItsRegion)
     auto modelCase{strip()};
     modelCase.regions.push_back({.material = stucco(), .points = {{0.1, 0.0}, {0.2, 0.0}, {0.2, 0.01}, {0.1, 0.01}}});
     // The convective segment now sits on the edge both rectangles share.
-    auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0],
-              "segment 2 from (0.1, 0) to (0.1, 0.01) lies on an edge shared by regions 0 and 1; state which with region");
+    expectOneIssue(
+      modelCase,
+      Issue{.kind = IssueKind::SharedEdge, .region = 0U, .otherRegion = 1U, .segment = 2U},
+      "segment 2 from (0.1, 0) to (0.1, 0.01) lies on an edge shared by regions 0 and 1; state which with region");
     EXPECT_FALSE(segmentRegion(modelCase, 2U).has_value());
 
     modelCase.segments[2].region = 1U;
@@ -191,9 +205,9 @@ TEST(Model, NamelessMaterialIsAnIssue)
 {
     auto modelCase{strip()};
     modelCase.regions[0].material.Name.clear();
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0], "region 0 has a material with no name");
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::UnnamedMaterial, .region = 0U},
+                   "region 0 has a material with no name");
 }
 
 TEST(Model, OneNameWithTwoRecordsIsAnIssue)
@@ -203,11 +217,10 @@ TEST(Model, OneNameWithTwoRecordsIsAnIssue)
     another.UUID = "another-record";
     modelCase.regions.push_back({.material = another, .points = {{0.1, 0.0}, {0.2, 0.0}, {0.2, 0.01}, {0.1, 0.01}}});
     modelCase.segments[2].region = 0U;   // the shared edge, attributed
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0],
-              "regions 0 and 1 carry two different materials both named 'Stucco'; the library keeps one record per "
-              "name");
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::MaterialNameClash, .region = 0U, .otherRegion = 1U},
+                   "regions 0 and 1 carry two different materials both named 'Stucco'; the library keeps one "
+                   "record per name");
 
     modelCase.regions[1].material = stucco();
     EXPECT_TRUE(issues(modelCase).empty());
@@ -217,11 +230,15 @@ TEST(Model, ANonPositiveStepIsAnIssue)
 {
     auto modelCase{strip()};
     modelCase.schedule = uniformSchedule(0.0, 3U);
-    EXPECT_EQ(issues(modelCase), (std::vector<std::string>{"the schedule's step 1 must be positive"}));
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::NonPositiveStep, .step = 0U},
+                   "the schedule's step 1 must be positive");
     modelCase.schedule.stepLengths = {3600.0, -1.0, 3600.0};
-    EXPECT_EQ(issues(modelCase), (std::vector<std::string>{"the schedule's step 2 must be positive"}));
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::NonPositiveStep, .step = 1U},
+                   "the schedule's step 2 must be positive");
     modelCase.schedule = {};
-    EXPECT_EQ(issues(modelCase), (std::vector<std::string>{"the schedule needs at least one step"}));
+    expectOneIssue(modelCase, Issue{.kind = IssueKind::NoSteps}, "the schedule needs at least one step");
 }
 
 TEST(Model, IssuesAccumulate)
@@ -230,7 +247,8 @@ TEST(Model, IssuesAccumulate)
     modelCase.regions[0].material.Name.clear();
     modelCase.segments[0].region = 9U;
     modelCase.schedule.stepLengths.clear();
-    EXPECT_EQ(issues(modelCase).size(), 3U);
+    EXPECT_EQ(kindsOf(issues(modelCase)),
+              (std::vector<IssueKind>{IssueKind::UnnamedMaterial, IssueKind::RegionMissing, IssueKind::NoSteps}));
 }
 
 TEST(Model, MaterialLookup)
@@ -387,9 +405,9 @@ TEST(Model, ASegmentReadingARoleNeedsADataset)
 {
     auto modelCase{strip()};
     convectiveEnd(modelCase).airTemperature = SeriesRole::AirTemperature;
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0], "segment 2 from (0.1, 0) to (0.1, 0.01) reads AirTemperature from a dataset but binds none");
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::RoleWithoutDataset, .segment = 2U, .roles = {SeriesRole::AirTemperature}},
+                   "segment 2 from (0.1, 0) to (0.1, 0.01) reads AirTemperature from a dataset but binds none");
 
     modelCase.segments[2].dataset = providing({SeriesRole::AirTemperature});
     EXPECT_TRUE(issues(modelCase).empty());
@@ -401,9 +419,9 @@ TEST(Model, TheDatasetMustProvideEveryRoleRead)
     convectiveEnd(modelCase).airTemperature = SeriesRole::AirTemperature;
     convectiveEnd(modelCase).humidity = SeriesRole::RelativeHumidity;
     modelCase.segments[2].dataset = providing({SeriesRole::AirTemperature});
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0], "segment 2 from (0.1, 0) to (0.1, 0.01): its dataset 'weather' provides no RelativeHumidity");
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::RoleNotProvided, .segment = 2U, .roles = {SeriesRole::RelativeHumidity}},
+                   "segment 2 from (0.1, 0) to (0.1, 0.01): its dataset 'weather' provides no RelativeHumidity");
 }
 
 TEST(Model, AStatedScheduleMustAgreeWithTheDatasets)
@@ -411,9 +429,10 @@ TEST(Model, AStatedScheduleMustAgreeWithTheDatasets)
     auto modelCase{strip()};
     convectiveEnd(modelCase).airTemperature = SeriesRole::AirTemperature;
     modelCase.segments[2].dataset = providing({SeriesRole::AirTemperature}, 10U);
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_NE(found[0].find("the stated schedule differs from the axis of its dataset 'weather'"), std::string::npos);
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::ScheduleDisagrees, .segment = 2U},
+                   "segment 2 from (0.1, 0) to (0.1, 0.01): the stated schedule differs from the axis of its dataset "
+                   "'weather' (1 Jan 00:00, step 1 h, 10 rows); leave the schedule out to run on the datasets' clock");
 
     // Left unstated, the schedule is the datasets'.
     modelCase.schedule = Schedule{};
@@ -437,29 +456,31 @@ TEST(Model, ASchedulWithNoStepsIsReportedWhenNoDatasetIsBound)
 {
     auto modelCase{strip()};
     modelCase.schedule.stepLengths.clear();
-    EXPECT_EQ(issues(modelCase), (std::vector<std::string>{"the schedule needs at least one step"}));
+    EXPECT_EQ(issues(modelCase), (std::vector<Issue>{Issue{.kind = IssueKind::NoSteps}}));
 }
 
 TEST(Model, TheConvectionModelMustBeGivenItsInputs)
 {
     auto modelCase{strip()};
     convectiveEnd(modelCase).filmCoefficient = std::nullopt;
-    auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0], "segment 2 from (0.1, 0) to (0.1, 0.01) needs a film coefficient for its convection model");
+    expectOneIssue(
+      modelCase,
+      Issue{.kind = IssueKind::ConvectionInputMissing, .segment = 2U, .input = ConvectionInput::FilmCoefficient},
+      "segment 2 from (0.1, 0) to (0.1, 0.01) needs a film coefficient for its convection model");
 
     convectiveEnd(modelCase).model = BCLibrary::ConvectionModel::ASHRAE_NFRC_Outside;
-    found = issues(modelCase);
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_NE(found[0].find("needs the wind speed"), std::string::npos);
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::ConvectionInputMissing, .segment = 2U, .input = ConvectionInput::WindSpeed},
+                   "segment 2 from (0.1, 0) to (0.1, 0.01) needs the wind speed for its convection model");
 
     convectiveEnd(modelCase).windSpeed = 3.0;
     EXPECT_TRUE(issues(modelCase).empty());
 
     convectiveEnd(modelCase).model = BCLibrary::ConvectionModel::Kimura;
-    found = issues(modelCase);
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_NE(found[0].find("needs the wind direction"), std::string::npos);
+    expectOneIssue(
+      modelCase,
+      Issue{.kind = IssueKind::ConvectionInputMissing, .segment = 2U, .input = ConvectionInput::WindDirection},
+      "segment 2 from (0.1, 0) to (0.1, 0.01) needs the wind direction for its convection model");
 
     convectiveEnd(modelCase).windDirection = SeriesRole::WindDirection;
     modelCase.segments[2].dataset = providing({SeriesRole::WindDirection});
@@ -479,9 +500,9 @@ TEST(Model, TransientAllowsFixedRadiationFromADataset)
     EXPECT_TRUE(issues(modelCase).empty());
 
     modelCase.segments[2].dataset = providing({SeriesRole::RelativeHumidity});
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_NE(found[0].find("provides no RadiantTemperature"), std::string::npos);
+    EXPECT_EQ(issues(modelCase),
+              (std::vector<Issue>{
+                Issue{.kind = IssueKind::RoleNotProvided, .segment = 2U, .roles = {SeriesRole::RadiantTemperature}}}));
 }
 
 TEST(Model, TransientRefusesWhatTheEngineDoesNotRunThroughAClock)
@@ -489,15 +510,17 @@ TEST(Model, TransientRefusesWhatTheEngineDoesNotRunThroughAClock)
     auto modelCase{strip()};
     modelCase.segments[2].dataset = providing({SeriesRole::RadiantTemperature});
     convectiveEnd(modelCase).radiation = BCLibrary::AutomaticEnclosure{};
-    auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_NE(found[0].find("radiates into an enclosure"), std::string::npos);
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::EnclosureInTransient, .segment = 2U},
+                   "segment 2 from (0.1, 0) to (0.1, 0.01) radiates into an enclosure, which a transient run does "
+                   "not model; state fixed radiation or a black body");
 
     convectiveEnd(modelCase).radiation = BCLibrary::BlackBodyRadiation{
       .temperature = SeriesRole::RadiantTemperature};
-    found = issues(modelCase);
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_NE(found[0].find("black body read from a series"), std::string::npos);
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::BlackBodyFromDataset, .segment = 2U},
+                   "segment 2 from (0.1, 0) to (0.1, 0.01) radiates as a black body read from a series, which a "
+                   "transient run holds constant; state constants, or fixed-coefficient radiation to read a dataset");
 
     convectiveEnd(modelCase).radiation = BCLibrary::BlackBodyRadiation{.temperature = -10.0};
     EXPECT_TRUE(issues(modelCase).empty());
@@ -511,17 +534,16 @@ TEST(Model, SteadyStateRefusesAnyRoleAndAnyDataset)
     EXPECT_TRUE(issues(modelCase).empty());
 
     convectiveEnd(modelCase).airTemperature = SeriesRole::AirTemperature;
-    auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_EQ(found[0],
-              "segment 2 from (0.1, 0) to (0.1, 0.01) reads AirTemperature from a dataset, which a steady-state case "
-              "has none of; state it as a constant");
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::RoleInSteadyState, .segment = 2U, .roles = {SeriesRole::AirTemperature}},
+                   "segment 2 from (0.1, 0) to (0.1, 0.01) reads AirTemperature from a dataset, which a steady-state "
+                   "case has none of; state it as a constant");
 
     convectiveEnd(modelCase).airTemperature = -5.0;
     modelCase.segments[2].dataset = providing({SeriesRole::AirTemperature});
-    found = issues(modelCase);
-    ASSERT_EQ(found.size(), 1U);
-    EXPECT_NE(found[0].find("binds a dataset, which a steady-state case does not write"), std::string::npos);
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::DatasetInSteadyState, .segment = 2U},
+                   "segment 2 from (0.1, 0) to (0.1, 0.01) binds a dataset, which a steady-state case does not write");
 }
 
 // ------------------------------------------------------------------------------------------

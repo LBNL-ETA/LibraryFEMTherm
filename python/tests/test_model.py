@@ -34,6 +34,10 @@ def hourly(role: fem.SeriesRole, values: list[float], name: str = "weather",
                               series=[fem.Series(role=role, values=values)])
 
 
+def kinds(found: list[model.Issue]) -> list[model.IssueKind]:
+    return [issue.kind for issue in found]
+
+
 def sealed_strip() -> model.ModelCase:
     """One rectangle, four segments, prescribed temperature on the two short ends."""
     return model.ModelCase(
@@ -101,7 +105,7 @@ class TestSteadyState:
         assert radiation.temperature.value == pytest.approx(-18.0)
         assert radiation == fem.BCBlackBodyRadiation(temperature=fem.Constant(-18.0), emissivity=1.0)
         cold = model.bc.Convective(air_temperature=-18.0, film_coefficient=26.0, radiation=radiation)
-        assert "radiation=BCBlackBodyRadiation(temperature=Constant(" in repr(cold)
+        assert "radiation=BCBlackBodyRadiation(temperature=-18.0, emissivity=1.0" in repr(cold)
         segment = model.Segment(cold, (0.0, 0.06), (0.0, 0.0), u_factor_tag="Frame")
         assert segment.u_factor_tag == "Frame"
         assert repr(segment).endswith("u_factor_tag='Frame')")
@@ -139,12 +143,12 @@ class TestSteadyState:
             model.bc.Convective(air_temperature=20.0, film_coefficient=8.0, radiation=fem.BCAutomaticEnclosure(emissivity=0.9)),
             (0.0, 0.0), (0.1, 0.0))
         case.segments = segments
-        assert any("enclosure" in issue for issue in model.issues(case))
+        assert model.IssueKind.EnclosureInTransient in kinds(found=model.issues(model_case=case))
 
     def test_a_steady_case_refuses_a_prescribed_segment(self):
         case = sealed_strip()
         case.mode = fem.CalculationMode.cmSteadyState
-        assert any("is prescribed" in issue for issue in model.issues(case))
+        assert model.IssueKind.PrescribedInSteadyState in kinds(found=model.issues(model_case=case))
 
 
 class TestVocabulary:
@@ -177,9 +181,12 @@ class TestVocabulary:
         segments = list(case.segments)
         segments[1] = model.Segment(model.bc.Prescribed(temperature=20.0), (0.1, 0.0), (0.1, 0.02), name="warm end")
         case.segments = segments
-        assert model.issues(case) == [
-            "segment 1 'warm end' from (0.1, 0) to (0.1, 0.02) does not lie along an edge of any region"
-        ]
+        found: list[model.Issue] = model.issues(model_case=case)
+        assert kinds(found=found) == [model.IssueKind.OffEveryRegion]
+        assert found[0].segment == 1
+        assert model.describe(model_case=case, issue=found[0]) == (
+            "segment 1 'warm end' from (0.1, 0) to (0.1, 0.02) does not lie along an edge of any region")
+        assert repr(found[0]) == "Issue(kind=IssueKind.OffEveryRegion, segment=1)"
 
     def test_segments_attach_to_the_region_found(self):
         case = sealed_strip()
@@ -191,9 +198,9 @@ class TestVocabulary:
         case.regions = list(case.regions) + [
             model.Region(linear_sorption(), [(0.1, 0.0), (0.2, 0.0), (0.2, 0.005), (0.1, 0.005)])
         ]
-        found = model.issues(case)
-        assert len(found) == 1
-        assert "shared by regions 0 and 1" in found[0]
+        found: list[model.Issue] = model.issues(model_case=case)
+        assert kinds(found=found) == [model.IssueKind.SharedEdge]
+        assert (found[0].region, found[0].other_region, found[0].segment) == (0, 1, 1)
         assert model.segment_region(case, 1) is None
         segments = list(case.segments)
         segments[1] = model.Segment(model.bc.Prescribed(temperature=20.0), (0.1, 0.0), (0.1, 0.005), region=1)
@@ -210,11 +217,13 @@ class TestVocabulary:
         assert convective.film_coefficient is None
         assert convective.model == fem.BCConvectionModel.Fixed_Convection_Coefficient
         assert convective.wind_speed is None and convective.flux is None and convective.radiation is None
-        assert any("needs a film coefficient" in issue for issue in model.issues(model.ModelCase(
+        found: list[model.Issue] = model.issues(model_case=model.ModelCase(
             id="probe",
             regions=[model.Region(linear_sorption(), [(0.0, 0.0), (0.1, 0.0), (0.1, 0.01), (0.0, 0.01)])],
             segments=[model.Segment(convective, (0.1, 0.0), (0.1, 0.01))],
-            schedule=model.Schedule(dtime=3600.0, n_steps=1))))
+            schedule=model.Schedule(dtime=3600.0, n_steps=1)))
+        assert any(issue.kind == model.IssueKind.ConvectionInputMissing
+                   and issue.input == model.ConvectionInput.FilmCoefficient for issue in found)
 
     def test_reprs(self):
         region = model.Region(linear_sorption(), [(0.0, 0.0), (0.2, 0.0), (0.2, 3.0)])
@@ -226,6 +235,12 @@ class TestVocabulary:
         assert repr(weather) == (
             "Convective(air_temperature=SeriesRole.AirTemperature, film_coefficient=8.0, humidity=0.5, "
             "model=BCConvectionModel.TARP)")
+        # A nested record prints its inputs the same way: as they would be written.
+        sky = model.bc.Convective(air_temperature=20.0, film_coefficient=8.0,
+                                  radiation=fem.BCFixedCoefficientRadiation(temperature=fem.SeriesRole.RadiantTemperature,
+                                                                            coefficient=4.5))
+        assert repr(sky).endswith(
+            "radiation=BCFixedCoefficientRadiation(temperature=SeriesRole.RadiantTemperature, coefficient=4.5))")
         bound = model.Segment(kind=weather, start=(0.0, 0.0), end=(0.2, 0.0),
                               dataset=hourly(role=fem.SeriesRole.AirTemperature, values=[1.0, 2.0]))
         assert repr(bound).endswith("dataset=TimeSeriesData(name='weather', 1 Jan 00:00, step 1 h, 2 rows))")
@@ -333,10 +348,10 @@ class TestIssues:
         nameless.name = ""
         case.regions = [model.Region(nameless, case.regions[0].points)]
         case.schedule = model.Schedule(dtime=3600.0, n_steps=0)
-        found = model.issues(case)
-        assert len(found) == 2
-        assert "no name" in found[0]
-        assert "at least one step" in found[1]
+        found: list[model.Issue] = model.issues(model_case=case)
+        assert kinds(found=found) == [model.IssueKind.UnnamedMaterial, model.IssueKind.NoSteps]
+        assert [model.describe(model_case=case, issue=issue) for issue in found] == [
+            "region 0 has a material with no name", "the schedule needs at least one step"]
 
     def test_one_name_with_two_records_is_an_issue(self):
         case = sealed_strip()
@@ -348,17 +363,19 @@ class TestIssues:
         segments = list(case.segments)
         segments[1] = model.Segment(model.bc.Prescribed(temperature=20.0), (0.1, 0.0), (0.1, 0.005), region=0)
         case.segments = segments
-        found = model.issues(case)
-        assert len(found) == 1
-        assert "two different materials both named 'linear-sorption'" in found[0]
+        found: list[model.Issue] = model.issues(model_case=case)
+        assert kinds(found=found) == [model.IssueKind.MaterialNameClash]
+        assert "two different materials both named 'linear-sorption'" in model.describe(model_case=case, issue=found[0])
 
     def test_writing_an_invalid_case_raises(self, tmp_path):
         case = sealed_strip()
         nameless = linear_sorption()
         nameless.name = ""
         case.regions = [model.Region(nameless, case.regions[0].points)]
-        with pytest.raises(ValueError, match="no name"):
+        with pytest.raises(ValueError, match="no name") as raised:
             build.thmz_entries(case)
+        # The issues ride on the error, for a caller that wants them rather than the text.
+        assert kinds(found=raised.value.issues) == [model.IssueKind.UnnamedMaterial]
         target = tmp_path / "invalid.thmz"
         with pytest.raises(ValueError, match="no name"):
             build.thmz(case, str(target))
@@ -473,20 +490,20 @@ class TestLibraryRecords:
         warm_end = model.bc.Prescribed(temperature=fem.SeriesRole.PrescribedTemperature)
         segments[1] = model.Segment(kind=warm_end, start=(0.1, 0.0), end=(0.1, 0.005))
         case.segments = segments
-        issues = model.issues(case)
-        assert len(issues) == 1
-        assert "reads PrescribedTemperature from a dataset but binds none" in issues[0]
+        found: list[model.Issue] = model.issues(model_case=case)
+        assert kinds(found=found) == [model.IssueKind.RoleWithoutDataset]
+        assert (found[0].segment, found[0].roles) == (1, [fem.SeriesRole.PrescribedTemperature])
 
         segments[1].dataset = hourly(role=fem.SeriesRole.RelativeHumidity, values=[0.5] * 300, step_seconds=36000.0)
         case.segments = segments
-        assert "its dataset 'weather' provides no PrescribedTemperature" in model.issues(case)[0]
+        assert kinds(found=model.issues(model_case=case)) == [model.IssueKind.RoleNotProvided]
 
         # Ten steps against a stated schedule of 300: the case says so; left unstated, the
         # schedule is the dataset's.
         segments[1].dataset = hourly(role=fem.SeriesRole.PrescribedTemperature, values=[20.0] * 10,
                                      step_seconds=36000.0)
         case.segments = segments
-        assert "the stated schedule differs from the axis of its dataset 'weather'" in model.issues(case)[0]
+        assert kinds(found=model.issues(model_case=case)) == [model.IssueKind.ScheduleDisagrees]
         case.schedule = model.Schedule(step_lengths=[])
         assert model.issues(case) == []
 

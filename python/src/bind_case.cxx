@@ -21,6 +21,7 @@ namespace py = pybind11;
 using namespace ThermFile::Model;
 using namespace ThermFile::Build;
 using SourceBinding::SourceLike;
+using SourceBinding::sourceRepr;
 using SourceBinding::toSource;
 
 namespace
@@ -54,19 +55,9 @@ namespace
         return value.has_value() ? std::format(", {}={}", label, pythonRepr(*value)) : std::string{};
     }
 
-    //! An input as a kind's constructor takes it: the number, or the role it reads.
-    std::string inputRepr(const BCLibrary::Source & source)
-    {
-        if(const auto * constant{std::get_if<BCLibrary::Constant>(&source)})
-        {
-            return pythonRepr(constant->value);
-        }
-        return py::str(py::cast(std::get<BCLibrary::FromTimeSeries>(source).role)).cast<std::string>();
-    }
-
     std::string optionalInput(const std::string_view label, const std::optional<BCLibrary::Source> & value)
     {
-        return value.has_value() ? std::format(", {}={}", label, inputRepr(*value)) : std::string{};
+        return value.has_value() ? std::format(", {}={}", label, sourceRepr(*value)) : std::string{};
     }
 
     //! A point as a constructor takes it: a Point or a 2-tuple of metres. Spelled out as a
@@ -108,9 +99,9 @@ namespace
                                        ? std::string{}
                                        : std::format(", model={}", py::str(py::cast(kind.model)).cast<std::string>())};
         return std::format("Convective(air_temperature={}{}, humidity={}{}{}{}{}{})",
-                           inputRepr(kind.airTemperature),
+                           sourceRepr(kind.airTemperature),
                            optionalInput("film_coefficient", kind.filmCoefficient),
-                           inputRepr(kind.humidity),
+                           sourceRepr(kind.humidity),
                            modelField,
                            optionalInput("wind_speed", kind.windSpeed),
                            optionalInput("wind_direction", kind.windDirection),
@@ -248,7 +239,7 @@ namespace
             .def_readwrite("humidity", &Prescribed::humidity)
             .def("__repr__", [](const Prescribed & kind) {
                 return std::format("Prescribed(temperature={}{})",
-                                   inputRepr(kind.temperature),
+                                   sourceRepr(kind.temperature),
                                    optionalInput("humidity", kind.humidity));
             })};
         addEquality(prescribed);
@@ -511,8 +502,6 @@ namespace
             .def_readwrite("mesh_control", &ModelCase::meshControl)};
         addEquality(modelCase);
 
-        model.def("issues", &issues, py::arg("model_case"),
-                      "Everything that stops the case from being written, one line each; empty when it can be.");
         model.def("is_steady_state", &isSteadyState, py::arg("model_case"),
                   "Whether the case is set up for a steady-state calculation.");
         model.def("region_material", &regionMaterial, py::arg("model_case"), py::arg("index"),
@@ -531,6 +520,106 @@ namespace
         model.def("completed", &completed, py::arg("model_case"),
                   "The case with its outline gaps appended as adiabatic segments, after the stated ones. This "
                   "is what build writes; a caller states only the faces that exchange something.");
+    }
+
+    //! An enumerator by its qualified name, `SeriesRole.AirTemperature`.
+    template<typename Enum>
+    std::string enumName(const Enum value)
+    {
+        return py::str(py::cast(value)).template cast<std::string>();
+    }
+
+    std::string rolesField(const std::vector<TimeSeriesLibrary::SeriesRole> & roles)
+    {
+        if(roles.empty())
+        {
+            return {};
+        }
+        std::string names;
+        for(const auto role : roles)
+        {
+            names += (names.empty() ? "" : ", ") + enumName(role);
+        }
+        return std::format(", roles=[{}]", names);
+    }
+
+    std::string issueRepr(const Issue & issue)
+    {
+        return std::format("Issue(kind={}{}{}{}{}{}{})",
+                           enumName(issue.kind),
+                           optionalField("region", issue.region),
+                           optionalField("other_region", issue.otherRegion),
+                           optionalField("segment", issue.segment),
+                           optionalField("step", issue.step),
+                           rolesField(issue.roles),
+                           issue.input.has_value() ? ", input=" + enumName(issue.input.value()) : std::string{});
+    }
+
+    void bindIssueKinds(py::module_ & model)
+    {
+        py::enum_<IssueKind>(model, "IssueKind", "What is wrong with a case, one kind per check issues() makes.")
+          .value("NoRegions", IssueKind::NoRegions)
+          .value("TooFewPoints", IssueKind::TooFewPoints)
+          .value("UnnamedMaterial", IssueKind::UnnamedMaterial)
+          .value("MaterialNameClash", IssueKind::MaterialNameClash)
+          .value("RegionMissing", IssueKind::RegionMissing)
+          .value("OffRegion", IssueKind::OffRegion)
+          .value("OffEveryRegion", IssueKind::OffEveryRegion)
+          .value("SharedEdge", IssueKind::SharedEdge)
+          .value("NoSteps", IssueKind::NoSteps)
+          .value("NonPositiveStep", IssueKind::NonPositiveStep)
+          .value("ScheduleDisagrees", IssueKind::ScheduleDisagrees)
+          .value("ConvectionInputMissing", IssueKind::ConvectionInputMissing)
+          .value("RoleWithoutDataset", IssueKind::RoleWithoutDataset)
+          .value("RoleNotProvided", IssueKind::RoleNotProvided)
+          .value("EnclosureInTransient", IssueKind::EnclosureInTransient)
+          .value("BlackBodyFromDataset", IssueKind::BlackBodyFromDataset)
+          .value("PrescribedInSteadyState", IssueKind::PrescribedInSteadyState)
+          .value("RoleInSteadyState", IssueKind::RoleInSteadyState)
+          .value("DatasetInSteadyState", IssueKind::DatasetInSteadyState)
+          .value("UnsupportedMode", IssueKind::UnsupportedMode);
+        py::enum_<ConvectionInput>(model, "ConvectionInput", "The input a convection model reads.")
+          .value("FilmCoefficient", ConvectionInput::FilmCoefficient)
+          .value("WindSpeed", ConvectionInput::WindSpeed)
+          .value("WindDirection", ConvectionInput::WindDirection);
+    }
+
+    //! The issues: facts a caller can act on, and LibraryFEMTherm's wording of them.
+    void bindIssues(py::module_ & model)
+    {
+        auto issue{py::class_<Issue>(model,
+                                     "Issue",
+                                     "One thing wrong with a case: its kind and what it is about, as indices into "
+                                     "the case and the roles or input concerned; only the fields the kind names are "
+                                     "set. describe() words it.")
+                     .def_readonly("kind", &Issue::kind)
+                     .def_readonly("region", &Issue::region)
+                     .def_readonly("other_region", &Issue::otherRegion)
+                     .def_readonly("segment", &Issue::segment)
+                     .def_readonly("step", &Issue::step)
+                     .def_readonly("roles", &Issue::roles)
+                     .def_readonly("input", &Issue::input)
+                     .def("__repr__", &issueRepr)};
+        addEquality(issue);
+        model.def("issues", &issues, py::arg("model_case"),
+                  "Everything that stops the case from being written, one Issue each; empty when it can be.");
+        model.def("describe", &describe, py::arg("model_case"), py::arg("issue"),
+                  "LibraryFEMTherm's wording of an issue of the case it was found in, as THERM shows it.");
+    }
+
+    //! Raises ValueError with the issues worded one per line, the issues themselves on its
+    //! `issues` attribute for a caller that wants them.
+    [[noreturn]] void raiseIssues(const ModelCase & modelCase, const std::vector<Issue> & found)
+    {
+        std::string text;
+        for(const auto & issue : found)
+        {
+            text += (text.empty() ? "" : "\n") + describe(modelCase, issue);
+        }
+        const py::object error{py::module_::import("builtins").attr("ValueError")(text)};
+        error.attr("issues") = py::cast(found);
+        PyErr_SetObject(PyExc_ValueError, error.ptr());
+        throw py::error_already_set();
     }
 
     void bindArchive(py::module_ & build)
@@ -580,27 +669,28 @@ namespace
               const auto entries{thmzEntries(modelCase)};
               if(!entries.has_value())
               {
-                  throw py::value_error(entries.error());
+                  raiseIssues(modelCase, entries.error());
               }
               return entries.value();
           },
           py::arg("model_case"),
           "Every entry of the case's THMZ, name -> content, before zipping. Raises ValueError with the case's "
-          "issues when it cannot be written.");
+          "issues worded one per line, and the issues themselves as its `issues`, when it cannot be written.");
         build.def(
           "thmz",
           [](const ModelCase & modelCase, const std::string & path) {
               const auto written{thmz(modelCase, path)};
               if(!written.has_value())
               {
-                  throw py::value_error(written.error());
+                  raiseIssues(modelCase, written.error());
               }
               return written.value();
           },
           py::arg("model_case"),
           py::arg("path"),
           "Writes the case's THMZ and returns the path. Creates the parent directory and overwrites an existing "
-          "file. Raises ValueError with the case's issues when it cannot be written.");
+          "file. Raises ValueError with the case's issues worded one per line, and the issues themselves as its "
+          "`issues`, when it cannot be written.");
         build.def("schedule_of", &scheduleOf, py::arg("datasets"),
                   "The clock the mediator will run, read from the first dataset as the mediator does.");
     }
@@ -621,6 +711,8 @@ void bind_case(py::module_ & mod)
     bindGeometry(model);
     bindSettings(model);
     bindCase(model);
+    bindIssueKinds(model);
+    bindIssues(model);
 
     auto build{mod.def_submodule("build", "Turn a stated model into the archive THERM would have saved.")};
     bindArchive(build);

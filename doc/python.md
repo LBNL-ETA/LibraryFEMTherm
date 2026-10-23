@@ -430,6 +430,24 @@ refuses a misaligned archive before it solves. `Convective` also takes a convect
 with `wind_speed` and `wind_direction` for the correlations, an imposed `flux`, and THERM's
 other radiation records.
 
+Each issue is a `model.Issue`: its `kind` (`model.IssueKind`) and what it is about, as
+indices into the case (`region`, `other_region`, `segment`, `step`) and the `roles` or the
+convection `input` concerned. `model.describe(model_case, issue)` words it as THERM does; a
+program that wants to point at the segment, or word it otherwise, reads the fields.
+`build.thmz` and `build.thmz_entries` refuse a case with issues with a `ValueError` whose
+text is LibraryFEMTherm's wording, one issue per line, and whose `issues` attribute holds
+the issues themselves:
+
+```python
+for issue in model.issues(case):
+    print(issue.kind, issue.segment, model.describe(case, issue))
+
+try:
+    build.thmz(case, "wall.thmz")
+except ValueError as refusal:
+    flagged = {issue.segment for issue in refusal.issues if issue.segment is not None}
+```
+
 ## Gases
 
 ### Loading the gas database

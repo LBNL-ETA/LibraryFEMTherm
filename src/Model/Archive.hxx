@@ -103,15 +103,15 @@ namespace ThermFile::Build
     [[nodiscard]] Libraries libraries(const Model::ModelCase & modelCase);
 
     //! Every entry of the case's THMZ, name -> content, before zipping. Fails with the
-    //! case's issues, one per line, when it cannot be written.
-    [[nodiscard]] lbnl::ExpectedExt<std::map<std::string, std::string>, std::string>
+    //! case's issues when it cannot be written; Model::describe words each.
+    [[nodiscard]] lbnl::ExpectedExt<std::map<std::string, std::string>, std::vector<Model::Issue>>
       thmzEntries(const Model::ModelCase & modelCase);
 
     //! Writes the case's THMZ and returns the path written. Creates the parent directory
     //! and overwrites an existing file. Fails with the case's issues when it cannot be
-    //! written.
-    [[nodiscard]] lbnl::ExpectedExt<std::string, std::string> thmz(const Model::ModelCase & modelCase,
-                                                                   const std::string & path);
+    //! written; Model::describe words each.
+    [[nodiscard]] lbnl::ExpectedExt<std::string, std::vector<Model::Issue>> thmz(const Model::ModelCase & modelCase,
+                                                                                 const std::string & path);
 
     //! The clock the mediator will run, read from the first dataset as the mediator does.
     [[nodiscard]] Model::Schedule scheduleOf(const std::vector<TimeSeriesLibrary::TimeSeriesData> & datasets);

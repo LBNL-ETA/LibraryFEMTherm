@@ -58,20 +58,6 @@ namespace ThermFile::Build
         const std::string emptyGases{"<Gases>\n\t<Version>1</Version>\n</Gases>\n"};
         const std::string emptyMesh{"<Mesh>\n\t<Version>1</Version>\n</Mesh>\n"};
 
-        std::string joined(const std::vector<std::string> & lines)
-        {
-            std::string text;
-            for(const auto & line : lines)
-            {
-                if(!text.empty())
-                {
-                    text += '\n';
-                }
-                text += line;
-            }
-            return text;
-        }
-
         // --------------------------------------------------------------------------------
         // Records and datasets per segment
         // --------------------------------------------------------------------------------
@@ -392,11 +378,12 @@ namespace ThermFile::Build
                          .datasets = std::move(datasets)};
     }
 
-    lbnl::ExpectedExt<std::map<std::string, std::string>, std::string> thmzEntries(const ModelCase & modelCase)
+    lbnl::ExpectedExt<std::map<std::string, std::string>, std::vector<Model::Issue>>
+      thmzEntries(const ModelCase & modelCase)
     {
-        if(const auto found{issues(modelCase)}; !found.empty())
+        if(auto found{issues(modelCase)}; !found.empty())
         {
-            return lbnl::Unexpected<std::string>{joined(found)};
+            return lbnl::Unexpected<std::vector<Model::Issue>>{std::move(found)};
         }
         const auto thermModel{model(modelCase)};
         const auto built{libraries(modelCase)};
@@ -416,12 +403,12 @@ namespace ThermFile::Build
         return entries;
     }
 
-    lbnl::ExpectedExt<std::string, std::string> thmz(const ModelCase & modelCase, const std::string & path)
+    lbnl::ExpectedExt<std::string, std::vector<Model::Issue>> thmz(const ModelCase & modelCase, const std::string & path)
     {
         const auto entries{thmzEntries(modelCase)};
         if(!entries.has_value())
         {
-            return lbnl::Unexpected<std::string>{entries.error()};
+            return lbnl::Unexpected<std::vector<Model::Issue>>{entries.error()};
         }
         const std::filesystem::path target{path};
         if(target.has_parent_path())
