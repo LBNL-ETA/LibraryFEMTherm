@@ -317,6 +317,24 @@ record whose inputs are all constant needs no dataset, but a transient model sti
 one somewhere for the clock. `fem.capability_issues(record, engine, mode)` says whether a
 record can run at all under an engine and calculation mode.
 
+The record and dataset a boundary refers to are looked up in the archive's libraries, for a
+model THERM saved as for one `build` wrote:
+
+```python
+model = fem.load_model("model.thmz")
+library = fem.BoundaryConditionsDB()
+library.load("model.thmz")
+datasets = fem.load_datasets("model.thmz")
+for boundary in model.boundary_conditions:
+    record = fem.boundary_record(library=library, boundary=boundary)       # None when not in the library
+    dataset = fem.boundary_dataset(datasets=datasets, boundary=boundary)   # None when none is bound
+    if record is not None:
+        print(boundary.name, fem.missing_roles(record, dataset))
+```
+
+`boundary_record` follows `bc_uuid`, and falls back to the boundary's name for an archive saved
+before the libraries were consolidated.
+
 `series` is copied out as a Python list, so build the list and assign it; appending to
 the returned list does not change the dataset. The same holds for every list-valued
 field in these bindings.
