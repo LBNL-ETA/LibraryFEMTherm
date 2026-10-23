@@ -376,6 +376,14 @@ class TestIssues:
             build.thmz_entries(case)
         # The issues ride on the error, for a caller that wants them rather than the text.
         assert kinds(found=raised.value.issues) == [model.IssueKind.UnnamedMaterial]
+
+        # A caller words them its own way, and leaves the kinds it does not reword to LibraryFEMTherm.
+        def own_wording(issue: model.Issue) -> str:
+            if issue.kind == model.IssueKind.UnnamedMaterial:
+                return f"Polygon {issue.region + 1} needs a material name."
+            return model.describe(model_case=case, issue=issue)
+
+        assert [own_wording(issue=issue) for issue in raised.value.issues] == ["Polygon 1 needs a material name."]
         target = tmp_path / "invalid.thmz"
         with pytest.raises(ValueError, match="no name"):
             build.thmz(case, str(target))

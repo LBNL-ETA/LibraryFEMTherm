@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <format>
 #include <set>
 #include <string>
 #include <vector>
@@ -394,6 +395,30 @@ TEST(Build, AnInvalidCaseIsRefusedWithItsIssues)
     const auto written{thmz(modelCase, "should-not-exist.thmz")};
     EXPECT_FALSE(written.has_value());
     EXPECT_FALSE(std::filesystem::exists("should-not-exist.thmz"));
+}
+
+//! A caller words the issues its own way: its function rewords the kinds it cares about,
+//! from the issue's fields and the case, and leaves the rest to LibraryFEMTherm.
+TEST(Build, ACallerWordsTheIssuesItsOwnWay)
+{
+    auto modelCase{sealedStrip()};
+    modelCase.regions[0].material.Name.clear();
+    modelCase.schedule.stepLengths.clear();
+
+    const auto ownWording{[&modelCase](const Issue & issue) -> std::string {
+        if(issue.kind == IssueKind::UnnamedMaterial)
+        {
+            return std::format("Polygon {} needs a material name.", issue.region.value() + 1U);
+        }
+        return describe(modelCase, issue);
+    }};
+    const auto written{thmz(modelCase, "should-not-exist.thmz").transform_error([&ownWording](const std::vector<Issue> & found) {
+        return lbnl::transform_to_vector(found, ownWording);
+    })};
+
+    ASSERT_FALSE(written.has_value());
+    EXPECT_EQ(written.error(),
+              (std::vector<std::string>{"Polygon 1 needs a material name.", "the schedule needs at least one step"}));
 }
 
 TEST(Build, WrittenArchiveRoundTrips)
