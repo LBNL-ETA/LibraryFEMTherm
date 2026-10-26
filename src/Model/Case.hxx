@@ -177,12 +177,14 @@ namespace ThermFile::Model
     };
 
     //! Where the clock starts in the year: a calendar position with no year, as a dataset's
-    //! axis states it. 1 January 00:00 unless stated.
+    //! axis states it and counted the same way (TimeSeriesLibrary::TimeAxis): month, day and
+    //! hour from 1, hour 1 being 00:00 to 01:00, and minute from 0. 1 January 00:00 unless
+    //! stated.
     struct Start
     {
         std::size_t month{1U};
         std::size_t day{1U};
-        std::size_t hour{0U};
+        std::size_t hour{1U};
         std::size_t minute{0U};
 
         [[nodiscard]] friend bool operator==(const Start & lhs, const Start & rhs) = default;

@@ -47,14 +47,42 @@ namespace TimeSeriesLibrary
     //! empty list. The file writes the single length, or the first of the list, as
     //! StepSeconds and the list, when there is one, as StepLengths: an evenly stepped axis
     //! is stored and hashed exactly as it was before uneven steps existed.
+    //!
+    //! Month, day and hour count from 1, as EnergyPlus's weather files count them; they are
+    //! the one place the library does not count from 0. Hour h is the hour from (h - 1):00 to
+    //! h:00, so hour 1 is the first hour of the day, and the first step starts `minute`
+    //! minutes into it: hour 1, minute 0 is 00:00. Minute counts from 0.
     using StepSeconds = std::variant<double, std::vector<double>>;
+
+    //! The months by name, numbered as TimeAxis::month counts them, from 1: a caller may state
+    //! a month either way.
+    enum class Month : size_t
+    {
+        January = 1U,
+        February,
+        March,
+        April,
+        May,
+        June,
+        July,
+        August,
+        September,
+        October,
+        November,
+        December
+    };
+
+    [[nodiscard]] constexpr size_t monthNumber(const Month month)
+    {
+        return static_cast<size_t>(month);
+    }
 
     struct TimeAxis
     {
         size_t month{1U};    //!< 1..12
         size_t day{1U};      //!< 1..31
-        size_t hour{0U};     //!< 0..23, the start of the first interval
-        size_t minute{0U};   //!< 0..59
+        size_t hour{1U};     //!< 1..24, the hour as EnergyPlus numbers it: hour 1 is 00:00 to 01:00
+        size_t minute{0U};   //!< 0..59, into that hour
         StepSeconds stepSeconds{3600.0};
 
         [[nodiscard]] bool operator==(const TimeAxis & other) const = default;
@@ -96,11 +124,23 @@ namespace TimeSeriesLibrary
         return 365.0 * 86400.0;
     }
 
-    //! Seconds from the start of the nominal year to the given calendar position.
+    //! Seconds from the start of the nominal year to the given calendar position. The hour
+    //! here is the CLOCK hour, 0..23, as a stamp reads; an axis's hour is that plus one.
     [[nodiscard]] double
-      secondsIntoYear(size_t month, size_t day, size_t hour, size_t minute, size_t second = 0U);
+      secondsIntoYear(size_t month, size_t day, size_t clockHour, size_t minute, size_t second = 0U);
+
+    //! The clock hour, 0..23, at which the axis's hour begins: hour 1 begins at 0. An hour
+    //! outside 1..24, as a file may state it, is clamped.
+    [[nodiscard]] size_t clockHour(const TimeAxis & axis);
 
     [[nodiscard]] double startSecondsIntoYear(const TimeAxis & axis);
+
+    //! Why a calendar position cannot be where an axis starts, or nothing when it can: month
+    //! 1..12, day within its month of the nominal year (so no 29 February), hour 1..24 and
+    //! minute 0..59. The library's own readers clamp what a file states; this is for a
+    //! position stated by hand, which is refused rather than clamped.
+    [[nodiscard]] std::optional<std::string>
+      calendarPositionError(size_t month, size_t day, size_t hour, size_t minute);
 
     //! The calendar position `secondsIntoYear` into the nominal year, wrapping at either end
     //! and rounded to the minute, which is as fine as an axis is stated. The step is hourly.
@@ -149,4 +189,31 @@ namespace TimeSeriesLibrary
                                                                    SeriesRole role);
 
     [[nodiscard]] std::vector<SeriesRole> providedRoles(const TimeSeriesData & data);
+
+    //! What a dataset holds that a run does not refuse but that may not be what was meant.
+    //! Nothing is changed and the run goes ahead, taking as many steps as the shortest
+    //! series has values.
+    enum class DatasetWarningKind
+    {
+        SeriesLengthsDiffer,   //!< the series have different numbers of values; the shortest sets the steps
+        StepLengthsDiffer,     //!< the axis lists a different number of step lengths than there are steps
+        NoUuid                 //!< no UUID; two such datasets written into one archive become one
+    };
+
+    //! One warning, as facts: `steps` is what a run takes, `stated` the count that differs
+    //! from it (the longest series, or the number of step lengths listed); both are 0 for
+    //! NoUuid. describeWarning words it.
+    struct DatasetWarning
+    {
+        DatasetWarningKind kind{DatasetWarningKind::SeriesLengthsDiffer};
+        size_t steps{0U};
+        size_t stated{0U};
+
+        [[nodiscard]] bool operator==(const DatasetWarning & other) const = default;
+    };
+
+    //! Every warning the dataset raises, none when it is as a run reads it.
+    [[nodiscard]] std::vector<DatasetWarning> datasetWarnings(const TimeSeriesData & data);
+
+    [[nodiscard]] std::string describeWarning(const TimeSeriesData & data, const DatasetWarning & warning);
 }   // namespace TimeSeriesLibrary

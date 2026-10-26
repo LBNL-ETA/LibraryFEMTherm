@@ -34,7 +34,8 @@ class TestConstruction:
         assert data.protected_ is False
         assert data.axis.month == 1
         assert data.axis.day == 1
-        assert data.axis.hour == 0
+        assert data.axis.hour == 1
+        assert fem.start_label(axis=data.axis) == "1 Jan 00:00"
         assert data.axis.minute == 0
         assert abs(data.axis.step_seconds - 3600.0) < TOL
         assert data.series == []
@@ -76,6 +77,48 @@ class TestConstruction:
         second.axis.step_seconds = 3600.0
         assert not fem.time_series_aligned(first, second)
         assert fem.time_series_alignment_issues([first, second])
+
+    def test_an_axis_outside_the_calendar_is_refused(self):
+        with pytest.raises(ValueError, match="months count from 1"):
+            fem.TimeAxis(month=0)
+        with pytest.raises(ValueError, match="Feb has 28 days"):
+            fem.TimeAxis(month=2, day=29)
+        with pytest.raises(ValueError, match="hours count from 1"):
+            fem.TimeAxis(hour=0)
+        with pytest.raises(ValueError, match="hour 25 is not 1..24"):
+            fem.TimeAxis(hour=25)
+        with pytest.raises(ValueError, match="minute 60"):
+            fem.TimeAxis(minute=60)
+
+    def test_a_month_by_name_or_by_number(self):
+        assert fem.TimeAxis(month=fem.Month.March, day=15) == fem.TimeAxis(month=3, day=15)
+        axis = fem.TimeAxis()
+        axis.month = fem.Month.December
+        assert axis.month == 12
+        with pytest.raises(ValueError, match="Feb has 28 days"):
+            fem.TimeAxis(month=fem.Month.February, day=30)
+
+    def test_series_of_different_lengths_warn_and_the_shortest_sets_the_steps(self):
+        cold_morning = fem.TimeSeriesData(
+            name="three cold hours",
+            axis=fem.TimeAxis(month=1, day=1, hour=1, minute=0, step_seconds=3600.0),
+            series=[
+                fem.Series(role=fem.SeriesRole.AirTemperature, values=[-5.0, -3.0, 0.0]),
+                fem.Series(role=fem.SeriesRole.RelativeHumidity, values=[0.80, 0.78, 0.75, 0.72]),
+            ],
+        )
+        assert fem.time_series_steps(cold_morning) == 3
+        kinds = [warning.kind for warning in fem.time_series_warnings(data=cold_morning)]
+        assert kinds == [fem.DatasetWarningKind.SeriesLengthsDiffer, fem.DatasetWarningKind.NoUuid]
+        first = fem.time_series_warnings(data=cold_morning)[0]
+        assert (first.steps, first.stated) == (3, 4)
+        assert "a run takes 3 steps" in fem.describe_warning(data=cold_morning, warning=first)
+
+    def test_a_refused_field_leaves_the_axis_as_it_was(self):
+        data = _dataset()
+        with pytest.raises(ValueError, match="day 32 is not 1..31"):
+            data.axis.day = 32
+        assert data.axis == fem.TimeAxis(month=3, day=15, hour=6, minute=30, step_seconds=1800.0)
 
 
 class TestLibraryRoundTrip:
@@ -188,13 +231,13 @@ class TestKeywordConstruction:
         assert data.protected_ is False
         assert fem.time_series_steps(data) == 2
         assert repr(axis) == "TimeAxis(month=3, day=15, hour=6, minute=30, step_seconds=1800.0)"
-        assert repr(data).startswith("TimeSeriesData(name='Two steps', 15 Mar 06:30")
+        assert repr(data).startswith("TimeSeriesData(name='Two steps', 15 Mar 05:30")
         assert fem.TimeAxis() == fem.TimeAxis(month=1, day=1)
 
     def test_steps_are_one_length_or_one_per_step(self):
         uneven: fem.TimeAxis = fem.TimeAxis(step_seconds=[900.0, 1800.0, 3600.0])
         assert uneven.step_seconds == [900.0, 1800.0, 3600.0]
-        assert repr(uneven) == "TimeAxis(month=1, day=1, hour=0, minute=0, step_seconds=[900.0, 1800.0, 3600.0])"
+        assert repr(uneven) == "TimeAxis(month=1, day=1, hour=1, minute=0, step_seconds=[900.0, 1800.0, 3600.0])"
         # Lengths that are all the same are one length, whichever way they were given.
         assert fem.TimeAxis(step_seconds=[1800.0, 1800.0]) == fem.TimeAxis(step_seconds=1800.0)
         uneven.step_seconds = [600.0, 600.0]
@@ -264,7 +307,7 @@ class TestCreation:
         assert fem.values_for_role(result.data, fem.SeriesRole.AirTemperature) == [1.0, 2.0, 3.0]
         assert result.data.axis == fem.TimeAxis(step_seconds=[900.0, 900.0, 1800.0])
         assert repr(result.data.axis) == (
-            "TimeAxis(month=1, day=1, hour=0, minute=0, step_seconds=[900.0, 900.0, 1800.0])")
+            "TimeAxis(month=1, day=1, hour=1, minute=0, step_seconds=[900.0, 900.0, 1800.0])")
         assert repr(fem.FixedStep(900.0)) == "FixedStep(seconds=900.0)"
         with pytest.raises(ValueError, match="has no Timestep column"):
             fem.read_csv_string(CSV_TEXT, "indoor", fem.StepColumn.Timestep)

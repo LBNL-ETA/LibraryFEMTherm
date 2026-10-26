@@ -32,7 +32,8 @@
 		<xs:sequence>
 			<xs:element name="Month" type="xs:unsignedInt"/>
 			<xs:element name="Day" type="xs:unsignedInt"/>
-			<!-- 0..23, the start of the first interval. -->
+			<!-- 1..24, as EnergyPlus numbers hours: hour 1 is 00:00 to 01:00, and the first
+			     step starts Minute minutes into it. Month and Day count from 1 as well. -->
 			<xs:element name="Hour" type="xs:unsignedInt"/>
 			<xs:element name="Minute" type="xs:unsignedInt"/>
 			<xs:element name="StepSeconds" type="xs:double"/>

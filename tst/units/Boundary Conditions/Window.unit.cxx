@@ -31,13 +31,13 @@ TEST(TestWindow, AxisAfterMovesThroughTheYear)
 {
     const TimeAxis hourly{};
     EXPECT_EQ(TimeSeriesLibrary::axisAfter(hourly, 0U), hourly);
-    EXPECT_EQ(TimeSeriesLibrary::axisAfter(hourly, 24U), (TimeAxis{.month = 1U, .day = 2U, .hour = 0U, .minute = 0U}));
-    EXPECT_EQ(TimeSeriesLibrary::axisAfter(hourly, 31U * 24U + 5U), (TimeAxis{.month = 2U, .day = 1U, .hour = 5U, .minute = 0U}));
+    EXPECT_EQ(TimeSeriesLibrary::axisAfter(hourly, 24U), (TimeAxis{.month = 1U, .day = 2U, .hour = 1U, .minute = 0U}));
+    EXPECT_EQ(TimeSeriesLibrary::axisAfter(hourly, 31U * 24U + 5U), (TimeAxis{.month = 2U, .day = 1U, .hour = 6U, .minute = 0U}));
 
-    const TimeAxis halfHourly{.month = 12U, .day = 31U, .hour = 23U, .minute = 0U, .stepSeconds = 1800.0};
-    EXPECT_EQ(TimeSeriesLibrary::axisAfter(halfHourly, 1U), (TimeAxis{.month = 12U, .day = 31U, .hour = 23U, .minute = 30U, .stepSeconds = 1800.0}));
+    const TimeAxis halfHourly{.month = 12U, .day = 31U, .hour = 24U, .minute = 0U, .stepSeconds = 1800.0};
+    EXPECT_EQ(TimeSeriesLibrary::axisAfter(halfHourly, 1U), (TimeAxis{.month = 12U, .day = 31U, .hour = 24U, .minute = 30U, .stepSeconds = 1800.0}));
     // The nominal year wraps: two half hours past 23:00 on 31 December is the next 1 January.
-    EXPECT_EQ(TimeSeriesLibrary::axisAfter(halfHourly, 2U), (TimeAxis{.month = 1U, .day = 1U, .hour = 0U, .minute = 0U, .stepSeconds = 1800.0}));
+    EXPECT_EQ(TimeSeriesLibrary::axisAfter(halfHourly, 2U), (TimeAxis{.month = 1U, .day = 1U, .hour = 1U, .minute = 0U, .stepSeconds = 1800.0}));
 }
 
 TEST(TestWindow, WindowKeepsTheRowsAskedForAndShiftsTheAxis)

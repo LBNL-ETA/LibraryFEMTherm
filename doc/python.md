@@ -290,7 +290,17 @@ one value per timestep. The dataset's time axis also sets the simulation clock: 
 of rows is the number of timesteps and `axis.step_seconds` the step length: one length
 for every step, or a list of one length per step when they are not even
 (`fem.TimeAxis(step_seconds=[900.0, 3600.0])`). `fem.step_lengths(data)` gives one length
-per step either way. Each dataset is its own archive entry, `time series/<uuid>.xml`.
+per step either way. Where the axis starts is a calendar position with no year, numbered
+as an EnergyPlus weather file numbers it: month, day and hour count from 1, hour 1 being
+the hour from 00:00 to 01:00, and the first step starts `minute` minutes into that hour,
+minute counting from 0. `fem.TimeAxis()` is 1 January, hour 1, minute 0: 00:00, which
+`fem.start_label(axis)` prints as "1 Jan 00:00". A run needs no calendar at all; an axis
+stated with only `step_seconds` starts there, and datasets made that way line up with one
+another. The month may be given by
+number or by name: `fem.TimeAxis(month=fem.Month.January)` is `fem.TimeAxis(month=1)`, and
+`axis.month` reads back the number either way. A position outside the calendar,
+such as `month=0` or 29 February, is a `ValueError`; it is never clamped. Each dataset is
+its own archive entry, `time series/<uuid>.xml`.
 
 ```python
 weather = fem.TimeSeriesData()

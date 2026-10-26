@@ -230,7 +230,7 @@ TEST(TestTimeSeriesData, TimeAxisDefaultsWhenAbsent)
 TEST(TestTimeSeriesData, AxisLabels)
 {
     const TimeSeriesLibrary::TimeAxis axis{
-      .month = 12U, .day = 31U, .hour = 23U, .minute = 5U, .stepSeconds = 1800.0};
+      .month = 12U, .day = 31U, .hour = 24U, .minute = 5U, .stepSeconds = 1800.0};
     EXPECT_EQ(TimeSeriesLibrary::startLabel(axis), "31 Dec 23:05");
     EXPECT_EQ(TimeSeriesLibrary::stepLabel(axis), "30 min");
     EXPECT_EQ(TimeSeriesLibrary::stepLabel({.stepSeconds = 90.0}), "90 s");
@@ -242,6 +242,62 @@ TEST(TestTimeSeriesData, AxisLabels)
     EXPECT_NEAR(TimeSeriesLibrary::secondsIntoYear(12U, 31U, 23U, 0U),
                 TimeSeriesLibrary::secondsPerNominalYear() - 3600.0,
                 1e-9);
+}
+
+TEST(TestTimeSeriesData, CalendarPositionCountsMonthDayAndHourFromOne)
+{
+    using TimeSeriesLibrary::calendarPositionError;
+    EXPECT_FALSE(calendarPositionError(1U, 1U, 1U, 0U).has_value());
+    EXPECT_FALSE(calendarPositionError(2U, 28U, 24U, 59U).has_value());
+    EXPECT_FALSE(calendarPositionError(12U, 31U, 1U, 0U).has_value());
+
+    EXPECT_EQ(calendarPositionError(0U, 1U, 1U, 0U).value_or(""),
+              "month 0 is not 1..12: months count from 1, as a calendar and an EnergyPlus weather file count them");
+    EXPECT_TRUE(calendarPositionError(13U, 1U, 1U, 0U).has_value());
+    EXPECT_TRUE(calendarPositionError(1U, 0U, 1U, 0U).has_value());
+    EXPECT_EQ(calendarPositionError(2U, 29U, 1U, 0U).value_or(""),
+              "day 29 is not 1..28: days count from 1, and Feb has 28 days in the nominal year, which has no leap day");
+    EXPECT_TRUE(calendarPositionError(4U, 31U, 1U, 0U).has_value());
+    EXPECT_EQ(calendarPositionError(1U, 1U, 0U, 0U).value_or(""),
+              "hour 0 is not 1..24: hours count from 1, as an EnergyPlus weather file counts them, hour 1 being 00:00 "
+              "to 01:00");
+    EXPECT_TRUE(calendarPositionError(1U, 1U, 25U, 0U).has_value());
+    EXPECT_TRUE(calendarPositionError(1U, 1U, 1U, 60U).has_value());
+}
+
+TEST(TestTimeSeriesData, WarningsNameWhatARunDoesNotRefuse)
+{
+    using TimeSeriesLibrary::DatasetWarning;
+    using TimeSeriesLibrary::DatasetWarningKind;
+    TimeSeriesLibrary::TimeSeriesData data{.UUID = "given", .Name = "three cold hours"};
+    data.series = {{TimeSeriesLibrary::SeriesRole::AirTemperature, {-5.0, -3.0, 0.0}},
+                   {TimeSeriesLibrary::SeriesRole::RelativeHumidity, {0.80, 0.78, 0.75, 0.72}}};
+    const auto found{TimeSeriesLibrary::datasetWarnings(data)};
+    ASSERT_EQ(found.size(), 1U);
+    EXPECT_EQ(found[0], (DatasetWarning{.kind = DatasetWarningKind::SeriesLengthsDiffer, .steps = 3U, .stated = 4U}));
+    EXPECT_EQ(TimeSeriesLibrary::describeWarning(data, found[0]),
+              "three cold hours: the series have from 3 to 4 values; a run takes 3 steps, as many as the shortest "
+              "series has, and leaves the rest unread");
+
+    data.UUID.clear();
+    data.axis.stepSeconds = std::vector<double>{900.0, 1800.0};
+    const auto more{TimeSeriesLibrary::datasetWarnings(data)};
+    ASSERT_EQ(more.size(), 3U);
+    EXPECT_EQ(more[1], (DatasetWarning{.kind = DatasetWarningKind::StepLengthsDiffer, .steps = 3U, .stated = 2U}));
+    EXPECT_EQ(more[2].kind, DatasetWarningKind::NoUuid);
+
+    EXPECT_TRUE(TimeSeriesLibrary::datasetWarnings(makeSample()).empty());
+}
+
+TEST(TestTimeSeriesData, HourOneIsMidnight)
+{
+    const TimeSeriesLibrary::TimeAxis midnight{};
+    EXPECT_EQ(midnight.hour, 1U);
+    EXPECT_EQ(TimeSeriesLibrary::clockHour(midnight), 0U);
+    EXPECT_NEAR(TimeSeriesLibrary::startSecondsIntoYear(midnight), 0.0, 1e-9);
+    EXPECT_EQ(TimeSeriesLibrary::startLabel(midnight), "1 Jan 00:00");
+    EXPECT_EQ(TimeSeriesLibrary::axisAt(3600.0 * 5.0 + 1800.0),
+              (TimeSeriesLibrary::TimeAxis{.month = 1U, .day = 1U, .hour = 6U, .minute = 30U}));
 }
 
 TEST(TestTimeSeriesData, AlignmentIssues)
@@ -338,10 +394,11 @@ TEST(TestTimeSeriesData, StepFormsKeepTheirFileAndIdentity)
           .axis = axis,
           .series = {{.role = TimeSeriesLibrary::SeriesRole::AirTemperature, .values = {1.0, 2.0, 3.0}}}};
     }};
-    const auto even{probe({.month = 3U, .day = 15U, .hour = 6U, .minute = 30U, .stepSeconds = 1800.0})};
+    // 06:30 is hour 7, minute 30: the moment, not the hour's number, is hashed.
+    const auto even{probe({.month = 3U, .day = 15U, .hour = 7U, .minute = 30U, .stepSeconds = 1800.0})};
     const auto uneven{probe({.month = 3U,
                              .day = 15U,
-                             .hour = 6U,
+                             .hour = 7U,
                              .minute = 30U,
                              .stepSeconds = std::vector<double>{900.0, 1800.0, 3600.0}})};
     EXPECT_EQ(TimeSeriesLibrary::contentUuid(even), "43c0ee7d-28a3-e19f-19d3-bd5dfc96f48f");

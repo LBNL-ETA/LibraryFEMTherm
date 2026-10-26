@@ -20,6 +20,8 @@
 #include "TimeSeriesData/TimeSeriesData.hxx"
 #include "TimeSeriesData/Window.hxx"
 
+#include "CalendarPosition.hxx"
+
 namespace py = pybind11;
 
 using TimeSeriesLibrary::Series;
@@ -55,6 +57,38 @@ namespace
         return TimeSeriesLibrary::stepSecondsOf(*lengths);
     }
 
+    void bindDatasetWarnings(py::module_ & mod)
+    {
+        using TimeSeriesLibrary::DatasetWarning;
+        using TimeSeriesLibrary::DatasetWarningKind;
+        py::enum_<DatasetWarningKind>(mod, "DatasetWarningKind", "What a dataset holds that a run does not refuse.")
+            .value("SeriesLengthsDiffer", DatasetWarningKind::SeriesLengthsDiffer)
+            .value("StepLengthsDiffer", DatasetWarningKind::StepLengthsDiffer)
+            .value("NoUuid", DatasetWarningKind::NoUuid);
+
+        py::class_<DatasetWarning>(mod,
+                                   "DatasetWarning",
+                                   "One warning, as facts: `steps` is what a run takes, `stated` the count that "
+                                   "differs from it; both 0 for NoUuid. describe_warning words it.")
+            .def_readonly("kind", &DatasetWarning::kind)
+            .def_readonly("steps", &DatasetWarning::steps)
+            .def_readonly("stated", &DatasetWarning::stated)
+            .def("__eq__", [](const DatasetWarning & lhs, const DatasetWarning & rhs) { return lhs == rhs; }, py::is_operator())
+            .def("__repr__", [](const DatasetWarning & warning) {
+                return std::format("DatasetWarning(kind={}, steps={}, stated={})",
+                                   py::str(py::cast(warning.kind)).cast<std::string>(),
+                                   warning.steps,
+                                   warning.stated);
+            });
+
+        mod.def("time_series_warnings", &TimeSeriesLibrary::datasetWarnings, py::arg("data"),
+                "What the dataset holds that a run does not refuse but that may not be what was meant: series "
+                "of different lengths, a step-length list that does not match the steps, no UUID. Empty when "
+                "there is nothing to say. The run goes ahead regardless, on as many steps as the shortest series.");
+        mod.def("describe_warning", &TimeSeriesLibrary::describeWarning, py::arg("data"), py::arg("warning"),
+                "A warning in LibraryFEMTherm's words.");
+    }
+
     void bindDataModel(py::module_ & mod)
     {
         py::enum_<SeriesRole>(mod, "SeriesRole")
@@ -71,6 +105,20 @@ namespace
             .value("PrescribedTemperature", SeriesRole::PrescribedTemperature)
             .value("PrescribedHumidity", SeriesRole::PrescribedHumidity);
 
+        py::enum_<TimeSeriesLibrary::Month>(mod, "Month", "The months by name, numbered from 1 as a time axis counts them.")
+            .value("January", TimeSeriesLibrary::Month::January)
+            .value("February", TimeSeriesLibrary::Month::February)
+            .value("March", TimeSeriesLibrary::Month::March)
+            .value("April", TimeSeriesLibrary::Month::April)
+            .value("May", TimeSeriesLibrary::Month::May)
+            .value("June", TimeSeriesLibrary::Month::June)
+            .value("July", TimeSeriesLibrary::Month::July)
+            .value("August", TimeSeriesLibrary::Month::August)
+            .value("September", TimeSeriesLibrary::Month::September)
+            .value("October", TimeSeriesLibrary::Month::October)
+            .value("November", TimeSeriesLibrary::Month::November)
+            .value("December", TimeSeriesLibrary::Month::December);
+
         py::class_<Series>(mod, "Series", "One role plus its values, one value per timestep.")
             .def(py::init<>())
             .def(py::init<SeriesRole, std::vector<double>>(), py::arg("role"), py::arg("values"))
@@ -83,30 +131,35 @@ namespace
                                    series.values.size());
             });
 
-        py::class_<TimeAxis>(mod,
-                             "TimeAxis",
-                             "Where row zero sits in the year and how far apart the rows are: a calendar "
-                             "position with no year, and `step_seconds`, one length in seconds for every step "
-                             "or a list of one length per step. A list whose lengths are all the same is kept "
-                             "as that one length.")
-            .def(py::init([](const std::size_t month,
-                             const std::size_t day,
-                             const std::size_t hour,
-                             const std::size_t minute,
-                             const TimeSeriesLibrary::StepSeconds & stepSeconds) {
-                     return TimeAxis{
-                       .month = month, .day = day, .hour = hour, .minute = minute, .stepSeconds = checkedSteps(stepSeconds)};
-                 }),
-                 py::arg("month") = 1U,
-                 py::arg("day") = 1U,
-                 py::arg("hour") = 0U,
-                 py::arg("minute") = 0U,
-                 py::arg("step_seconds") = 3600.0)
-            .def_readwrite("month", &TimeAxis::month)
-            .def_readwrite("day", &TimeAxis::day)
-            .def_readwrite("hour", &TimeAxis::hour)
-            .def_readwrite("minute", &TimeAxis::minute)
-            .def_property(
+        auto axis{py::class_<TimeAxis>(mod,
+                                       "TimeAxis",
+                                       "Where row zero sits in the year and how far apart the rows are: a calendar "
+                                       "position with no year, and `step_seconds`, one length in seconds for every "
+                                       "step or a list of one length per step. A list whose lengths are all the same "
+                                       "is kept as that one length.\n\n"
+                                       "Month, day and hour count from 1, as an EnergyPlus weather file counts "
+                                       "them: hour 1 is 00:00 to 01:00, and the first step starts `minute` minutes "
+                                       "into its hour, minute counting from 0. The month may be given by name, "
+                                       "`Month.January`, or by number. A position outside the calendar is a "
+                                       "ValueError, never clamped.")
+                    .def(py::init([](const CalendarPositionBinding::MonthLike & month,
+                                     const std::size_t day,
+                                     const std::size_t hour,
+                                     const std::size_t minute,
+                                     const TimeSeriesLibrary::StepSeconds & stepSeconds) {
+                             return CalendarPositionBinding::checkedPosition(TimeAxis{.month = CalendarPositionBinding::positionNumber(month),
+                                                                                      .day = day,
+                                                                                      .hour = hour,
+                                                                                      .minute = minute,
+                                                                                      .stepSeconds = checkedSteps(stepSeconds)});
+                         }),
+                         py::arg("month") = 1U,
+                         py::arg("day") = 1U,
+                         py::arg("hour") = 1U,
+                         py::arg("minute") = 0U,
+                         py::arg("step_seconds") = 3600.0)};
+        CalendarPositionBinding::addCalendarPosition(axis);
+        axis.def_property(
               "step_seconds",
               [](const TimeAxis & axis) { return axis.stepSeconds; },
               [](TimeAxis & axis, const TimeSeriesLibrary::StepSeconds & stepSeconds) {
@@ -182,6 +235,7 @@ namespace
                 "Same axis and same step count: the two can drive one simulation.");
         mod.def("time_series_alignment_issues", &TimeSeriesLibrary::alignmentIssues, py::arg("datasets"),
                 "Empty when every dataset lines up with the first; otherwise one line per dataset.");
+        bindDatasetWarnings(mod);
         mod.def("has_role", &TimeSeriesLibrary::hasRole, py::arg("data"), py::arg("role"));
         mod.def("values_for_role", &TimeSeriesLibrary::valuesForRole, py::arg("data"), py::arg("role"),
                 "The series values for a role, or None when the dataset has no such series.");
@@ -208,6 +262,8 @@ namespace
                 "imported twice lands on one record. Name, colour and the other metadata play no part.");
         mod.def("axis_after", &TimeSeriesLibrary::axisAfter, py::arg("axis"), py::arg("steps"),
                 "The axis `steps` rows later, wrapping at the end of the nominal year, the remaining steps kept.");
+        mod.def("start_label", &TimeSeriesLibrary::startLabel, py::arg("axis"),
+                "Where the axis starts, as a clock reads it: \"1 Jan 00:00\" for hour 1, minute 0.");
         mod.def("axis_at", &TimeSeriesLibrary::axisAt, py::arg("seconds_into_year"),
                 "The calendar position that many seconds into the nominal year, wrapping at either end, hourly.");
         mod.def("evenly_stepped", [](const TimeSeriesData & data) { return TimeSeriesLibrary::evenlyStepped(data.axis); },

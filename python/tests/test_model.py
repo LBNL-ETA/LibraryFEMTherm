@@ -518,7 +518,7 @@ class TestLibraryRecords:
     def test_the_schedule_follows_a_dataset(self):
         weather = fem.TimeSeriesData(
             name="january",
-            axis=fem.TimeAxis(month=1, day=1, hour=0, minute=0, step_seconds=1800.0),
+            axis=fem.TimeAxis(month=1, day=1, hour=1, minute=0, step_seconds=1800.0),
             series=[fem.Series(fem.SeriesRole.AirTemperature, [0.0] * 48)],
         )
         schedule = model.schedule_for(weather)
@@ -534,11 +534,22 @@ class TestLibraryRecords:
         assert abs(uneven.duration - 2700.0) < TOL
         with pytest.raises(ValueError):
             uneven.dtime
-        assert repr(uneven) == "Schedule(step_lengths=[900.0, 1800.0], start=Start(month=2, day=1, hour=0, minute=0))"
+        assert repr(uneven) == "Schedule(step_lengths=[900.0, 1800.0], start=Start(month=2, day=1, hour=1, minute=0))"
         assert model.axis_of(uneven) == fem.TimeAxis(month=2, step_seconds=[900.0, 1800.0])
         weather = fem.TimeSeriesData(axis=model.axis_of(uneven),
                                      series=[fem.Series(fem.SeriesRole.AirTemperature, [0.0, 1.0])])
         assert model.schedule_for(weather) == uneven
+
+    def test_a_start_outside_the_calendar_is_refused(self):
+        with pytest.raises(ValueError, match="months count from 1"):
+            model.Start(month=0)
+        with pytest.raises(ValueError, match="Feb has 28 days"):
+            model.Start(month=2, day=29)
+        assert model.Start(month=fem.Month.February, day=10) == model.Start(month=2, day=10)
+        start = model.Start(month=1, day=31)
+        with pytest.raises(ValueError, match="day 31 is not 1..30"):
+            start.month = fem.Month.April
+        assert start == model.Start(month=1, day=31)
         assert model.Schedule(step_lengths=[3600.0] * 3) == model.Schedule(dtime=3600.0, n_steps=3)
 
 

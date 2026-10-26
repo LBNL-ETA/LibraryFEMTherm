@@ -24,8 +24,8 @@ namespace TimeSeriesLibrary::Epw
     //! role vocabulary cannot express are reported by name so the omission is
     //! visible rather than silent.
     //!
-    //! The dataset's TimeAxis comes from the first record's month, day, and hour
-    //! (EPW hour 1 is the interval starting at 00:00) and from how many records
+    //! The dataset's TimeAxis comes from the first record's month, day, and hour, copied
+    //! as they are, since the axis numbers them as EPW does, and from how many records
     //! share that hour (one for hourly files, two for half-hourly). The year field is
     //! ignored: a typical-year file draws each month from a different source year.
 

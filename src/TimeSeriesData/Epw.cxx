@@ -178,8 +178,9 @@ namespace TimeSeriesLibrary::Epw
                             .elevation = number(9U)};
         }
 
-        //! EPW hours run 1..24 and name the END of the interval, so hour 1 is the interval
-        //! starting at 00:00 - the axis stores that start. A sub-hourly file repeats the
+        //! EPW hours run 1..24, hour 1 being the interval from 00:00 to 01:00, and the axis
+        //! numbers its hours the same way, so the first record's hour is copied as it is and the
+        //! run starts at the beginning of that hour. A sub-hourly file repeats the
         //! hour on consecutive records; the number of records sharing the first hour gives
         //! the step. The year field is ignored: typical-year files draw each month from a
         //! different source year.
@@ -197,10 +198,9 @@ namespace TimeSeriesLibrary::Epw
             {
                 ++perHour;
             }
-            const auto endHour{field(0U, 3U)};
             return TimeAxis{.month = std::clamp<size_t>(field(0U, 1U), 1U, 12U),
                             .day = std::clamp<size_t>(field(0U, 2U), 1U, 31U),
-                            .hour = endHour == 0U ? 0U : endHour - 1U,
+                            .hour = std::clamp<size_t>(field(0U, 3U), 1U, 24U),
                             .minute = 0U,
                             .stepSeconds = 3600.0 / static_cast<double>(perHour)};
         }

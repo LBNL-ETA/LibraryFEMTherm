@@ -355,7 +355,7 @@ TEST(Model, DefaultsMatchTheEngineSettings)
     EXPECT_FALSE(segment.dataset.has_value());
 
     const Schedule schedule;
-    EXPECT_EQ(schedule.start, (Start{.month = 1U, .day = 1U, .hour = 0U, .minute = 0U}));
+    EXPECT_EQ(schedule.start, (Start{.month = 1U, .day = 1U, .hour = 1U, .minute = 0U}));
 }
 
 TEST(Model, CasesCompareByValue)

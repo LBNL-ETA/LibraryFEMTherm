@@ -14,6 +14,7 @@
 #include "Model/Archive.hxx"
 #include "Model/Case.hxx"
 
+#include "CalendarPosition.hxx"
 #include "SourceLike.hxx"
 
 namespace py = pybind11;
@@ -319,21 +320,26 @@ namespace
         auto start{py::class_<Start>(model,
                                      "Start",
                                      "Where the clock starts in the year: a calendar position with no year, as a "
-                                     "dataset's axis states it. 1 January 00:00 unless stated.")
-                     .def(py::init([](const std::size_t month, const std::size_t day, const std::size_t hour, const std::size_t minute) {
-                              return Start{.month = month, .day = day, .hour = hour, .minute = minute};
+                                     "dataset's axis states it and counted the same way: month, day and hour from 1, "
+                                     "hour 1 being 00:00 to 01:00, minute from 0. 1 January 00:00 unless stated. A "
+                                     "position outside the calendar is a ValueError, never clamped.")
+                     .def(py::init([](const CalendarPositionBinding::MonthLike & month,
+                                      const std::size_t day,
+                                      const std::size_t hour,
+                                      const std::size_t minute) {
+                              return CalendarPositionBinding::checkedPosition(Start{.month = CalendarPositionBinding::positionNumber(month),
+                                                                                    .day = day,
+                                                                                    .hour = hour,
+                                                                                    .minute = minute});
                           }),
                           py::arg("month") = 1U,
                           py::arg("day") = 1U,
-                          py::arg("hour") = 0U,
+                          py::arg("hour") = 1U,
                           py::arg("minute") = 0U)
-                     .def_readwrite("month", &Start::month)
-                     .def_readwrite("day", &Start::day)
-                     .def_readwrite("hour", &Start::hour)
-                     .def_readwrite("minute", &Start::minute)
                      .def("__repr__", [](const Start & start) {
                          return std::format("Start(month={}, day={}, hour={}, minute={})", start.month, start.day, start.hour, start.minute);
                      })};
+        CalendarPositionBinding::addCalendarPosition(start);
         addEquality(start);
 
         auto schedule{py::class_<Schedule>(model,

@@ -110,7 +110,7 @@ namespace
 TEST(TestEpw, ImportReadsAxisFromFirstRecordAndIgnoresYear)
 {
     const auto record{makeRecord("10", "50", infraredForSevenDegrees, "180", "5")};
-    // EPW hour 7 names the interval ending at 07:00, so the axis starts at 06:00.
+    // EPW hour 7 is the interval from 06:00 to 07:00, and the axis numbers it 7 as well.
     const std::string content{makeHeader() + datedRecord(record, "1987,3,15,7,")
                               + datedRecord(record, "1987,3,15,8,")
                               + datedRecord(record, "1990,3,15,9,")};
@@ -118,7 +118,7 @@ TEST(TestEpw, ImportReadsAxisFromFirstRecordAndIgnoresYear)
     const auto result{Epw::readFromString(content, "typical year")};
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result->data.axis,
-              (TimeSeriesLibrary::TimeAxis{.month = 3U, .day = 15U, .hour = 6U}));
+              (TimeSeriesLibrary::TimeAxis{.month = 3U, .day = 15U, .hour = 7U}));
 }
 
 TEST(TestEpw, ImportDetectsSubHourlyRecords)
@@ -130,7 +130,7 @@ TEST(TestEpw, ImportDetectsSubHourlyRecords)
     const auto result{Epw::readFromString(content, "half hourly")};
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result->data.axis.stepSeconds, TimeSeriesLibrary::StepSeconds{1800.0});
-    EXPECT_EQ(result->data.axis.hour, 0U);
+    EXPECT_EQ(result->data.axis.hour, 1U);
 }
 
 TEST(TestEpw, ImportDerivesRadiantTemperatureFromInfrared)

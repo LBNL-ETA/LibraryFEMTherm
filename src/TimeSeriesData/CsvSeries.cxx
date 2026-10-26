@@ -417,9 +417,10 @@ namespace TimeSeriesLibrary::Csv
 
         using ClockResult = lbnl::ExpectedExt<Clock, std::string>;
 
+        //! A stamp's clock hour, 0..23, is the axis's hour 1..24 less one.
         TimeAxis startAxis(const Moment & moment)
         {
-            return TimeAxis{.month = moment.month, .day = moment.day, .hour = moment.hour, .minute = moment.minute};
+            return TimeAxis{.month = moment.month, .day = moment.day, .hour = moment.hour + 1U, .minute = moment.minute};
         }
 
         TimeAxis axisWith(const TimeAxis & start, const std::vector<double> & lengths)
@@ -598,7 +599,7 @@ namespace TimeSeriesLibrary::Csv
             const std::chrono::year_month_day date{std::chrono::year{nominalYear},
                                                    std::chrono::month{static_cast<unsigned>(axis.month)},
                                                    std::chrono::day{static_cast<unsigned>(axis.day)}};
-            return std::chrono::sys_days{date} + std::chrono::hours{static_cast<long long>(axis.hour)}
+            return std::chrono::sys_days{date} + std::chrono::hours{static_cast<long long>(clockHour(axis))}
                    + std::chrono::minutes{static_cast<long long>(axis.minute)};
         }
 
