@@ -348,6 +348,9 @@ namespace ThermFile::Model
     //! points, since it has no edges to lie on.
     [[nodiscard]] std::vector<Issue> issues(const ModelCase & modelCase);
 
+    //! Every issue of the case, each in LibraryFEMTherm's words; none when it can be written.
+    [[nodiscard]] std::vector<std::string> describeIssues(const ModelCase & modelCase);
+
     //! Whether the case is set up for a steady-state calculation.
     [[nodiscard]] bool isSteadyState(const ModelCase & modelCase);
 

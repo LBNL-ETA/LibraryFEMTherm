@@ -18,8 +18,8 @@ namespace TimeSeriesLibrary::Csv
     //! spacing ignored - and is otherwise ignored and reported. No keyword guessing: a
     //! header either is a role name or it is not.
     //!
-    //! How rows become steps is the caller's choice, stated on every read, because the
-    //! file alone cannot say (see StepChoice). Two clock columns are recognised: a
+    //! How rows become steps is the caller's choice (see StepChoice); stated as nothing,
+    //! AutoStep, the file's columns decide. Two clock columns are recognised: a
     //! calendar Time column (Time, Date, Datetime, Timestamp - the year is read and
     //! dropped) and a Timestep column (Timestep, Step, Step Seconds, dt) of lengths in
     //! seconds. A stamp is the END of its row's step under every rule. Steps may be
@@ -46,7 +46,16 @@ namespace TimeSeriesLibrary::Csv
         [[nodiscard]] bool operator==(const FixedStep & other) const = default;
     };
 
-    using StepChoice = std::variant<FixedStep, StepColumn>;
+    //! The columns decide: the Time column when the file has one, else the Timestep column,
+    //! else every row one step of FixedStep's default, an hour. The choice when none is
+    //! stated.
+    struct AutoStep
+    {
+        [[nodiscard]] bool operator==(const AutoStep & other) const = default;
+    };
+
+    //! AutoStep first, so a choice made without a value is the automatic one.
+    using StepChoice = std::variant<AutoStep, FixedStep, StepColumn>;
 
     struct ImportResult
     {
@@ -63,17 +72,21 @@ namespace TimeSeriesLibrary::Csv
     //! header written on export and the second spelling accepted on import.
     [[nodiscard]] std::string displayHeaderForRole(SeriesRole role);
 
+    //! Every role as a table, a heading row and one row per role: the role's name and the
+    //! CSV header that writes it out, columns aligned. A CSV file may use either spelling.
+    [[nodiscard]] std::string describeRoles();
+
     //! The imported dataset's UUID is the deterministic content hash, so importing the
     //! same file twice converges to one dataset. Blank cells mid-run carry the last good
     //! reading forward, as the weather reader does - a gap is not a zero. A column the
     //! choice asks for and the file lacks is an error, as is a time that does not follow
     //! the previous one or a timestep that is not positive.
     [[nodiscard]] lbnl::ExpectedExt<ImportResult, std::string>
-      readFromString(const std::string & content, const std::string & datasetName, const StepChoice & stepChoice);
+      readFromString(const std::string & content, const std::string & datasetName, const StepChoice & stepChoice = {});
 
     //! Reads the file and imports it under its stem as the dataset name.
     [[nodiscard]] lbnl::ExpectedExt<ImportResult, std::string> read(const std::string & fileName,
-                                                                    const StepChoice & stepChoice);
+                                                                    const StepChoice & stepChoice = {});
 
     //! Export in the shape read() accepts: a Time column stamping the end of each step in
     //! a fixed nominal year, a Timestep column of the step lengths in seconds, then one

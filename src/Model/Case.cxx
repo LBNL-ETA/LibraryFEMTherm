@@ -3,6 +3,7 @@
 #include <format>
 #include <numeric>
 
+#include <lbnl/algorithm.hxx>
 #include <lbnl/optional.hxx>
 
 #include "Case.hxx"
@@ -745,6 +746,12 @@ namespace ThermFile::Model
         checkConvectionInputs(modelCase, found);
         checkMode(modelCase, found);
         return found;
+    }
+
+    std::vector<std::string> describeIssues(const ModelCase & modelCase)
+    {
+        return lbnl::transform_to_vector(issues(modelCase),
+                                         [&modelCase](const Issue & issue) { return describe(modelCase, issue); });
     }
 
     bool isSteadyState(const ModelCase & modelCase)

@@ -58,6 +58,35 @@ namespace
         return TimeSeriesLibrary::stepSecondsOf(*lengths);
     }
 
+    void bindValuesByStep(py::module_ & mod)
+    {
+        using TimeSeriesLibrary::StepValues;
+        mod.def("series_values_by_role", &TimeSeriesLibrary::valuesByRole, py::arg("data"),
+                "Every series' values, keyed by its role, as the dataset holds them.");
+
+        py::class_<StepValues>(mod,
+                               "StepValues",
+                               "One step of a dataset: `index` from 0, where it `begins` as start_label prints it "
+                               "and `elapsed_seconds` from the dataset's start, how long it lasts in `timestep_seconds`, and "
+                               "every role's value in it, `values`.")
+            .def_readonly("index", &StepValues::index)
+            .def_readonly("begins", &StepValues::begins)
+            .def_readonly("elapsed_seconds", &StepValues::elapsedSeconds)
+            .def_readonly("timestep_seconds", &StepValues::timestepSeconds)
+            .def_readonly("values", &StepValues::values)
+            .def("__eq__", [](const StepValues & lhs, const StepValues & rhs) { return lhs == rhs; }, py::is_operator())
+            .def("__repr__", [](const StepValues & step) {
+                return std::format("StepValues(index={}, begins='{}', timestep_seconds={}, {} values)",
+                                   step.index,
+                                   step.begins,
+                                   step.timestepSeconds,
+                                   step.values.size());
+            });
+
+        mod.def("series_values_by_step", &TimeSeriesLibrary::valuesByStep, py::arg("data"),
+                "The dataset step by step, one StepValues each: as many steps as the shortest series has values.");
+    }
+
     void bindDatasetWarnings(py::module_ & mod)
     {
         using TimeSeriesLibrary::DatasetWarning;
@@ -258,6 +287,7 @@ namespace
           py::arg("role"),
           "The series values for a role, which the dataset must carry: raises KeyError naming the dataset "
           "and the role otherwise. The form to hand a column straight to a boundary input.");
+        bindValuesByStep(mod);
         mod.def("provided_roles", &TimeSeriesLibrary::providedRoles, py::arg("data"));
         mod.def("series_role_to_string", &TimeSeriesLibrary::seriesRoleToString, py::arg("role"));
         mod.def("series_role_from_string", &TimeSeriesLibrary::seriesRoleFromString, py::arg("value"));
@@ -374,6 +404,12 @@ namespace
                    "The Timestep column (Timestep, Step, Step Seconds or dt): row i is step i, of the length in "
                    "seconds the row states. A Time column, if present, places the start one step before the first "
                    "stamp.");
+        py::class_<Csv::AutoStep>(mod, "AutoStep",
+                                  "The file's columns decide: the Time column when there is one, else the Timestep "
+                                  "column, else every row one hour. The choice when `steps` is not given.")
+            .def(py::init<>())
+            .def("__eq__", [](const Csv::AutoStep & lhs, const Csv::AutoStep & rhs) { return lhs == rhs; }, py::is_operator())
+            .def("__repr__", [](const Csv::AutoStep &) { return std::string{"AutoStep()"}; });
         py::class_<Csv::FixedStep>(mod, "FixedStep",
                                    "Every row is one step of this many seconds. A Time column, if present, places the "
                                    "start one step before the first stamp.")
@@ -398,12 +434,13 @@ namespace
           "read_csv",
           [](const std::filesystem::path & path, const Csv::StepChoice & steps) { return unwrap(Csv::read(path.string(), steps)); },
           py::arg("path"),
-          py::arg("steps"),
+          py::arg("steps") = Csv::StepChoice{},
           "Reads a CSV whose headers name series roles, in either spelling (AirTemperature or Air Temperature). "
           "`steps` says how rows become steps: StepColumn.Time reads the Time column, each row's value driving the "
           "step that ends at its time (the first row is only the start); StepColumn.Timestep reads one length in "
           "seconds per row from the Timestep column; FixedStep(seconds) makes every row one step of that length. "
-          "Steps may be uneven. A column the choice asks for and the file lacks raises ValueError, as does anything "
+          "Not given (AutoStep), the file's columns decide: Time when it has one, else Timestep, else an hour per "
+          "row. Steps may be uneven. A column the choice asks for and the file lacks raises ValueError, as does anything "
           "unreadable. Blank value cells carry the last reading forward.");
         mod.def(
           "read_csv_string",
@@ -412,7 +449,7 @@ namespace
           },
           py::arg("content"),
           py::arg("name"),
-          py::arg("steps"),
+          py::arg("steps") = Csv::StepChoice{},
           "The same from the CSV text, under the given dataset name.");
         mod.def("write_csv", &Csv::writeToString, py::arg("data"),
                 "The dataset as the CSV read_csv accepts: a Time column stamping the end of each step, a Timestep "
@@ -425,6 +462,9 @@ namespace
           py::arg("path"));
         mod.def("csv_header_for_role", &Csv::displayHeaderForRole, py::arg("role"),
                 "The spelled-out column header of a role, as write_csv writes it (\"Air Temperature\").");
+        mod.def("describe_roles", &Csv::describeRoles,
+                "Every role as a table: a heading row, then the role's name and the CSV header that writes it "
+                "out, columns aligned. A CSV file may use either spelling.");
 
         py::enum_<Standards::Standard>(mod, "InteriorStandard", "The standard an interior climate is generated by.")
             .value("EN_15026_DIN_4108", Standards::Standard::EN_15026_DIN_4108)
@@ -458,7 +498,7 @@ namespace
               return unwrap(Import::importDatasets(path, steps));
           },
           py::arg("path"),
-          py::arg("steps"),
+          py::arg("steps") = Csv::StepChoice{},
           "Datasets from a file by its extension: .epw, .csv, or a .zip holding any number of either (each "
           "under its entry's stem). `steps` is how a CSV's rows become steps, as for read_csv; a weather file has "
           "its own clock and ignores it. Raises ValueError for an unsupported extension, an unreadable file or a "
@@ -469,7 +509,7 @@ namespace
               return unwrap(Import::importDatasetsFromEntries(entries, steps));
           },
           py::arg("entries"),
-          py::arg("steps"),
+          py::arg("steps") = Csv::StepChoice{},
           "The zip case on its contents: entry name -> text.");
         mod.def("supported_import_extensions", &Import::supportedExtensions);
     }

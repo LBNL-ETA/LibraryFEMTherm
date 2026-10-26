@@ -292,6 +292,29 @@ TEST(TestTimeSeriesData, WarningsNameWhatARunDoesNotRefuse)
     EXPECT_TRUE(TimeSeriesLibrary::describeWarnings(makeSample()).empty());
 }
 
+TEST(TestTimeSeriesData, ValuesByRoleAndByStep)
+{
+    using TimeSeriesLibrary::SeriesRole;
+    TimeSeriesLibrary::TimeSeriesData data{.UUID = "given", .Name = "three uneven steps"};
+    data.axis.stepSeconds = std::vector<double>{900.0, 900.0, 3600.0};
+    data.series = {{SeriesRole::AirTemperature, {-5.0, -3.0, 0.0}},
+                   {SeriesRole::RelativeHumidity, {0.80, 0.78, 0.75, 0.72}}};
+
+    const auto byRole{TimeSeriesLibrary::valuesByRole(data)};
+    EXPECT_EQ(byRole.at(SeriesRole::RelativeHumidity), (std::vector<double>{0.80, 0.78, 0.75, 0.72}));
+
+    const auto bySteps{TimeSeriesLibrary::valuesByStep(data)};
+    ASSERT_EQ(bySteps.size(), 3U);
+    EXPECT_EQ(bySteps[2],
+              (TimeSeriesLibrary::StepValues{.index = 2U,
+                                             .begins = "1 Jan 00:30",
+                                             .elapsedSeconds = 1800.0,
+                                             .timestepSeconds = 3600.0,
+                                             .values = {{SeriesRole::AirTemperature, 0.0},
+                                                        {SeriesRole::RelativeHumidity, 0.75}}}));
+    EXPECT_EQ(bySteps[0].begins, "1 Jan 00:00");
+}
+
 TEST(TestTimeSeriesData, HourOneIsMidnight)
 {
     const TimeSeriesLibrary::TimeAxis midnight{};

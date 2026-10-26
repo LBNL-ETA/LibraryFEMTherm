@@ -46,11 +46,11 @@ namespace TimeSeriesLibrary::Import
     //! says how a CSV's rows become steps (Csv::StepChoice); a weather file has its own
     //! clock and ignores it.
     [[nodiscard]] lbnl::ExpectedExt<ImportOutcome, std::string>
-      importDatasets(const std::filesystem::path & file, const Csv::StepChoice & stepChoice);
+      importDatasets(const std::filesystem::path & file, const Csv::StepChoice & stepChoice = {});
 
     //! The zip case on its contents: entry name -> content, each .epw or .csv entry
     //! imported under its stem, every other entry ignored.
     [[nodiscard]] lbnl::ExpectedExt<ImportOutcome, std::string>
       importDatasetsFromEntries(const std::map<std::string, std::string> & entries,
-                                const Csv::StepChoice & stepChoice);
+                                const Csv::StepChoice & stepChoice = {});
 }   // namespace TimeSeriesLibrary::Import

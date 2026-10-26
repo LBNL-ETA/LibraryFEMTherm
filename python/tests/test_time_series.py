@@ -114,6 +114,40 @@ class TestConstruction:
         assert fem.describe_warnings(data=cold_morning) == [fem.describe_warning(data=cold_morning, warning=warnings[0])]
         assert "a run takes 3 steps" in fem.describe_warnings(data=cold_morning)[0]
 
+    def test_without_steps_the_columns_decide(self):
+        both = "Time,Timestep,Air Temperature\n2026-01-01 00:15,900,1\n2026-01-01 00:30,900,2\n"
+        assert (fem.read_csv_string(content=both, name="both").data.axis
+                == fem.read_csv_string(content=both, name="both", steps=fem.StepColumn.Time).data.axis)
+        timestep_only = fem.read_csv_string(content="Timestep,Air Temperature\n900,1\n1800,2\n", name="timestep")
+        assert fem.step_lengths(data=timestep_only.data) == [900.0, 1800.0]
+        neither = fem.read_csv_string(content="Air Temperature\n1\n2\n", name="neither")
+        assert neither.data.axis == fem.TimeAxis()
+        assert repr(fem.AutoStep()) == "AutoStep()"
+
+    def test_describe_roles_is_a_table_with_a_heading(self):
+        lines = fem.describe_roles().splitlines()
+        assert lines[0].split() == ["Role", "CSV", "header"]
+        assert lines[1].split() == ["AirTemperature", "Air", "Temperature"]
+        assert len(lines) == 1 + len(fem.series_role_strings())
+
+    def test_values_by_role_and_by_step(self):
+        data = fem.TimeSeriesData(
+            name="three uneven steps",
+            axis=fem.TimeAxis(step_seconds=[900.0, 900.0, 3600.0]),
+            series=[
+                fem.Series(role=fem.SeriesRole.AirTemperature, values=[-5.0, -3.0, 0.0]),
+                fem.Series(role=fem.SeriesRole.RelativeHumidity, values=[0.80, 0.78, 0.75]),
+            ],
+        )
+        by_role = fem.series_values_by_role(data=data)
+        assert by_role == {fem.SeriesRole.AirTemperature: [-5.0, -3.0, 0.0],
+                           fem.SeriesRole.RelativeHumidity: [0.80, 0.78, 0.75]}
+        steps = fem.series_values_by_step(data=data)
+        assert [step.begins for step in steps] == ["1 Jan 00:00", "1 Jan 00:15", "1 Jan 00:30"]
+        assert [step.elapsed_seconds for step in steps] == [0.0, 900.0, 1800.0]
+        assert steps[2].timestep_seconds == 3600.0
+        assert steps[1].values[fem.SeriesRole.AirTemperature] == -3.0
+
     def test_a_dataset_stated_without_a_uuid_draws_one(self):
         first = fem.TimeSeriesData(name="by hand")
         second = fem.TimeSeriesData(name="by hand")

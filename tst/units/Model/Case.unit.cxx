@@ -75,6 +75,7 @@ namespace
         ASSERT_EQ(found.size(), 1U);
         EXPECT_EQ(found[0], expected);
         EXPECT_EQ(describe(modelCase, found[0]), wording);
+        EXPECT_EQ(describeIssues(modelCase), std::vector<std::string>{wording});
     }
 
     std::vector<IssueKind> kindsOf(const std::vector<Issue> & found)

@@ -611,6 +611,8 @@ namespace
                   "Everything that stops the case from being written, one Issue each; empty when it can be.");
         model.def("describe", &describe, py::arg("model_case"), py::arg("issue"),
                   "LibraryFEMTherm's wording of an issue of the case it was found in, as THERM shows it.");
+        model.def("describe_issues", &describeIssues, py::arg("model_case"),
+                  "Every issue of the case, each in LibraryFEMTherm's words; empty when it can be written.");
     }
 
     //! Raises ValueError with the issues worded one per line, the issues themselves on its

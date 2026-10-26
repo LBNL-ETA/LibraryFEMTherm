@@ -7,7 +7,9 @@
 #include <format>
 #include <initializer_list>
 #include <map>
+#include <numeric>
 #include <optional>
+#include <ranges>
 #include <sstream>
 #include <tuple>
 
@@ -556,11 +558,26 @@ namespace TimeSeriesLibrary::Csv
             });
         }
 
+        //! AutoStep made definite by the columns the file has; any other choice as stated.
+        StepChoice resolved(const StepChoice & stepChoice, const Layout & layout)
+        {
+            if(!std::holds_alternative<AutoStep>(stepChoice))
+            {
+                return stepChoice;
+            }
+            if(layout.time.has_value())
+            {
+                return StepColumn::Time;
+            }
+            return layout.timestep.has_value() ? StepChoice{StepColumn::Timestep} : StepChoice{FixedStep{}};
+        }
+
         ClockResult clockFor(const std::vector<std::vector<std::string>> & rows,
                              const Layout & layout,
-                             const StepChoice & stepChoice,
+                             const StepChoice & stated,
                              const std::string & datasetName)
         {
+            const auto stepChoice{resolved(stated, layout)};
             if(const auto * fixed{std::get_if<FixedStep>(&stepChoice)}; fixed != nullptr)
             {
                 return clockFixed(rows, layout, *fixed, datasetName);
@@ -625,6 +642,18 @@ namespace TimeSeriesLibrary::Csv
             spelled.push_back(letter);
         }
         return spelled;
+    }
+
+    std::string describeRoles()
+    {
+        const auto names{seriesRoleStrings()};
+        const auto widest{std::ranges::max(names | std::views::transform([](const std::string & name) { return name.size(); }))};
+        const auto row{[width = widest + 2U](const std::string & left, const std::string & right) {
+            return std::format("{:<{}}{}", left, width, right);
+        }};
+        return std::accumulate(names.begin(), names.end(), row("Role", "CSV header"), [&row](std::string table, const std::string & name) {
+            return std::move(table) + "\n" + row(name, displayHeaderForRole(seriesRoleFromString(name)));
+        });
     }
 
     lbnl::ExpectedExt<ImportResult, std::string>

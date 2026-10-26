@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <gtest/gtest.h>
 
 #include "TimeSeriesData/ContentHash.hxx"
@@ -152,6 +154,38 @@ TEST(TestCsvSeries, ExportReadBackByTimeIsOneStepShorter)
     EXPECT_EQ(temperatures(result.value()), (std::vector<double>{21.1, 20.8}));
     // The first stamp, the end of the first step, becomes the start: 01:00, hour 2.
     EXPECT_EQ(result->data.axis, (TimeAxis{.month = 1U, .day = 1U, .hour = 2U}));
+}
+
+TEST(TestCsvSeries, WithoutAChoiceTheColumnsDecide)
+{
+    const std::string both{"Time,Timestep,Air Temperature\n"
+                           "2026-01-01 00:15,900,1\n"
+                           "2026-01-01 00:30,900,2\n"
+                           "2026-01-01 01:30,3600,3\n"};
+    const auto byDefault{Csv::readFromString(both, "both")};
+    const auto byTime{Csv::readFromString(both, "both", Csv::StepColumn::Time)};
+    ASSERT_TRUE(byDefault.has_value()) << byDefault.error();
+    ASSERT_TRUE(byTime.has_value()) << byTime.error();
+    EXPECT_EQ(byDefault->data.axis, byTime->data.axis);
+    EXPECT_TRUE(byDefault->firstRowWasStart);
+
+    const auto timestepOnly{Csv::readFromString("Timestep,Air Temperature\n900,1\n1800,2\n", "timestep")};
+    ASSERT_TRUE(timestepOnly.has_value()) << timestepOnly.error();
+    EXPECT_EQ(timestepOnly->data.axis.stepSeconds, (TimeSeriesLibrary::StepSeconds{std::vector<double>{900.0, 1800.0}}));
+
+    const auto neither{Csv::readFromString("Air Temperature\n1\n2\n3\n", "neither")};
+    ASSERT_TRUE(neither.has_value()) << neither.error();
+    EXPECT_EQ(neither->data.axis, TimeAxis{});
+    EXPECT_EQ(temperatures(neither.value()), (std::vector<double>{1.0, 2.0, 3.0}));
+}
+
+TEST(TestCsvSeries, DescribeRolesIsAnAlignedTable)
+{
+    const auto table{Csv::describeRoles()};
+    // The widest role name, ConvectiveCoefficient, has 21 letters; the columns sit two apart.
+    EXPECT_TRUE(table.starts_with("Role                   CSV header\n"
+                                  "AirTemperature         Air Temperature\n"));
+    EXPECT_EQ(std::ranges::count(table, '\n'), 12);
 }
 
 TEST(TestCsvSeries, TimeRuleEndsAStepAtEveryStamp)

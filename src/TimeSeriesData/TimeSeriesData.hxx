@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <optional>
 #include <string>
 #include <variant>
@@ -189,6 +190,26 @@ namespace TimeSeriesLibrary
                                                                    SeriesRole role);
 
     [[nodiscard]] std::vector<SeriesRole> providedRoles(const TimeSeriesData & data);
+
+    //! Every series' values, keyed by its role, as the dataset holds them.
+    [[nodiscard]] std::map<SeriesRole, std::vector<double>> valuesByRole(const TimeSeriesData & data);
+
+    //! One step of a dataset: where it begins, as startLabel prints it and in seconds from
+    //! the dataset's start (elapsedSeconds), how long it lasts (timestepSeconds), and every
+    //! role's value in it. `index` counts from 0.
+    struct StepValues
+    {
+        size_t index{0U};
+        std::string begins;
+        double elapsedSeconds{0.0};
+        double timestepSeconds{0.0};
+        std::map<SeriesRole, double> values;
+
+        [[nodiscard]] bool operator==(const StepValues & other) const = default;
+    };
+
+    //! The dataset step by step: as many steps as the shortest series has values.
+    [[nodiscard]] std::vector<StepValues> valuesByStep(const TimeSeriesData & data);
 
     //! What a dataset holds that a run does not refuse but that may not be what was meant.
     //! Nothing is changed and the run goes ahead, taking as many steps as the shortest

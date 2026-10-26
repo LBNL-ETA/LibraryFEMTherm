@@ -352,6 +352,9 @@ class TestIssues:
         assert kinds(found=found) == [model.IssueKind.UnnamedMaterial, model.IssueKind.NoSteps]
         assert [model.describe(model_case=case, issue=issue) for issue in found] == [
             "region 0 has a material with no name", "the schedule needs at least one step"]
+        assert model.describe_issues(model_case=case) == [
+            "region 0 has a material with no name", "the schedule needs at least one step"]
+        assert model.describe_issues(model_case=sealed_strip()) == []
 
     def test_one_name_with_two_records_is_an_issue(self):
         case = sealed_strip()

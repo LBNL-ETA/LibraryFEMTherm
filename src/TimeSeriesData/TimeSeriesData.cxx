@@ -280,6 +280,46 @@ namespace TimeSeriesLibrary
                                          [](const Series & series) { return series.role; });
     }
 
+    std::map<SeriesRole, std::vector<double>> valuesByRole(const TimeSeriesData & data)
+    {
+        const auto pairs{data.series
+                         | std::views::transform([](const Series & series) { return std::pair{series.role, series.values}; })};
+        return {pairs.begin(), pairs.end()};
+    }
+
+    namespace
+    {
+        std::map<SeriesRole, double> valuesAt(const TimeSeriesData & data, const size_t index)
+        {
+            const auto pairs{data.series | std::views::transform([index](const Series & series) {
+                                 return std::pair{series.role, series.values[index]};
+                             })};
+            return {pairs.begin(), pairs.end()};
+        }
+
+        //! Seconds from the dataset's start to the start of each step.
+        std::vector<double> elapsedBefore(const std::vector<double> & lengths)
+        {
+            std::vector<double> elapsed(lengths.size());
+            std::exclusive_scan(lengths.begin(), lengths.end(), elapsed.begin(), 0.0);
+            return elapsed;
+        }
+    }   // namespace
+
+    std::vector<StepValues> valuesByStep(const TimeSeriesData & data)
+    {
+        const auto lengths{stepLengths(data.axis, steps(data))};
+        const auto elapsed{elapsedBefore(lengths)};
+        const double start{startSecondsIntoYear(data.axis)};
+        return lbnl::transform_to_vector(std::views::iota(size_t{0U}, lengths.size()), [&](const size_t index) {
+            return StepValues{.index = index,
+                              .begins = startLabel(axisAt(start + elapsed[index])),
+                              .elapsedSeconds = elapsed[index],
+                              .timestepSeconds = lengths[index],
+                              .values = valuesAt(data, index)};
+        });
+    }
+
     namespace
     {
         size_t longestSeries(const TimeSeriesData & data)

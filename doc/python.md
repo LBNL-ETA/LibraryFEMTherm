@@ -306,6 +306,11 @@ UUID of its content instead. Series of different lengths are not refused: the da
 as many steps as its shortest series. `fem.describe_warnings(data)` lists, in
 LibraryFEMTherm's words, what a dataset holds that a run takes but may not be what was
 meant; `fem.time_series_warnings(data)` gives the same as facts, for other wording.
+`fem.series_values(data, role)` gives one role's values, `fem.series_values_by_role(data)`
+every role's, keyed by role, and `fem.series_values_by_step(data)` the dataset step by
+step: each step's `index` from 0, where it `begins`, its `elapsed_seconds` from the start,
+its length in `timestep_seconds`, and every role's value in it. `fem.describe_roles()` prints every
+role as a table, its name beside the CSV header that writes it out; a CSV file may use either.
 
 ```python
 weather = fem.TimeSeriesData()
@@ -374,14 +379,15 @@ indoor = fem.generate_interior(outdoor, fem.InteriorStandard.EN_15026_DIN_4108, 
 # sets the axis. Columns that name no role are listed in ignored_headers.
 # How rows become steps is the caller's call: the Time column (a row's value drives the
 # step ending at its time; the first row is only the start), the Timestep column (one
-# length in seconds per row), or a fixed step for every row. A column the choice asks
-# for and the file lacks raises ValueError.
-measured = fem.read_csv("measured.csv", steps=fem.StepColumn.Time).data
+# length in seconds per row), or a fixed step for every row. Left unsaid, the file's
+# columns decide: Time when it has one, else Timestep, else an hour per row. A column the
+# choice asks for and the file lacks raises ValueError.
+measured = fem.read_csv("measured.csv").data
 logged = fem.read_csv("logger.csv", steps=fem.FixedStep(seconds=900.0)).data
 fem.write_csv_file(indoor, "indoor.csv")
 
 # Whatever the file is, by its extension (.epw, .csv, or a .zip of either)
-for imported in fem.import_datasets("weather.zip", steps=fem.StepColumn.Time).datasets:
+for imported in fem.import_datasets("weather.zip").datasets:
     print(imported.data.name, imported.skipped_columns)
 
 # Or stated outright
@@ -447,13 +453,17 @@ other radiation records.
 
 Each issue is a `model.Issue`: its `kind` (`model.IssueKind`) and what it is about, as
 indices into the case (`region`, `other_region`, `segment`, `step`) and the `roles` or the
-convection `input` concerned. `model.describe(model_case, issue)` words it as THERM does; a
-program that wants to point at the segment, or word it otherwise, reads the fields.
+convection `input` concerned. `model.describe(model_case, issue)` words it as THERM does,
+and `model.describe_issues(model_case)` gives every issue so worded, an empty list when
+there are none; a program that wants to point at the segment, or word it otherwise, reads
+the fields.
 `build.thmz` and `build.thmz_entries` refuse a case with issues with a `ValueError` whose
 text is LibraryFEMTherm's wording, one issue per line, and whose `issues` attribute holds
 the issues themselves:
 
 ```python
+print("\n".join(model.describe_issues(case)))
+
 for issue in model.issues(case):
     print(issue.kind, issue.segment, model.describe(case, issue))
 
