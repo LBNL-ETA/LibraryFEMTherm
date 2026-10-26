@@ -311,12 +311,6 @@ namespace TimeSeriesLibrary
               .kind = DatasetWarningKind::StepLengthsDiffer, .steps = steps(data), .stated = lengths->size()};
         }
 
-        std::optional<DatasetWarning> uuidWarning(const TimeSeriesData & data)
-        {
-            return data.UUID.empty() ? std::optional{DatasetWarning{.kind = DatasetWarningKind::NoUuid}}
-                                     : std::nullopt;
-        }
-
         std::string stepLengthsText(const DatasetWarning & warning)
         {
             return std::format("the axis lists {} step lengths for {} steps: {}",
@@ -329,7 +323,7 @@ namespace TimeSeriesLibrary
 
     std::vector<DatasetWarning> datasetWarnings(const TimeSeriesData & data)
     {
-        const std::array candidates{seriesLengthWarning(data), stepLengthWarning(data), uuidWarning(data)};
+        const std::array candidates{seriesLengthWarning(data), stepLengthWarning(data)};
         return lbnl::transform_filter(
           candidates,
           [](const std::optional<DatasetWarning> & candidate) { return candidate.has_value(); },
@@ -349,11 +343,14 @@ namespace TimeSeriesLibrary
                                    warning.steps);
             case DatasetWarningKind::StepLengthsDiffer:
                 return std::format("{}: {}", data.Name, stepLengthsText(warning));
-            case DatasetWarningKind::NoUuid:
-                return std::format("{}: no UUID; two datasets without one, written into one archive, become one. "
-                                   "Its content UUID gives it one of its own",
-                                   data.Name);
         }
         return {};
+    }
+
+    std::vector<std::string> describeWarnings(const TimeSeriesData & data)
+    {
+        return lbnl::transform_to_vector(datasetWarnings(data), [&data](const DatasetWarning & warning) {
+            return describeWarning(data, warning);
+        });
     }
 }   // namespace TimeSeriesLibrary

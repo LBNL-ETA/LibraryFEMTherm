@@ -300,7 +300,12 @@ another. The month may be given by
 number or by name: `fem.TimeAxis(month=fem.Month.January)` is `fem.TimeAxis(month=1)`, and
 `axis.month` reads back the number either way. A position outside the calendar,
 such as `month=0` or 29 February, is a `ValueError`; it is never clamped. Each dataset is
-its own archive entry, `time series/<uuid>.xml`.
+its own archive entry, `time series/<uuid>.xml`; a dataset made without a `uuid` draws one
+at random, so no two made by hand share an entry, and `fem.content_uuid(data)` gives the
+UUID of its content instead. Series of different lengths are not refused: the dataset has
+as many steps as its shortest series. `fem.describe_warnings(data)` lists, in
+LibraryFEMTherm's words, what a dataset holds that a run takes but may not be what was
+meant; `fem.time_series_warnings(data)` gives the same as facts, for other wording.
 
 ```python
 weather = fem.TimeSeriesData()

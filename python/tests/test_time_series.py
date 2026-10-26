@@ -108,11 +108,18 @@ class TestConstruction:
             ],
         )
         assert fem.time_series_steps(cold_morning) == 3
-        kinds = [warning.kind for warning in fem.time_series_warnings(data=cold_morning)]
-        assert kinds == [fem.DatasetWarningKind.SeriesLengthsDiffer, fem.DatasetWarningKind.NoUuid]
-        first = fem.time_series_warnings(data=cold_morning)[0]
-        assert (first.steps, first.stated) == (3, 4)
-        assert "a run takes 3 steps" in fem.describe_warning(data=cold_morning, warning=first)
+        warnings = fem.time_series_warnings(data=cold_morning)
+        assert [warning.kind for warning in warnings] == [fem.DatasetWarningKind.SeriesLengthsDiffer]
+        assert (warnings[0].steps, warnings[0].stated) == (3, 4)
+        assert fem.describe_warnings(data=cold_morning) == [fem.describe_warning(data=cold_morning, warning=warnings[0])]
+        assert "a run takes 3 steps" in fem.describe_warnings(data=cold_morning)[0]
+
+    def test_a_dataset_stated_without_a_uuid_draws_one(self):
+        first = fem.TimeSeriesData(name="by hand")
+        second = fem.TimeSeriesData(name="by hand")
+        assert len(first.uuid) == 36
+        assert first.uuid != second.uuid
+        assert fem.TimeSeriesData(name="given", uuid="kept").uuid == "kept"
 
     def test_a_refused_field_leaves_the_axis_as_it_was(self):
         data = _dataset()
@@ -227,7 +234,7 @@ class TestKeywordConstruction:
         assert data.axis == axis
         assert data.name == "Two steps"
         assert data.source == "Stated"
-        assert data.uuid == ""
+        assert len(data.uuid) == 36
         assert data.protected_ is False
         assert fem.time_series_steps(data) == 2
         assert repr(axis) == "TimeAxis(month=3, day=15, hour=6, minute=30, step_seconds=1800.0)"

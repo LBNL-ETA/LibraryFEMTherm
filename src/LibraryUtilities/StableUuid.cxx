@@ -1,4 +1,5 @@
 #include <format>
+#include <random>
 
 #include "StableUuid.hxx"
 
@@ -63,5 +64,17 @@ namespace LibraryCommon
     std::string stableUuid(const std::string_view scope, const std::string_view name)
     {
         return uuidFromDigests(digestOf(fnvOffsetBasis, scope, name), digestOf(fnvSecondSeed, scope, name));
+    }
+
+    std::string randomUuid()
+    {
+        thread_local std::mt19937_64 engine{[] {
+            std::random_device device;
+            std::seed_seq seeds{device(), device(), device(), device()};
+            return std::mt19937_64{seeds};
+        }()};
+        const auto high{engine()};
+        const auto low{engine()};
+        return uuidFromDigests(high, low);
     }
 }   // namespace LibraryCommon

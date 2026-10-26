@@ -60,6 +60,16 @@ TEST(StableUuidTest, IsPinned)
     EXPECT_EQ(LibraryCommon::stableUuid("material", "Stucco"), "10418ea1-f55a-0907-70e6-4309a45738d7");
 }
 
+TEST(StableUuidTest, RandomUuidsDifferAndKeepTheShape)
+{
+    const auto first{LibraryCommon::randomUuid()};
+    const auto second{LibraryCommon::randomUuid()};
+    EXPECT_NE(first, second);
+    EXPECT_EQ(first.size(), 36U);
+    EXPECT_EQ(first[8], '-');
+    EXPECT_EQ(first[23], '-');
+}
+
 TEST(StableUuidTest, HasherMatchesReferenceVectors)
 {
     // FNV-1a 64-bit reference: the empty input is the offset basis, "a" is 0xaf63dc4c8601ec8c.

@@ -10,6 +10,7 @@
 
 #include <lbnl/expected.hxx>
 
+#include "LibraryUtilities/StableUuid.hxx"
 #include "TimeSeriesData/ContentHash.hxx"
 #include "TimeSeriesData/CsvSeries.hxx"
 #include "TimeSeriesData/DB.hxx"
@@ -63,13 +64,12 @@ namespace
         using TimeSeriesLibrary::DatasetWarningKind;
         py::enum_<DatasetWarningKind>(mod, "DatasetWarningKind", "What a dataset holds that a run does not refuse.")
             .value("SeriesLengthsDiffer", DatasetWarningKind::SeriesLengthsDiffer)
-            .value("StepLengthsDiffer", DatasetWarningKind::StepLengthsDiffer)
-            .value("NoUuid", DatasetWarningKind::NoUuid);
+            .value("StepLengthsDiffer", DatasetWarningKind::StepLengthsDiffer);
 
         py::class_<DatasetWarning>(mod,
                                    "DatasetWarning",
                                    "One warning, as facts: `steps` is what a run takes, `stated` the count that "
-                                   "differs from it; both 0 for NoUuid. describe_warning words it.")
+                                   "differs from it. describe_warning words it.")
             .def_readonly("kind", &DatasetWarning::kind)
             .def_readonly("steps", &DatasetWarning::steps)
             .def_readonly("stated", &DatasetWarning::stated)
@@ -83,10 +83,13 @@ namespace
 
         mod.def("time_series_warnings", &TimeSeriesLibrary::datasetWarnings, py::arg("data"),
                 "What the dataset holds that a run does not refuse but that may not be what was meant: series "
-                "of different lengths, a step-length list that does not match the steps, no UUID. Empty when "
-                "there is nothing to say. The run goes ahead regardless, on as many steps as the shortest series.");
+                "of different lengths, or a step-length list that does not match the steps. Empty when there is "
+                "nothing to say. The run goes ahead regardless, on as many steps as the shortest series.");
         mod.def("describe_warning", &TimeSeriesLibrary::describeWarning, py::arg("data"), py::arg("warning"),
-                "A warning in LibraryFEMTherm's words.");
+                "One warning in LibraryFEMTherm's words, the default; other words are built from its fields.");
+        mod.def("describe_warnings", &TimeSeriesLibrary::describeWarnings, py::arg("data"),
+                "Every warning the dataset raises, each in LibraryFEMTherm's words; empty when there is nothing "
+                "to say.");
     }
 
     void bindDataModel(py::module_ & mod)
@@ -179,19 +182,21 @@ namespace
         py::class_<TimeSeriesData>(mod,
                                    "TimeSeriesData",
                                    "One dataset: identity, time axis and its series.\n\n"
+                                   "Without a `uuid`, one is drawn at random, so no two datasets stated by "
+                                   "hand share one; `content_uuid(data)` gives the UUID of the content instead.\n\n"
                                    "`series` is copied out as a Python list: build the list and "
                                    "assign it (`data.series = [...]`); appending to the returned "
                                    "list does not change the dataset.")
             .def(py::init([](std::string name,
                              std::vector<Series> series,
                              const TimeAxis & axis,
-                             std::string uuid,
+                             std::optional<std::string> uuid,
                              std::optional<std::string> projectName,
                              std::optional<std::string> description,
                              std::string color,
                              std::optional<std::string> source,
                              const bool isProtected) {
-                     return TimeSeriesData{.UUID = std::move(uuid),
+                     return TimeSeriesData{.UUID = uuid.value_or(LibraryCommon::randomUuid()),
                                            .Name = std::move(name),
                                            .ProjectName = std::move(projectName),
                                            .Protected = isProtected,
@@ -204,7 +209,7 @@ namespace
                  py::arg("name") = std::string{"Default Name"},
                  py::arg("series") = std::vector<Series>{},
                  py::arg("axis") = TimeAxis{},
-                 py::arg("uuid") = std::string{},
+                 py::arg("uuid") = py::none(),
                  py::arg("project_name") = py::none(),
                  py::arg("description") = py::none(),
                  py::arg("color") = std::string{"0x1F6FB4"},

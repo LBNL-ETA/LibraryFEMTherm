@@ -47,4 +47,8 @@ namespace LibraryCommon
     //! share a name must not share an identifier. Both strings are length-prefixed before
     //! hashing, so ("ab", "c") and ("a", "bc") differ.
     [[nodiscard]] std::string stableUuid(std::string_view scope, std::string_view name);
+
+    //! A UUID drawn at random, different on every call: for a record stated by hand with no
+    //! identity of its own, so that two such records never share one.
+    [[nodiscard]] std::string randomUuid();
 }   // namespace LibraryCommon

@@ -196,13 +196,12 @@ namespace TimeSeriesLibrary
     enum class DatasetWarningKind
     {
         SeriesLengthsDiffer,   //!< the series have different numbers of values; the shortest sets the steps
-        StepLengthsDiffer,     //!< the axis lists a different number of step lengths than there are steps
-        NoUuid                 //!< no UUID; two such datasets written into one archive become one
+        StepLengthsDiffer      //!< the axis lists a different number of step lengths than there are steps
     };
 
     //! One warning, as facts: `steps` is what a run takes, `stated` the count that differs
-    //! from it (the longest series, or the number of step lengths listed); both are 0 for
-    //! NoUuid. describeWarning words it.
+    //! from it (the longest series, or the number of step lengths listed). describeWarning
+    //! words it.
     struct DatasetWarning
     {
         DatasetWarningKind kind{DatasetWarningKind::SeriesLengthsDiffer};
@@ -215,5 +214,11 @@ namespace TimeSeriesLibrary
     //! Every warning the dataset raises, none when it is as a run reads it.
     [[nodiscard]] std::vector<DatasetWarning> datasetWarnings(const TimeSeriesData & data);
 
+    //! LibraryFEMTherm's wording of one warning, the default; a caller wanting other words
+    //! builds them from the warning's fields.
     [[nodiscard]] std::string describeWarning(const TimeSeriesData & data, const DatasetWarning & warning);
+
+    //! Every warning the dataset raises, each in LibraryFEMTherm's words; none when there is
+    //! nothing to say.
+    [[nodiscard]] std::vector<std::string> describeWarnings(const TimeSeriesData & data);
 }   // namespace TimeSeriesLibrary

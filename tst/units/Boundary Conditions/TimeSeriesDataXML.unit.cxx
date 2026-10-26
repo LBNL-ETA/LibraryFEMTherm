@@ -279,14 +279,17 @@ TEST(TestTimeSeriesData, WarningsNameWhatARunDoesNotRefuse)
               "three cold hours: the series have from 3 to 4 values; a run takes 3 steps, as many as the shortest "
               "series has, and leaves the rest unread");
 
-    data.UUID.clear();
     data.axis.stepSeconds = std::vector<double>{900.0, 1800.0};
     const auto more{TimeSeriesLibrary::datasetWarnings(data)};
-    ASSERT_EQ(more.size(), 3U);
+    ASSERT_EQ(more.size(), 2U);
     EXPECT_EQ(more[1], (DatasetWarning{.kind = DatasetWarningKind::StepLengthsDiffer, .steps = 3U, .stated = 2U}));
-    EXPECT_EQ(more[2].kind, DatasetWarningKind::NoUuid);
+    const auto worded{TimeSeriesLibrary::describeWarnings(data)};
+    ASSERT_EQ(worded.size(), 2U);
+    EXPECT_EQ(worded[1],
+              "three cold hours: the axis lists 2 step lengths for 3 steps: the last length is repeated for the rest");
 
     EXPECT_TRUE(TimeSeriesLibrary::datasetWarnings(makeSample()).empty());
+    EXPECT_TRUE(TimeSeriesLibrary::describeWarnings(makeSample()).empty());
 }
 
 TEST(TestTimeSeriesData, HourOneIsMidnight)
