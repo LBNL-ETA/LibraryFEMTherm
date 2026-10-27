@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
@@ -28,9 +29,11 @@ namespace TimeSeriesLibrary::Csv
     //! Which column states the steps.
     enum class StepColumn
     {
-        //! The Time column: a row's value belongs to the step ending at its time, so the
-        //! first row is only the start of the run and n rows make n-1 steps. This mirrors
-        //! how EnergyPlus reads a weather file; it is the rule most likely to be revisited.
+        //! The Time column: every row is a step ending at its time, as EnergyPlus reads a
+        //! weather file, and n rows make n steps. The stamps give every length but the
+        //! first, which is the distance from the stated start, else the first entry of a
+        //! Timestep column that agrees with the stamps everywhere else, else, assumed, the
+        //! gap to the second row. ImportResult::firstStep says which.
         Time,
         //! The Timestep column: row i is step i, of the length the row states. A Time
         //! column, if present, places the start one step before the first stamp.
@@ -57,16 +60,28 @@ namespace TimeSeriesLibrary::Csv
     //! AutoStep first, so a choice made without a value is the automatic one.
     using StepChoice = std::variant<AutoStep, FixedStep, StepColumn>;
 
+    //! Where the length of the first step came from: the caller (a stated start, or a
+    //! fixed step), the file's Timestep column, or an assumption, the gap between the
+    //! first two stamps. Only the Time rule ever assumes.
+    enum class FirstStep
+    {
+        Stated,
+        FromColumn,
+        Assumed
+    };
+
     struct ImportResult
     {
         TimeSeriesData data;
         std::vector<std::string> ignoredHeaders;
         bool hadTimeColumn{false};
         bool hadTimestepColumn{false};
-        //! Under StepColumn::Time the first row was the start, not a step: its values
-        //! were dropped.
-        bool firstRowWasStart{false};
+        FirstStep firstStep{FirstStep::FromColumn};
     };
+
+    //! One line on the first step, in LibraryFEMTherm's words: its length and where the
+    //! length came from, so a reader can see what the file did not state.
+    [[nodiscard]] std::string describeFirstStep(const ImportResult & result);
 
     //! Spelled-out spelling of a role (AirTemperature -> "Air Temperature"): the
     //! header written on export and the second spelling accepted on import.
@@ -81,18 +96,32 @@ namespace TimeSeriesLibrary::Csv
     //! reading forward, as the weather reader does - a gap is not a zero. A column the
     //! choice asks for and the file lacks is an error, as is a time that does not follow
     //! the previous one or a timestep that is not positive.
+    //!
+    //! `start` is when the run begins, written as the Time column writes a time
+    //! ("2026-01-01 00:00"). It is read where the file does not say: under the Time rule
+    //! it sets the first step's length, and without a Time column it places the run,
+    //! which otherwise starts on 1 January 00:00. Beside a Time column, the Timestep and
+    //! fixed-step rules place the start from the first stamp and do not read it. The
+    //! year is dropped, as in the stamps: a start later in the year than the first stamp
+    //! is the year before, so "2025-12-31 23:00" begins a file whose first stamp is
+    //! 1 January 00:00.
     [[nodiscard]] lbnl::ExpectedExt<ImportResult, std::string>
-      readFromString(const std::string & content, const std::string & datasetName, const StepChoice & stepChoice = {});
+      readFromString(const std::string & content,
+                     const std::string & datasetName,
+                     const StepChoice & stepChoice = {},
+                     const std::optional<std::string> & start = std::nullopt);
 
     //! Reads the file and imports it under its stem as the dataset name.
-    [[nodiscard]] lbnl::ExpectedExt<ImportResult, std::string> read(const std::string & fileName,
-                                                                    const StepChoice & stepChoice = {});
+    [[nodiscard]] lbnl::ExpectedExt<ImportResult, std::string>
+      read(const std::string & fileName,
+           const StepChoice & stepChoice = {},
+           const std::optional<std::string> & start = std::nullopt);
 
     //! Export in the shape read() accepts: a Time column stamping the end of each step in
     //! a fixed nominal year, a Timestep column of the step lengths in seconds, then one
-    //! column per role under its spelled-out name. Read back under StepColumn::Timestep
-    //! it is the same dataset; under StepColumn::Time the first row becomes the start and
-    //! the dataset is one step shorter.
+    //! column per role under its spelled-out name. Read back under either column it is
+    //! the same dataset: under the Time rule the Timestep column, agreeing with the
+    //! stamps, supplies the first step's length.
     [[nodiscard]] std::string writeToString(const TimeSeriesData & data);
     void writeToFile(const TimeSeriesData & data, const std::string & fileName);
 }   // namespace TimeSeriesLibrary::Csv

@@ -409,15 +409,31 @@ namespace TimeSeriesLibrary::Csv
             return layout;
         }
 
-        //! The clock a file states: its axis and the first data row that is a step (row 1,
-        //! or row 2 under the Time rule, where row 1 is only the start).
+        //! The clock a file states: its axis, and where the first step's length came from.
         struct Clock
         {
             TimeAxis axis;
-            size_t firstDataRow{1U};
+            FirstStep firstStep{FirstStep::FromColumn};
         };
 
         using ClockResult = lbnl::ExpectedExt<Clock, std::string>;
+
+        double secondsOf(const Moment & moment)
+        {
+            return secondsIntoYear(moment.month, moment.day, moment.hour, moment.minute, moment.second);
+        }
+
+        //! The start of the run as the caller states it, in the Time column's own format.
+        lbnl::ExpectedExt<Moment, std::string> parseStart(const std::string & start, const std::string & datasetName)
+        {
+            const auto moment{parseMoment(start)};
+            if(!moment.has_value())
+            {
+                return lbnl::Unexpected<std::string>{
+                  std::format("{}: cannot read the start '{}'", datasetName, trimmed(start))};
+            }
+            return moment.value();
+        }
 
         //! A stamp's clock hour, 0..23, is the axis's hour 1..24 less one.
         TimeAxis startAxis(const Moment & moment)
@@ -450,52 +466,6 @@ namespace TimeSeriesLibrary::Csv
             return gaps;
         }
 
-        //! The Time rule, EnergyPlus-like for now: a row's value belongs to the step that
-        //! ENDS at its time, so the first row is the start of the run and every later row
-        //! is one step - n rows, n-1 steps. Which row drives a step is still under
-        //! discussion; when that is settled, this function changes and nothing else does.
-        ClockResult clockFromTimes(const std::vector<std::vector<std::string>> & rows,
-                                   const size_t timeIndex,
-                                   const std::string & datasetName)
-        {
-            return readMoments(rows, timeIndex, datasetName)
-              .and_then([&datasetName](const std::vector<Moment> & moments) -> ClockResult {
-                  if(moments.size() < 2U)
-                  {
-                      return Failure{datasetName
-                                     + " needs at least two rows with times: the first row is the start "
-                                       "of the run, each later row ends a step"};
-                  }
-                  return gapsBetween(offsetsFrom(moments), datasetName)
-                    .transform([&moments](const std::vector<double> & gaps) {
-                        return Clock{.axis = axisWith(startAxis(moments.front()), gaps), .firstDataRow = 2U};
-                    });
-              });
-        }
-
-        //! A stamp is the end of its row's step under every rule, so beside a Timestep
-        //! column, or under a fixed step, a Time column places the start one step before
-        //! the first stamp. Without a Time column the run starts on 1 January 00:00.
-        lbnl::ExpectedExt<TimeAxis, std::string> startBefore(const std::vector<std::vector<std::string>> & rows,
-                                                             const std::optional<size_t> timeIndex,
-                                                             const double firstLength,
-                                                             const std::string & datasetName)
-        {
-            if(!timeIndex.has_value())
-            {
-                return TimeAxis{};
-            }
-            const auto cell{cellAt(rows[1], timeIndex.value())};
-            const auto moment{parseMoment(cell)};
-            if(!moment.has_value())
-            {
-                return Failure{std::format("{} data row 1: cannot read the time '{}'", datasetName, trimmed(cell))};
-            }
-            const double stampSeconds{
-              secondsIntoYear(moment->month, moment->day, moment->hour, moment->minute, moment->second)};
-            return axisAt(stampSeconds - firstLength);
-        }
-
         //! One positive length in seconds per row.
         lbnl::ExpectedExt<std::vector<double>, std::string>
           readTimesteps(const std::vector<std::vector<std::string>> & rows,
@@ -522,9 +492,159 @@ namespace TimeSeriesLibrary::Csv
             return lengths;
         }
 
+        //! The first step's length and where it came from.
+        struct FirstLength
+        {
+            double seconds{0.0};
+            FirstStep source{FirstStep::Assumed};
+        };
+
+        using FirstLengthResult = lbnl::ExpectedExt<FirstLength, std::string>;
+
+        //! From the stated start to the first stamp. Years are dropped, so a start later in
+        //! the year than the first stamp is the year before, as the stamps themselves wrap
+        //! in offsetsFrom; only a start at the first stamp itself leaves nothing for a step.
+        FirstLengthResult firstLengthFromStart(const std::string & start,
+                                               const Moment & firstStamp,
+                                               const std::string & firstStampText,
+                                               const std::string & datasetName)
+        {
+            return parseStart(start, datasetName).and_then([&](const Moment & begin) -> FirstLengthResult {
+                const double before{secondsOf(begin)};
+                const double stamp{secondsOf(firstStamp)};
+                if(before == stamp)
+                {
+                    return Failure{std::format("{}: the start '{}' is the first time '{}', which leaves no first step",
+                                               datasetName,
+                                               trimmed(start),
+                                               trimmed(firstStampText))};
+                }
+                const double seconds{before < stamp ? stamp - before : stamp + secondsPerNominalYear() - before};
+                return FirstLength{.seconds = seconds, .source = FirstStep::Stated};
+            });
+        }
+
+        //! Whether a Timestep column says the same as the stamps wherever both speak: every
+        //! length after the first equals the gap ending at its row, within half a second.
+        bool agreesWithGaps(const std::vector<double> & lengths, const std::vector<double> & gaps)
+        {
+            return lengths.size() == gaps.size() + 1U
+                   && std::ranges::equal(lengths | std::views::drop(1), gaps, [](const double length, const double gap) {
+                          return std::abs(length - gap) <= 0.5;
+                      });
+        }
+
+        //! A Timestep column beside the stamps supplies the first length when it agrees with
+        //! them everywhere else. One that contradicts the stamps, or cannot be read, is not
+        //! trusted: the caller chose the stamps.
+        std::optional<double> firstLengthFromColumn(const std::vector<std::vector<std::string>> & rows,
+                                                    const Layout & layout,
+                                                    const std::vector<double> & gaps)
+        {
+            if(!layout.timestep.has_value())
+            {
+                return std::nullopt;
+            }
+            const auto lengths{readTimesteps(rows, layout.timestep.value(), "")};
+            if(!lengths.has_value() || !agreesWithGaps(lengths.value(), gaps))
+            {
+                return std::nullopt;
+            }
+            return lengths->front();
+        }
+
+        //! The stamps give every length but the first. That one is the stated start's
+        //! distance to the first stamp, else the first entry of a Timestep column that
+        //! agrees with the stamps, else, assumed, the gap to the second row.
+        FirstLengthResult firstLengthFor(const std::vector<std::vector<std::string>> & rows,
+                                         const Layout & layout,
+                                         const std::optional<std::string> & start,
+                                         const std::vector<Moment> & moments,
+                                         const std::vector<double> & gaps,
+                                         const std::string & datasetName)
+        {
+            if(start.has_value())
+            {
+                return firstLengthFromStart(start.value(), moments.front(), cellAt(rows[1], layout.time.value()), datasetName);
+            }
+            if(const auto fromColumn{firstLengthFromColumn(rows, layout, gaps)}; fromColumn.has_value())
+            {
+                return FirstLength{.seconds = fromColumn.value(), .source = FirstStep::FromColumn};
+            }
+            if(gaps.empty())
+            {
+                return Failure{datasetName
+                               + " has one row with a time and no start: how long its step lasts cannot be known"};
+            }
+            return FirstLength{.seconds = gaps.front(), .source = FirstStep::Assumed};
+        }
+
+        std::vector<double> withFirst(const double first, const std::vector<double> & gaps)
+        {
+            std::vector<double> lengths{first};
+            lengths.insert(lengths.end(), gaps.begin(), gaps.end());
+            return lengths;
+        }
+
+        //! The Time rule: every row is a step ending at its stamp, as EnergyPlus reads a
+        //! weather file - n rows, n steps, the run starting one first length before the
+        //! first stamp.
+        ClockResult clockFromTimes(const std::vector<std::vector<std::string>> & rows,
+                                   const Layout & layout,
+                                   const std::optional<std::string> & start,
+                                   const std::string & datasetName)
+        {
+            return readMoments(rows, layout.time.value(), datasetName)
+              .and_then([&](const std::vector<Moment> & moments) -> ClockResult {
+                  return gapsBetween(offsetsFrom(moments), datasetName)
+                    .and_then([&](const std::vector<double> & gaps) -> ClockResult {
+                        return firstLengthFor(rows, layout, start, moments, gaps, datasetName)
+                          .transform([&](const FirstLength & first) {
+                              const auto begins{axisAt(secondsOf(moments.front()) - first.seconds)};
+                              return Clock{.axis = axisWith(begins, withFirst(first.seconds, gaps)),
+                                           .firstStep = first.source};
+                          });
+                    });
+              });
+        }
+
+        //! Without a Time column the run starts where the caller says, else on 1 January 00:00.
+        lbnl::ExpectedExt<TimeAxis, std::string> statedOrDefaultStart(const std::optional<std::string> & start,
+                                                                      const std::string & datasetName)
+        {
+            if(!start.has_value())
+            {
+                return TimeAxis{};
+            }
+            return parseStart(start.value(), datasetName).transform([](const Moment & begin) { return startAxis(begin); });
+        }
+
+        //! A stamp is the end of its row's step under every rule, so beside a Timestep
+        //! column, or under a fixed step, a Time column places the start one step before
+        //! the first stamp and a stated start is not read.
+        lbnl::ExpectedExt<TimeAxis, std::string> startBefore(const std::vector<std::vector<std::string>> & rows,
+                                                             const std::optional<size_t> timeIndex,
+                                                             const double firstLength,
+                                                             const std::optional<std::string> & start,
+                                                             const std::string & datasetName)
+        {
+            if(!timeIndex.has_value())
+            {
+                return statedOrDefaultStart(start, datasetName);
+            }
+            const auto cell{cellAt(rows[1], timeIndex.value())};
+            const auto moment{parseMoment(cell)};
+            if(!moment.has_value())
+            {
+                return Failure{std::format("{} data row 1: cannot read the time '{}'", datasetName, trimmed(cell))};
+            }
+            return axisAt(secondsOf(moment.value()) - firstLength);
+        }
+
         //! The Timestep rule: row i is step i, of the length it states.
         ClockResult clockFromTimesteps(const std::vector<std::vector<std::string>> & rows,
                                        const Layout & layout,
+                                       const std::optional<std::string> & start,
                                        const std::string & datasetName)
         {
             if(!layout.timestep.has_value())
@@ -532,10 +652,10 @@ namespace TimeSeriesLibrary::Csv
                 return Failure{datasetName + " has no Timestep column (Timestep, Step, Step Seconds or dt)"};
             }
             return readTimesteps(rows, layout.timestep.value(), datasetName)
-              .and_then([&rows, &layout, &datasetName](const std::vector<double> & lengths) {
-                  return startBefore(rows, layout.time, lengths.front(), datasetName)
-                    .transform([&lengths](const TimeAxis & start) {
-                        return Clock{.axis = axisWith(start, lengths), .firstDataRow = 1U};
+              .and_then([&](const std::vector<double> & lengths) {
+                  return startBefore(rows, layout.time, lengths.front(), start, datasetName)
+                    .transform([&lengths](const TimeAxis & begins) {
+                        return Clock{.axis = axisWith(begins, lengths), .firstStep = FirstStep::FromColumn};
                     });
               });
         }
@@ -544,6 +664,7 @@ namespace TimeSeriesLibrary::Csv
         ClockResult clockFixed(const std::vector<std::vector<std::string>> & rows,
                                const Layout & layout,
                                const FixedStep & fixed,
+                               const std::optional<std::string> & start,
                                const std::string & datasetName)
         {
             if(fixed.seconds <= 0.0)
@@ -551,11 +672,12 @@ namespace TimeSeriesLibrary::Csv
                 return Failure{
                   std::format("{}: the fixed step must be positive, got {:g}", datasetName, fixed.seconds)};
             }
-            return startBefore(rows, layout.time, fixed.seconds, datasetName).transform([&fixed](const TimeAxis & start) {
-                TimeAxis axis{start};
-                axis.stepSeconds = fixed.seconds;
-                return Clock{.axis = axis, .firstDataRow = 1U};
-            });
+            return startBefore(rows, layout.time, fixed.seconds, start, datasetName)
+              .transform([&fixed](const TimeAxis & begins) {
+                  TimeAxis axis{begins};
+                  axis.stepSeconds = fixed.seconds;
+                  return Clock{.axis = axis, .firstStep = FirstStep::Stated};
+              });
         }
 
         //! AutoStep made definite by the columns the file has; any other choice as stated.
@@ -575,34 +697,32 @@ namespace TimeSeriesLibrary::Csv
         ClockResult clockFor(const std::vector<std::vector<std::string>> & rows,
                              const Layout & layout,
                              const StepChoice & stated,
+                             const std::optional<std::string> & start,
                              const std::string & datasetName)
         {
             const auto stepChoice{resolved(stated, layout)};
             if(const auto * fixed{std::get_if<FixedStep>(&stepChoice)}; fixed != nullptr)
             {
-                return clockFixed(rows, layout, *fixed, datasetName);
+                return clockFixed(rows, layout, *fixed, start, datasetName);
             }
             if(std::get<StepColumn>(stepChoice) == StepColumn::Timestep)
             {
-                return clockFromTimesteps(rows, layout, datasetName);
+                return clockFromTimesteps(rows, layout, start, datasetName);
             }
             if(!layout.time.has_value())
             {
                 return Failure{datasetName + " has no Time column (Time, Date, Datetime or Timestamp)"};
             }
-            return clockFromTimes(rows, layout.time.value(), datasetName);
+            return clockFromTimes(rows, layout, start, datasetName);
         }
 
-        //! Every role column from the first data row on; of two columns naming one role
-        //! the last wins.
-        std::vector<Series> seriesFrom(const std::vector<std::vector<std::string>> & rows,
-                                       const Layout & layout,
-                                       const size_t firstDataRow)
+        //! Every role column, every data row; of two columns naming one role the last wins.
+        std::vector<Series> seriesFrom(const std::vector<std::vector<std::string>> & rows, const Layout & layout)
         {
             TimeSeriesData data;
             for(const auto & [role, index] : layout.roles)
             {
-                storeSeries(data, role, fillGaps(readColumn(rows, index, firstDataRow)));
+                storeSeries(data, role, fillGaps(readColumn(rows, index, 1U)));
             }
             return data.series;
         }
@@ -656,8 +776,25 @@ namespace TimeSeriesLibrary::Csv
         });
     }
 
-    lbnl::ExpectedExt<ImportResult, std::string>
-      readFromString(const std::string & content, const std::string & datasetName, const StepChoice & stepChoice)
+    std::string describeFirstStep(const ImportResult & result)
+    {
+        const auto length{stepLabel(TimeAxis{.stepSeconds = stepLengths(result.data.axis, 1U).front()})};
+        switch(result.firstStep)
+        {
+            case FirstStep::Stated:
+                return std::format("first step {}, as stated", length);
+            case FirstStep::FromColumn:
+                return std::format("first step {}, from the Timestep column", length);
+            case FirstStep::Assumed:
+                return std::format("first step {}, assumed from the gap to the second row", length);
+        }
+        return {};
+    }
+
+    lbnl::ExpectedExt<ImportResult, std::string> readFromString(const std::string & content,
+                                                                const std::string & datasetName,
+                                                                const StepChoice & stepChoice,
+                                                                const std::optional<std::string> & start)
     {
         const auto rows{parseRows(content)};
         if(rows.size() < 2)
@@ -669,7 +806,7 @@ namespace TimeSeriesLibrary::Csv
         {
             return Failure{datasetName + " has no column named after a time series quantity"};
         }
-        const auto clock{clockFor(rows, layout, stepChoice, datasetName)};
+        const auto clock{clockFor(rows, layout, stepChoice, start, datasetName)};
         if(!clock.has_value())
         {
             return Failure{clock.error()};
@@ -677,23 +814,24 @@ namespace TimeSeriesLibrary::Csv
         ImportResult result{.ignoredHeaders = layout.ignored,
                             .hadTimeColumn = layout.time.has_value(),
                             .hadTimestepColumn = layout.timestep.has_value(),
-                            .firstRowWasStart = clock->firstDataRow > 1U};
+                            .firstStep = clock->firstStep};
         result.data.Name = datasetName;
         result.data.Source = "Imported";
         result.data.axis = clock->axis;
-        result.data.series = seriesFrom(rows, layout, clock->firstDataRow);
+        result.data.series = seriesFrom(rows, layout);
         result.data.UUID = contentUuid(result.data);
         return result;
     }
 
-    lbnl::ExpectedExt<ImportResult, std::string> read(const std::string & fileName, const StepChoice & stepChoice)
+    lbnl::ExpectedExt<ImportResult, std::string>
+      read(const std::string & fileName, const StepChoice & stepChoice, const std::optional<std::string> & start)
     {
         if(!std::filesystem::exists(fileName))
         {
             return Failure{std::filesystem::path{fileName}.filename().string() + " does not exist"};
         }
         const auto datasetName{std::filesystem::path{fileName}.stem().string()};
-        return readFromString(File::loadToString(fileName), datasetName, stepChoice);
+        return readFromString(File::loadToString(fileName), datasetName, stepChoice, start);
     }
 
     std::string writeToString(const TimeSeriesData & data)
@@ -715,10 +853,11 @@ namespace TimeSeriesLibrary::Csv
             // The stamp is the end of the step, as the readers take it.
             elapsed += lengths[index];
             content += stampText(start + std::chrono::seconds{std::llround(elapsed)}, wholeMinutes);
-            content += std::format(",{:g}", lengths[index]);
+            // Shortest text that reads back as the same double: the round trip is exact.
+            content += std::format(",{}", lengths[index]);
             for(const auto & series : data.series)
             {
-                content += std::format(",{:.4g}", series.values[index]);
+                content += std::format(",{}", series.values[index]);
             }
             content += "\n";
         }

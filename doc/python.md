@@ -377,13 +377,16 @@ indoor = fem.generate_interior(outdoor, fem.InteriorStandard.EN_15026_DIN_4108, 
 
 # A CSV whose headers name roles ("Air Temperature" or "AirTemperature"); a Time column
 # sets the axis. Columns that name no role are listed in ignored_headers.
-# How rows become steps is the caller's call: the Time column (a row's value drives the
-# step ending at its time; the first row is only the start), the Timestep column (one
-# length in seconds per row), or a fixed step for every row. Left unsaid, the file's
-# columns decide: Time when it has one, else Timestep, else an hour per row. A column the
-# choice asks for and the file lacks raises ValueError.
+# How rows become steps is the caller's call: the Time column (every row is a step ending
+# at its time; the first step's length comes from `start`, else from a Timestep column
+# that agrees with the stamps, else from the gap to the second row, and `first_step` says
+# which), the Timestep column (one length in seconds per row), or a fixed step for every
+# row. Left unsaid, the file's columns decide: Time when it has one, else Timestep, else
+# an hour per row. A column the choice asks for and the file lacks raises ValueError.
 measured = fem.read_csv("measured.csv").data
 logged = fem.read_csv("logger.csv", steps=fem.FixedStep(seconds=900.0)).data
+begun = fem.read_csv("logger.csv", start="2026-01-01 00:00")          # the first step's length, exact
+print(fem.describe_first_step(fem.read_csv("measured.csv")))          # "first step 1 h, assumed from ..."
 fem.write_csv_file(indoor, "indoor.csv")
 
 # Whatever the file is, by its extension (.epw, .csv, or a .zip of either)

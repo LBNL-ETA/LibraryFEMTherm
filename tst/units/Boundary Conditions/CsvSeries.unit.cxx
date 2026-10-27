@@ -37,7 +37,7 @@ TEST(TestCsvSeries, ImportAcceptsBothRoleSpellings)
     EXPECT_EQ(imported.Name, "sample");
     EXPECT_TRUE(result->hadTimeColumn);
     EXPECT_FALSE(result->hadTimestepColumn);
-    EXPECT_FALSE(result->firstRowWasStart);
+    EXPECT_EQ(result->firstStep, Csv::FirstStep::Stated);
     ASSERT_EQ(result->ignoredHeaders.size(), 1U);
     EXPECT_EQ(result->ignoredHeaders.front(), "Comfort Index");
 
@@ -143,17 +143,17 @@ TEST(TestCsvSeries, ExportRoundTripsThroughImportByTimestep)
     }
 }
 
-TEST(TestCsvSeries, ExportReadBackByTimeIsOneStepShorter)
+TEST(TestCsvSeries, ExportReadsBackTheSameByTime)
 {
     TimeSeriesData data;
     data.series = {Series{SeriesRole::AirTemperature, {21.3, 21.1, 20.8}}};
 
-    const auto result{Csv::readFromString(Csv::writeToString(data), "shorter", byTime)};
+    // The exported Timestep column agrees with the stamps, so it supplies the first length.
+    const auto result{Csv::readFromString(Csv::writeToString(data), "same", byTime)};
     ASSERT_TRUE(result.has_value()) << result.error();
-    EXPECT_TRUE(result->firstRowWasStart);
-    EXPECT_EQ(temperatures(result.value()), (std::vector<double>{21.1, 20.8}));
-    // The first stamp, the end of the first step, becomes the start: 01:00, hour 2.
-    EXPECT_EQ(result->data.axis, (TimeAxis{.month = 1U, .day = 1U, .hour = 2U}));
+    EXPECT_EQ(result->firstStep, Csv::FirstStep::FromColumn);
+    EXPECT_EQ(temperatures(result.value()), (std::vector<double>{21.3, 21.1, 20.8}));
+    EXPECT_EQ(result->data.axis, data.axis);
 }
 
 TEST(TestCsvSeries, WithoutAChoiceTheColumnsDecide)
@@ -167,7 +167,11 @@ TEST(TestCsvSeries, WithoutAChoiceTheColumnsDecide)
     ASSERT_TRUE(byDefault.has_value()) << byDefault.error();
     ASSERT_TRUE(byTime.has_value()) << byTime.error();
     EXPECT_EQ(byDefault->data.axis, byTime->data.axis);
-    EXPECT_TRUE(byDefault->firstRowWasStart);
+    EXPECT_EQ(byDefault->firstStep, Csv::FirstStep::FromColumn);
+    // The column agrees with the stamps, so the three readings are one dataset.
+    const auto byColumn{Csv::readFromString(both, "both", byTimestep)};
+    ASSERT_TRUE(byColumn.has_value()) << byColumn.error();
+    EXPECT_EQ(byTime->data, byColumn->data);
 
     const auto timestepOnly{Csv::readFromString("Timestep,Air Temperature\n900,1\n1800,2\n", "timestep")};
     ASSERT_TRUE(timestepOnly.has_value()) << timestepOnly.error();
@@ -198,10 +202,13 @@ TEST(TestCsvSeries, TimeRuleEndsAStepAtEveryStamp)
     const auto result{Csv::readFromString(content, "ten minutes", byTime)};
     ASSERT_TRUE(result.has_value()) << result.error();
     EXPECT_TRUE(result->hadTimeColumn);
-    EXPECT_TRUE(result->firstRowWasStart);
-    const TimeAxis expected{.month = 3U, .day = 15U, .hour = 7U, .minute = 30U, .stepSeconds = 600.0};
+    // Stamps alone: the first step is taken as long as the gap to the second row, so the
+    // run starts at 06:20, hour 7 of the day.
+    EXPECT_EQ(result->firstStep, Csv::FirstStep::Assumed);
+    const TimeAxis expected{.month = 3U, .day = 15U, .hour = 7U, .minute = 20U, .stepSeconds = 600.0};
     EXPECT_EQ(result->data.axis, expected);
-    EXPECT_EQ(temperatures(result.value()), (std::vector<double>{2.0, 3.0}));
+    EXPECT_EQ(temperatures(result.value()), (std::vector<double>{1.0, 2.0, 3.0}));
+    EXPECT_EQ(Csv::describeFirstStep(result.value()), "first step 10 min, assumed from the gap to the second row");
 }
 
 TEST(TestCsvSeries, ImportReadsUsAndEuropeanDateOrders)
@@ -211,7 +218,8 @@ TEST(TestCsvSeries, ImportReadsUsAndEuropeanDateOrders)
                                "2/1/2026 0:00,2\n"};
     const auto usResult{Csv::readFromString(american, "us", byTime)};
     ASSERT_TRUE(usResult.has_value());
-    EXPECT_EQ(usResult->data.axis, (TimeAxis{.month = 1U, .day = 31U, .hour = 24U}));
+    // Two hourly steps; the run starts an hour before the first stamp, at 22:00.
+    EXPECT_EQ(usResult->data.axis, (TimeAxis{.month = 1U, .day = 31U, .hour = 23U}));
 
     const std::string european{"Timestamp;Air Temperature\n"
                                "31.1.2026 23:00;1\n"
@@ -231,7 +239,8 @@ TEST(TestCsvSeries, ImportKeepsSpacingAcrossNewYear)
 
     const auto result{Csv::readFromString(content, "new year", byTime)};
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result->data.axis, (TimeAxis{.month = 12U, .day = 31U, .hour = 24U}));
+    EXPECT_EQ(result->data.axis, (TimeAxis{.month = 12U, .day = 31U, .hour = 23U}));
+    EXPECT_EQ(temperatures(result.value()), (std::vector<double>{1.0, 2.0, 3.0}));
 }
 
 TEST(TestCsvSeries, UnevenTimesBecomeStepLengths)
@@ -243,12 +252,86 @@ TEST(TestCsvSeries, UnevenTimesBecomeStepLengths)
 
     const auto result{Csv::readFromString(content, "uneven", byTime)};
     ASSERT_TRUE(result.has_value()) << result.error();
-    EXPECT_EQ(result->data.axis, (TimeAxis{.stepSeconds = std::vector<double>{3600.0, 7200.0}}));
-    EXPECT_EQ(temperatures(result.value()), (std::vector<double>{2.0, 3.0}));
-    EXPECT_EQ(TimeSeriesLibrary::describeAxis(result->data), "1 Jan 00:00, steps 1 h to 2 h, 2 rows");
+    // The assumed first step is an hour, the gap to the second row; the run starts at 23:00 the day before.
+    EXPECT_EQ(result->data.axis,
+              (TimeAxis{.month = 12U, .day = 31U, .hour = 24U, .stepSeconds = std::vector<double>{3600.0, 3600.0, 7200.0}}));
+    EXPECT_EQ(temperatures(result.value()), (std::vector<double>{1.0, 2.0, 3.0}));
+    EXPECT_EQ(TimeSeriesLibrary::describeAxis(result->data), "31 Dec 23:00, steps 1 h to 2 h, 3 rows");
 }
 
-TEST(TestCsvSeries, TimeRuleRejectsTimesOutOfOrderOrTooFew)
+TEST(TestCsvSeries, AStatedStartSetsTheFirstStep)
+{
+    const std::string content{"Time,Air Temperature\n"
+                              "2026-01-01 00:30,1\n"
+                              "2026-01-01 01:00,2\n"};
+
+    const auto stated{Csv::readFromString(content, "stated", byTime, "2026-01-01 00:00")};
+    ASSERT_TRUE(stated.has_value()) << stated.error();
+    EXPECT_EQ(stated->firstStep, Csv::FirstStep::Stated);
+    EXPECT_EQ(stated->data.axis, (TimeAxis{.stepSeconds = 1800.0}));
+    EXPECT_EQ(Csv::describeFirstStep(stated.value()), "first step 30 min, as stated");
+
+    // Without it the first step is assumed as long as the second; with it, the gap is exact.
+    const auto assumed{Csv::readFromString(content, "assumed", byTime)};
+    ASSERT_TRUE(assumed.has_value()) << assumed.error();
+    EXPECT_EQ(assumed->data.axis, stated->data.axis);
+    EXPECT_EQ(assumed->firstStep, Csv::FirstStep::Assumed);
+    const auto shorter{Csv::readFromString(content, "shorter", byTime, "2026-01-01 00:10")};
+    ASSERT_TRUE(shorter.has_value()) << shorter.error();
+    EXPECT_EQ(shorter->data.axis,
+              (TimeAxis{.month = 1U, .day = 1U, .hour = 1U, .minute = 10U, .stepSeconds = std::vector<double>{1200.0, 1800.0}}));
+
+    // The year is dropped, so a start later in the year than the first stamp is the year before.
+    const auto wrapped{Csv::readFromString(content, "wrapped", byTime, "2025-12-31 23:00")};
+    ASSERT_TRUE(wrapped.has_value()) << wrapped.error();
+    EXPECT_EQ(wrapped->data.axis,
+              (TimeAxis{.month = 12U, .day = 31U, .hour = 24U, .stepSeconds = std::vector<double>{5400.0, 1800.0}}));
+
+    const auto empty{Csv::readFromString(content, "empty", byTime, "2026-01-01 00:30")};
+    ASSERT_FALSE(empty.has_value());
+    EXPECT_EQ(empty.error(), "empty: the start '2026-01-01 00:30' is the first time '2026-01-01 00:30', which leaves no first step");
+    const auto vague{Csv::readFromString(content, "vague", byTime, "dawn")};
+    ASSERT_FALSE(vague.has_value());
+    EXPECT_EQ(vague.error(), "vague: cannot read the start 'dawn'");
+}
+
+TEST(TestCsvSeries, ATimestepColumnThatContradictsTheStampsIsNotTrusted)
+{
+    const std::string content{"Time,Timestep,Air Temperature\n"
+                              "2026-01-01 00:15,3600,1\n"
+                              "2026-01-01 00:30,3600,2\n"
+                              "2026-01-01 00:45,3600,3\n"};
+
+    const auto byStamps{Csv::readFromString(content, "stamps", byTime)};
+    ASSERT_TRUE(byStamps.has_value()) << byStamps.error();
+    EXPECT_EQ(byStamps->firstStep, Csv::FirstStep::Assumed);
+    EXPECT_EQ(byStamps->data.axis, (TimeAxis{.stepSeconds = 900.0}));
+
+    const auto byColumn{Csv::readFromString(content, "column", byTimestep)};
+    ASSERT_TRUE(byColumn.has_value()) << byColumn.error();
+    EXPECT_EQ(byColumn->firstStep, Csv::FirstStep::FromColumn);
+    EXPECT_EQ(byColumn->data.axis, (TimeAxis{.month = 12U, .day = 31U, .hour = 24U, .minute = 15U, .stepSeconds = 3600.0}));
+}
+
+TEST(TestCsvSeries, AStartPlacesARunWithoutStamps)
+{
+    const auto placed{Csv::readFromString("Timestep,Air Temperature\n900,1\n900,2\n", "placed", byTimestep, "2026-02-01 06:00")};
+    ASSERT_TRUE(placed.has_value()) << placed.error();
+    EXPECT_EQ(placed->data.axis, (TimeAxis{.month = 2U, .day = 1U, .hour = 7U, .stepSeconds = 900.0}));
+    EXPECT_EQ(placed->firstStep, Csv::FirstStep::FromColumn);
+
+    const auto fixed{Csv::readFromString("Air Temperature\n1\n2\n", "fixed", hourly, "2026-02-01 06:00")};
+    ASSERT_TRUE(fixed.has_value()) << fixed.error();
+    EXPECT_EQ(fixed->data.axis, (TimeAxis{.month = 2U, .day = 1U, .hour = 7U}));
+
+    // Beside a Time column these rules place the start from the first stamp and do not read it.
+    const std::string stamped{"Time,dt,Air Temperature\n2026-01-01 01:00,3600,1\n2026-01-01 02:00,3600,2\n"};
+    const auto ignored{Csv::readFromString(stamped, "stamped", byTimestep, "2026-02-01 06:00")};
+    ASSERT_TRUE(ignored.has_value()) << ignored.error();
+    EXPECT_EQ(ignored->data.axis, Csv::readFromString(stamped, "stamped", byTimestep)->data.axis);
+}
+
+TEST(TestCsvSeries, TimeRuleRejectsTimesOutOfOrderOrASingleRowWithoutAStart)
 {
     const std::string repeated{"Time,Air Temperature\n"
                                "2026-01-01 00:00,1\n"
@@ -258,9 +341,13 @@ TEST(TestCsvSeries, TimeRuleRejectsTimesOutOfOrderOrTooFew)
     ASSERT_FALSE(duplicate.has_value());
     EXPECT_EQ(duplicate.error(), "dup data row 3 does not come after data row 2");
 
-    const auto single{Csv::readFromString("Time,Air Temperature\n2026-01-01 00:00,1\n", "one", byTime)};
+    const std::string oneRow{"Time,Air Temperature\n2026-01-01 01:00,1\n"};
+    const auto single{Csv::readFromString(oneRow, "one", byTime)};
     ASSERT_FALSE(single.has_value());
-    EXPECT_NE(single.error().find("needs at least two rows with times"), std::string::npos);
+    EXPECT_EQ(single.error(), "one has one row with a time and no start: how long its step lasts cannot be known");
+    const auto placed{Csv::readFromString(oneRow, "one", byTime, "2026-01-01 00:00")};
+    ASSERT_TRUE(placed.has_value()) << placed.error();
+    EXPECT_EQ(placed->data.axis, TimeAxis{});
 }
 
 TEST(TestCsvSeries, ImportRejectsUnreadableTime)
@@ -285,7 +372,8 @@ TEST(TestCsvSeries, TimestepColumnStatesEveryStep)
     ASSERT_TRUE(result.has_value()) << result.error();
     EXPECT_TRUE(result->hadTimestepColumn);
     EXPECT_FALSE(result->hadTimeColumn);
-    EXPECT_FALSE(result->firstRowWasStart);
+    EXPECT_EQ(result->firstStep, Csv::FirstStep::FromColumn);
+    EXPECT_EQ(Csv::describeFirstStep(result.value()), "first step 15 min, from the Timestep column");
     EXPECT_EQ(result->data.axis, (TimeAxis{.stepSeconds = std::vector<double>{900.0, 900.0, 1800.0}}));
     EXPECT_EQ(temperatures(result.value()), (std::vector<double>{1.0, 2.0, 3.0}));
     EXPECT_EQ(TimeSeriesLibrary::stepLabel(result->data.axis), "15 min to 30 min");
@@ -376,11 +464,11 @@ TEST(TestCsvSeries, ExportWritesUnevenLengthsAndReadsThemBack)
     EXPECT_EQ(exact->data.axis, data.axis);
     EXPECT_EQ(exact->data.series, data.series);
 
-    const auto shorter{Csv::readFromString(content, "uneven", byTime)};
-    ASSERT_TRUE(shorter.has_value()) << shorter.error();
-    EXPECT_EQ(shorter->data.axis,
-              (TimeAxis{.month = 7U, .day = 4U, .hour = 13U, .minute = 15U, .stepSeconds = std::vector<double>{1800.0, 3600.0}}));
-    EXPECT_EQ(temperatures(shorter.value()), (std::vector<double>{31.0, 32.0}));
+    const auto byStamps{Csv::readFromString(content, "uneven", byTime)};
+    ASSERT_TRUE(byStamps.has_value()) << byStamps.error();
+    EXPECT_EQ(byStamps->firstStep, Csv::FirstStep::FromColumn);
+    EXPECT_EQ(byStamps->data.axis, data.axis);
+    EXPECT_EQ(byStamps->data.series, data.series);
 }
 
 TEST(TestCsvSeries, ImportHandlesQuotedCellsWithSeparators)

@@ -329,22 +329,44 @@ class TestCreation:
 
     def test_the_time_rule_ends_a_step_at_each_stamp(self):
         result = fem.read_csv_string(CSV_TEXT, "indoor", fem.StepColumn.Time)
-        assert result.first_row_was_start
-        assert fem.values_for_role(result.data, fem.SeriesRole.AirTemperature) == [21.1]
-        assert fem.describe_axis(result.data) == "1 Jan 00:00, step 1 h, 1 rows"
+        # Stamps alone: every row is a step, and the first is taken as long as the gap to the second.
+        assert result.first_step == fem.FirstStep.Assumed
+        assert fem.values_for_role(result.data, fem.SeriesRole.AirTemperature) == [21.3, 21.1]
+        assert fem.describe_axis(result.data) == "31 Dec 23:00, step 1 h, 2 rows"
+        assert fem.describe_first_step(result) == "first step 1 h, assumed from the gap to the second row"
         uneven = fem.read_csv_string(
             "Time,Air Temperature\n2026-01-01 00:00,1\n2026-01-01 00:15,2\n2026-01-01 02:15,3\n",
             "uneven", fem.StepColumn.Time)
         assert not fem.evenly_stepped(uneven.data)
-        assert fem.step_lengths(uneven.data) == [900.0, 7200.0]
-        assert uneven.data.axis == fem.TimeAxis(step_seconds=[900.0, 7200.0])
-        assert fem.describe_axis(uneven.data) == "1 Jan 00:00, steps 15 min to 2 h, 2 rows"
+        assert fem.step_lengths(uneven.data) == [900.0, 900.0, 7200.0]
+        assert uneven.data.axis == fem.TimeAxis(month=12, day=31, hour=24, minute=45, step_seconds=[900.0, 900.0, 7200.0])
+        assert fem.describe_axis(uneven.data) == "31 Dec 23:45, steps 15 min to 2 h, 3 rows"
         with pytest.raises(ValueError, match="has no Time column"):
             fem.read_csv_string("Air Temperature\n1\n2\n", "bare", fem.StepColumn.Time)
 
+    def test_a_stated_start_sets_the_first_step(self):
+        stated = fem.read_csv_string(CSV_TEXT, "indoor", fem.StepColumn.Time, start="2025-12-31 22:00")
+        assert stated.first_step == fem.FirstStep.Stated
+        assert fem.step_lengths(stated.data) == [7200.0, 3600.0]
+        assert fem.describe_axis(stated.data) == "31 Dec 22:00, steps 1 h to 2 h, 2 rows"
+        assert fem.describe_first_step(stated) == "first step 2 h, as stated"
+        with pytest.raises(ValueError, match="leaves no first step"):
+            fem.read_csv_string(CSV_TEXT, "indoor", fem.StepColumn.Time, start="2026-01-01 00:00")
+        with pytest.raises(ValueError, match="cannot read the start"):
+            fem.read_csv_string(CSV_TEXT, "indoor", start="dawn")
+        # A Timestep column that agrees with the stamps supplies the first step without any assumption.
+        both = "Time,Timestep,Air Temperature\n2026-01-01 00:15,900,1\n2026-01-01 00:30,900,2\n2026-01-01 01:30,3600,3\n"
+        by_time = fem.read_csv_string(both, "both", fem.StepColumn.Time)
+        assert by_time.first_step == fem.FirstStep.FromColumn
+        assert by_time.data == fem.read_csv_string(both, "both", fem.StepColumn.Timestep).data
+        # Without stamps, the start places the run; beside stamps it is not read.
+        placed = fem.read_csv_string("Timestep,Air Temperature\n900,1\n", "placed", start="2026-02-01 06:00")
+        assert placed.data.axis == fem.TimeAxis(month=2, day=1, hour=7, step_seconds=900.0)
+        assert fem.read_csv_string(both, "both", fem.StepColumn.Timestep, start="2026-02-01 06:00").data == by_time.data
+
     def test_the_timestep_column_states_every_step(self):
         result = fem.read_csv_string("dt,Air Temperature\n900,1\n900,2\n1800,3\n", "logger", fem.StepColumn.Timestep)
-        assert result.had_timestep_column and not result.first_row_was_start
+        assert result.had_timestep_column and result.first_step == fem.FirstStep.FromColumn
         assert fem.values_for_role(result.data, fem.SeriesRole.AirTemperature) == [1.0, 2.0, 3.0]
         assert result.data.axis == fem.TimeAxis(step_seconds=[900.0, 900.0, 1800.0])
         assert repr(result.data.axis) == (

@@ -398,8 +398,10 @@ namespace
 
         py::enum_<Csv::StepColumn>(mod, "StepColumn", "Which CSV column states the steps.")
             .value("Time", Csv::StepColumn::Time,
-                   "The Time column: a row's value belongs to the step ending at its time, so the first row is only "
-                   "the start of the run and n rows make n-1 steps.")
+                   "The Time column: every row is a step ending at its time, as EnergyPlus reads a weather file, so "
+                   "n rows make n steps. The stamps give every length but the first, which comes from `start`, "
+                   "else from a Timestep column that agrees with the stamps, else, assumed, from the gap to the "
+                   "second row; `first_step` says which.")
             .value("Timestep", Csv::StepColumn::Timestep,
                    "The Timestep column (Timestep, Step, Step Seconds or dt): row i is step i, of the length in "
                    "seconds the row states. A Time column, if present, places the start one step before the first "
@@ -420,41 +422,57 @@ namespace
                 return std::format("FixedStep(seconds={})", py::repr(py::cast(fixed.seconds)).cast<std::string>());
             });
 
+        py::enum_<Csv::FirstStep>(mod, "FirstStep",
+                                  "Where the length of the first step came from. Only the Time rule ever assumes.")
+            .value("Stated", Csv::FirstStep::Stated, "The caller: a `start`, or a FixedStep.")
+            .value("FromColumn", Csv::FirstStep::FromColumn, "The file's Timestep column.")
+            .value("Assumed", Csv::FirstStep::Assumed,
+                   "The gap between the first two stamps, which the first step is taken to equal.");
         py::class_<Csv::ImportResult>(mod,
                                       "CsvImportResult",
                                       "A CSV read: the dataset, the headers that named no role and were skipped, which "
-                                      "clock columns the file had, and whether the first row was only the start.")
+                                      "clock columns the file had, and where the first step's length came from.")
             .def_readonly("data", &Csv::ImportResult::data)
             .def_readonly("ignored_headers", &Csv::ImportResult::ignoredHeaders)
             .def_readonly("had_time_column", &Csv::ImportResult::hadTimeColumn)
             .def_readonly("had_timestep_column", &Csv::ImportResult::hadTimestepColumn)
-            .def_readonly("first_row_was_start", &Csv::ImportResult::firstRowWasStart,
-                          "Under StepColumn.Time the first row was the start, not a step: its values were dropped.");
+            .def_readonly("first_step", &Csv::ImportResult::firstStep,
+                          "Where the first step's length came from: FirstStep.Stated, FromColumn or Assumed.");
+        mod.def("describe_first_step", &Csv::describeFirstStep, py::arg("result"),
+                "One line on the first step: its length and where the length came from, so a reader sees what "
+                "the file did not state.");
         mod.def(
           "read_csv",
-          [](const std::filesystem::path & path, const Csv::StepChoice & steps) { return unwrap(Csv::read(path.string(), steps)); },
+          [](const std::filesystem::path & path, const Csv::StepChoice & steps, const std::optional<std::string> & start) {
+              return unwrap(Csv::read(path.string(), steps, start));
+          },
           py::arg("path"),
           py::arg("steps") = Csv::StepChoice{},
+          py::arg("start") = py::none(),
           "Reads a CSV whose headers name series roles, in either spelling (AirTemperature or Air Temperature). "
-          "`steps` says how rows become steps: StepColumn.Time reads the Time column, each row's value driving the "
-          "step that ends at its time (the first row is only the start); StepColumn.Timestep reads one length in "
-          "seconds per row from the Timestep column; FixedStep(seconds) makes every row one step of that length. "
-          "Not given (AutoStep), the file's columns decide: Time when it has one, else Timestep, else an hour per "
-          "row. Steps may be uneven. A column the choice asks for and the file lacks raises ValueError, as does anything "
-          "unreadable. Blank value cells carry the last reading forward.");
+          "`steps` says how rows become steps: StepColumn.Time reads the Time column, every row a step ending at "
+          "its time; StepColumn.Timestep reads one length in seconds per row from the Timestep column; "
+          "FixedStep(seconds) makes every row one step of that length. Not given (AutoStep), the file's columns "
+          "decide: Time when it has one, else Timestep, else an hour per row. Steps may be uneven. `start` is when "
+          "the run begins, written as the Time column writes a time (\"2026-01-01 00:00\"); it is read where the "
+          "file does not say: under StepColumn.Time it sets the first step's length, and without a Time column it "
+          "places the run, which otherwise starts on 1 January 00:00. A column the choice asks for and the file "
+          "lacks raises ValueError, as does anything unreadable. Blank value cells carry the last reading forward.");
         mod.def(
           "read_csv_string",
-          [](const std::string & content, const std::string & name, const Csv::StepChoice & steps) {
-              return unwrap(Csv::readFromString(content, name, steps));
-          },
+          [](const std::string & content,
+             const std::string & name,
+             const Csv::StepChoice & steps,
+             const std::optional<std::string> & start) { return unwrap(Csv::readFromString(content, name, steps, start)); },
           py::arg("content"),
           py::arg("name"),
           py::arg("steps") = Csv::StepChoice{},
+          py::arg("start") = py::none(),
           "The same from the CSV text, under the given dataset name.");
         mod.def("write_csv", &Csv::writeToString, py::arg("data"),
                 "The dataset as the CSV read_csv accepts: a Time column stamping the end of each step, a Timestep "
-                "column of the step lengths in seconds, then one column per role. Read back with StepColumn.Timestep "
-                "it is the same dataset; with StepColumn.Time it is one step shorter.");
+                "column of the step lengths in seconds, then one column per role. Read back by either column it is "
+                "the same dataset.");
         mod.def(
           "write_csv_file",
           [](const TimeSeriesData & data, const std::filesystem::path & path) { Csv::writeToFile(data, path.string()); },
