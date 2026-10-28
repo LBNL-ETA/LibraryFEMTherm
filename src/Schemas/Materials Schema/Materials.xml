@@ -1208,60 +1208,40 @@
                         <y>0</y>
                     </TableValue>
                     <TableValue>
-                        <x>0.1</x>
-                        <y>37</y>
-                    </TableValue>
-                    <TableValue>
-                        <x>0.3</x>
-                        <y>45</y>
-                    </TableValue>
-                    <TableValue>
                         <x>0.5</x>
-                        <y>53</y>
+                        <y>5.3</y>
                     </TableValue>
                     <TableValue>
-                        <x>0.7</x>
-                        <y>64</y>
+                        <x>0.65</x>
+                        <y>8.4</y>
                     </TableValue>
                     <TableValue>
                         <x>0.8</x>
-                        <y>73</y>
-                    </TableValue>
-                    <TableValue>
-                        <x>0.9</x>
-                        <y>89</y>
+                        <y>12</y>
                     </TableValue>
                     <TableValue>
                         <x>0.93</x>
-                        <y>98</y>
+                        <y>17</y>
                     </TableValue>
                     <TableValue>
                         <x>0.95</x>
-                        <y>107</y>
+                        <y>25</y>
                     </TableValue>
                     <TableValue>
                         <x>0.99</x>
-                        <y>159</y>
+                        <y>63</y>
                     </TableValue>
                     <TableValue>
                         <x>0.995</x>
-                        <y>185</y>
+                        <y>83</y>
                     </TableValue>
                     <TableValue>
                         <x>0.999</x>
-                        <y>251</y>
-                    </TableValue>
-                    <TableValue>
-                        <x>0.9995</x>
-                        <y>281</y>
-                    </TableValue>
-                    <TableValue>
-                        <x>0.9999</x>
-                        <y>347</y>
+                        <y>120</y>
                     </TableValue>
                     <TableValue>
                         <x>1</x>
-                        <y>534</y>
+                        <y>180</y>
                     </TableValue>
                 </MoistureStorageFunction>
                 <LiquidTransportationCoefficientSuction>
@@ -1270,12 +1250,36 @@
                         <y>0</y>
                     </TableValue>
                     <TableValue>
-                        <x>73</x>
-                        <y>4e-12</y>
+                        <x>27</x>
+                        <y>1e-08</y>
                     </TableValue>
                     <TableValue>
-                        <x>534</x>
-                        <y>5e-12</y>
+                        <x>45</x>
+                        <y>4e-08</y>
+                    </TableValue>
+                    <TableValue>
+                        <x>90</x>
+                        <y>8e-08</y>
+                    </TableValue>
+                    <TableValue>
+                        <x>126</x>
+                        <y>1.2e-07</y>
+                    </TableValue>
+                    <TableValue>
+                        <x>144</x>
+                        <y>2e-07</y>
+                    </TableValue>
+                    <TableValue>
+                        <x>162</x>
+                        <y>3e-07</y>
+                    </TableValue>
+                    <TableValue>
+                        <x>171</x>
+                        <y>5e-07</y>
+                    </TableValue>
+                    <TableValue>
+                        <x>180</x>
+                        <y>2e-06</y>
                     </TableValue>
                 </LiquidTransportationCoefficientSuction>
                 <LiquidTransportationCoefficientRedistribution>
@@ -1284,32 +1288,48 @@
                         <y>0</y>
                     </TableValue>
                     <TableValue>
-                        <x>57</x>
-                        <y>5.2e-11</y>
+                        <x>27</x>
+                        <y>1e-08</y>
                     </TableValue>
                     <TableValue>
-                        <x>65</x>
-                        <y>7e-11</y>
+                        <x>45</x>
+                        <y>1.1e-08</y>
                     </TableValue>
                     <TableValue>
-                        <x>534</x>
-                        <y>1e-10</y>
+                        <x>90</x>
+                        <y>2e-08</y>
+                    </TableValue>
+                    <TableValue>
+                        <x>126</x>
+                        <y>3.5e-08</y>
+                    </TableValue>
+                    <TableValue>
+                        <x>144</x>
+                        <y>5e-08</y>
+                    </TableValue>
+                    <TableValue>
+                        <x>162</x>
+                        <y>1e-07</y>
+                    </TableValue>
+                    <TableValue>
+                        <x>171</x>
+                        <y>2e-07</y>
+                    </TableValue>
+                    <TableValue>
+                        <x>180</x>
+                        <y>7e-07</y>
                     </TableValue>
                 </LiquidTransportationCoefficientRedistribution>
                 <ThermalConductivityMoistureDependent>
                     <TableValue>
                         <x>0</x>
-                        <y>0.12</y>
-                    </TableValue>
-                    <TableValue>
-                        <x>534</x>
-                        <y>0.12</y>
+                        <y>1.8</y>
                     </TableValue>
                 </ThermalConductivityMoistureDependent>
                 <ThermalConductivityTemperatureDependent>
                     <TableValue>
                         <x>10</x>
-                        <y>0.12</y>
+                        <y>1.8</y>
                     </TableValue>
                 </ThermalConductivityTemperatureDependent>
             </HygroThermal>
@@ -1334,8 +1354,9 @@
                 <MaterialInformation>NA</MaterialInformation>
                 <BulkDensity>454</BulkDensity>
                 <Porosity>0.56</Porosity>
-                <SpecificHeatCapacityDry>0.12</SpecificHeatCapacityDry>
+                <SpecificHeatCapacityDry>1400</SpecificHeatCapacityDry>
                 <ThermalConductivityDry>0.12</ThermalConductivityDry>
+                <WaterVaporDiffusionResistanceFactor>203</WaterVaporDiffusionResistanceFactor>
                 <MoistureStorageFunction>
                     <TableValue>
                         <x>0</x>
