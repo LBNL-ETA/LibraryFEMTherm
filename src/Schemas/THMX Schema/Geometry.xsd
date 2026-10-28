@@ -50,10 +50,29 @@
 			<xs:enumeration value="Radiation Enclosure"/>
 		</xs:restriction>
 	</xs:simpleType>
+	<xs:complexType name="CavityState">
+		<xs:annotation>
+			<xs:documentation>
+                The frame cavity's last calculated state: the screen direction of the heat flow
+                and, for the warm side (1) and the cold side (2) of the equivalent rectangular
+                cavity, the side temperature in degrees Celsius and the length-weighted emissivity
+                of the cavity surfaces on that side. Shown before the next calculation and used
+                as its starting point.
+            </xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="HeatFlowDirection" type="Direction" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Side1Temperature" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Side1Emissivity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Side2Temperature" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Side2Emissivity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:all>
+	</xs:complexType>
 	<xs:complexType name="CavityData">
 		<xs:all>
 			<xs:element name="Gas" type="xs:string" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="Ventilated" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="State" type="CavityState" minOccurs="0" maxOccurs="1"/>
 		</xs:all>
 	</xs:complexType>
 	<xs:complexType name="Point">

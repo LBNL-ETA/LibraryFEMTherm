@@ -28,11 +28,36 @@ namespace ThermFile
     //! Present only when the polygon is a frame cavity. The gas string is a name (resolved
     //! against the project's gas library at runtime); the schema treats it as opaque text.
     //! @gas - cavity fill gas name (default "Air").
+    //! \brief The state of a frame cavity after its last calculation.
+    //!
+    //! The two sides are the warm side (1) and the cold side (2) of the equivalent rectangular
+    //! cavity, with their average temperature and the length-weighted emissivity of the cavity
+    //! surfaces on them. The program shows these values before the next calculation and uses
+    //! them as that calculation's starting point.
+    //! @heatFlowDirection - screen direction of the heat flow through the cavity.
+    //! @side1Temperature - temperature of the warm side [C].
+    //! @side1Emissivity - emissivity of the warm side.
+    //! @side2Temperature - temperature of the cold side [C].
+    //! @side2Emissivity - emissivity of the cold side.
+    struct CavityState
+    {
+        Direction heatFlowDirection{Direction::Unknown};
+        double side1Temperature{0.0};
+        double side1Emissivity{0.0};
+        double side2Temperature{0.0};
+        double side2Emissivity{0.0};
+    };
+
+    //! \brief Per-polygon frame cavity attributes.
+    //! @gas - name of the fill gas.
     //! @ventilated - whether this cavity is treated as ventilated by the chosen standard.
+    //! @state - the cavity's last calculated state (see CavityState); absent in files written
+    //!          before it existed and for cavities that have not been calculated.
     struct CavityData
     {
         std::string gas{"Air"};
         bool ventilated{false};
+        std::optional<CavityState> state;
     };
 
     //! \brief Represents a polygon in THERM model.

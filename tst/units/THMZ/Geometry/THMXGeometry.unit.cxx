@@ -98,6 +98,54 @@ TEST_F(TestTHMXGeometry, PolygonSerialization)
     EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNode));
 }
 
+TEST_F(TestTHMXGeometry, CavityDataRoundTripWithState)
+{
+    const ThermFile::CavityData cavityData{
+      .gas = "Argon",
+      .ventilated = true,
+      .state = ThermFile::CavityState{.heatFlowDirection = ThermFile::Direction::Left,
+                                      .side1Temperature = -8.67,
+                                      .side1Emissivity = 0.345,
+                                      .side2Temperature = -8.834,
+                                      .side2Emissivity = 0.2}};
+
+    Helper::MockNode node{"Cavity"};
+    Helper::MockNodeAdapter adapter{&node};
+    adapter << cavityData;
+
+    const Helper::MockNodeAdapter reader{&node};
+    ThermFile::CavityData readBack;
+    reader >> readBack;
+
+    EXPECT_EQ("Argon", readBack.gas);
+    EXPECT_TRUE(readBack.ventilated);
+    ASSERT_TRUE(readBack.state.has_value());
+    // Compared as integers: streaming the enum for a failure message would pick the file
+    // serializer template instead of a printer.
+    EXPECT_EQ(static_cast<int>(ThermFile::Direction::Left), static_cast<int>(readBack.state->heatFlowDirection));
+    EXPECT_NEAR(-8.67, readBack.state->side1Temperature, 1e-9);
+    EXPECT_NEAR(0.345, readBack.state->side1Emissivity, 1e-9);
+    EXPECT_NEAR(-8.834, readBack.state->side2Temperature, 1e-9);
+    EXPECT_NEAR(0.2, readBack.state->side2Emissivity, 1e-9);
+}
+
+TEST_F(TestTHMXGeometry, CavityDataWithoutStateReadsBackWithoutState)
+{
+    const ThermFile::CavityData cavityData{.gas = "Air", .ventilated = false, .state = std::nullopt};
+
+    Helper::MockNode node{"Cavity"};
+    Helper::MockNodeAdapter adapter{&node};
+    adapter << cavityData;
+
+    const Helper::MockNodeAdapter reader{&node};
+    ThermFile::CavityData readBack;
+    reader >> readBack;
+
+    EXPECT_EQ("Air", readBack.gas);
+    EXPECT_FALSE(readBack.ventilated);
+    EXPECT_FALSE(readBack.state.has_value());
+}
+
 TEST_F(TestTHMXGeometry, SurfaceDataDeserialization)
 {
     auto node{Helper::generateSurfaceDataNode({"45", "2000"})};
