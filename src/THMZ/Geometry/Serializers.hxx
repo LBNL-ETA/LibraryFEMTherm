@@ -45,35 +45,10 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, CavityState & cavityState)
-    {
-        node >> FileParse::Child{"HeatFlowDirection", cavityState.heatFlowDirection};
-        node >> FileParse::Child{"Side1Temperature", cavityState.side1Temperature};
-        node >> FileParse::Child{"Side1Emissivity", cavityState.side1Emissivity};
-        node >> FileParse::Child{"Side2Temperature", cavityState.side2Temperature};
-        node >> FileParse::Child{"Side2Emissivity", cavityState.side2Emissivity};
-
-        return node;
-    }
-
-    template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const CavityState & cavityState)
-    {
-        node << FileParse::Child{"HeatFlowDirection", cavityState.heatFlowDirection};
-        node << FileParse::Child{"Side1Temperature", cavityState.side1Temperature};
-        node << FileParse::Child{"Side1Emissivity", cavityState.side1Emissivity};
-        node << FileParse::Child{"Side2Temperature", cavityState.side2Temperature};
-        node << FileParse::Child{"Side2Emissivity", cavityState.side2Emissivity};
-
-        return node;
-    }
-
-    template<typename NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, CavityData & cavityData)
     {
         node >> FileParse::Child{"Gas", cavityData.gas};
         node >> FileParse::Child{"Ventilated", cavityData.ventilated};
-        node >> FileParse::Child{"State", cavityData.state};
 
         return node;
     }
@@ -83,7 +58,6 @@ namespace ThermFile
     {
         node << FileParse::Child{"Gas", cavityData.gas};
         node << FileParse::Child{"Ventilated", cavityData.ventilated};
-        node << FileParse::Child{"State", cavityData.state};
 
         return node;
     }

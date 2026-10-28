@@ -65,6 +65,83 @@ TEST_F(TestSteadyStateResults, UFactorsNodeDeserialization)
     Helper::expect_near(correctResult, result, 1e-6);
 }
 
+TEST_F(TestSteadyStateResults, FrameCavityRoundTrip)
+{
+    const ThermFile::FrameCavityResult frameCavity{.polygonUUID = "cavity-uuid",
+                                                   .heatFlowDirection = ThermFile::Direction::Left,
+                                                   .side1Temperature = -8.67,
+                                                   .side1Emissivity = 0.345,
+                                                   .side2Temperature = -8.834,
+                                                   .side2Emissivity = 0.2};
+
+    Helper::MockNode node{"FrameCavity"};
+    Helper::MockNodeAdapter adapter{&node};
+    adapter << frameCavity;
+
+    const Helper::MockNodeAdapter reader{&node};
+    ThermFile::FrameCavityResult readBack;
+    reader >> readBack;
+
+    EXPECT_EQ("cavity-uuid", readBack.polygonUUID);
+    // Compared as integers: streaming the enum for a failure message would pick the file
+    // serializer template instead of a printer.
+    EXPECT_EQ(static_cast<int>(ThermFile::Direction::Left), static_cast<int>(readBack.heatFlowDirection));
+    EXPECT_NEAR(-8.67, readBack.side1Temperature, 1e-9);
+    EXPECT_NEAR(0.345, readBack.side1Emissivity, 1e-9);
+    EXPECT_NEAR(-8.834, readBack.side2Temperature, 1e-9);
+    EXPECT_NEAR(0.2, readBack.side2Emissivity, 1e-9);
+}
+
+TEST_F(TestSteadyStateResults, CaseRoundTripWithFrameCavities)
+{
+    ThermFile::SteadyStateResultsCase resultsCase;
+    resultsCase.modelType = ThermFile::RunType::UFactor;
+    resultsCase.simulationError = 1.5;
+    resultsCase.frameCavities = {{.polygonUUID = "cavity-1",
+                                  .heatFlowDirection = ThermFile::Direction::Right,
+                                  .side1Temperature = 7.0,
+                                  .side1Emissivity = 0.9,
+                                  .side2Temperature = -4.0,
+                                  .side2Emissivity = 0.9},
+                                 {.polygonUUID = "cavity-2",
+                                  .heatFlowDirection = ThermFile::Direction::Up,
+                                  .side1Temperature = 12.5,
+                                  .side1Emissivity = 0.2,
+                                  .side2Temperature = 3.25,
+                                  .side2Emissivity = 0.345}};
+
+    Helper::MockNode node{"Case"};
+    Helper::MockNodeAdapter adapter{&node};
+    adapter << resultsCase;
+
+    const Helper::MockNodeAdapter reader{&node};
+    ThermFile::SteadyStateResultsCase readBack;
+    reader >> readBack;
+
+    ASSERT_EQ(2u, readBack.frameCavities.size());
+    EXPECT_EQ("cavity-1", readBack.frameCavities[0].polygonUUID);
+    EXPECT_EQ("cavity-2", readBack.frameCavities[1].polygonUUID);
+    EXPECT_EQ(static_cast<int>(ThermFile::Direction::Up), static_cast<int>(readBack.frameCavities[1].heatFlowDirection));
+    EXPECT_NEAR(3.25, readBack.frameCavities[1].side2Temperature, 1e-9);
+    EXPECT_NEAR(0.345, readBack.frameCavities[1].side2Emissivity, 1e-9);
+}
+
+TEST_F(TestSteadyStateResults, CaseWithoutFrameCavitiesReadsBackEmpty)
+{
+    ThermFile::SteadyStateResultsCase resultsCase;
+    resultsCase.modelType = ThermFile::RunType::UFactor;
+
+    Helper::MockNode node{"Case"};
+    Helper::MockNodeAdapter adapter{&node};
+    adapter << resultsCase;
+
+    const Helper::MockNodeAdapter reader{&node};
+    ThermFile::SteadyStateResultsCase readBack;
+    reader >> readBack;
+
+    EXPECT_TRUE(readBack.frameCavities.empty());
+}
+
 TEST_F(TestSteadyStateResults, UFactorsNodeSerialization)
 {
     //clang-format off

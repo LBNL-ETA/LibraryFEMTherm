@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 	<xs:include schemaLocation="Common.xsd"/>
+	<xs:include schemaLocation="Geometry.xsd"/>
 	<xs:simpleType name="LengthType">
 		<xs:annotation>
 			<xs:documentation> Length type is enumeration for different projection on the surfaces that is
@@ -37,6 +38,25 @@
 			<xs:element name="Projection" type="Projection" minOccurs="1" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
+	<xs:complexType name="FrameCavity">
+		<xs:annotation>
+			<xs:documentation>
+                The state of one frame cavity after the run: the screen direction of the heat
+                flow and, for the warm side (1) and the cold side (2) of the equivalent
+                rectangular cavity, the side temperature in degrees Celsius and the
+                length-weighted emissivity of the cavity surfaces on that side. Written for the
+                U-factor case only.
+            </xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="PolygonUUID" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="HeatFlowDirection" type="Direction" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Side1Temperature" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Side1Emissivity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Side2Temperature" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Side2Emissivity" type="xs:double" minOccurs="1" maxOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
 	<xs:complexType name="Case">
 		<xs:sequence>
 			<xs:element name="ModelType" type="ModelType" minOccurs="0" maxOccurs="1"/>
@@ -45,6 +65,7 @@
 			<xs:element name="SpacerCase" type="CMACase" minOccurs="0" maxOccurs="1"/>
 			<!-- units: [Percent] -->
 			<xs:element name="U-factors" type="U-factors" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="FrameCavity" type="FrameCavity" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:element name="Results">
