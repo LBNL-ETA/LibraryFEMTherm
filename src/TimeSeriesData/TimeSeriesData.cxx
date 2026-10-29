@@ -311,13 +311,20 @@ namespace TimeSeriesLibrary
         const auto lengths{stepLengths(data.axis, steps(data))};
         const auto elapsed{elapsedBefore(lengths)};
         const double start{startSecondsIntoYear(data.axis)};
-        return lbnl::transform_to_vector(std::views::iota(size_t{0U}, lengths.size()), [&](const size_t index) {
-            return StepValues{.index = index,
-                              .begins = startLabel(axisAt(start + elapsed[index])),
-                              .elapsedSeconds = elapsed[index],
-                              .timestepSeconds = lengths[index],
-                              .values = valuesAt(data, index)};
-        });
+        // Built with a loop rather than lbnl::transform_to_vector over an iota view: that
+        // helper constructs the vector from the view's iterator pair, which libstdc++ (GCC 13
+        // and 14) rejects for a transform view yielding values. MSVC accepts it.
+        std::vector<StepValues> result;
+        result.reserve(lengths.size());
+        for(size_t index = 0U; index < lengths.size(); ++index)
+        {
+            result.push_back(StepValues{.index = index,
+                                        .begins = startLabel(axisAt(start + elapsed[index])),
+                                        .elapsedSeconds = elapsed[index],
+                                        .timestepSeconds = lengths[index],
+                                        .values = valuesAt(data, index)});
+        }
+        return result;
     }
 
     namespace
