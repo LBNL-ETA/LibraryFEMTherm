@@ -8,9 +8,36 @@
 #include "EnumSerializers.hxx"
 #include "THMZ/Common/EnumSerializers.hxx"
 #include "THMZ/CMA/EnumSerializers.hxx"
+#include "THMZ/Geometry/EnumSerializers.hxx"
 
 namespace ThermFile
 {
+    template<typename NodeAdapter>
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, FrameCavityResult & frameCavity)
+    {
+        node >> FileParse::Child{"PolygonUUID", frameCavity.polygonUUID};
+        node >> FileParse::Child{"HeatFlowDirection", frameCavity.heatFlowDirection};
+        node >> FileParse::Child{"Side1Temperature", frameCavity.side1Temperature};
+        node >> FileParse::Child{"Side1Emissivity", frameCavity.side1Emissivity};
+        node >> FileParse::Child{"Side2Temperature", frameCavity.side2Temperature};
+        node >> FileParse::Child{"Side2Emissivity", frameCavity.side2Emissivity};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline NodeAdapter & operator<<(NodeAdapter & node, const FrameCavityResult & frameCavity)
+    {
+        node << FileParse::Child{"PolygonUUID", frameCavity.polygonUUID};
+        node << FileParse::Child{"HeatFlowDirection", frameCavity.heatFlowDirection};
+        node << FileParse::Child{"Side1Temperature", frameCavity.side1Temperature};
+        node << FileParse::Child{"Side1Emissivity", frameCavity.side1Emissivity};
+        node << FileParse::Child{"Side2Temperature", frameCavity.side2Temperature};
+        node << FileParse::Child{"Side2Emissivity", frameCavity.side2Emissivity};
+
+        return node;
+    }
+
     template<typename NodeAdapter>
     inline const NodeAdapter & operator>>(const NodeAdapter & node, Projection & projection)
     {
@@ -68,6 +95,7 @@ namespace ThermFile
         node >> FileParse::Child{"SpacerCase", steadyStateResultsCase.spacerCase};
         // Vector is intentionally at the same level as the other nodes
         node >> FileParse::Child{"U-factors", steadyStateResultsCase.steadyStateUFactors};
+        node >> FileParse::Child{"FrameCavity", steadyStateResultsCase.frameCavities};
 
         return node;
     }
@@ -81,6 +109,7 @@ namespace ThermFile
         node << FileParse::Child{"SpacerCase", steadyStateResultsCase.spacerCase};
         // Vector is intentionally at the same level as the other nodes
         node << FileParse::Child{"U-factors", steadyStateResultsCase.steadyStateUFactors};
+        node << FileParse::Child{"FrameCavity", steadyStateResultsCase.frameCavities};
 
         return node;
     }
