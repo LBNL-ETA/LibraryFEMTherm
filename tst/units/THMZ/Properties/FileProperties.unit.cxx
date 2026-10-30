@@ -531,3 +531,18 @@ TEST_F(TestFileProperties, FilePropertiesDeserialization)
     constexpr auto tolerance{1e-6};
     Helper::expect_near(correctFileProperties, fileProperties, tolerance);
 }
+
+TEST_F(TestFileProperties, SteadyStartPhysicsRoundTrips)
+{
+    const ThermFile::InitialConditions written{ThermFile::SteadyStart{
+      .start = ThermFile::UniformStart{30.0, 0.4},
+      .physics = ThermFile::StartPhysics{.simulateThermal = true, .simulateMoisture = false}}};
+
+    Helper::MockNode node{"InitialConditions"};
+    Helper::MockNodeAdapter adapter{&node};
+    adapter << written;
+
+    ThermFile::InitialConditions read;
+    static_cast<const Helper::MockNodeAdapter &>(adapter) >> read;
+    EXPECT_TRUE(read == written);
+}

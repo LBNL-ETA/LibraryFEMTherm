@@ -317,8 +317,23 @@ namespace ThermFile::Build
             });
         }
 
+        //! The switches a start solved first runs with, as the file's own, when it states any.
+        std::optional<StartPhysics> fileStartPhysics(const std::optional<Model::Physics> & physics)
+        {
+            if(!physics.has_value())
+            {
+                return std::nullopt;
+            }
+            CalculationOptions options;
+            applyPhysics(physics.value(), options);
+            return StartPhysics{.simulateThermal = options.simulateThermal,
+                                .simulateMoisture = options.simulateMoisture,
+                                .modelingOptions = options.modelingOptions};
+        }
+
         //! The case's start as the file states it: the uniform values, or the start solved
-        //! first with its conditions as segment index and record.
+        //! first with its conditions as segment index and record, and its physics when it
+        //! has its own.
         InitialConditions fileInitialConditions(const ModelCase & modelCase, const std::vector<StartRecord> & starts)
         {
             return std::visit(
@@ -332,13 +347,15 @@ namespace ThermFile::Build
                   {
                       return InitialConditions{SteadyStart{
                         .conditions = fileStartConditions(starts),
-                        .start = start.start.has_value() ? std::optional{fileStart(start.start.value())} : std::nullopt}};
+                        .start = start.start.has_value() ? std::optional{fileStart(start.start.value())} : std::nullopt,
+                        .physics = fileStartPhysics(start.physics)}};
                   }
                   else
                   {
                       return InitialConditions{TransientStart{.conditions = fileStartConditions(starts),
                                                               .stepLengths = start.schedule.stepLengths,
-                                                              .start = fileStart(start.start)}};
+                                                              .start = fileStart(start.start),
+                                                              .physics = fileStartPhysics(start.physics)}};
                   }
               },
               modelCase.initial);

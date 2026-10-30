@@ -697,3 +697,17 @@ TEST(Model, ASteadyStateCaseMayPrescribeAFace)
     modelCase.mode = ThermFile::CalculationMode::cmSteadyState;
     EXPECT_TRUE(issues(modelCase).empty());
 }
+
+TEST(Model, TheInitializerMaySolveOtherPhysicsThanTheRun)
+{
+    auto modelCase{strip()};
+    modelCase.initial = FromSteadyState{.physics = Physics{.moisture = false}};
+    const auto found{initializerCase(modelCase)};
+    ASSERT_TRUE(found.has_value());
+    EXPECT_FALSE(found->physics.moisture);
+    EXPECT_TRUE(found->physics.thermal);
+    EXPECT_TRUE(issues(modelCase).empty());
+
+    modelCase.initial = FromTransient{.schedule = uniformSchedule(600.0, 2U)};
+    EXPECT_EQ(initializerCase(modelCase)->physics, modelCase.physics);
+}

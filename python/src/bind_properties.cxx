@@ -36,6 +36,16 @@ namespace
 
 void bind_properties(py::module_ & mod)
 {
+    py::class_<ThermFile::ModelingOptions>(mod, "ModelingOptions")
+        .def(py::init<>())
+        .def_readwrite("exclude_water_liquid_transportation", &ThermFile::ModelingOptions::excludeWaterLiquidTransportation)
+        .def_readwrite("exclude_heat_of_evaporation", &ThermFile::ModelingOptions::excludeHeatOfEvaporation)
+        .def_readwrite("exclude_capillary_conduction", &ThermFile::ModelingOptions::excludeCapillaryConduction)
+        .def_readwrite("exclude_vapor_diffusion_conduction", &ThermFile::ModelingOptions::excludeVaporDiffusionConduction)
+        .def_readwrite("exclude_latent_heat_of_fusion", &ThermFile::ModelingOptions::excludeLatentHeatOfFusion)
+        .def_readwrite("exclude_thermal_conductivity_moisture_dependent", &ThermFile::ModelingOptions::excludeThermalConductivityMoistureDependent)
+        .def_readwrite("exclude_thermal_conductivity_temperature_dependent", &ThermFile::ModelingOptions::excludeThermalConductivityTemperatureDependent);
+
     py::class_<ThermFile::UniformStart>(mod, "UniformStart",
                                         "A uniform state: temperature in degrees C, relative humidity as a fraction.")
         .def(py::init([](const double temperature, const double humidity) {
@@ -65,17 +75,38 @@ void bind_properties(py::module_ & mod)
             return std::format("StartCondition(segment={}, bc_uuid='{}')", condition.segment, condition.bcUUID);
         });
 
+    py::class_<ThermFile::StartPhysics>(mod, "StartPhysics",
+                                        "The switches a start solved first runs with, when they differ from the run's.")
+        .def(py::init([](const bool simulateThermal,
+                         const bool simulateMoisture,
+                         const std::optional<ThermFile::ModelingOptions> & modelingOptions) {
+                 return ThermFile::StartPhysics{.simulateThermal = simulateThermal,
+                                                .simulateMoisture = simulateMoisture,
+                                                .modelingOptions = modelingOptions.value_or(ThermFile::ModelingOptions{})};
+             }),
+             py::arg("simulate_thermal") = true,
+             py::arg("simulate_moisture") = true,
+             py::arg("modeling_options") = py::none())
+        .def_readwrite("simulate_thermal", &ThermFile::StartPhysics::simulateThermal)
+        .def_readwrite("simulate_moisture", &ThermFile::StartPhysics::simulateMoisture)
+        .def_readwrite("modeling_options", &ThermFile::StartPhysics::modelingOptions)
+        .def(py::self == py::self)
+        .def(py::self != py::self);
+
     py::class_<ThermFile::SteadyStart>(mod, "SteadyStart",
                                        "The starting state is the steady state of the model with `conditions` "
                                        "swapped in; `start` is where that solve begins, None for the engine's default.")
         .def(py::init([](std::vector<ThermFile::StartCondition> conditions,
-                         const std::optional<ThermFile::UniformStart> & start) {
-                 return ThermFile::SteadyStart{.conditions = std::move(conditions), .start = start};
+                         const std::optional<ThermFile::UniformStart> & start,
+                         const std::optional<ThermFile::StartPhysics> & physics) {
+                 return ThermFile::SteadyStart{.conditions = std::move(conditions), .start = start, .physics = physics};
              }),
              py::arg("conditions") = std::vector<ThermFile::StartCondition>{},
-             py::arg("start") = py::none())
+             py::arg("start") = py::none(),
+             py::arg("physics") = py::none())
         .def_readwrite("conditions", &ThermFile::SteadyStart::conditions)
         .def_readwrite("start", &ThermFile::SteadyStart::start)
+        .def_readwrite("physics", &ThermFile::SteadyStart::physics)
         .def(py::self == py::self)
         .def(py::self != py::self)
         .def("__repr__", [](const ThermFile::SteadyStart & start) {
@@ -89,16 +120,21 @@ void bind_properties(py::module_ & mod)
                                           "(seconds) with `conditions` swapped in, itself started from `start`.")
         .def(py::init([](std::vector<ThermFile::StartCondition> conditions,
                          std::vector<double> stepLengths,
-                         const ThermFile::UniformStart & start) {
-                 return ThermFile::TransientStart{
-                   .conditions = std::move(conditions), .stepLengths = std::move(stepLengths), .start = start};
+                         const ThermFile::UniformStart & start,
+                         const std::optional<ThermFile::StartPhysics> & physics) {
+                 return ThermFile::TransientStart{.conditions = std::move(conditions),
+                                                  .stepLengths = std::move(stepLengths),
+                                                  .start = start,
+                                                  .physics = physics};
              }),
              py::arg("conditions") = std::vector<ThermFile::StartCondition>{},
              py::arg("step_lengths") = std::vector<double>{},
-             py::arg("start") = ThermFile::UniformStart{})
+             py::arg("start") = ThermFile::UniformStart{},
+             py::arg("physics") = py::none())
         .def_readwrite("conditions", &ThermFile::TransientStart::conditions)
         .def_readwrite("step_lengths", &ThermFile::TransientStart::stepLengths)
         .def_readwrite("start", &ThermFile::TransientStart::start)
+        .def_readwrite("physics", &ThermFile::TransientStart::physics)
         .def(py::self == py::self)
         .def(py::self != py::self)
         .def("__repr__", [](const ThermFile::TransientStart & start) {
@@ -119,16 +155,6 @@ void bind_properties(py::module_ & mod)
         .def_readwrite("state", &ThermFile::InitialConditions::state)
         .def(py::self == py::self)
         .def(py::self != py::self);
-
-    py::class_<ThermFile::ModelingOptions>(mod, "ModelingOptions")
-        .def(py::init<>())
-        .def_readwrite("exclude_water_liquid_transportation", &ThermFile::ModelingOptions::excludeWaterLiquidTransportation)
-        .def_readwrite("exclude_heat_of_evaporation", &ThermFile::ModelingOptions::excludeHeatOfEvaporation)
-        .def_readwrite("exclude_capillary_conduction", &ThermFile::ModelingOptions::excludeCapillaryConduction)
-        .def_readwrite("exclude_vapor_diffusion_conduction", &ThermFile::ModelingOptions::excludeVaporDiffusionConduction)
-        .def_readwrite("exclude_latent_heat_of_fusion", &ThermFile::ModelingOptions::excludeLatentHeatOfFusion)
-        .def_readwrite("exclude_thermal_conductivity_moisture_dependent", &ThermFile::ModelingOptions::excludeThermalConductivityMoistureDependent)
-        .def_readwrite("exclude_thermal_conductivity_temperature_dependent", &ThermFile::ModelingOptions::excludeThermalConductivityTemperatureDependent);
 
     py::class_<ThermFile::EngineParameters>(mod, "EngineParameters")
         .def(py::init<>())

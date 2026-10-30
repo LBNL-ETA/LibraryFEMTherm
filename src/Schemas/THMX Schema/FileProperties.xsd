@@ -113,11 +113,21 @@
 			<xs:element name="BCUUID" type="xs:string"/>
 		</xs:all>
 	</xs:complexType>
+	<!-- The switches a start solved first runs with, when they differ from the run's. -->
+	<xs:complexType name="StartPhysicsType">
+		<xs:all>
+			<xs:element name="SimulateThermal" type="xs:boolean"/>
+			<xs:element name="SimulateMoisture" type="xs:boolean"/>
+			<xs:element name="ModelingOptions" type="ModelingOptionsType"/>
+		</xs:all>
+	</xs:complexType>
 	<!-- The starting state is the steady state of the model with the conditions swapped in;
-	Start is where that solve begins, the engine's own default when absent. -->
+	Start is where that solve begins, the engine's own default when absent; Physics is what
+	it runs with, the run's own when absent. -->
 	<xs:complexType name="SteadyStartType">
 		<xs:sequence>
 			<xs:element name="Start" type="UniformStartType" minOccurs="0"/>
+			<xs:element name="Physics" type="StartPhysicsType" minOccurs="0"/>
 			<xs:element name="Condition" type="StartConditionType" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 	</xs:complexType>
@@ -126,6 +136,7 @@
 	<xs:complexType name="TransientStartType">
 		<xs:sequence>
 			<xs:element name="Start" type="UniformStartType"/>
+			<xs:element name="Physics" type="StartPhysicsType" minOccurs="0"/>
 			<xs:element name="Condition" type="StartConditionType" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="Step" type="xs:double" maxOccurs="unbounded"/>
 		</xs:sequence>

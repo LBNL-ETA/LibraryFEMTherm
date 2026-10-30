@@ -934,12 +934,14 @@ namespace ThermFile::Model
     {
         ModelCase initializerOf(const ModelCase & modelCase,
                                const std::map<std::string, Boundary> & conditions,
-                               const Uniform & start)
+                               const Uniform & start,
+                               const std::optional<Physics> & physics)
         {
             auto result{withConditions(modelCase, conditions)};
             result.id = modelCase.id + "/initializer";
             result.title = (modelCase.title.empty() ? modelCase.id : modelCase.title) + " (initializer)";
             result.initial = start;
+            result.physics = physics.value_or(modelCase.physics);
             return result;
         }
     }   // namespace
@@ -948,14 +950,14 @@ namespace ThermFile::Model
     {
         if(const auto * steady{std::get_if<FromSteadyState>(&modelCase.initial)})
         {
-            auto result{initializerOf(modelCase, steady->conditions, steady->start.value_or(Uniform{}))};
+            auto result{initializerOf(modelCase, steady->conditions, steady->start.value_or(Uniform{}), steady->physics)};
             result.mode = ThermFile::CalculationMode::cmSteadyState;
             result.schedule = Schedule{};
             return result;
         }
         if(const auto * transient{std::get_if<FromTransient>(&modelCase.initial)})
         {
-            auto result{initializerOf(modelCase, transient->conditions, transient->start)};
+            auto result{initializerOf(modelCase, transient->conditions, transient->start, transient->physics)};
             result.schedule = transient->schedule;
             return result;
         }

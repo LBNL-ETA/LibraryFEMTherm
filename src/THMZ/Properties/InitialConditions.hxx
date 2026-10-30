@@ -6,8 +6,22 @@
 #include <variant>
 #include <vector>
 
+#include "ModelingOptions.hxx"
+
 namespace ThermFile
 {
+    //! \brief The switches a start solved first runs with, when they differ from the
+    //! run's: a start may solve temperature alone and hand the run a field to solve
+    //! moisture on.
+    struct StartPhysics
+    {
+        bool simulateThermal{true};
+        bool simulateMoisture{true};
+        ModelingOptions modelingOptions{};
+
+        [[nodiscard]] friend bool operator==(const StartPhysics & lhs, const StartPhysics & rhs) = default;
+    };
+
     //! \brief A uniform state: temperature in °C, relative humidity as a fraction.
     struct UniformStart
     {
@@ -28,12 +42,14 @@ namespace ThermFile
     };
 
     //! \brief The starting state is the steady state of the model with `conditions` swapped
-    //! in. `start` is where that solve begins; none means the engine's own default. A field
-    //! the model does not solve keeps its start value.
+    //! in. `start` is where that solve begins; none means the engine's own default. `physics`
+    //! is what that solve runs with, the run's own when none. A field it does not solve keeps
+    //! its start value.
     struct SteadyStart
     {
         std::vector<StartCondition> conditions{};
         std::optional<UniformStart> start{};
+        std::optional<StartPhysics> physics{};
 
         [[nodiscard]] friend bool operator==(const SteadyStart & lhs, const SteadyStart & rhs) = default;
     };
@@ -46,6 +62,7 @@ namespace ThermFile
         std::vector<StartCondition> conditions{};
         std::vector<double> stepLengths{};
         UniformStart start{};
+        std::optional<StartPhysics> physics{};
 
         [[nodiscard]] friend bool operator==(const TransientStart & lhs, const TransientStart & rhs) = default;
     };

@@ -781,3 +781,24 @@ TEST(Build, ASteadyStateCaseWritesItsUniformStart)
     const auto & options{model(steadyL()).properties.calculationOptions};
     EXPECT_TRUE(options.initialConditions == (ThermFile::InitialConditions{ThermFile::UniformStart{20.0, 0.5}}));
 }
+
+TEST(Build, ASolvedStartWritesItsOwnPhysics)
+{
+    auto modelCase{sealedStrip()};
+    modelCase.initial = FromSteadyState{.start = Uniform{.temperature = 30.0, .humidity = 0.4},
+                                        .physics = Physics{.moisture = false, .liquidTransport = false}};
+    const auto & options{model(modelCase).properties.calculationOptions};
+    EXPECT_TRUE(options.simulateMoisture);
+    const auto * steady{std::get_if<ThermFile::SteadyStart>(&options.initialConditions.state)};
+    ASSERT_NE(steady, nullptr);
+    ASSERT_TRUE(steady->physics.has_value());
+    EXPECT_FALSE(steady->physics->simulateMoisture);
+    EXPECT_TRUE(steady->physics->simulateThermal);
+    EXPECT_TRUE(steady->physics->modelingOptions.excludeWaterLiquidTransportation);
+
+    modelCase.initial = FromSteadyState{};
+    const auto & plainOptions{model(modelCase).properties.calculationOptions};
+    const auto * plain{std::get_if<ThermFile::SteadyStart>(&plainOptions.initialConditions.state)};
+    ASSERT_NE(plain, nullptr);
+    EXPECT_FALSE(plain->physics.has_value());
+}

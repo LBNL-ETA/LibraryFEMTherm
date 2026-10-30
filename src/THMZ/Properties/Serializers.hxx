@@ -46,9 +46,30 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, StartPhysics & physics)
+    {
+        node >> FileParse::Child{"SimulateThermal", physics.simulateThermal};
+        node >> FileParse::Child{"SimulateMoisture", physics.simulateMoisture};
+        node >> FileParse::Child{"ModelingOptions", physics.modelingOptions};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline NodeAdapter & operator<<(NodeAdapter & node, const StartPhysics & physics)
+    {
+        node << FileParse::Child{"SimulateThermal", physics.simulateThermal};
+        node << FileParse::Child{"SimulateMoisture", physics.simulateMoisture};
+        node << FileParse::Child{"ModelingOptions", physics.modelingOptions};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
     inline const NodeAdapter & operator>>(const NodeAdapter & node, SteadyStart & start)
     {
         node >> FileParse::Child{"Start", start.start};
+        node >> FileParse::Child{"Physics", start.physics};
         node >> FileParse::Child{"Condition", start.conditions};
 
         return node;
@@ -58,6 +79,7 @@ namespace ThermFile
     inline NodeAdapter & operator<<(NodeAdapter & node, const SteadyStart & start)
     {
         node << FileParse::Child{"Start", start.start};
+        node << FileParse::Child{"Physics", start.physics};
         node << FileParse::Child{"Condition", start.conditions};
 
         return node;
@@ -67,6 +89,7 @@ namespace ThermFile
     inline const NodeAdapter & operator>>(const NodeAdapter & node, TransientStart & start)
     {
         node >> FileParse::Child{"Start", start.start};
+        node >> FileParse::Child{"Physics", start.physics};
         node >> FileParse::Child{"Condition", start.conditions};
         node >> FileParse::Child{"Step", start.stepLengths};
 
@@ -77,6 +100,7 @@ namespace ThermFile
     inline NodeAdapter & operator<<(NodeAdapter & node, const TransientStart & start)
     {
         node << FileParse::Child{"Start", start.start};
+        node << FileParse::Child{"Physics", start.physics};
         node << FileParse::Child{"Condition", start.conditions};
         node << FileParse::Child{"Step", start.stepLengths};
 

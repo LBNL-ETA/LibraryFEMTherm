@@ -480,19 +480,24 @@ namespace
                                       "A start solved first: the steady state of the same regions, with the faces "
                                       "named in `conditions` under those conditions instead of their own (the "
                                       "initializer). Faces not named keep the condition they carry. `start` is where "
-                                      "the steady iteration begins; None means the engine's own default. A field the "
-                                      "case does not solve keeps its start value.")
-            .def(py::init([](std::map<std::string, Boundary> conditions, const std::optional<Uniform> & start) {
-                     return FromSteadyState{.conditions = std::move(conditions), .start = start};
+                                      "the steady iteration begins; None means the engine\'s own default. `physics` is what the "
+                                      "initializer solves, the case\'s own when None. A field it does not solve keeps its start value.")
+            .def(py::init([](std::map<std::string, Boundary> conditions,
+                             const std::optional<Uniform> & start,
+                             const std::optional<Physics> & physics) {
+                     return FromSteadyState{.conditions = std::move(conditions), .start = start, .physics = physics};
                  }),
                  py::arg("conditions") = std::map<std::string, Boundary>{},
-                 py::arg("start") = py::none())
+                 py::arg("start") = py::none(),
+                 py::arg("physics") = py::none())
             .def_readwrite("conditions", &FromSteadyState::conditions)
             .def_readwrite("start", &FromSteadyState::start)
+            .def_readwrite("physics", &FromSteadyState::physics)
             .def("__repr__", [](const FromSteadyState & value) {
-                return std::format("FromSteadyState(conditions={}{})",
+                return std::format("FromSteadyState(conditions={}{}{})",
                                    conditionsRepr(value.conditions),
-                                   value.start.has_value() ? ", start=" + pythonRepr(value.start.value()) : std::string{});
+                                   value.start.has_value() ? ", start=" + pythonRepr(value.start.value()) : std::string{},
+                                   value.physics.has_value() ? ", physics=" + pythonRepr(value.physics.value()) : std::string{});
             })};
         addEquality(steady);
 
@@ -503,20 +508,27 @@ namespace
                                     "`schedule`, with the faces named in `conditions` under those conditions instead "
                                     "of their own, itself started from `start`. Faces reading a dataset read it from "
                                     "its beginning, as the main run then does again.")
-            .def(py::init([](std::map<std::string, Boundary> conditions, const Schedule & schedule, const Uniform & start) {
-                     return FromTransient{.conditions = std::move(conditions), .schedule = schedule, .start = start};
+            .def(py::init([](std::map<std::string, Boundary> conditions,
+                             const Schedule & schedule,
+                             const Uniform & start,
+                             const std::optional<Physics> & physics) {
+                     return FromTransient{
+                       .conditions = std::move(conditions), .schedule = schedule, .start = start, .physics = physics};
                  }),
                  py::arg("conditions") = std::map<std::string, Boundary>{},
                  py::arg("schedule") = Schedule{},
-                 py::arg("start") = Uniform{})
+                 py::arg("start") = Uniform{},
+                 py::arg("physics") = py::none())
             .def_readwrite("conditions", &FromTransient::conditions)
             .def_readwrite("schedule", &FromTransient::schedule)
             .def_readwrite("start", &FromTransient::start)
+            .def_readwrite("physics", &FromTransient::physics)
             .def("__repr__", [](const FromTransient & value) {
-                return std::format("FromTransient(conditions={}, schedule={}, start={})",
+                return std::format("FromTransient(conditions={}, schedule={}, start={}{})",
                                    conditionsRepr(value.conditions),
                                    pythonRepr(value.schedule),
-                                   pythonRepr(value.start));
+                                   pythonRepr(value.start),
+                                   value.physics.has_value() ? ", physics=" + pythonRepr(value.physics.value()) : std::string{});
             })};
         addEquality(transient);
 

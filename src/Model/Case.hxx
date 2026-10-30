@@ -212,52 +212,6 @@ namespace ThermFile::Model
     //! case driven by a weather file runs exactly over the file.
     [[nodiscard]] Schedule scheduleFor(const TimeSeriesLibrary::TimeSeriesData & dataset);
 
-    //! Uniform starting state: temperature in °C, relative humidity as a fraction.
-    struct Uniform
-    {
-        double temperature{20.0};
-        double humidity{0.5};
-
-        [[nodiscard]] friend bool operator==(const Uniform & lhs, const Uniform & rhs) = default;
-    };
-
-    //! A start solved first: the steady state of the same regions, with the faces named in
-    //! `conditions` under those conditions instead of their own (the initializer). Faces not
-    //! named keep the condition they carry, read at their first step when it comes from a
-    //! dataset. `start` is where the steady iteration begins; none means the engine's own
-    //! default. A field the case does not solve keeps its start value.
-    struct FromSteadyState
-    {
-        std::map<std::string, Boundary> conditions{};
-        std::optional<Uniform> start{};
-
-        [[nodiscard]] friend bool operator==(const FromSteadyState & lhs, const FromSteadyState & rhs) = default;
-    };
-
-    //! A start solved first: the end of a transient run of the same regions over `schedule`,
-    //! with the faces named in `conditions` under those conditions instead of their own,
-    //! itself started from `start`. Faces reading a dataset read it from its beginning, as
-    //! the main run then does again.
-    struct FromTransient
-    {
-        std::map<std::string, Boundary> conditions{};
-        Schedule schedule{};
-        Uniform start{};
-
-        [[nodiscard]] friend bool operator==(const FromTransient & lhs, const FromTransient & rhs) = default;
-    };
-
-    //! How a case starts: uniform, or from a state solved first.
-    using Initial = std::variant<Uniform, FromSteadyState, FromTransient>;
-
-    //! The uniform values a start is stated with: the constant itself, or where the
-    //! initializer begins (20 °C and 0.5 standing in when a steady start names none). Not
-    //! where a solved start's run begins: that is the field the initializer ends with.
-    [[nodiscard]] Uniform initialValues(const Initial & initial);
-
-    //! The conditions a solved start swaps in, by face name; none for a uniform start.
-    [[nodiscard]] const std::map<std::string, Boundary> * startConditions(const Initial & initial);
-
     //! Which terms are simulated, stated positively. Each switch is written to the file's
     //! calculation options; what the engine does with each is the engine's documentation.
     struct Physics
@@ -285,6 +239,56 @@ namespace ThermFile::Model
 
         [[nodiscard]] friend bool operator==(const Numerics & lhs, const Numerics & rhs) = default;
     };
+
+    //! Uniform starting state: temperature in °C, relative humidity as a fraction.
+    struct Uniform
+    {
+        double temperature{20.0};
+        double humidity{0.5};
+
+        [[nodiscard]] friend bool operator==(const Uniform & lhs, const Uniform & rhs) = default;
+    };
+
+    //! A start solved first: the steady state of the same regions, with the faces named in
+    //! `conditions` under those conditions instead of their own (the initializer). Faces not
+    //! named keep the condition they carry, read at their first step when it comes from a
+    //! dataset. `start` is where the steady iteration begins; none means the engine's own
+    //! default. `physics` is what the initializer solves, the case's own when none: a start
+    //! may solve temperature alone and hand the run a field to solve moisture on. A field
+    //! the initializer does not solve keeps its start value.
+    struct FromSteadyState
+    {
+        std::map<std::string, Boundary> conditions{};
+        std::optional<Uniform> start{};
+        std::optional<Physics> physics{};
+
+        [[nodiscard]] friend bool operator==(const FromSteadyState & lhs, const FromSteadyState & rhs) = default;
+    };
+
+    //! A start solved first: the end of a transient run of the same regions over `schedule`,
+    //! with the faces named in `conditions` under those conditions instead of their own,
+    //! itself started from `start` and run with `physics`, the case's own when none. Faces
+    //! reading a dataset read it from its beginning, as the main run then does again.
+    struct FromTransient
+    {
+        std::map<std::string, Boundary> conditions{};
+        Schedule schedule{};
+        Uniform start{};
+        std::optional<Physics> physics{};
+
+        [[nodiscard]] friend bool operator==(const FromTransient & lhs, const FromTransient & rhs) = default;
+    };
+
+    //! How a case starts: uniform, or from a state solved first.
+    using Initial = std::variant<Uniform, FromSteadyState, FromTransient>;
+
+    //! The uniform values a start is stated with: the constant itself, or where the
+    //! initializer begins (20 °C and 0.5 standing in when a steady start names none). Not
+    //! where a solved start's run begins: that is the field the initializer ends with.
+    [[nodiscard]] Uniform initialValues(const Initial & initial);
+
+    //! The conditions a solved start swaps in, by face name; none for a uniform start.
+    [[nodiscard]] const std::map<std::string, Boundary> * startConditions(const Initial & initial);
 
     // ------------------------------------------------------------------------------------
     // The case

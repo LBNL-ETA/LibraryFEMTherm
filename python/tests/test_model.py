@@ -677,3 +677,20 @@ class TestSolvedStarts:
         state = build.model(case).properties.calculation_options.initial_conditions.state
         assert state == fem.TransientStart(step_lengths=[1800.0, 1800.0, 1800.0],
                                            start=fem.UniformStart(temperature=5.0, humidity=0.9))
+
+    def test_the_initializer_may_solve_other_physics_than_the_run(self):
+        case = sealed_strip()
+        case.initial = model.initializer.FromSteadyState(start=model.initializer.Uniform(temperature=30.0, humidity=0.4),
+                                                         physics=model.Physics(moisture=False))
+        assert model.issues(model_case=case) == []
+        initializer_case = model.initializer.case(model_case=case)
+        assert initializer_case is not None
+        assert initializer_case.physics.moisture is False
+        assert initializer_case.physics.thermal is True
+        state = build.model(case).properties.calculation_options.initial_conditions.state
+        assert state.physics.simulate_thermal is True
+        assert state.physics.simulate_moisture is False
+        # The start runs with the physics it is given, every switch of it: a Physics stated
+        # as moisture=False keeps liquid transport at its default, on, not at the case's.
+        assert state.physics.modeling_options.exclude_water_liquid_transportation is False
+        assert repr(case.initial).endswith(", physics=" + repr(model.Physics(moisture=False)) + ")")
