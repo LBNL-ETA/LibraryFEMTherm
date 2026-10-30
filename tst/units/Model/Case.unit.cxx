@@ -581,13 +581,13 @@ TEST(Model, AnUnevenScheduleStatesEveryStep)
 // Starts solved first
 // ------------------------------------------------------------------------------------
 
-TEST(Model, StartOfEachForm)
+TEST(Model, InitialValuesOfEachForm)
 {
-    EXPECT_EQ(startOf(Uniform{.temperature = 30.0, .humidity = 0.4}), (Uniform{.temperature = 30.0, .humidity = 0.4}));
-    EXPECT_EQ(startOf(FromSteadyState{}), Uniform{});
-    EXPECT_EQ(startOf(FromSteadyState{.start = Uniform{.temperature = 5.0, .humidity = 0.9}}),
+    EXPECT_EQ(initialValues(Uniform{.temperature = 30.0, .humidity = 0.4}), (Uniform{.temperature = 30.0, .humidity = 0.4}));
+    EXPECT_EQ(initialValues(FromSteadyState{}), Uniform{});
+    EXPECT_EQ(initialValues(FromSteadyState{.start = Uniform{.temperature = 5.0, .humidity = 0.9}}),
               (Uniform{.temperature = 5.0, .humidity = 0.9}));
-    EXPECT_EQ(startOf(FromTransient{.start = Uniform{.temperature = 10.0, .humidity = 0.7}}),
+    EXPECT_EQ(initialValues(FromTransient{.start = Uniform{.temperature = 10.0, .humidity = 0.7}}),
               (Uniform{.temperature = 10.0, .humidity = 0.7}));
     EXPECT_EQ(startConditions(Uniform{}), nullptr);
 }
@@ -607,21 +607,21 @@ TEST(Model, WithConditionsSwapsOnlyTheNamedFaces)
     EXPECT_TRUE(modelCase.segments[2].dataset.has_value());
 }
 
-TEST(Model, AUniformStartHasNoPrescriber)
+TEST(Model, AUniformStartHasNoInitializer)
 {
-    EXPECT_EQ(prescriber(strip()), std::nullopt);
+    EXPECT_EQ(initializerCase(strip()), std::nullopt);
 }
 
-TEST(Model, TheSteadyPrescriberIsTheSwappedCaseAtSteadyState)
+TEST(Model, TheSteadyInitializerIsTheSwappedCaseAtSteadyState)
 {
     auto modelCase{strip()};
     modelCase.title = "Strip";
     modelCase.segments[2].name = "cold end";
     modelCase.initial = FromSteadyState{.conditions = {{"cold end", Prescribed{.temperature = 40.0}}}};
-    const auto found{prescriber(modelCase)};
+    const auto found{initializerCase(modelCase)};
     ASSERT_TRUE(found.has_value());
-    EXPECT_EQ(found->id, "strip/prescriber");
-    EXPECT_EQ(found->title, "Strip (prescriber)");
+    EXPECT_EQ(found->id, "strip/initializer");
+    EXPECT_EQ(found->title, "Strip (initializer)");
     EXPECT_TRUE(isSteadyState(found.value()));
     EXPECT_TRUE(found->schedule.stepLengths.empty());
     EXPECT_EQ(std::get<Uniform>(found->initial), Uniform{});
@@ -629,15 +629,15 @@ TEST(Model, TheSteadyPrescriberIsTheSwappedCaseAtSteadyState)
     EXPECT_EQ(found->regions, modelCase.regions);
 
     modelCase.initial = FromSteadyState{.start = Uniform{.temperature = 5.0, .humidity = 0.9}};
-    EXPECT_EQ(std::get<Uniform>(prescriber(modelCase)->initial), (Uniform{.temperature = 5.0, .humidity = 0.9}));
+    EXPECT_EQ(std::get<Uniform>(initializerCase(modelCase)->initial), (Uniform{.temperature = 5.0, .humidity = 0.9}));
 }
 
-TEST(Model, TheTransientPrescriberRunsTheStartsSchedule)
+TEST(Model, TheTransientInitializerRunsTheStartsSchedule)
 {
     auto modelCase{strip()};
     modelCase.initial = FromTransient{.schedule = uniformSchedule(600.0, 3U),
                                       .start = Uniform{.temperature = 10.0, .humidity = 0.9}};
-    const auto found{prescriber(modelCase)};
+    const auto found{initializerCase(modelCase)};
     ASSERT_TRUE(found.has_value());
     EXPECT_FALSE(isSteadyState(found.value()));
     EXPECT_EQ(found->schedule, uniformSchedule(600.0, 3U));

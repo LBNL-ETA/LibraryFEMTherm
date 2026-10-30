@@ -878,7 +878,7 @@ namespace ThermFile::Model
         return result;
     }
 
-    Uniform startOf(const Initial & initial)
+    Uniform initialValues(const Initial & initial)
     {
         return std::visit(
           [](const auto & start) -> Uniform {
@@ -932,30 +932,30 @@ namespace ThermFile::Model
 
     namespace
     {
-        ModelCase prescriberOf(const ModelCase & modelCase,
+        ModelCase initializerOf(const ModelCase & modelCase,
                                const std::map<std::string, Boundary> & conditions,
                                const Uniform & start)
         {
             auto result{withConditions(modelCase, conditions)};
-            result.id = modelCase.id + "/prescriber";
-            result.title = (modelCase.title.empty() ? modelCase.id : modelCase.title) + " (prescriber)";
+            result.id = modelCase.id + "/initializer";
+            result.title = (modelCase.title.empty() ? modelCase.id : modelCase.title) + " (initializer)";
             result.initial = start;
             return result;
         }
     }   // namespace
 
-    std::optional<ModelCase> prescriber(const ModelCase & modelCase)
+    std::optional<ModelCase> initializerCase(const ModelCase & modelCase)
     {
         if(const auto * steady{std::get_if<FromSteadyState>(&modelCase.initial)})
         {
-            auto result{prescriberOf(modelCase, steady->conditions, steady->start.value_or(Uniform{}))};
+            auto result{initializerOf(modelCase, steady->conditions, steady->start.value_or(Uniform{}))};
             result.mode = ThermFile::CalculationMode::cmSteadyState;
             result.schedule = Schedule{};
             return result;
         }
         if(const auto * transient{std::get_if<FromTransient>(&modelCase.initial)})
         {
-            auto result{prescriberOf(modelCase, transient->conditions, transient->start)};
+            auto result{initializerOf(modelCase, transient->conditions, transient->start)};
             result.schedule = transient->schedule;
             return result;
         }

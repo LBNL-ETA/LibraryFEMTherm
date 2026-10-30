@@ -301,9 +301,11 @@ namespace
 
     void bindSettings(py::module_ & model)
     {
-        auto initial{model.def_submodule(
-          "initial", "How a case starts: Uniform, or a start solved first, FromSteadyState or FromTransient.")};
-        auto uniform{py::class_<Uniform>(initial,
+        auto initializer{model.def_submodule(
+          "initializer",
+          "How a case starts: Uniform, or a start solved first by the initializer, a run before the run: "
+          "FromSteadyState or FromTransient. The functions over starts live here too.")};
+        auto uniform{py::class_<Uniform>(initializer,
                                          "Uniform",
                                          "Uniform starting state: temperature in degrees C, relative humidity as a "
                                          "fraction.")
@@ -471,13 +473,13 @@ namespace
     //! names, and before ModelCase, whose `initial` names all three forms.
     void bindSolvedStarts(py::module_ & model)
     {
-        auto initial{model.attr("initial").cast<py::module_>()};
+        auto initializer{model.attr("initializer").cast<py::module_>()};
         auto steady{
-          py::class_<FromSteadyState>(initial,
+          py::class_<FromSteadyState>(initializer,
                                       "FromSteadyState",
                                       "A start solved first: the steady state of the same regions, with the faces "
                                       "named in `conditions` under those conditions instead of their own (the "
-                                      "prescriber). Faces not named keep the condition they carry. `start` is where "
+                                      "initializer). Faces not named keep the condition they carry. `start` is where "
                                       "the steady iteration begins; None means the engine's own default. A field the "
                                       "case does not solve keeps its start value.")
             .def(py::init([](std::map<std::string, Boundary> conditions, const std::optional<Uniform> & start) {
@@ -495,7 +497,7 @@ namespace
         addEquality(steady);
 
         auto transient{
-          py::class_<FromTransient>(initial,
+          py::class_<FromTransient>(initializer,
                                     "FromTransient",
                                     "A start solved first: the end of a transient run of the same regions over "
                                     "`schedule`, with the faces named in `conditions` under those conditions instead "
@@ -630,15 +632,17 @@ namespace
     //! The functions over starts, bound after ModelCase so their signatures name it.
     void bindStartFunctions(py::module_ & model)
     {
-        model.def("start_of", &startOf, py::arg("initial"),
-                  "The uniform values of a start: the constant itself, or where a solved start begins (20 C and 0.5 "
-                  "standing in when a steady start names none).");
-        model.def("with_conditions", &withConditions, py::arg("model_case"), py::arg("conditions"),
+        auto initializer{model.attr("initializer").cast<py::module_>()};
+        initializer.def("initial_values", &initialValues, py::arg("initial"),
+                  "The uniform values a start is stated with: the constant itself, or where the initializer begins "
+                  "(20 C and 0.5 standing in when a steady start names none). Not where a solved start's run "
+                  "begins: that is the field the initializer ends with.");
+        initializer.def("with_conditions", &withConditions, py::arg("model_case"), py::arg("conditions"),
                   "The case with the named faces under other conditions: a copy in which every segment whose name "
                   "is a key of `conditions` carries that condition instead of its own and binds no dataset. "
                   "Segments not named are untouched.");
-        model.def("prescriber", &prescriber, py::arg("model_case"),
-                  "The case the prescriber solves, for a start solved first; None for a uniform start. "
+        initializer.def("case", &initializerCase, py::arg("model_case"),
+                  "The case the initializer solves, for a start solved first; None for a uniform start. "
                   "FromSteadyState: the case under the swapped conditions, steady state, starting from `start`, "
                   "with no schedule. FromTransient: the same, transient, over the start's schedule.");
     }
@@ -792,7 +796,7 @@ namespace
 
 //! Two submodules. `model` is the vocabulary a THERM model is stated in: regions in metres
 //! carrying their material, segments carrying a physical condition (the kinds live in
-//! `model.bc`), a start (its forms in `model.initial`), a clock and the calculation switches. `build` turns such a
+//! `model.bc`), a start (its forms in `model.initializer`), a clock and the calculation switches. `build` turns such a
 //! case into what THERM would have saved:
 //! the model, its libraries, the archive. The file-level types bound elsewhere in this
 //! module are what the archive is made of; these two are the layer above.

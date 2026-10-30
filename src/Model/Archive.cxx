@@ -214,7 +214,7 @@ namespace ThermFile::Build
               .axis = Model::axisOf(modelCase.schedule),
               .series = {Series{.role = SeriesRole::AirTemperature,
                                 .values = std::vector<double>(Model::nSteps(modelCase.schedule),
-                                                              Model::startOf(modelCase.initial).temperature)}}};
+                                                              Model::initialValues(modelCase.initial).temperature)}}};
         }
 
         //! The dataset of every segment of the completed case: the one it binds, as given;
