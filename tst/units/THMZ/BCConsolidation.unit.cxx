@@ -101,3 +101,21 @@ TEST(TestBCConsolidationMigration, MinimalSteadyArchiveMigrates)
     const auto legacy{ThermFile::Migration::BCConsolidation::captureFromArchive(zipPath)};
     EXPECT_FALSE(ThermFile::Migration::BCConsolidation::isEmpty(legacy));
 }
+
+//! A transient face of a pre-consolidation archive binds to the type record it names, even
+//! when the archive embeds no record: THERM's shipped transient records keep their UUIDs in
+//! the unified library, so the binding resolves there.
+TEST(TestBCConsolidationMigration, TransientTypeRecordBindsWithoutAnEmbeddedRecord)
+{
+    ThermFile::ThermModel model;
+    ThermFile::Boundary face{};
+    face.name = "Project:Model:Fixed film coefficient - Indoor";
+    face.transientRecordData = ThermFile::TransientData{};
+    face.transientRecordData->typeRecordUUID = "8a0494b0-d5ba-11ea-87d0-0242ac130003";
+    model.boundaryConditions.push_back(face);
+
+    const ThermFile::Migration::BCConsolidation::LegacyBCCapture emptyCapture;
+    const auto migrated{ThermFile::Migration::BCConsolidation::applyToModel(emptyCapture, model)};
+    EXPECT_EQ(migrated.boundaryConditions[0].bcUUID, std::optional<std::string>{"8a0494b0-d5ba-11ea-87d0-0242ac130003"});
+    EXPECT_TRUE(migrated.boundaryConditions[0].transientRecordData.has_value());
+}

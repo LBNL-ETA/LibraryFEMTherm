@@ -42,21 +42,20 @@ namespace ThermFile::Migration::BCConsolidation
             }
         }
 
+        //! A transient face names its type record by UUID, and that UUID is the record's
+        //! identity in the unified library too, whether the archive embedded the record or
+        //! the record is one THERM ships ("Fixed film coefficient - Indoor" and the like):
+        //! the binding is carried over as it is, and resolves wherever the record is.
         void bindSegment(const LegacyBCCapture & legacy, ThermFile::Boundary & segment)
         {
             if(segment.bcUUID.has_value())
             {
                 return;
             }
-
             const auto & transient{segment.transientRecordData};
             if(transient.has_value())
             {
-                const auto captured{lbnl::find_element(legacy.boundaryConditions,
-                                                       [&transient](const BCLibrary::BoundaryCondition & record) {
-                                                           return record.UUID == transient->typeRecordUUID;
-                                                       })};
-                if(captured.has_value())
+                if(!transient->typeRecordUUID.empty())
                 {
                     segment.bcUUID = transient->typeRecordUUID;
                 }
@@ -94,11 +93,6 @@ namespace ThermFile::Migration::BCConsolidation
 
     ThermFile::ThermModel applyToModel(const LegacyBCCapture & legacy, ThermFile::ThermModel model)
     {
-        if(isEmpty(legacy))
-        {
-            return model;
-        }
-
         for(auto & segment : model.boundaryConditions)
         {
             bindSegment(legacy, segment);

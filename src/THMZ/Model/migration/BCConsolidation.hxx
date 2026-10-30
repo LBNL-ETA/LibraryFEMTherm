@@ -37,10 +37,11 @@ namespace ThermFile::Migration::BCConsolidation
 
     //! \brief Model-side migration: returns a copy of the input model where every segment
     //! whose unified record binding is absent gets it filled from the legacy binding --
-    //! bcUUID from the steady record name or the transient type-record UUID. Legacy fields
-    //! stay in place; segments whose legacy reference has no captured counterpart are left
-    //! untouched. Idempotent: an empty capture, or a model already carrying unified
-    //! bindings, is a no-op.
+    //! bcUUID from the steady record name, or the transient type-record UUID as it is, since
+    //! that UUID is the record's identity in the unified library whether the archive embeds
+    //! the record or THERM ships it. Legacy fields stay in place; a steady name with no
+    //! captured counterpart is left untouched. Idempotent: a model already carrying unified
+    //! bindings is a no-op.
     [[nodiscard]] ThermFile::ThermModel applyToModel(const LegacyBCCapture & legacy,
                                                      ThermFile::ThermModel model);
 }   // namespace ThermFile::Migration::BCConsolidation

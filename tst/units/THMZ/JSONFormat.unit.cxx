@@ -91,6 +91,24 @@ TEST(TestJSONFormat, ModelJSONFileRoundTrip)
     std::filesystem::remove(fileName);
 }
 
+namespace
+{
+    //! What the zip loader hands back for the pre-consolidation example: a face naming a
+    //! transient type record is bound to it on load (Migration::BCConsolidation), the rest
+    //! is as written.
+    ThermFile::ThermModel withTransientBindings(ThermFile::ThermModel model)
+    {
+        for(auto & face : model.boundaryConditions)
+        {
+            if(!face.bcUUID.has_value() && face.transientRecordData.has_value())
+            {
+                face.bcUUID = face.transientRecordData->typeRecordUUID;
+            }
+        }
+        return model;
+    }
+}   // namespace
+
 TEST(TestJSONFormat, ModelJSONZipRoundTripAndCounterpartRemoval)
 {
     const ThermFile::ThermModel model{Helper::THMXFile1::testObject()};
@@ -106,7 +124,7 @@ TEST(TestJSONFormat, ModelJSONZipRoundTripAndCounterpartRemoval)
 
     const auto loaded{ThermFile::loadThermModelFromZipFile(zipPath.string())};
     ASSERT_TRUE(loaded.has_value());
-    Helper::expect_near(model, loaded.value(), tolerance);
+    Helper::expect_near(withTransientBindings(model), loaded.value(), tolerance);
 
     // Switching back to XML must drop the JSON entry again.
     EXPECT_EQ(ThermFile::saveToZipFile(model, zipPath.string(), FileParse::FileFormat::XML), 1);
@@ -116,7 +134,7 @@ TEST(TestJSONFormat, ModelJSONZipRoundTripAndCounterpartRemoval)
 
     const auto reloaded{ThermFile::loadThermModelFromZipFile(zipPath.string())};
     ASSERT_TRUE(reloaded.has_value());
-    Helper::expect_near(model, reloaded.value(), tolerance);
+    Helper::expect_near(withTransientBindings(model), reloaded.value(), tolerance);
 
     std::filesystem::remove(zipPath);
 }
