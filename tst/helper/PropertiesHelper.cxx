@@ -20,8 +20,8 @@ namespace Helper
                   actual.excludeThermalConductivityTemperatureDependent);
     }
 
-    void expect_near(const ThermFile::ConstantInitialConditions & expected,
-                     const ThermFile::ConstantInitialConditions & actual,
+    void expect_near(const ThermFile::UniformStart & expected,
+                     const ThermFile::UniformStart & actual,
                      double tolerance)
     {
         EXPECT_NEAR(expected.temperature, actual.temperature, tolerance);
@@ -78,12 +78,8 @@ namespace Helper
         EXPECT_EQ(expected.calculationMode, actual.calculationMode);
         EXPECT_EQ(expected.simulateMoisture, actual.simulateMoisture);
         EXPECT_EQ(expected.simulateThermal, actual.simulateMoisture);
-        EXPECT_EQ(expected.transientCalculationMethodology, actual.transientCalculationMethodology);
-        EXPECT_EQ(expected.steadyStateCalculationMethodology, actual.steadyStateCalculationMethodology);
         expect_eq(expected.modelingOptions, actual.modelingOptions);
-        expect_near(expected.constantInitialConditionsTransient, actual.constantInitialConditionsTransient, tolerance);
-        expect_near(
-          expected.constantInitialConditionsSteadyState, actual.constantInitialConditionsSteadyState, tolerance);
+        EXPECT_TRUE(expected.initialConditions == actual.initialConditions);
         expect_near(expected.engineParameters, actual.engineParameters, tolerance);
         expect_near(expected.meshControl, actual.meshControl, tolerance);
         expect_near(expected.heatTransferModelingOptions, actual.heatTransferModelingOptions, tolerance);
@@ -194,6 +190,17 @@ namespace Helper
         Helper::MockNode node{"ConstantInitialConditionsSteadyState"};
         addChildNode(node, "Temperature", initialConditions.temperature);
         addChildNode(node, "Humidity", initialConditions.humidity);
+
+        return node;
+    }
+
+    Helper::MockNode initialConditionsUniformNode(const MockInitialConditions & initialConditions)
+    {
+        Helper::MockNode node{"InitialConditions"};
+        Helper::MockNode uniform{"Uniform"};
+        addChildNode(uniform, "Temperature", initialConditions.temperature);
+        addChildNode(uniform, "Humidity", initialConditions.humidity);
+        addChildNode(node, uniform);
 
         return node;
     }
@@ -354,10 +361,7 @@ namespace Helper
                                                    std::string simulateMoisture,
                                                    std::string simulateThermal,
                                                    MockModelingOptions modelingOptions,
-                                                   std::string transientCalculationMethodology,
-                                                   std::string steadyStateCalculationMethodology,
-                                                   MockInitialConditions transientInitialConditions,
-                                                   MockInitialConditions steadyStateInitialConditions,
+                                                   MockInitialConditions initialConditions,
                                                    MockEngineParameters engineParameters,
                                                    MockMeshControl meshControl,
                                                    MockHeatTransferModelingOptions heatTransferModelingOptions,
@@ -368,10 +372,7 @@ namespace Helper
         simulateMoisture(std::move(simulateMoisture)),
         simulateThermal(std::move(simulateThermal)),
         modelingOptions(std::move(modelingOptions)),
-        transientCalculationMethodology(std::move(transientCalculationMethodology)),
-        steadyStateCalculationMethodology(std::move(steadyStateCalculationMethodology)),
-        transientInitialConditions(std::move(transientInitialConditions)),
-        steadyStateInitialConditions(std::move(steadyStateInitialConditions)),
+        initialConditions(std::move(initialConditions)),
         engineParameters(std::move(engineParameters)),
         meshControl(std::move(meshControl)),
         heatTransferModelingOptions(std::move(heatTransferModelingOptions)),
@@ -387,10 +388,9 @@ namespace Helper
         addChildNode(node, "SimulateMoisture", options.simulateMoisture);
         addChildNode(node, "SimulateThermal", options.simulateThermal);
         addChildNode(node, modelingOptionsNode(options.modelingOptions));
-        addChildNode(node, "TransientCalculationMethodology", options.transientCalculationMethodology);
-        addChildNode(node, "SteadyStateCalculationMethodology", options.steadyStateCalculationMethodology);
-        addChildNode(node, constantInitialConditionsTransientNode(options.transientInitialConditions));
-        addChildNode(node, constantInitialConditionsSteadyStateNode(options.steadyStateInitialConditions));
+        addChildNode(node, initialConditionsUniformNode(options.initialConditions));
+        addChildNode(node, constantInitialConditionsTransientNode(options.initialConditions));
+        addChildNode(node, constantInitialConditionsSteadyStateNode(options.initialConditions));
         addChildNode(node, engineParametersNode(options.engineParameters));
         addChildNode(node, meshControlNode(options.meshControl));
         addChildNode(node, heatTransferModelingOptionsNode(options.heatTransferModelingOptions));

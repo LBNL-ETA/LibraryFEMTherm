@@ -8,8 +8,8 @@ namespace Helper
 
     void expect_eq(const ThermFile::ModelingOptions & expected, const ThermFile::ModelingOptions & actual);
 
-    void expect_near(const ThermFile::ConstantInitialConditions & expected,
-                     const ThermFile::ConstantInitialConditions & actual,
+    void expect_near(const ThermFile::UniformStart & expected,
+                     const ThermFile::UniformStart & actual,
                      double tolerance);
 
     void expect_near(const ThermFile::EngineParameters & expected,
@@ -82,6 +82,9 @@ namespace Helper
 
     //! \brief Inserts a ConstantInitialConditions node into the given mock node for the steady state case.
     Helper::MockNode constantInitialConditionsSteadyStateNode(const MockInitialConditions & initialConditions);
+
+    //! \brief The InitialConditions node of a uniform start, as written since Model.xml version 4.
+    Helper::MockNode initialConditionsUniformNode(const MockInitialConditions & initialConditions);
 
     struct MockEngineParameters
     {
@@ -204,10 +207,7 @@ namespace Helper
         std::string simulateMoisture;
         std::string simulateThermal;
         MockModelingOptions modelingOptions;
-        std::string transientCalculationMethodology;
-        std::string steadyStateCalculationMethodology;
-        MockInitialConditions transientInitialConditions;
-        MockInitialConditions steadyStateInitialConditions;
+        MockInitialConditions initialConditions;
         MockEngineParameters engineParameters;
         MockMeshControl meshControl;
         MockHeatTransferModelingOptions heatTransferModelingOptions;
@@ -219,10 +219,7 @@ namespace Helper
                                std::string simulateMoisture,
                                std::string simulateThermal,
                                MockModelingOptions modelingOptions,
-                               std::string transientCalculationMethodology,
-                               std::string steadyStateCalculationMethodology,
-                               MockInitialConditions transientInitialConditions,
-                               MockInitialConditions steadyStateInitialConditions,
+                               MockInitialConditions initialConditions,
                                MockEngineParameters engineParameters,
                                MockMeshControl meshControl,
                                MockHeatTransferModelingOptions heatTransferModelingOptions,

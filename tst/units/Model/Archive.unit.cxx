@@ -61,7 +61,7 @@ namespace
                         .start = {0.0, 0.05},
                         .end = {0.0, 0.0},
                         .region = 0U}},
-          .initial = {.temperature = 20.0, .humidity = 0.5},
+          .initial = Uniform{.temperature = 20.0, .humidity = 0.5},
           .schedule = uniformSchedule(3600.0, 24U),
         };
     }
@@ -78,7 +78,7 @@ namespace
                        {.kind = Prescribed{.temperature = 20.0}, .start = {0.1, 0.0}, .end = {0.1, 0.005}},
                        {.kind = Adiabatic{}, .start = {0.1, 0.005}, .end = {0.0, 0.005}},
                        {.kind = Prescribed{.temperature = 40.0}, .start = {0.0, 0.005}, .end = {0.0, 0.0}}},
-          .initial = {.temperature = 30.0, .humidity = 0.4},
+          .initial = Uniform{.temperature = 30.0, .humidity = 0.4},
           .schedule = uniformSchedule(36000.0, 300U),
           .physics = {.liquidTransport = false, .heatOfEvaporation = false},
         };
@@ -153,7 +153,7 @@ namespace
                         .end = {0.3, 0.3},
                         .name = "room side"},
                        {.kind = outside, .start = {0.3, 0.3}, .end = {0.0, 0.3}, .name = "top", .dataset = outdoor}},
-          .initial = {.temperature = 20.0, .humidity = 0.5},
+          .initial = Uniform{.temperature = 20.0, .humidity = 0.5},
         };
     }
 
@@ -338,9 +338,7 @@ TEST(Build, CalculationOptionsFollowTheCase)
     EXPECT_TRUE(options.modelingOptions.excludeHeatOfEvaporation);
     EXPECT_FALSE(options.modelingOptions.excludeCapillaryConduction);
     EXPECT_FALSE(options.modelingOptions.excludeThermalConductivityTemperatureDependent);
-    EXPECT_EQ(options.transientCalculationMethodology, ThermFile::TransientCalculationMethodology::icConstantEverywhere);
-    EXPECT_NEAR(options.constantInitialConditionsTransient.temperature, 30.0, tolerance);
-    EXPECT_NEAR(options.constantInitialConditionsTransient.humidity, 0.4, tolerance);
+    EXPECT_TRUE(options.initialConditions == (ThermFile::InitialConditions{ThermFile::UniformStart{30.0, 0.4}}));
     EXPECT_NEAR(options.engineParameters.convergenceTolerance, 1e-5, tolerance);
     EXPECT_NEAR(options.engineParameters.relaxationParameter, 1.0, tolerance);
     EXPECT_EQ(options.heatTransferModelingOptions.maximumIterations, 25U);
@@ -500,16 +498,18 @@ TEST(Build, SteadyStateEntriesCarryTheUnifiedLibraryOnlyAndNoSeries)
                                      [](const auto & entry) { return entry.first.starts_with("time series/"); }));
 }
 
-TEST(Build, SteadyStateRefusesAPrescribedSegment)
+//! The engine and HygroTherm's steady path hold a surface at a prescribed state, and the
+//! unified library carries the record in either mode.
+TEST(Build, SteadyStateWritesAPrescribedSegment)
 {
     auto modelCase{sealedStrip()};
     modelCase.mode = ThermFile::CalculationMode::cmSteadyState;
-    const auto found{issues(modelCase)};
-    ASSERT_EQ(found.size(), 2U);
-    EXPECT_EQ(found.front(), (Issue{.kind = IssueKind::PrescribedInSteadyState, .segment = 1U}));
-    EXPECT_EQ(describe(modelCase, found.front()),
-              "segment 1 from (0.1, 0) to (0.1, 0.005) is prescribed, which a steady-state case cannot write; state it "
-              "as Convective");
+    EXPECT_TRUE(issues(modelCase).empty());
+    const auto records{libraries(modelCase).boundaryConditions};
+    const auto record{records.getByName("segment 2")};
+    ASSERT_TRUE(record.has_value());
+    EXPECT_TRUE(std::holds_alternative<BCLibrary::PrescribedState>(record->data));
+    EXPECT_TRUE(model(modelCase).properties.calculationOptions.initialConditions == (ThermFile::InitialConditions{ThermFile::UniformStart{30.0, 0.4}}));
 }
 
 TEST(Build, SteadyStateRadiationAndTagsAreWritten)
@@ -706,4 +706,78 @@ TEST(Build, TransientCaseWritesFixedRadiation)
       .temperature = SeriesRole::RadiantTemperature, .coefficient = 4.0};
     EXPECT_EQ(radiation, std::optional{BCLibrary::RadiationOptions{expected}});
     EXPECT_EQ(BCLibrary::requiredRoles(record.value()), (std::vector<SeriesRole>{SeriesRole::RadiantTemperature}));
+}
+
+// ------------------------------------------------------------------------------------
+// Starts solved first
+// ------------------------------------------------------------------------------------
+
+TEST(Build, ASolvedStartWritesItsConditionsAsRecords)
+{
+    auto modelCase{weatherWall(weather({SeriesRole::AirTemperature}, 48U))};
+    modelCase.initial = FromSteadyState{
+      .conditions = {{"outside", Convective{.airTemperature = -10.0, .filmCoefficient = 25.0, .humidity = 0.8}}}};
+    ASSERT_TRUE(issues(modelCase).empty());
+
+    const auto records{libraries(modelCase).boundaryConditions};
+    EXPECT_EQ(sortedNames(records), (std::vector<std::string>{"Adiabatic", "outside", "outside at start", "room side"}));
+    const auto startRecord{records.getByName("outside at start")};
+    ASSERT_TRUE(startRecord.has_value());
+    EXPECT_TRUE(startRecord->data
+                == recordData(Convective{.airTemperature = -10.0, .filmCoefficient = 25.0, .humidity = 0.8}));
+
+    const auto & options{model(modelCase).properties.calculationOptions};
+    const auto * steady{std::get_if<ThermFile::SteadyStart>(&options.initialConditions.state)};
+    ASSERT_NE(steady, nullptr);
+    EXPECT_TRUE(steady->conditions == (std::vector<ThermFile::StartCondition>{{.segment = 0U, .bcUUID = startRecord->UUID}}));
+    EXPECT_FALSE(steady->start.has_value());
+}
+
+TEST(Build, AStartConditionOfKnownContentSharesTheRecord)
+{
+    auto modelCase{weatherWall(weather({SeriesRole::AirTemperature}, 48U))};
+    modelCase.initial = FromSteadyState{
+      .conditions = {{"outside", Convective{.airTemperature = 20.0, .filmCoefficient = 8.0, .humidity = 0.5}}},
+      .start = Uniform{.temperature = 5.0, .humidity = 0.9}};
+
+    const auto records{libraries(modelCase).boundaryConditions};
+    EXPECT_EQ(sortedNames(records), (std::vector<std::string>{"Adiabatic", "outside", "room side"}));
+    const auto & options{model(modelCase).properties.calculationOptions};
+    const auto * steady{std::get_if<ThermFile::SteadyStart>(&options.initialConditions.state)};
+    ASSERT_NE(steady, nullptr);
+    EXPECT_TRUE(steady->conditions == (std::vector<ThermFile::StartCondition>{{.segment = 0U, .bcUUID = records.getByName("room side")->UUID}}));
+    EXPECT_TRUE((steady->start == std::optional{ThermFile::UniformStart{.temperature = 5.0, .humidity = 0.9}}));
+}
+
+TEST(Build, ATransientStartWritesItsScheduleAndRoundTrips)
+{
+    auto modelCase{weatherWall(weather({SeriesRole::AirTemperature}, 48U))};
+    modelCase.initial = FromTransient{.schedule = uniformSchedule(1800.0, 4U),
+                                      .start = Uniform{.temperature = 5.0, .humidity = 0.9}};
+    const ThermFile::InitialConditions expected{
+      ThermFile::TransientStart{.stepLengths = {1800.0, 1800.0, 1800.0, 1800.0}, .start = {5.0, 0.9}}};
+    EXPECT_TRUE(model(modelCase).properties.calculationOptions.initialConditions == expected);
+
+    const auto path{(std::filesystem::temp_directory_path() / "authoring-transient-start.thmz").string()};
+    ASSERT_TRUE(thmz(modelCase, path).has_value());
+    const auto read{ThermFile::loadThermModelFromZipFile(path)};
+    ASSERT_TRUE(read.has_value());
+    EXPECT_TRUE(read->properties.calculationOptions.initialConditions == expected);
+    std::filesystem::remove(path);
+}
+
+TEST(Build, TheClockReadsTheStartTemperature)
+{
+    auto modelCase{sealedStrip()};
+    modelCase.initial = FromTransient{.schedule = uniformSchedule(3600.0, 2U),
+                                      .start = Uniform{.temperature = 12.0, .humidity = 0.3}};
+    const auto datasets{boundaryDatasets(modelCase)};
+    ASSERT_TRUE(datasets.contains(0U));
+    EXPECT_EQ(datasets.at(0U).series.front().values, (std::vector<double>(300U, 12.0)));
+}
+
+TEST(Build, ASteadyStateCaseWritesItsUniformStart)
+{
+    const auto & options{model(steadyL()).properties.calculationOptions};
+    EXPECT_TRUE(options.initialConditions == (ThermFile::InitialConditions{ThermFile::UniformStart{20.0, 0.5}}));
 }

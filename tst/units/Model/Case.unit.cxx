@@ -32,7 +32,7 @@ namespace
                         .start = {0.1, 0.0},
                         .end = {0.1, 0.01}},
                        {.kind = Adiabatic{}, .start = {0.1, 0.01}, .end = {0.0, 0.01}}},
-          .initial = {.temperature = 20.0, .humidity = 0.5},
+          .initial = Uniform{.temperature = 20.0, .humidity = 0.5},
           .schedule = uniformSchedule(3600.0, 24U),
         };
     }
@@ -363,7 +363,7 @@ TEST(Model, CasesCompareByValue)
 {
     EXPECT_EQ(strip(), strip());
     auto changed{strip()};
-    changed.initial.humidity = 0.6;
+    changed.initial = Uniform{.temperature = 20.0, .humidity = 0.6};
     EXPECT_NE(changed, strip());
 }
 
@@ -575,4 +575,125 @@ TEST(Model, AnUnevenScheduleStatesEveryStep)
     EXPECT_EQ(axisOf(schedule), dataset.axis);
     // Stated evenly, the axis is the plain even one.
     EXPECT_EQ(axisOf(Schedule{.stepLengths = {3600.0, 3600.0}}), TimeSeriesLibrary::TimeAxis{});
+}
+
+// ------------------------------------------------------------------------------------
+// Starts solved first
+// ------------------------------------------------------------------------------------
+
+TEST(Model, StartOfEachForm)
+{
+    EXPECT_EQ(startOf(Uniform{.temperature = 30.0, .humidity = 0.4}), (Uniform{.temperature = 30.0, .humidity = 0.4}));
+    EXPECT_EQ(startOf(FromSteadyState{}), Uniform{});
+    EXPECT_EQ(startOf(FromSteadyState{.start = Uniform{.temperature = 5.0, .humidity = 0.9}}),
+              (Uniform{.temperature = 5.0, .humidity = 0.9}));
+    EXPECT_EQ(startOf(FromTransient{.start = Uniform{.temperature = 10.0, .humidity = 0.7}}),
+              (Uniform{.temperature = 10.0, .humidity = 0.7}));
+    EXPECT_EQ(startConditions(Uniform{}), nullptr);
+}
+
+TEST(Model, WithConditionsSwapsOnlyTheNamedFaces)
+{
+    auto modelCase{strip()};
+    modelCase.segments[0].name = "warm end";
+    modelCase.segments[2].name = "cold end";
+    modelCase.segments[2].dataset = providing({SeriesRole::AirTemperature});
+    const auto swapped{withConditions(modelCase, {{"cold end", Prescribed{.temperature = 40.0}}})};
+    EXPECT_EQ(swapped.segments[2].kind, Boundary{Prescribed{.temperature = 40.0}});
+    EXPECT_EQ(swapped.segments[2].dataset, std::nullopt);
+    EXPECT_EQ(swapped.segments[0], modelCase.segments[0]);
+    EXPECT_EQ(swapped.segments[1], modelCase.segments[1]);
+    EXPECT_EQ(swapped.segments[3], modelCase.segments[3]);
+    EXPECT_TRUE(modelCase.segments[2].dataset.has_value());
+}
+
+TEST(Model, AUniformStartHasNoPrescriber)
+{
+    EXPECT_EQ(prescriber(strip()), std::nullopt);
+}
+
+TEST(Model, TheSteadyPrescriberIsTheSwappedCaseAtSteadyState)
+{
+    auto modelCase{strip()};
+    modelCase.title = "Strip";
+    modelCase.segments[2].name = "cold end";
+    modelCase.initial = FromSteadyState{.conditions = {{"cold end", Prescribed{.temperature = 40.0}}}};
+    const auto found{prescriber(modelCase)};
+    ASSERT_TRUE(found.has_value());
+    EXPECT_EQ(found->id, "strip/prescriber");
+    EXPECT_EQ(found->title, "Strip (prescriber)");
+    EXPECT_TRUE(isSteadyState(found.value()));
+    EXPECT_TRUE(found->schedule.stepLengths.empty());
+    EXPECT_EQ(std::get<Uniform>(found->initial), Uniform{});
+    EXPECT_EQ(found->segments[2].kind, Boundary{Prescribed{.temperature = 40.0}});
+    EXPECT_EQ(found->regions, modelCase.regions);
+
+    modelCase.initial = FromSteadyState{.start = Uniform{.temperature = 5.0, .humidity = 0.9}};
+    EXPECT_EQ(std::get<Uniform>(prescriber(modelCase)->initial), (Uniform{.temperature = 5.0, .humidity = 0.9}));
+}
+
+TEST(Model, TheTransientPrescriberRunsTheStartsSchedule)
+{
+    auto modelCase{strip()};
+    modelCase.initial = FromTransient{.schedule = uniformSchedule(600.0, 3U),
+                                      .start = Uniform{.temperature = 10.0, .humidity = 0.9}};
+    const auto found{prescriber(modelCase)};
+    ASSERT_TRUE(found.has_value());
+    EXPECT_FALSE(isSteadyState(found.value()));
+    EXPECT_EQ(found->schedule, uniformSchedule(600.0, 3U));
+    EXPECT_EQ(std::get<Uniform>(found->initial), (Uniform{.temperature = 10.0, .humidity = 0.9}));
+    EXPECT_EQ(found->segments, modelCase.segments);
+}
+
+TEST(Model, AStartNamingNoFaceIsAnIssue)
+{
+    auto modelCase{strip()};
+    modelCase.initial = FromSteadyState{.conditions = {{"nowhere", Adiabatic{}}}};
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::StartConditionUnknownName, .name = "nowhere"},
+                   "the start names a face 'nowhere' that no segment carries");
+}
+
+TEST(Model, AStartConditionReadingARoleIsAnIssue)
+{
+    auto modelCase{strip()};
+    modelCase.segments[2].name = "cold end";
+    modelCase.initial = FromTransient{
+      .conditions = {{"cold end", Convective{.airTemperature = SeriesRole::AirTemperature, .filmCoefficient = 8.0}}},
+      .schedule = uniformSchedule(3600.0, 2U)};
+    const auto found{issues(modelCase)};
+    ASSERT_EQ(found.size(), 1U);
+    EXPECT_EQ(found[0],
+              (Issue{.kind = IssueKind::StartConditionReadsRole, .roles = {SeriesRole::AirTemperature}, .name = "cold end"}));
+    EXPECT_TRUE(describe(modelCase, found[0]).starts_with("the start's condition on 'cold end' reads "));
+    EXPECT_TRUE(describe(modelCase, found[0]).ends_with(" from a dataset; a start condition is constants"));
+}
+
+TEST(Model, AStartConditionMissingItsInputIsAnIssue)
+{
+    auto modelCase{strip()};
+    modelCase.segments[2].name = "cold end";
+    modelCase.initial = FromSteadyState{.conditions = {{"cold end", Convective{.airTemperature = -10.0}}}};
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::StartConditionInputMissing,
+                         .input = ConvectionInput::FilmCoefficient,
+                         .name = "cold end"},
+                   "the start's condition on 'cold end' needs a film coefficient for its convection model");
+}
+
+TEST(Model, ASteadyStateCaseStartsUniform)
+{
+    auto modelCase{strip()};
+    modelCase.mode = ThermFile::CalculationMode::cmSteadyState;
+    modelCase.initial = FromSteadyState{};
+    expectOneIssue(modelCase,
+                   Issue{.kind = IssueKind::SolvedStartInSteadyState},
+                   "a steady-state case starts uniform; a start solved first is for a transient case");
+}
+
+TEST(Model, ASteadyStateCaseMayPrescribeAFace)
+{
+    auto modelCase{strip()};
+    modelCase.mode = ThermFile::CalculationMode::cmSteadyState;
+    EXPECT_TRUE(issues(modelCase).empty());
 }

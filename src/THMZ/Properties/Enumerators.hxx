@@ -63,29 +63,6 @@ namespace ThermFile
     //! \return String representation of calculation mode
     std::string calculationModeToString(CalculationMode calculationMode);
 
-    //! \brief Defines how transient initial conditions will be applied to the entire domain.
-    //!
-    //! @param icValuesFromInputFile Initial condition will be read from input file.
-    //! @param icUseFirstTimestep Initial condition will be calculated from steady-state case when
-    //! applying boundary conditions from first timestep.
-    //! @param icConstantEverywhere Initial conditions will be set to constant everywhere by user.
-    enum class TransientCalculationMethodology
-    {
-        Unknown,
-        icValuesFromInputFile,
-        icUseFirstTimestep,
-        icConstantEverywhere
-    };
-
-    //! \brief Returns transient calculation methodology from string
-    //! \return Transient calculation methodology
-    TransientCalculationMethodology transientCalculationMethodologyFromString(std::string_view value);
-
-    //! \brief Returns string representation of transient calculation methodology
-    //! \param transientCalculationMethodology Transient calculation methodology
-    std::string
-      transientCalculationMethodologyToString(TransientCalculationMethodology transientCalculationMethodology);
-
     enum class MesherType
     {
         Unknown,
@@ -100,28 +77,6 @@ namespace ThermFile
     //! \brief Returns string representation of mesher type
     //! \param mesherType Mesher type
     std::string mesherTypeToString(MesherType mesherType);
-
-    //! \brief Steady-state can be calculated by using true steady-state equations from the engine.
-    //! \brief However it is possible that user wants to calculate steady-state by running transient
-    //! \brief simulation for certain number of timesteps.
-    //!
-    //! @param ssNoTimeVariable No time variable is applied. True steady-state calculations are applied.
-    //! @param ssFalseTransient Transient approach will be used to calculate steady state solution.
-    enum class SteadyStateCalculationMethodology
-    {
-        Unknown,
-        ssNoTimeVariable,
-        ssFalseTransient
-    };
-
-    //! \brief Returns steady-state calculation methodology from string
-    //! \return Steady-state calculation methodology
-    SteadyStateCalculationMethodology steadyStateCalculationMethodologyFromString(std::string_view value);
-
-    //! \brief Returns string representation of steady-state calculation methodology
-    //! \param steadyStateCalculationMethodology Steady-state calculation methodology
-    std::string
-      steadyStateCalculationMethodologyToString(SteadyStateCalculationMethodology steadyStateCalculationMethodology);
 
     //! \brief Simple orientation enumerator
     enum class Orientation

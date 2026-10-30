@@ -482,17 +482,12 @@ namespace ThermFile::Model
             }
         }
 
-        //! A steady-state archive keeps its conditions in THERM's steady-state library,
-        //! which has no record for a prescribed surface state, and has no datasets to read.
+        //! A steady-state archive has no datasets to read.
         void checkSteadyStateSegments(const ModelCase & modelCase, std::vector<Issue> & found)
         {
             for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
             {
                 const auto & segment{modelCase.segments[index]};
-                if(std::holds_alternative<Prescribed>(segment.kind))
-                {
-                    found.push_back(Issue{.kind = IssueKind::PrescribedInSteadyState, .segment = index});
-                }
                 if(auto roles{rolesRead(segment)}; !roles.empty())
                 {
                     found.push_back(Issue{.kind = IssueKind::RoleInSteadyState, .segment = index, .roles = std::move(roles)});
@@ -570,6 +565,58 @@ namespace ThermFile::Model
             }
         }
 
+        bool anySegmentNamed(const ModelCase & modelCase, const std::string & name)
+        {
+            return std::ranges::any_of(modelCase.segments,
+                                       [&name](const Segment & segment) { return segment.name == name; });
+        }
+
+        //! A swapped-in condition is constants on a face the case has: it reads no role, and
+        //! its convection model is given its inputs.
+        void checkStartCondition(const ModelCase & modelCase,
+                                 const std::string & name,
+                                 const Boundary & boundary,
+                                 std::vector<Issue> & found)
+        {
+            if(!anySegmentNamed(modelCase, name))
+            {
+                found.push_back(Issue{.kind = IssueKind::StartConditionUnknownName, .name = name});
+                return;
+            }
+            if(auto roles{rolesRead(Segment{.kind = boundary})}; !roles.empty())
+            {
+                found.push_back(
+                  Issue{.kind = IssueKind::StartConditionReadsRole, .roles = std::move(roles), .name = name});
+            }
+            const auto * convective{std::get_if<Convective>(&boundary)};
+            if(convective == nullptr)
+            {
+                return;
+            }
+            if(const auto missing{missingConvectionInput(*convective)})
+            {
+                found.push_back(Issue{.kind = IssueKind::StartConditionInputMissing, .input = missing, .name = name});
+            }
+        }
+
+        void checkStart(const ModelCase & modelCase, std::vector<Issue> & found)
+        {
+            const auto * conditions{startConditions(modelCase.initial)};
+            if(conditions == nullptr)
+            {
+                return;
+            }
+            if(isSteadyState(modelCase))
+            {
+                found.push_back(Issue{.kind = IssueKind::SolvedStartInSteadyState});
+                return;
+            }
+            for(const auto & [name, boundary] : *conditions)
+            {
+                checkStartCondition(modelCase, name, boundary, found);
+            }
+        }
+
         void checkMode(const ModelCase & modelCase, std::vector<Issue> & found)
         {
             if(modelCase.mode == ThermFile::CalculationMode::cmTransient)
@@ -586,6 +633,7 @@ namespace ThermFile::Model
             {
                 found.push_back(Issue{.kind = IssueKind::UnsupportedMode});
             }
+            checkStart(modelCase, found);
         }
         // --------------------------------------------------------------------------------
         // The default wording
@@ -651,6 +699,19 @@ namespace ThermFile::Model
                     return std::format("the schedule's step {} must be positive", issue.step.value() + 1U);
                 case IssueKind::UnsupportedMode:
                     return "the mode must be transient or steady state";
+                case IssueKind::SolvedStartInSteadyState:
+                    return "a steady-state case starts uniform; a start solved first is for a transient case";
+                case IssueKind::StartConditionUnknownName:
+                    return std::format("the start names a face '{}' that no segment carries", issue.name.value());
+                case IssueKind::StartConditionReadsRole:
+                    return std::format("the start's condition on '{}' reads {} from a dataset; a start condition "
+                                       "is constants",
+                                       issue.name.value(),
+                                       roleNames(issue.roles));
+                case IssueKind::StartConditionInputMissing:
+                    return std::format("the start's condition on '{}' needs {} for its convection model",
+                                       issue.name.value(),
+                                       inputName(issue.input.value()));
                 default:
                     return std::nullopt;
             }
@@ -707,8 +768,6 @@ namespace ThermFile::Model
                 case IssueKind::BlackBodyFromDataset:
                     return " radiates as a black body read from a series, which a transient run holds constant; "
                            "state constants, or fixed-coefficient radiation to read a dataset";
-                case IssueKind::PrescribedInSteadyState:
-                    return " is prescribed, which a steady-state case cannot write; state it as Convective";
                 case IssueKind::RoleInSteadyState:
                     return std::format(" reads {} from a dataset, which a steady-state case has none of; state it "
                                        "as a constant",
@@ -817,6 +876,90 @@ namespace ThermFile::Model
         const auto gaps{outlineGaps(modelCase)};
         result.segments.insert(result.segments.end(), gaps.begin(), gaps.end());
         return result;
+    }
+
+    Uniform startOf(const Initial & initial)
+    {
+        return std::visit(
+          [](const auto & start) -> Uniform {
+              using Start = std::decay_t<decltype(start)>;
+              if constexpr(std::is_same_v<Start, Uniform>)
+              {
+                  return start;
+              }
+              else if constexpr(std::is_same_v<Start, FromSteadyState>)
+              {
+                  return start.start.value_or(Uniform{});
+              }
+              else
+              {
+                  return start.start;
+              }
+          },
+          initial);
+    }
+
+    const std::map<std::string, Boundary> * startConditions(const Initial & initial)
+    {
+        if(const auto * steady{std::get_if<FromSteadyState>(&initial)})
+        {
+            return &steady->conditions;
+        }
+        if(const auto * transient{std::get_if<FromTransient>(&initial)})
+        {
+            return &transient->conditions;
+        }
+        return nullptr;
+    }
+
+    ModelCase withConditions(const ModelCase & modelCase, const std::map<std::string, Boundary> & conditions)
+    {
+        auto result{modelCase};
+        for(auto & segment : result.segments)
+        {
+            if(!segment.name.has_value())
+            {
+                continue;
+            }
+            if(const auto found{conditions.find(segment.name.value())}; found != conditions.end())
+            {
+                segment.kind = found->second;
+                segment.dataset = std::nullopt;
+            }
+        }
+        return result;
+    }
+
+    namespace
+    {
+        ModelCase prescriberOf(const ModelCase & modelCase,
+                               const std::map<std::string, Boundary> & conditions,
+                               const Uniform & start)
+        {
+            auto result{withConditions(modelCase, conditions)};
+            result.id = modelCase.id + "/prescriber";
+            result.title = (modelCase.title.empty() ? modelCase.id : modelCase.title) + " (prescriber)";
+            result.initial = start;
+            return result;
+        }
+    }   // namespace
+
+    std::optional<ModelCase> prescriber(const ModelCase & modelCase)
+    {
+        if(const auto * steady{std::get_if<FromSteadyState>(&modelCase.initial)})
+        {
+            auto result{prescriberOf(modelCase, steady->conditions, steady->start.value_or(Uniform{}))};
+            result.mode = ThermFile::CalculationMode::cmSteadyState;
+            result.schedule = Schedule{};
+            return result;
+        }
+        if(const auto * transient{std::get_if<FromTransient>(&modelCase.initial)})
+        {
+            auto result{prescriberOf(modelCase, transient->conditions, transient->start)};
+            result.schedule = transient->schedule;
+            return result;
+        }
+        return std::nullopt;
     }
 
     std::optional<MaterialsLibrary::Material> regionMaterial(const ModelCase & modelCase, const std::size_t index)

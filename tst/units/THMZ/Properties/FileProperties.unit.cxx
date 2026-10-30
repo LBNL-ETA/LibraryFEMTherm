@@ -11,29 +11,81 @@
 class TestFileProperties : public testing::Test
 {};
 
-TEST_F(TestFileProperties, ConstantInitialConditionsDeserializer)
+TEST_F(TestFileProperties, UniformStartDeserializer)
 {
     auto elementNode(Helper::constantInitialConditionsSteadyStateNode({"20", "0.5"}));
     const Helper::MockNodeAdapter adapter{&elementNode};
 
-    ThermFile::ConstantInitialConditions initialConditions;
-    adapter >> initialConditions;
+    ThermFile::UniformStart start;
+    adapter >> start;
 
-    ThermFile::ConstantInitialConditions correctInitialConditions{20.0, 0.5};
-    Helper::expect_near(correctInitialConditions, initialConditions, 1e-6);
+    ThermFile::UniformStart correctStart{20.0, 0.5};
+    Helper::expect_near(correctStart, start, 1e-6);
 }
 
-TEST_F(TestFileProperties, ConstantInitialConditionsSerializer)
+TEST_F(TestFileProperties, UniformStartSerializer)
 {
-    ThermFile::ConstantInitialConditions initialConditions{32.7, 0.65};
+    ThermFile::UniformStart start{32.7, 0.65};
 
     Helper::MockNode node{"ConstantInitialConditionsSteadyState"};
     Helper::MockNodeAdapter adapter{&node};
 
-    adapter << initialConditions;
+    adapter << start;
 
     EXPECT_TRUE(
       Helper::compareNodes(adapter.getNode(), Helper::constantInitialConditionsSteadyStateNode({"32.7", "0.65"})));
+}
+
+//! A Model.xml of version 3 carries no InitialConditions element: the constant pair of its
+//! calculation mode is its uniform start, since those files knew no other methodology.
+TEST_F(TestFileProperties, OldConstantPairsReadAsTheUniformStartOfTheMode)
+{
+    Helper::MockNode transientNode{"CalculationOptions"};
+    Helper::addChildNode(transientNode, "CalculationMode", "Transient");
+    Helper::addChildNode(transientNode, Helper::constantInitialConditionsTransientNode({"20", "0.5"}));
+    Helper::addChildNode(transientNode, Helper::constantInitialConditionsSteadyStateNode({"25", "0.75"}));
+    ThermFile::CalculationOptions transientOptions;
+    Helper::MockNodeAdapter{&transientNode} >> transientOptions;
+    EXPECT_TRUE(transientOptions.initialConditions == (ThermFile::InitialConditions{ThermFile::UniformStart{20.0, 0.5}}));
+
+    Helper::MockNode steadyNode{"CalculationOptions"};
+    Helper::addChildNode(steadyNode, "CalculationMode", "Steady-State");
+    Helper::addChildNode(steadyNode, Helper::constantInitialConditionsTransientNode({"20", "0.5"}));
+    Helper::addChildNode(steadyNode, Helper::constantInitialConditionsSteadyStateNode({"25", "0.75"}));
+    ThermFile::CalculationOptions steadyOptions;
+    Helper::MockNodeAdapter{&steadyNode} >> steadyOptions;
+    EXPECT_TRUE(steadyOptions.initialConditions == (ThermFile::InitialConditions{ThermFile::UniformStart{25.0, 0.75}}));
+}
+
+TEST_F(TestFileProperties, SteadyStartRoundTrips)
+{
+    const ThermFile::InitialConditions written{ThermFile::SteadyStart{
+      .conditions = {{.segment = 1U, .bcUUID = "warm-end"}, {.segment = 3U, .bcUUID = "cold-end"}},
+      .start = std::nullopt}};
+
+    Helper::MockNode node{"InitialConditions"};
+    Helper::MockNodeAdapter adapter{&node};
+    adapter << written;
+
+    ThermFile::InitialConditions read;
+    static_cast<const Helper::MockNodeAdapter &>(adapter) >> read;
+    EXPECT_TRUE(read == written);
+}
+
+TEST_F(TestFileProperties, TransientStartRoundTrips)
+{
+    const ThermFile::InitialConditions written{ThermFile::TransientStart{
+      .conditions = {{.segment = 0U, .bcUUID = "outside at start"}},
+      .stepLengths = {3600.0, 3600.0, 1800.0},
+      .start = {.temperature = 15.0, .humidity = 0.8}}};
+
+    Helper::MockNode node{"InitialConditions"};
+    Helper::MockNodeAdapter adapter{&node};
+    adapter << written;
+
+    ThermFile::InitialConditions read;
+    static_cast<const Helper::MockNodeAdapter &>(adapter) >> read;
+    EXPECT_TRUE(read == written);
 }
 
 TEST_F(TestFileProperties, ModelingOptionsDeserializer)
@@ -264,10 +316,7 @@ TEST_F(TestFileProperties, CalculationOptionsDeserialization)
                                                   "true",
                                                   "true",
                                                   {"false", "true", "false", "true", "false", "true", "false"},
-                                                  "Constant everywhere",
-                                                  "No time variable",
                                                   {"20", "0.5"},
-                                                  {"25", "0.75"},
                                                   {"1e-06", "0.84"},
                                                   {"QuadTree Mesher", "7", "true", "1e-06", "100"},
                                                   {"false", "-0.01", "28", "true"},
@@ -285,12 +334,7 @@ TEST_F(TestFileProperties, CalculationOptionsDeserialization)
       .simulateMoisture = true,
       .simulateThermal = true,
       .modelingOptions = {false, true, false, true, false, true, false},
-      .transientCalculationMethodology =
-        ThermFile::TransientCalculationMethodology::icConstantEverywhere,
-      .steadyStateCalculationMethodology =
-        ThermFile::SteadyStateCalculationMethodology::ssNoTimeVariable,
-      .constantInitialConditionsTransient = {20.0, 0.5},
-      .constantInitialConditionsSteadyState = {25.0, 0.75},
+      .initialConditions = {ThermFile::UniformStart{20.0, 0.5}},
       .engineParameters = {1e-6, 0.84},
       .meshControl = {ThermFile::MesherType::QuadTreeMesher, 7u, true, 1e-6, 100},
       .heatTransferModelingOptions = {false, -0.01, 28u, true},
@@ -309,12 +353,7 @@ TEST_F(TestFileProperties, CalculationOptionsSerialization)
       .simulateMoisture = true,
       .simulateThermal = true,
       .modelingOptions = {false, true, false, true, false, true, false},
-      .transientCalculationMethodology =
-        ThermFile::TransientCalculationMethodology::icConstantEverywhere,
-      .steadyStateCalculationMethodology =
-        ThermFile::SteadyStateCalculationMethodology::ssNoTimeVariable,
-      .constantInitialConditionsTransient = {20.0, 0.5},
-      .constantInitialConditionsSteadyState = {25.0, 0.75},
+      .initialConditions = {ThermFile::UniformStart{20.0, 0.5}},
       .engineParameters = {1e-6, 0.84},
       .meshControl = {ThermFile::MesherType::QuadTreeMesher, 7u, true, 1e-6, 100},
       .heatTransferModelingOptions = {false, -0.01, 28u, true},
@@ -331,10 +370,7 @@ TEST_F(TestFileProperties, CalculationOptionsSerialization)
                                                       "true",
                                                       "true",
                                                       {"false", "true", "false", "true", "false", "true", "false"},
-                                                      "Constant everywhere",
-                                                      "No time variable",
                                                       {"20", "0.5"},
-                                                      {"25", "0.75"},
                                                       {"1e-06", "0.84"},
                                                       {"QuadTree Mesher", "7", "true", "1e-06", "100"},
                                                       {"false", "-0.01", "28", "true"},

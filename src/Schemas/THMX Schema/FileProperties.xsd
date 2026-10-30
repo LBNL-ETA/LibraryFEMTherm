@@ -28,32 +28,6 @@
 			<xs:enumeration value="Simmetrix Version 2022"/>
 		</xs:restriction>
 	</xs:simpleType>
-	<xs:simpleType name="TransientCalculationMethodologyType">
-		<xs:annotation>
-			<xs:documentation> Defines how initial values at each node are specified. -
-				ValuesFromInputFile needs input file from which starting conditions will be defined.
-				- UseFirstTimestep will use first timestep values from the simulation. -
-				ConstantEverywhere is used to set up constant values in every node. </xs:documentation>
-		</xs:annotation>
-		<xs:restriction base="xs:string">
-			<xs:enumeration value="Values from input file"/>
-			<xs:enumeration value="Use first timestep"/>
-			<xs:enumeration value="Constant everywhere"/>
-		</xs:restriction>
-	</xs:simpleType>
-	<xs:simpleType name="SteadyStateCalculationMethodologyType">
-		<xs:annotation>
-			<xs:documentation> Defines the way steady-state calculation is performed. -
-				ssNoTimeVariable is classical way to perform steady-state simulation. -
-				ssFalseTransient will use transient simulation that will last long enough in order
-				to achieve steady state solution. </xs:documentation>
-		</xs:annotation>
-		<xs:restriction base="xs:string">
-			<xs:enumeration value="Unknown" />
-			<xs:enumeration value="No time variable"/>
-			<xs:enumeration value="False transient"/>
-		</xs:restriction>
-	</xs:simpleType>
 	<xs:simpleType name="OrientationType">
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="North"/>
@@ -124,11 +98,48 @@
 		</xs:restriction>
 	</xs:simpleType>
 	<!-- Basic structures-->
-	<xs:complexType name="ConstantInitialConditionsType">
+	<!-- A uniform state: temperature in C, relative humidity as a fraction. -->
+	<xs:complexType name="UniformStartType">
 		<xs:all>
 			<xs:element name="Temperature" type="xs:double"/>
 			<xs:element name="Humidity" type="xs:double"/>
 		</xs:all>
+	</xs:complexType>
+	<!-- A boundary segment held under another record while the starting state is solved:
+	the segment's index in the model's boundary list and the record it reads. -->
+	<xs:complexType name="StartConditionType">
+		<xs:all>
+			<xs:element name="Segment" type="xs:nonNegativeInteger"/>
+			<xs:element name="BCUUID" type="xs:string"/>
+		</xs:all>
+	</xs:complexType>
+	<!-- The starting state is the steady state of the model with the conditions swapped in;
+	Start is where that solve begins, the engine's own default when absent. -->
+	<xs:complexType name="SteadyStartType">
+		<xs:sequence>
+			<xs:element name="Start" type="UniformStartType" minOccurs="0"/>
+			<xs:element name="Condition" type="StartConditionType" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- The starting state is the end of a transient run over the steps (seconds) with the
+	conditions swapped in, itself started from Start. -->
+	<xs:complexType name="TransientStartType">
+		<xs:sequence>
+			<xs:element name="Start" type="UniformStartType"/>
+			<xs:element name="Condition" type="StartConditionType" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="Step" type="xs:double" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- How a run's initial state is set: a constant everywhere, or solved first. A
+	steady-state run reads only Uniform, as the start of its iteration. Files of Model
+	version 3 carry ConstantInitialConditionsTransient and ConstantInitialConditionsSteadyState
+	instead; readers take the pair of the file's calculation mode as Uniform. -->
+	<xs:complexType name="InitialConditionsType">
+		<xs:choice>
+			<xs:element name="Uniform" type="UniformStartType"/>
+			<xs:element name="FromSteadyState" type="SteadyStartType"/>
+			<xs:element name="FromTransient" type="TransientStartType"/>
+		</xs:choice>
 	</xs:complexType>
 	<!-- Properties for on screen display in THERM-->
 	<xs:complexType name="ModelingOptionsType">
@@ -203,10 +214,11 @@
 			<xs:element name="SimulateMoisture" type="xs:boolean" default="true" minOccurs="0"/>
 			<xs:element name="SimulateThermal" type="xs:boolean" default="true" minOccurs="0"/>
 			<xs:element name="ModelingOptions" type="ModelingOptionsType" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="TransientCalculationMethodology" type="TransientCalculationMethodologyType" default="Constant everywhere" minOccurs="0"/>
-			<xs:element name="SteadyStateCalculationMethodology" type="SteadyStateCalculationMethodologyType" default="No time variable" minOccurs="0"/>
-			<xs:element name="ConstantInitialConditionsTransient" type="ConstantInitialConditionsType"/>
-			<xs:element name="ConstantInitialConditionsSteadyState" type="ConstantInitialConditionsType"/>
+			<xs:element name="InitialConditions" type="InitialConditionsType"/>
+			<!-- Mirrors of the uniform values for readers of Model version 3; not read when
+			InitialConditions is present. -->
+			<xs:element name="ConstantInitialConditionsTransient" type="UniformStartType" minOccurs="0"/>
+			<xs:element name="ConstantInitialConditionsSteadyState" type="UniformStartType" minOccurs="0"/>
 			<!-- EngineParameters is defined as optional, which means that all of the default values
 			are inherited through EngineParametersType class-->
 			<xs:element name="EngineParameters" type="EngineParametersType" minOccurs="0"/>

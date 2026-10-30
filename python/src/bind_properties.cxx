@@ -1,5 +1,9 @@
 #include <cstddef>
 #include <format>
+#include <optional>
+#include <string>
+#include <variant>
+#include <vector>
 
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
@@ -9,12 +13,112 @@
 
 namespace py = pybind11;
 
+namespace
+{
+    std::string conditionsRepr(const std::vector<ThermFile::StartCondition> & conditions)
+    {
+        std::string text;
+        for(const auto & condition : conditions)
+        {
+            text += std::format("{}StartCondition(segment={}, bc_uuid='{}')",
+                                text.empty() ? "" : ", ",
+                                condition.segment,
+                                condition.bcUUID);
+        }
+        return "[" + text + "]";
+    }
+
+    std::string startRepr(const ThermFile::UniformStart & start)
+    {
+        return std::format("UniformStart(temperature={}, humidity={})", start.temperature, start.humidity);
+    }
+}   // namespace
+
 void bind_properties(py::module_ & mod)
 {
-    py::class_<ThermFile::ConstantInitialConditions>(mod, "ConstantInitialConditions")
-        .def(py::init<>())
-        .def_readwrite("temperature", &ThermFile::ConstantInitialConditions::temperature)
-        .def_readwrite("humidity", &ThermFile::ConstantInitialConditions::humidity);
+    py::class_<ThermFile::UniformStart>(mod, "UniformStart",
+                                        "A uniform state: temperature in degrees C, relative humidity as a fraction.")
+        .def(py::init([](const double temperature, const double humidity) {
+                 return ThermFile::UniformStart{.temperature = temperature, .humidity = humidity};
+             }),
+             py::arg("temperature") = 21.0,
+             py::arg("humidity") = 0.5)
+        .def_readwrite("temperature", &ThermFile::UniformStart::temperature)
+        .def_readwrite("humidity", &ThermFile::UniformStart::humidity)
+        .def(py::self == py::self)
+        .def(py::self != py::self)
+        .def("__repr__", &startRepr);
+
+    py::class_<ThermFile::StartCondition>(mod, "StartCondition",
+                                          "A boundary segment held under another record while the starting state is "
+                                          "solved: its index in the model's boundary list and the record it reads.")
+        .def(py::init([](const std::size_t segment, std::string bcUUID) {
+                 return ThermFile::StartCondition{.segment = segment, .bcUUID = std::move(bcUUID)};
+             }),
+             py::arg("segment"),
+             py::arg("bc_uuid"))
+        .def_readwrite("segment", &ThermFile::StartCondition::segment)
+        .def_readwrite("bc_uuid", &ThermFile::StartCondition::bcUUID)
+        .def(py::self == py::self)
+        .def(py::self != py::self)
+        .def("__repr__", [](const ThermFile::StartCondition & condition) {
+            return std::format("StartCondition(segment={}, bc_uuid='{}')", condition.segment, condition.bcUUID);
+        });
+
+    py::class_<ThermFile::SteadyStart>(mod, "SteadyStart",
+                                       "The starting state is the steady state of the model with `conditions` "
+                                       "swapped in; `start` is where that solve begins, None for the engine's default.")
+        .def(py::init([](std::vector<ThermFile::StartCondition> conditions,
+                         const std::optional<ThermFile::UniformStart> & start) {
+                 return ThermFile::SteadyStart{.conditions = std::move(conditions), .start = start};
+             }),
+             py::arg("conditions") = std::vector<ThermFile::StartCondition>{},
+             py::arg("start") = py::none())
+        .def_readwrite("conditions", &ThermFile::SteadyStart::conditions)
+        .def_readwrite("start", &ThermFile::SteadyStart::start)
+        .def(py::self == py::self)
+        .def(py::self != py::self)
+        .def("__repr__", [](const ThermFile::SteadyStart & start) {
+            return std::format("SteadyStart(conditions={}, start={})",
+                               conditionsRepr(start.conditions),
+                               start.start.has_value() ? startRepr(start.start.value()) : std::string{"None"});
+        });
+
+    py::class_<ThermFile::TransientStart>(mod, "TransientStart",
+                                          "The starting state is the end of a transient run over `step_lengths` "
+                                          "(seconds) with `conditions` swapped in, itself started from `start`.")
+        .def(py::init([](std::vector<ThermFile::StartCondition> conditions,
+                         std::vector<double> stepLengths,
+                         const ThermFile::UniformStart & start) {
+                 return ThermFile::TransientStart{
+                   .conditions = std::move(conditions), .stepLengths = std::move(stepLengths), .start = start};
+             }),
+             py::arg("conditions") = std::vector<ThermFile::StartCondition>{},
+             py::arg("step_lengths") = std::vector<double>{},
+             py::arg("start") = ThermFile::UniformStart{})
+        .def_readwrite("conditions", &ThermFile::TransientStart::conditions)
+        .def_readwrite("step_lengths", &ThermFile::TransientStart::stepLengths)
+        .def_readwrite("start", &ThermFile::TransientStart::start)
+        .def(py::self == py::self)
+        .def(py::self != py::self)
+        .def("__repr__", [](const ThermFile::TransientStart & start) {
+            return std::format("TransientStart(conditions={}, step_lengths=<{} steps>, start={})",
+                               conditionsRepr(start.conditions),
+                               start.stepLengths.size(),
+                               startRepr(start.start));
+        });
+
+    py::class_<ThermFile::InitialConditions>(mod, "InitialConditions",
+                                             "How a run's initial state is set: a UniformStart, or solved first by a "
+                                             "SteadyStart or a TransientStart. A steady-state run reads only the "
+                                             "uniform form, as the start of its iteration.")
+        .def(py::init([](std::variant<ThermFile::UniformStart, ThermFile::SteadyStart, ThermFile::TransientStart> state) {
+                 return ThermFile::InitialConditions{.state = std::move(state)};
+             }),
+             py::arg("state") = ThermFile::UniformStart{})
+        .def_readwrite("state", &ThermFile::InitialConditions::state)
+        .def(py::self == py::self)
+        .def(py::self != py::self);
 
     py::class_<ThermFile::ModelingOptions>(mod, "ModelingOptions")
         .def(py::init<>())
@@ -113,10 +217,8 @@ void bind_properties(py::module_ & mod)
         .def_readwrite("simulate_moisture", &ThermFile::CalculationOptions::simulateMoisture)
         .def_readwrite("simulate_thermal", &ThermFile::CalculationOptions::simulateThermal)
         .def_readwrite("modeling_options", &ThermFile::CalculationOptions::modelingOptions)
-        .def_readwrite("transient_calculation_methodology", &ThermFile::CalculationOptions::transientCalculationMethodology)
-        .def_readwrite("steady_state_calculation_methodology", &ThermFile::CalculationOptions::steadyStateCalculationMethodology)
-        .def_readwrite("constant_initial_conditions_transient", &ThermFile::CalculationOptions::constantInitialConditionsTransient)
-        .def_readwrite("constant_initial_conditions_steady_state", &ThermFile::CalculationOptions::constantInitialConditionsSteadyState)
+        .def_readwrite("initial_conditions", &ThermFile::CalculationOptions::initialConditions,
+                       "How the run starts: UniformStart, SteadyStart or TransientStart in `.state`.")
         .def_readwrite("engine_parameters", &ThermFile::CalculationOptions::engineParameters)
         .def_readwrite("mesh_control", &ThermFile::CalculationOptions::meshControl)
         .def_readwrite("heat_transfer_modeling_options", &ThermFile::CalculationOptions::heatTransferModelingOptions)

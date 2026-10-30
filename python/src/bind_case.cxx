@@ -301,21 +301,23 @@ namespace
 
     void bindSettings(py::module_ & model)
     {
-        auto initial{py::class_<Initial>(model,
-                                         "Initial",
-                                         "Uniform initial state: temperature in degrees C, relative humidity as a "
+        auto initial{model.def_submodule(
+          "initial", "How a case starts: Uniform, or a start solved first, FromSteadyState or FromTransient.")};
+        auto uniform{py::class_<Uniform>(initial,
+                                         "Uniform",
+                                         "Uniform starting state: temperature in degrees C, relative humidity as a "
                                          "fraction.")
                        .def(py::init([](const double temperature, const double humidity) {
-                                return Initial{temperature, humidity};
+                                return Uniform{temperature, humidity};
                             }),
-                            py::arg("temperature"),
-                            py::arg("humidity"))
-                       .def_readwrite("temperature", &Initial::temperature)
-                       .def_readwrite("humidity", &Initial::humidity)
-                       .def("__repr__", [](const Initial & initial) {
-                           return std::format("Initial(temperature={}, humidity={})", initial.temperature, initial.humidity);
+                            py::arg("temperature") = 20.0,
+                            py::arg("humidity") = 0.5)
+                       .def_readwrite("temperature", &Uniform::temperature)
+                       .def_readwrite("humidity", &Uniform::humidity)
+                       .def("__repr__", [](const Uniform & start) {
+                           return std::format("Uniform(temperature={}, humidity={})", start.temperature, start.humidity);
                        })};
-        addEquality(initial);
+        addEquality(uniform);
 
         auto start{py::class_<Start>(model,
                                      "Start",
@@ -455,6 +457,69 @@ namespace
         addEquality(numerics);
     }
 
+    std::string conditionsRepr(const std::map<std::string, Boundary> & conditions)
+    {
+        std::string text;
+        for(const auto & [name, boundary] : conditions)
+        {
+            text += std::format("{}'{}': {}", text.empty() ? "" : ", ", name, pythonRepr(boundary));
+        }
+        return "{" + text + "}";
+    }
+
+    //! The two starts solved first. Bound after Schedule, which FromTransient's signature
+    //! names, and before ModelCase, whose `initial` names all three forms.
+    void bindSolvedStarts(py::module_ & model)
+    {
+        auto initial{model.attr("initial").cast<py::module_>()};
+        auto steady{
+          py::class_<FromSteadyState>(initial,
+                                      "FromSteadyState",
+                                      "A start solved first: the steady state of the same regions, with the faces "
+                                      "named in `conditions` under those conditions instead of their own (the "
+                                      "prescriber). Faces not named keep the condition they carry. `start` is where "
+                                      "the steady iteration begins; None means the engine's own default. A field the "
+                                      "case does not solve keeps its start value.")
+            .def(py::init([](std::map<std::string, Boundary> conditions, const std::optional<Uniform> & start) {
+                     return FromSteadyState{.conditions = std::move(conditions), .start = start};
+                 }),
+                 py::arg("conditions") = std::map<std::string, Boundary>{},
+                 py::arg("start") = py::none())
+            .def_readwrite("conditions", &FromSteadyState::conditions)
+            .def_readwrite("start", &FromSteadyState::start)
+            .def("__repr__", [](const FromSteadyState & value) {
+                return std::format("FromSteadyState(conditions={}{})",
+                                   conditionsRepr(value.conditions),
+                                   value.start.has_value() ? ", start=" + pythonRepr(value.start.value()) : std::string{});
+            })};
+        addEquality(steady);
+
+        auto transient{
+          py::class_<FromTransient>(initial,
+                                    "FromTransient",
+                                    "A start solved first: the end of a transient run of the same regions over "
+                                    "`schedule`, with the faces named in `conditions` under those conditions instead "
+                                    "of their own, itself started from `start`. Faces reading a dataset read it from "
+                                    "its beginning, as the main run then does again.")
+            .def(py::init([](std::map<std::string, Boundary> conditions, const Schedule & schedule, const Uniform & start) {
+                     return FromTransient{.conditions = std::move(conditions), .schedule = schedule, .start = start};
+                 }),
+                 py::arg("conditions") = std::map<std::string, Boundary>{},
+                 py::arg("schedule") = Schedule{},
+                 py::arg("start") = Uniform{})
+            .def_readwrite("conditions", &FromTransient::conditions)
+            .def_readwrite("schedule", &FromTransient::schedule)
+            .def_readwrite("start", &FromTransient::start)
+            .def("__repr__", [](const FromTransient & value) {
+                return std::format("FromTransient(conditions={}, schedule={}, start={})",
+                                   conditionsRepr(value.conditions),
+                                   pythonRepr(value.schedule),
+                                   pythonRepr(value.start));
+            })};
+        addEquality(transient);
+
+    }
+
     void bindCase(py::module_ & model)
     {
         auto modelCase{
@@ -551,14 +616,31 @@ namespace
 
     std::string issueRepr(const Issue & issue)
     {
-        return std::format("Issue(kind={}{}{}{}{}{}{})",
+        return std::format("Issue(kind={}{}{}{}{}{}{}{})",
                            enumName(issue.kind),
                            optionalField("region", issue.region),
                            optionalField("other_region", issue.otherRegion),
                            optionalField("segment", issue.segment),
                            optionalField("step", issue.step),
                            rolesField(issue.roles),
-                           issue.input.has_value() ? ", input=" + enumName(issue.input.value()) : std::string{});
+                           issue.input.has_value() ? ", input=" + enumName(issue.input.value()) : std::string{},
+                           issue.name.has_value() ? std::format(", name='{}'", issue.name.value()) : std::string{});
+    }
+
+    //! The functions over starts, bound after ModelCase so their signatures name it.
+    void bindStartFunctions(py::module_ & model)
+    {
+        model.def("start_of", &startOf, py::arg("initial"),
+                  "The uniform values of a start: the constant itself, or where a solved start begins (20 C and 0.5 "
+                  "standing in when a steady start names none).");
+        model.def("with_conditions", &withConditions, py::arg("model_case"), py::arg("conditions"),
+                  "The case with the named faces under other conditions: a copy in which every segment whose name "
+                  "is a key of `conditions` carries that condition instead of its own and binds no dataset. "
+                  "Segments not named are untouched.");
+        model.def("prescriber", &prescriber, py::arg("model_case"),
+                  "The case the prescriber solves, for a start solved first; None for a uniform start. "
+                  "FromSteadyState: the case under the swapped conditions, steady state, starting from `start`, "
+                  "with no schedule. FromTransient: the same, transient, over the start's schedule.");
     }
 
     void bindIssueKinds(py::module_ & model)
@@ -580,9 +662,12 @@ namespace
           .value("RoleNotProvided", IssueKind::RoleNotProvided)
           .value("EnclosureInTransient", IssueKind::EnclosureInTransient)
           .value("BlackBodyFromDataset", IssueKind::BlackBodyFromDataset)
-          .value("PrescribedInSteadyState", IssueKind::PrescribedInSteadyState)
           .value("RoleInSteadyState", IssueKind::RoleInSteadyState)
           .value("DatasetInSteadyState", IssueKind::DatasetInSteadyState)
+          .value("SolvedStartInSteadyState", IssueKind::SolvedStartInSteadyState)
+          .value("StartConditionUnknownName", IssueKind::StartConditionUnknownName)
+          .value("StartConditionReadsRole", IssueKind::StartConditionReadsRole)
+          .value("StartConditionInputMissing", IssueKind::StartConditionInputMissing)
           .value("UnsupportedMode", IssueKind::UnsupportedMode);
         py::enum_<ConvectionInput>(model, "ConvectionInput", "The input a convection model reads.")
           .value("FilmCoefficient", ConvectionInput::FilmCoefficient)
@@ -605,6 +690,7 @@ namespace
                      .def_readonly("step", &Issue::step)
                      .def_readonly("roles", &Issue::roles)
                      .def_readonly("input", &Issue::input)
+                     .def_readonly("name", &Issue::name)
                      .def("__repr__", &issueRepr)};
         addEquality(issue);
         model.def("issues", &issues, py::arg("model_case"),
@@ -706,7 +792,7 @@ namespace
 
 //! Two submodules. `model` is the vocabulary a THERM model is stated in: regions in metres
 //! carrying their material, segments carrying a physical condition (the kinds live in
-//! `model.bc`), a uniform start, a clock and the calculation switches. `build` turns such a
+//! `model.bc`), a start (its forms in `model.initial`), a clock and the calculation switches. `build` turns such a
 //! case into what THERM would have saved:
 //! the model, its libraries, the archive. The file-level types bound elsewhere in this
 //! module are what the archive is made of; these two are the layer above.
@@ -718,7 +804,9 @@ void bind_case(py::module_ & mod)
     bindBoundaryKinds(model);
     bindGeometry(model);
     bindSettings(model);
+    bindSolvedStarts(model);
     bindCase(model);
+    bindStartFunctions(model);
     bindIssueKinds(model);
     bindIssues(model);
 

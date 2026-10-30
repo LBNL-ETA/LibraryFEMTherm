@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -167,15 +168,6 @@ namespace ThermFile::Model
     // Settings
     // ------------------------------------------------------------------------------------
 
-    //! Uniform initial state: temperature in °C, relative humidity as a fraction.
-    struct Initial
-    {
-        double temperature{20.0};
-        double humidity{0.5};
-
-        [[nodiscard]] friend bool operator==(const Initial & lhs, const Initial & rhs) = default;
-    };
-
     //! Where the clock starts in the year: a calendar position with no year, as a dataset's
     //! axis states it and counted the same way (TimeSeriesLibrary::TimeAxis): month, day and
     //! hour from 1, hour 1 being 00:00 to 01:00, and minute from 0. 1 January 00:00 unless
@@ -220,6 +212,51 @@ namespace ThermFile::Model
     //! case driven by a weather file runs exactly over the file.
     [[nodiscard]] Schedule scheduleFor(const TimeSeriesLibrary::TimeSeriesData & dataset);
 
+    //! Uniform starting state: temperature in °C, relative humidity as a fraction.
+    struct Uniform
+    {
+        double temperature{20.0};
+        double humidity{0.5};
+
+        [[nodiscard]] friend bool operator==(const Uniform & lhs, const Uniform & rhs) = default;
+    };
+
+    //! A start solved first: the steady state of the same regions, with the faces named in
+    //! `conditions` under those conditions instead of their own (the prescriber). Faces not
+    //! named keep the condition they carry, read at their first step when it comes from a
+    //! dataset. `start` is where the steady iteration begins; none means the engine's own
+    //! default. A field the case does not solve keeps its start value.
+    struct FromSteadyState
+    {
+        std::map<std::string, Boundary> conditions{};
+        std::optional<Uniform> start{};
+
+        [[nodiscard]] friend bool operator==(const FromSteadyState & lhs, const FromSteadyState & rhs) = default;
+    };
+
+    //! A start solved first: the end of a transient run of the same regions over `schedule`,
+    //! with the faces named in `conditions` under those conditions instead of their own,
+    //! itself started from `start`. Faces reading a dataset read it from its beginning, as
+    //! the main run then does again.
+    struct FromTransient
+    {
+        std::map<std::string, Boundary> conditions{};
+        Schedule schedule{};
+        Uniform start{};
+
+        [[nodiscard]] friend bool operator==(const FromTransient & lhs, const FromTransient & rhs) = default;
+    };
+
+    //! How a case starts: uniform, or from a state solved first.
+    using Initial = std::variant<Uniform, FromSteadyState, FromTransient>;
+
+    //! The uniform values of a start: the constant itself, or where a solved start begins
+    //! (20 °C and 0.5 standing in when a steady start names none).
+    [[nodiscard]] Uniform startOf(const Initial & initial);
+
+    //! The conditions a solved start swaps in, by face name; none for a uniform start.
+    [[nodiscard]] const std::map<std::string, Boundary> * startConditions(const Initial & initial);
+
     //! Which terms are simulated, stated positively. Each switch is written to the file's
     //! calculation options; what the engine does with each is the engine's documentation.
     struct Physics
@@ -257,9 +294,10 @@ namespace ThermFile::Model
     //!
     //! `mode` is the calculation the archive is set up for. A transient case runs through
     //! its clock -- the datasets its segments bind, or `schedule` when they bind none -- from
-    //! `initial`. A steady-state case has no clock: `initial` and `schedule` are not
-    //! written, each condition is a constant on its own record, and `meshControl` --
-    //! THERM's own error target and pass budget -- drives the error estimator.
+    //! `initial`, uniform or solved first. A steady-state case has no clock: `schedule` is
+    //! not written, `initial` is the uniform start of its iteration, each condition is a
+    //! constant on its own record, and `meshControl` -- THERM's own error target and pass
+    //! budget -- drives the error estimator.
     struct ModelCase
     {
         std::string id{};
@@ -295,9 +333,12 @@ namespace ThermFile::Model
         RoleNotProvided,           //!< `segment`'s dataset provides none of `roles`, which it reads
         EnclosureInTransient,      //!< `segment` radiates into an enclosure in a transient case
         BlackBodyFromDataset,      //!< `segment`'s black body reads a dataset in a transient case
-        PrescribedInSteadyState,   //!< `segment` is prescribed in a steady-state case
         RoleInSteadyState,         //!< `segment` reads `roles` in a steady-state case
         DatasetInSteadyState,      //!< `segment` binds a dataset in a steady-state case
+        SolvedStartInSteadyState,  //!< the start is solved first, which a steady-state case does not do
+        StartConditionUnknownName, //!< the start names a face `name` that no segment carries
+        StartConditionReadsRole,   //!< the start's condition on `name` reads `roles`; it must be constants
+        StartConditionInputMissing,//!< the start's condition on `name` reads `input`, which it does not give
         UnsupportedMode            //!< the mode is neither transient nor steady state
     };
 
@@ -322,6 +363,7 @@ namespace ThermFile::Model
         std::optional<std::size_t> step{};
         std::vector<TimeSeriesLibrary::SeriesRole> roles{};
         std::optional<ConvectionInput> input{};
+        std::optional<std::string> name{};
 
         [[nodiscard]] friend bool operator==(const Issue & lhs, const Issue & rhs) = default;
     };
@@ -339,10 +381,11 @@ namespace ThermFile::Model
     //! whose condition reads a role, providing every role it reads (BCLibrary::missingRoles),
     //! a schedule of positive steps when no segment binds a dataset, a schedule that agrees
     //! with every bound dataset's axis when one is stated beside them, and radiation the
-    //! engine runs through a clock (fixed coefficient, or a black body of constants); for a
-    //! steady-state case no prescribed segment, since THERM's steady-state library has no
-    //! record for a prescribed surface state, and no role read and no dataset bound, since it
-    //! has no datasets. Whether the datasets of a case agree with one another is not checked
+    //! engine runs through a clock (fixed coefficient, or a black body of constants), and for
+    //! a start solved first every face it names carried by a segment and every condition it
+    //! swaps in a constant given the inputs its convection model reads; for a steady-state
+    //! case a uniform start, and no role read and no dataset bound, since it has no
+    //! datasets. Whether the datasets of a case agree with one another is not checked
     //! here: TimeSeriesLibrary::alignmentIssues says, and HygroTherm refuses a misaligned
     //! archive before it solves. Segments are not checked while a region has fewer than three
     //! points, since it has no edges to lie on.
@@ -372,6 +415,19 @@ namespace ThermFile::Model
     //! ones so their indices hold. This is what the Build namespace writes; a caller states
     //! only the faces that exchange something.
     [[nodiscard]] ModelCase completed(const ModelCase & modelCase);
+
+    //! The case with the named faces under other conditions: a copy in which every segment
+    //! whose name is a key of `conditions` carries that condition instead of its own and
+    //! binds no dataset, since a swapped-in condition is constants. Segments not named are
+    //! untouched.
+    [[nodiscard]] ModelCase withConditions(const ModelCase & modelCase,
+                                           const std::map<std::string, Boundary> & conditions);
+
+    //! The case the prescriber solves, for a start solved first; nothing for a uniform
+    //! start. FromSteadyState: the case under the swapped conditions, steady state, starting
+    //! from `start` (or the default start), with no schedule; the id and title say
+    //! "prescriber". FromTransient: the same, transient, over the start's schedule.
+    [[nodiscard]] std::optional<ModelCase> prescriber(const ModelCase & modelCase);
 
     //! The material record filling the region at the given index, or nothing if the index
     //! is out of range.

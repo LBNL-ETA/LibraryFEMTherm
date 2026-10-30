@@ -94,17 +94,6 @@ void bind_enums(py::module_ & mod)
         .value("cmTransient", ThermFile::CalculationMode::cmTransient)
         .value("cmSteadyState", ThermFile::CalculationMode::cmSteadyState);
 
-    py::enum_<ThermFile::TransientCalculationMethodology>(mod, "TransientCalculationMethodology")
-        .value("Unknown", ThermFile::TransientCalculationMethodology::Unknown)
-        .value("icValuesFromInputFile", ThermFile::TransientCalculationMethodology::icValuesFromInputFile)
-        .value("icUseFirstTimestep", ThermFile::TransientCalculationMethodology::icUseFirstTimestep)
-        .value("icConstantEverywhere", ThermFile::TransientCalculationMethodology::icConstantEverywhere);
-
-    py::enum_<ThermFile::SteadyStateCalculationMethodology>(mod, "SteadyStateCalculationMethodology")
-        .value("Unknown", ThermFile::SteadyStateCalculationMethodology::Unknown)
-        .value("ssNoTimeVariable", ThermFile::SteadyStateCalculationMethodology::ssNoTimeVariable)
-        .value("ssFalseTransient", ThermFile::SteadyStateCalculationMethodology::ssFalseTransient);
-
     py::enum_<ThermFile::MesherType>(mod, "MesherType")
         .value("Unknown", ThermFile::MesherType::Unknown)
         .value("QuadTreeMesher", ThermFile::MesherType::QuadTreeMesher)

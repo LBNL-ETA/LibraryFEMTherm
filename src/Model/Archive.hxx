@@ -26,7 +26,7 @@
 //!   records that name their condition record by UUID and, when the record reads series,
 //!   their dataset by UUID. The case is completed first (Model::completed): every outside
 //!   face the caller left unstated is written adiabatic, so a caller states only the
-//!   faces that exchange something. The calculation options are the case's Physics, Initial and
+//!   faces that exchange something. The calculation options are the case's Physics, start and
 //!   Numerics written as the file's switches.
 //! - Materials: the regions' materials, converted by Materials.hxx.
 //! - BoundaryConditions: the consolidated records the segments refer to. Each segment's

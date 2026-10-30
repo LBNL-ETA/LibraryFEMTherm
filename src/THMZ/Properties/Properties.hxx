@@ -9,6 +9,7 @@
 
 #include "Enumerators.hxx"
 #include "GravityProperties.hxx"
+#include "InitialConditions.hxx"
 
 #include "Common/GeometryDefinitions.hxx"
 #include "LibraryUtilities/TimeRoutines.hxx"
@@ -16,14 +17,6 @@
 
 namespace ThermFile
 {
-    //! \brief Defines initial condition values for case when constant values are used in either
-    //! transient or steady-state conditions.
-    struct ConstantInitialConditions
-    {
-        double temperature{21};
-        double humidity{0.5};
-    };
-
     ////////////////////////////////////////////////////////////////////////////////////
     /// ModelingOptions
     ////////////////////////////////////////////////////////////////////////////////////
@@ -194,10 +187,7 @@ namespace ThermFile
         bool simulateMoisture{true};
         bool simulateThermal{true};
         ModelingOptions modelingOptions;
-        TransientCalculationMethodology transientCalculationMethodology{TransientCalculationMethodology::icConstantEverywhere};
-        SteadyStateCalculationMethodology steadyStateCalculationMethodology{SteadyStateCalculationMethodology::ssNoTimeVariable};
-        ConstantInitialConditions constantInitialConditionsTransient;
-        ConstantInitialConditions constantInitialConditionsSteadyState;
+        InitialConditions initialConditions{};
         EngineParameters engineParameters;
         MeshControl meshControl;
         HeatTransferModelingOptions heatTransferModelingOptions;

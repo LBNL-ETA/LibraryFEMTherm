@@ -49,7 +49,7 @@ def sealed_strip() -> model.ModelCase:
             model.Segment(model.bc.Adiabatic(), (0.1, 0.005), (0.0, 0.005)),
             model.Segment(model.bc.Prescribed(temperature=40.0), (0.0, 0.005), (0.0, 0.0)),
         ],
-        initial=model.Initial(temperature=30.0, humidity=0.4),
+        initial=model.initial.Uniform(temperature=30.0, humidity=0.4),
         schedule=model.Schedule(dtime=36000.0, n_steps=300),
         physics=model.Physics(liquid_transport=False, heat_of_evaporation=False),
     )
@@ -145,10 +145,10 @@ class TestSteadyState:
         case.segments = segments
         assert model.IssueKind.EnclosureInTransient in kinds(found=model.issues(model_case=case))
 
-    def test_a_steady_case_refuses_a_prescribed_segment(self):
+    def test_a_steady_case_may_prescribe_a_face(self):
         case = sealed_strip()
         case.mode = fem.CalculationMode.cmSteadyState
-        assert model.IssueKind.PrescribedInSteadyState in kinds(found=model.issues(model_case=case))
+        assert model.issues(model_case=case) == []
 
 
 class TestVocabulary:
@@ -248,7 +248,7 @@ class TestVocabulary:
         assert repr(named) == (
             "Segment(kind=Adiabatic(), start=Point(0, 0), end=Point(0.2, 0), region=1, color='0x1E5A96', name='bottom')"
         )
-        assert repr(model.Initial(temperature=20.0, humidity=0.5)) == "Initial(temperature=20, humidity=0.5)"
+        assert repr(model.initial.Uniform(temperature=20.0, humidity=0.5)) == "Uniform(temperature=20, humidity=0.5)"
         assert repr(model.Schedule(dtime=3600.0, n_steps=24)) == "Schedule(dtime=3600.0, n_steps=24)"
         assert repr(model.Physics(moisture=False)) == (
             "Physics(thermal=True, moisture=False, liquid_transport=True, heat_of_evaporation=True, "
@@ -279,7 +279,7 @@ class TestVocabulary:
     def test_cases_compare_by_value(self):
         assert sealed_strip() == sealed_strip()
         changed = sealed_strip()
-        changed.initial = model.Initial(temperature=30.0, humidity=0.6)
+        changed.initial = model.initial.Uniform(temperature=30.0, humidity=0.6)
         assert changed != sealed_strip()
 
     def test_regions_carry_their_material(self):
@@ -447,7 +447,7 @@ class TestLibraryRecords:
         assert options.calculation_mode == fem.CalculationMode.cmTransient
         assert options.modeling_options.exclude_water_liquid_transportation is True
         assert options.modeling_options.exclude_capillary_conduction is False
-        assert abs(options.constant_initial_conditions_transient.temperature - 30.0) < TOL
+        assert options.initial_conditions.state == fem.UniformStart(temperature=30.0, humidity=0.4)
         origin = therm_model.preferences.settings.origin
         assert (origin.x, origin.y) == build.DRAWING_ORIGIN_MM
 
@@ -601,3 +601,79 @@ class TestArchive:
         assert record.protected_ is True
         assert record.project_name is None
         assert isinstance(record.data, fem.NoExchange)
+
+
+def strip_with_a_named_cold_end() -> model.ModelCase:
+    case = sealed_strip()
+    segments = list(case.segments)
+    segments[1].name = "cold end"
+    case.segments = segments
+    return case
+
+
+class TestSolvedStarts:
+    def test_start_of_each_form(self):
+        assert model.start_of(initial=model.initial.Uniform(temperature=30.0, humidity=0.4)) == model.initial.Uniform(temperature=30.0, humidity=0.4)
+        assert model.start_of(initial=model.initial.FromSteadyState()) == model.initial.Uniform()
+        schedule = model.Schedule(dtime=3600.0, n_steps=2)
+        start = model.initial.Uniform(temperature=10.0, humidity=0.9)
+        assert model.start_of(initial=model.initial.FromTransient(schedule=schedule, start=start)) == start
+
+    def test_reprs(self):
+        assert repr(model.initial.FromSteadyState()) == "FromSteadyState(conditions={})"
+        start = model.initial.FromSteadyState(conditions={"cold end": model.bc.Prescribed(temperature=40.0)},
+                                      start=model.initial.Uniform(temperature=5.0, humidity=0.9))
+        assert repr(start) == ("FromSteadyState(conditions={'cold end': Prescribed(temperature=40.0)}, "
+                               "start=Uniform(temperature=5, humidity=0.9))")
+
+    def test_the_prescriber_is_the_swapped_case_at_steady_state(self):
+        case = strip_with_a_named_cold_end()
+        case.initial = model.initial.FromSteadyState(conditions={"cold end": model.bc.Prescribed(temperature=40.0)})
+        assert model.issues(model_case=case) == []
+        assert model.prescriber(model_case=sealed_strip()) is None
+        prescriber = model.prescriber(model_case=case)
+        assert prescriber is not None
+        assert model.is_steady_state(model_case=prescriber)
+        assert prescriber.segments[1].kind == model.bc.Prescribed(temperature=40.0)
+        assert prescriber.segments[3].kind == case.segments[3].kind
+        assert prescriber.initial == model.initial.Uniform()
+
+    def test_with_conditions_leaves_the_case_alone(self):
+        case = strip_with_a_named_cold_end()
+        swapped = model.with_conditions(model_case=case, conditions={"cold end": model.bc.Adiabatic()})
+        assert swapped.segments[1].kind == model.bc.Adiabatic()
+        assert case.segments[1].kind == model.bc.Prescribed(temperature=20.0)
+
+    def test_a_start_naming_no_face_is_an_issue(self):
+        case = sealed_strip()
+        case.initial = model.initial.FromSteadyState(conditions={"nowhere": model.bc.Adiabatic()})
+        found = model.issues(model_case=case)
+        assert kinds(found=found) == [model.IssueKind.StartConditionUnknownName]
+        assert found[0].name == "nowhere"
+        assert model.describe_issues(model_case=case) == ["the start names a face 'nowhere' that no segment carries"]
+
+    def test_a_solved_start_writes_its_conditions_as_records(self):
+        case = strip_with_a_named_cold_end()
+        case.initial = model.initial.FromSteadyState(conditions={"cold end": model.bc.Prescribed(temperature=35.0)})
+        records = build.libraries(case).boundary_conditions
+        assert sorted(records.get_names()) == ["Adiabatic", "cold end", "cold end at start", "segment 4"]
+        state = build.model(case).properties.calculation_options.initial_conditions.state
+        assert isinstance(state, fem.SteadyStart)
+        assert state.conditions == [fem.StartCondition(segment=1, bc_uuid=records.get_by_name("cold end at start").uuid)]
+        assert state.start is None
+
+    def test_a_start_condition_of_known_content_shares_the_record(self):
+        case = strip_with_a_named_cold_end()
+        case.initial = model.initial.FromSteadyState(conditions={"cold end": model.bc.Prescribed(temperature=40.0)})
+        records = build.libraries(case).boundary_conditions
+        assert sorted(records.get_names()) == ["Adiabatic", "cold end", "segment 4"]
+        state = build.model(case).properties.calculation_options.initial_conditions.state
+        assert state.conditions == [fem.StartCondition(segment=1, bc_uuid=records.get_by_name("segment 4").uuid)]
+
+    def test_a_transient_start_writes_its_schedule(self):
+        case = sealed_strip()
+        case.initial = model.initial.FromTransient(schedule=model.Schedule(dtime=1800.0, n_steps=3),
+                                           start=model.initial.Uniform(temperature=5.0, humidity=0.9))
+        state = build.model(case).properties.calculation_options.initial_conditions.state
+        assert state == fem.TransientStart(step_lengths=[1800.0, 1800.0, 1800.0],
+                                           start=fem.UniformStart(temperature=5.0, humidity=0.9))

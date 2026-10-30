@@ -19,6 +19,7 @@ namespace ThermFile::Build
     // The vocabulary this namespace turns into a file. Using-declarations rather than a
     // using-directive: Model::Point and Model::Boundary must win over ThermFile's own.
     using Model::Adiabatic;
+    using Model::Boundary;
     using Model::completed;
     using Model::isSteadyState;
     using Model::ModelCase;
@@ -77,13 +78,10 @@ namespace ThermFile::Build
             return std::ranges::any_of(records, [&name](const auto & record) { return record.Name == name; });
         }
 
-        //! The segment's own name, or "segment N", kept apart from the names already taken
-        //! by a record of different content: "outside", "outside (2)", ...
-        std::string uniqueRecordName(const ModelCase & modelCase,
-                                     const std::size_t index,
-                                     const std::vector<BCLibrary::BoundaryCondition> & records)
+        //! `base` kept apart from the names already taken by a record of different
+        //! content: "outside", "outside (2)", ...
+        std::string uniqueRecordName(const std::string & base, const std::vector<BCLibrary::BoundaryCondition> & records)
         {
-            const auto base{modelCase.segments[index].name.value_or(std::format("segment {}", index + 1U))};
             std::string name{base};
             for(std::size_t suffix = 2U; hasName(records, name); ++suffix)
             {
@@ -92,20 +90,43 @@ namespace ThermFile::Build
             return name;
         }
 
-        //! A record of the project's own for a segment's lowered condition, named and
-        //! coloured after the segment.
+        //! A record of the project's own for a lowered condition, under the name and colour
+        //! of what states it.
         BCLibrary::BoundaryCondition newRecord(const ModelCase & modelCase,
-                                               const std::size_t index,
+                                               const std::string & base,
+                                               const std::string & color,
                                                const RecordData & data,
                                                const std::vector<BCLibrary::BoundaryCondition> & records)
         {
-            const auto name{uniqueRecordName(modelCase, index, records)};
+            const auto name{uniqueRecordName(base, records)};
             return BCLibrary::BoundaryCondition{.UUID = caseUuid(modelCase, "record/" + name),
                                                 .Name = name,
                                                 .Protected = false,
-                                                .Color = segmentColor(modelCase.segments[index]),
+                                                .Color = color,
                                                 .data = data,
                                                 .ProjectName = modelCase.id};
+        }
+
+        //! The record a condition lowers to: THERM's Adiabatic for no exchange, the record
+        //! of the same content already in `records`, or a new one appended to them under
+        //! `base` and `color`.
+        BCLibrary::BoundaryCondition recordFor(const ModelCase & modelCase,
+                                               const Boundary & boundary,
+                                               const std::string & base,
+                                               const std::string & color,
+                                               std::vector<BCLibrary::BoundaryCondition> & records)
+        {
+            const auto data{Model::recordData(boundary)};
+            if(std::holds_alternative<BCLibrary::NoExchange>(data))
+            {
+                return adiabaticRecord();
+            }
+            const auto shared{lbnl::find_element(records, [&data](const auto & record) { return record.data == data; })};
+            if(!shared.has_value())
+            {
+                records.push_back(newRecord(modelCase, base, color, data, records));
+            }
+            return shared.value_or(records.back());
         }
 
         //! The record of every segment of the completed case: segments whose conditions
@@ -116,23 +137,72 @@ namespace ThermFile::Build
             std::vector<BCLibrary::BoundaryCondition> perSegment;
             for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
             {
-                const auto data{Model::recordData(modelCase.segments[index].kind)};
-                if(std::holds_alternative<BCLibrary::NoExchange>(data))
-                {
-                    perSegment.push_back(adiabaticRecord());
-                    continue;
-                }
-                const auto shared{lbnl::find_element(records, [&data](const auto & record) { return record.data == data; })};
-                if(!shared.has_value())
-                {
-                    records.push_back(newRecord(modelCase, index, data, records));
-                }
-                perSegment.push_back(shared.value_or(records.back()));
+                const auto & segment{modelCase.segments[index]};
+                perSegment.push_back(recordFor(modelCase,
+                                               segment.kind,
+                                               segment.name.value_or(std::format("segment {}", index + 1U)),
+                                               segmentColor(segment),
+                                               records));
             }
             return perSegment;
         }
 
-        //! The clock of a model in which no segment binds a dataset: the initial temperature
+        //! A face held under another record while the start is solved: the segment and the
+        //! record of the condition swapped in.
+        struct StartRecord
+        {
+            std::size_t segment{0U};
+            BCLibrary::BoundaryCondition record{};
+        };
+
+        //! The records of a solved start's conditions, named "<face> at start" and shared
+        //! with the segment records of the same content: one entry per segment the start
+        //! names, in segment order. `records` is every record the segments use, appended to.
+        std::vector<StartRecord> startRecords(const ModelCase & modelCase,
+                                              std::vector<BCLibrary::BoundaryCondition> & records)
+        {
+            std::vector<StartRecord> found;
+            const auto * conditions{Model::startConditions(modelCase.initial)};
+            if(conditions == nullptr)
+            {
+                return found;
+            }
+            for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
+            {
+                const auto & name{modelCase.segments[index].name};
+                if(!name.has_value())
+                {
+                    continue;
+                }
+                const auto condition{conditions->find(name.value())};
+                if(condition == conditions->end())
+                {
+                    continue;
+                }
+                found.push_back(StartRecord{
+                  .segment = index,
+                  .record = recordFor(
+                    modelCase, condition->second, name.value() + " at start", kindColor(condition->second), records)});
+            }
+            return found;
+        }
+
+        //! Every distinct record, by UUID, in the order first used.
+        std::vector<BCLibrary::BoundaryCondition>
+          distinctRecords(const std::vector<BCLibrary::BoundaryCondition> & records)
+        {
+            std::vector<BCLibrary::BoundaryCondition> distinct;
+            for(const auto & record : records)
+            {
+                if(!std::ranges::any_of(distinct, [&record](const auto & known) { return known.UUID == record.UUID; }))
+                {
+                    distinct.push_back(record);
+                }
+            }
+            return distinct;
+        }
+
+        //! The clock of a model in which no segment binds a dataset: the start temperature
         //! on every step, under a role the Adiabatic record ignores.
         TimeSeriesData clockDataset(const ModelCase & modelCase)
         {
@@ -143,7 +213,8 @@ namespace ThermFile::Build
               .Protected = false,
               .axis = Model::axisOf(modelCase.schedule),
               .series = {Series{.role = SeriesRole::AirTemperature,
-                                .values = std::vector<double>(Model::nSteps(modelCase.schedule), modelCase.initial.temperature)}}};
+                                .values = std::vector<double>(Model::nSteps(modelCase.schedule),
+                                                              Model::startOf(modelCase.initial).temperature)}}};
         }
 
         //! The dataset of every segment of the completed case: the one it binds, as given;
@@ -234,29 +305,66 @@ namespace ThermFile::Build
             switches.excludeThermalConductivityTemperatureDependent = !physics.conductivityDependent;
         }
 
-        //! A transient case starts from its uniform initial state and runs no estimator: the
-        //! estimator is a steady-state tool. A steady-state case writes its mesh control,
-        //! which is what drives the estimator.
-        void applyMode(const ModelCase & modelCase, CalculationOptions & options)
+        UniformStart fileStart(const Model::Uniform & start)
+        {
+            return UniformStart{.temperature = start.temperature, .humidity = start.humidity};
+        }
+
+        std::vector<StartCondition> fileStartConditions(const std::vector<StartRecord> & starts)
+        {
+            return lbnl::transform_to_vector(starts, [](const StartRecord & start) {
+                return StartCondition{.segment = start.segment, .bcUUID = start.record.UUID};
+            });
+        }
+
+        //! The case's start as the file states it: the uniform values, or the start solved
+        //! first with its conditions as segment index and record.
+        InitialConditions fileInitialConditions(const ModelCase & modelCase, const std::vector<StartRecord> & starts)
+        {
+            return std::visit(
+              [&starts](const auto & start) -> InitialConditions {
+                  using Start = std::decay_t<decltype(start)>;
+                  if constexpr(std::is_same_v<Start, Model::Uniform>)
+                  {
+                      return InitialConditions{fileStart(start)};
+                  }
+                  else if constexpr(std::is_same_v<Start, Model::FromSteadyState>)
+                  {
+                      return InitialConditions{SteadyStart{
+                        .conditions = fileStartConditions(starts),
+                        .start = start.start.has_value() ? std::optional{fileStart(start.start.value())} : std::nullopt}};
+                  }
+                  else
+                  {
+                      return InitialConditions{TransientStart{.conditions = fileStartConditions(starts),
+                                                              .stepLengths = start.schedule.stepLengths,
+                                                              .start = fileStart(start.start)}};
+                  }
+              },
+              modelCase.initial);
+        }
+
+        //! A transient case runs no estimator: the estimator is a steady-state tool. A
+        //! steady-state case writes its mesh control, which is what drives the estimator.
+        //! Both write their start.
+        void applyMode(const ModelCase & modelCase, const std::vector<StartRecord> & starts, CalculationOptions & options)
         {
             options.calculationMode = modelCase.mode;
+            options.initialConditions = fileInitialConditions(modelCase, starts);
             if(isSteadyState(modelCase))
             {
                 options.meshControl = modelCase.meshControl;
                 return;
             }
-            options.transientCalculationMethodology = TransientCalculationMethodology::icConstantEverywhere;
-            options.constantInitialConditionsTransient.temperature = modelCase.initial.temperature;
-            options.constantInitialConditionsTransient.humidity = modelCase.initial.humidity;
             options.meshControl.runErrorEstimator = false;
         }
 
-        void applyCalculationOptions(const ModelCase & modelCase, ThermModel & model)
+        void applyCalculationOptions(const ModelCase & modelCase, const std::vector<StartRecord> & starts, ThermModel & model)
         {
             auto & options{model.properties.calculationOptions};
             options.simulationEngine = SimulationEngine::HygroThermFEM;
             applyPhysics(modelCase.physics, options);
-            applyMode(modelCase, options);
+            applyMode(modelCase, starts, options);
 
             options.engineParameters.convergenceTolerance = modelCase.numerics.convergenceTolerance;
             options.engineParameters.relaxationParameter = modelCase.numerics.relaxation;
@@ -279,15 +387,15 @@ namespace ThermFile::Build
 
     std::vector<BCLibrary::BoundaryCondition> segmentRecords(const ModelCase & stated)
     {
-        std::vector<BCLibrary::BoundaryCondition> records;
-        for(const auto & record : recordPerSegment(completed(stated)))
+        const auto modelCase{completed(stated)};
+        auto records{recordPerSegment(modelCase)};
+        auto pool{distinctRecords(records)};
+        std::erase_if(pool, [](const auto & record) { return record.UUID == adiabaticRecordUuid; });
+        for(const auto & start : startRecords(modelCase, pool))
         {
-            if(!std::ranges::any_of(records, [&record](const auto & known) { return known.UUID == record.UUID; }))
-            {
-                records.push_back(record);
-            }
+            records.push_back(start.record);
         }
-        return records;
+        return distinctRecords(records);
     }
 
     std::vector<Binding> segmentBindings(const ModelCase & stated)
@@ -326,13 +434,16 @@ namespace ThermFile::Build
         const auto modelCase{completed(stated)};
         const auto records{recordPerSegment(modelCase)};
         const auto datasets{datasetPerSegment(modelCase)};
+        auto pool{distinctRecords(records)};
+        std::erase_if(pool, [](const auto & record) { return record.UUID == adiabaticRecordUuid; });
+        const auto starts{startRecords(modelCase, pool)};
         ThermModel result;
         result.calculationReady = true;
         result.preferences.settings.origin = drawingOriginMm;
         result.glazingOrigin = drawingOriginMm;
         result.properties.general.fileName = modelCase.id;
         result.properties.general.title = modelCase.title.empty() ? modelCase.id : modelCase.title;
-        applyCalculationOptions(modelCase, result);
+        applyCalculationOptions(modelCase, starts, result);
 
         for(std::size_t index = 0U; index < modelCase.regions.size(); ++index)
         {

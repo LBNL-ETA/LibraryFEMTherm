@@ -2,6 +2,7 @@
 
 #include <fileParse/Optional.hxx>
 #include <fileParse/Variant.hxx>
+#include <fileParse/Vector.hxx>
 
 #include "EnumSerializers.hxx"
 #include "LibraryUtilities/TimeRoutines.hxx"
@@ -9,21 +10,115 @@
 namespace ThermFile
 {
     template<typename NodeAdapter>
-    inline const NodeAdapter & operator>>(const NodeAdapter & node, ConstantInitialConditions & initialConditions)
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, UniformStart & start)
     {
-        node >> FileParse::Child{"Temperature", initialConditions.temperature};
-        node >> FileParse::Child{"Humidity", initialConditions.humidity};
+        node >> FileParse::Child{"Temperature", start.temperature};
+        node >> FileParse::Child{"Humidity", start.humidity};
 
         return node;
     }
 
     template<typename NodeAdapter>
-    inline NodeAdapter & operator<<(NodeAdapter & node, const ConstantInitialConditions & initialConditions)
+    inline NodeAdapter & operator<<(NodeAdapter & node, const UniformStart & start)
     {
-        node << FileParse::Child{"Temperature", initialConditions.temperature};
-        node << FileParse::Child{"Humidity", initialConditions.humidity};
+        node << FileParse::Child{"Temperature", start.temperature};
+        node << FileParse::Child{"Humidity", start.humidity};
 
         return node;
+    }
+
+    template<typename NodeAdapter>
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, StartCondition & condition)
+    {
+        node >> FileParse::Child{"Segment", condition.segment};
+        node >> FileParse::Child{"BCUUID", condition.bcUUID};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline NodeAdapter & operator<<(NodeAdapter & node, const StartCondition & condition)
+    {
+        node << FileParse::Child{"Segment", condition.segment};
+        node << FileParse::Child{"BCUUID", condition.bcUUID};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, SteadyStart & start)
+    {
+        node >> FileParse::Child{"Start", start.start};
+        node >> FileParse::Child{"Condition", start.conditions};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline NodeAdapter & operator<<(NodeAdapter & node, const SteadyStart & start)
+    {
+        node << FileParse::Child{"Start", start.start};
+        node << FileParse::Child{"Condition", start.conditions};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, TransientStart & start)
+    {
+        node >> FileParse::Child{"Start", start.start};
+        node >> FileParse::Child{"Condition", start.conditions};
+        node >> FileParse::Child{"Step", start.stepLengths};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline NodeAdapter & operator<<(NodeAdapter & node, const TransientStart & start)
+    {
+        node << FileParse::Child{"Start", start.start};
+        node << FileParse::Child{"Condition", start.conditions};
+        node << FileParse::Child{"Step", start.stepLengths};
+
+        return node;
+    }
+
+    //! The alternatives of InitialConditions, as the file names them.
+    inline const std::vector<std::string> initialConditionsNodeNames{"Uniform", "FromSteadyState", "FromTransient"};
+
+    template<typename NodeAdapter>
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, InitialConditions & initialConditions)
+    {
+        FileParse::deserializeVariant(node, initialConditionsNodeNames, initialConditions.state);
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline NodeAdapter & operator<<(NodeAdapter & node, const InitialConditions & initialConditions)
+    {
+        FileParse::serializeVariant(node, initialConditionsNodeNames, initialConditions.state);
+
+        return node;
+    }
+
+    //! The initial conditions as written since Model.xml version 4, or converted from the
+    //! two constant pairs of earlier files, whose methodologies were always "constant
+    //! everywhere" and "no time variable": the pair of the file's calculation mode.
+    template<typename NodeAdapter>
+    inline void readInitialConditions(const NodeAdapter & node, CalculationOptions & options)
+    {
+        if(node.nChildNode("InitialConditions") > 0)
+        {
+            node >> FileParse::Child{"InitialConditions", options.initialConditions};
+            return;
+        }
+        UniformStart transientStart;
+        UniformStart steadyStart;
+        node >> FileParse::Child{"ConstantInitialConditionsTransient", transientStart};
+        node >> FileParse::Child{"ConstantInitialConditionsSteadyState", steadyStart};
+        options.initialConditions.state =
+          options.calculationMode == CalculationMode::cmSteadyState ? steadyStart : transientStart;
     }
 
     template<typename NodeAdapter>
@@ -242,10 +337,7 @@ namespace ThermFile
         node >> FileParse::Child{"SimulateMoisture", options.simulateMoisture};
         node >> FileParse::Child{"SimulateThermal", options.simulateThermal};
         node >> FileParse::Child{"ModelingOptions", options.modelingOptions};
-        node >> FileParse::Child{"TransientCalculationMethodology", options.transientCalculationMethodology};
-        node >> FileParse::Child{"SteadyStateCalculationMethodology", options.steadyStateCalculationMethodology};
-        node >> FileParse::Child{"ConstantInitialConditionsTransient", options.constantInitialConditionsTransient};
-        node >> FileParse::Child{"ConstantInitialConditionsSteadyState", options.constantInitialConditionsSteadyState};
+        readInitialConditions(node, options);
         node >> FileParse::Child{"EngineParameters", options.engineParameters};
         node >> FileParse::Child{"MeshControl", options.meshControl};
         node >> FileParse::Child{"HeatTransferModelingOptions", options.heatTransferModelingOptions};
@@ -263,10 +355,12 @@ namespace ThermFile
         node << FileParse::Child{"SimulateMoisture", options.simulateMoisture};
         node << FileParse::Child{"SimulateThermal", options.simulateThermal};
         node << FileParse::Child{"ModelingOptions", options.modelingOptions};
-        node << FileParse::Child{"TransientCalculationMethodology", options.transientCalculationMethodology};
-        node << FileParse::Child{"SteadyStateCalculationMethodology", options.steadyStateCalculationMethodology};
-        node << FileParse::Child{"ConstantInitialConditionsTransient", options.constantInitialConditionsTransient};
-        node << FileParse::Child{"ConstantInitialConditionsSteadyState", options.constantInitialConditionsSteadyState};
+        node << FileParse::Child{"InitialConditions", options.initialConditions};
+        // Mirrors for readers of Model.xml version 3 (THERM 8.1), which take the constant
+        // pair of their calculation mode and know no other methodology.
+        const auto mirror{uniformStartOf(options.initialConditions)};
+        node << FileParse::Child{"ConstantInitialConditionsTransient", mirror};
+        node << FileParse::Child{"ConstantInitialConditionsSteadyState", mirror};
         node << FileParse::Child{"EngineParameters", options.engineParameters};
         node << FileParse::Child{"MeshControl", options.meshControl};
         node << FileParse::Child{"HeatTransferModelingOptions", options.heatTransferModelingOptions};

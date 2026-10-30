@@ -60,21 +60,6 @@ namespace ThermFile
         return LibraryCommon::enumToString(calculationMode, calculationModeString);
     }
 
-    std::map<TransientCalculationMethodology, std::string> transientCalculationMethodologyString{
-      {TransientCalculationMethodology::icConstantEverywhere, "Constant everywhere"},
-      {TransientCalculationMethodology::icUseFirstTimestep, "Use first timestep"},
-      {TransientCalculationMethodology::icUseFirstTimestep, "Use first timestep"}};
-
-    TransientCalculationMethodology transientCalculationMethodologyFromString(std::string_view value)
-    {
-        return LibraryCommon::enumFromString(value, transientCalculationMethodologyString);
-    }
-
-    std::string transientCalculationMethodologyToString(TransientCalculationMethodology transientCalculationMethodology)
-    {
-        return LibraryCommon::enumToString(transientCalculationMethodology, transientCalculationMethodologyString);
-    }
-
     std::map<MesherType, std::string> mesherTypeString{{MesherType::QuadTreeMesher, "QuadTree Mesher"},
                                                        {MesherType::Simmetrix_Version_2022, "Simmetrix Version 2022"}};
 
@@ -86,21 +71,6 @@ namespace ThermFile
     std::string mesherTypeToString(MesherType mesherType)
     {
         return LibraryCommon::enumToString(mesherType, mesherTypeString);
-    }
-
-    std::map<SteadyStateCalculationMethodology, std::string> steadyStateCalculationMethodologyString{
-      {SteadyStateCalculationMethodology::ssNoTimeVariable, "No time variable"},
-      {SteadyStateCalculationMethodology::ssFalseTransient, "False transient"}};
-
-    SteadyStateCalculationMethodology steadyStateCalculationMethodologyFromString(std::string_view value)
-    {
-        return LibraryCommon::enumFromString(value, steadyStateCalculationMethodologyString);
-    }
-
-    std::string
-      steadyStateCalculationMethodologyToString(SteadyStateCalculationMethodology steadyStateCalculationMethodology)
-    {
-        return LibraryCommon::enumToString(steadyStateCalculationMethodology, steadyStateCalculationMethodologyString);
     }
 
     std::map<Orientation, std::string> orientationStringMap = {{Orientation::North, "North"},

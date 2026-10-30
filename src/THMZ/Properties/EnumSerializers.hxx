@@ -66,21 +66,6 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
-    inline const NodeAdapter & operator>>(const NodeAdapter & node,
-                                          ThermFile::TransientCalculationMethodology & methodology)
-    {
-        return FileParse::deserializeEnum<NodeAdapter, ThermFile::TransientCalculationMethodology>(
-          node, methodology, ThermFile::transientCalculationMethodologyFromString);
-    }
-
-    template<typename NodeAdapter>
-    inline NodeAdapter & operator<<(NodeAdapter & node, const ThermFile::TransientCalculationMethodology & methodology)
-    {
-        return FileParse::serializeEnum<NodeAdapter, ThermFile::TransientCalculationMethodology>(
-          node, methodology, ThermFile::transientCalculationMethodologyToString);
-    }
-
-    template<typename NodeAdapter>
     inline const NodeAdapter & operator>>(const NodeAdapter & node, ThermFile::MesherType & mesherType)
     {
         return FileParse::deserializeEnum<NodeAdapter, ThermFile::MesherType>(
@@ -92,22 +77,6 @@ namespace ThermFile
     {
         return FileParse::serializeEnum<NodeAdapter, ThermFile::MesherType>(
           node, mesherType, ThermFile::mesherTypeToString);
-    }
-
-    template<typename NodeAdapter>
-    inline const NodeAdapter & operator>>(const NodeAdapter & node,
-                                          ThermFile::SteadyStateCalculationMethodology & methodology)
-    {
-        return FileParse::deserializeEnum<NodeAdapter, ThermFile::SteadyStateCalculationMethodology>(
-          node, methodology, ThermFile::steadyStateCalculationMethodologyFromString);
-    }
-
-    template<typename NodeAdapter>
-    inline NodeAdapter & operator<<(NodeAdapter & node,
-                                    const ThermFile::SteadyStateCalculationMethodology & methodology)
-    {
-        return FileParse::serializeEnum<NodeAdapter, ThermFile::SteadyStateCalculationMethodology>(
-          node, methodology, ThermFile::steadyStateCalculationMethodologyToString);
     }
 
     template<typename NodeAdapter>

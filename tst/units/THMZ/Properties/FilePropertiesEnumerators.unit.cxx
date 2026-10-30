@@ -183,46 +183,6 @@ TEST_F(TestFilePropertiesEnumerators, CalculationModeSerialization)
     EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNodes()));
 }
 
-TEST_F(TestFilePropertiesEnumerators, TransientCalculationMethodologyDeserialization)
-{
-    auto mockData = []() {
-        Helper::MockNode node{"FileProperties"};
-
-        addChildNode(node, "TransientCalculationMethodology", "Use first timestep");
-
-        return node;
-    };
-
-    auto elementNode(mockData());
-    const Helper::MockNodeAdapter adapter{&elementNode};
-
-    ThermFile::TransientCalculationMethodology transientCalculationMethodology;
-    adapter >> FileParse::Child{"TransientCalculationMethodology", transientCalculationMethodology};
-
-    EXPECT_EQ(static_cast<int>(ThermFile::TransientCalculationMethodology::icUseFirstTimestep),
-              static_cast<int>(transientCalculationMethodology));
-}
-
-TEST_F(TestFilePropertiesEnumerators, TransientCalculationMethodologySerialization)
-{
-    ThermFile::TransientCalculationMethodology transientCalculationMethodology{
-      ThermFile::TransientCalculationMethodology::icConstantEverywhere};
-
-    Helper::MockNode elementNode("FileProperties");
-    Helper::MockNodeAdapter adapter{&elementNode};
-    adapter << FileParse::Child{"TransientCalculationMethodology", transientCalculationMethodology};
-
-    auto correctNodes = []() {
-        Helper::MockNode node{"FileProperties"};
-
-        addChildNode(node, "TransientCalculationMethodology", "Constant everywhere");
-
-        return node;
-    };
-
-    EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNodes()));
-}
-
 TEST_F(TestFilePropertiesEnumerators, MesherTypeDeserialization)
 {
     auto mockData = []() {
@@ -254,46 +214,6 @@ TEST_F(TestFilePropertiesEnumerators, MesherTypeSerialization)
         Helper::MockNode node{"FileProperties"};
 
         addChildNode(node, "MesherType", "Simmetrix Version 2022");
-
-        return node;
-    };
-
-    EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNodes()));
-}
-
-TEST_F(TestFilePropertiesEnumerators, SteadyStateCalculationMethodologyDeserialization)
-{
-    auto mockData = []() {
-        Helper::MockNode node{"FileProperties"};
-
-        addChildNode(node, "SteadyStateCalculationMethodology", "No time variable");
-
-        return node;
-    };
-
-    auto elementNode(mockData());
-    const Helper::MockNodeAdapter adapter{&elementNode};
-
-    ThermFile::SteadyStateCalculationMethodology steadyStateCalculationMethodology;
-    adapter >> FileParse::Child{"SteadyStateCalculationMethodology", steadyStateCalculationMethodology};
-
-    EXPECT_EQ(static_cast<int>(ThermFile::SteadyStateCalculationMethodology::ssNoTimeVariable),
-              static_cast<int>(steadyStateCalculationMethodology));
-}
-
-TEST_F(TestFilePropertiesEnumerators, SteadyStateCalculationMethodologySerialization)
-{
-    ThermFile::SteadyStateCalculationMethodology steadyStateCalculationMethodology{
-      ThermFile::SteadyStateCalculationMethodology::ssFalseTransient};
-
-    Helper::MockNode elementNode("FileProperties");
-    Helper::MockNodeAdapter adapter{&elementNode};
-    adapter << FileParse::Child{"SteadyStateCalculationMethodology", steadyStateCalculationMethodology};
-
-    auto correctNodes = []() {
-        Helper::MockNode node{"FileProperties"};
-
-        addChildNode(node, "SteadyStateCalculationMethodology", "False transient");
 
         return node;
     };
