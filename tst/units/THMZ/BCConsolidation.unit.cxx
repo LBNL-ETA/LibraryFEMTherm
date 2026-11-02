@@ -108,6 +108,7 @@ TEST(TestBCConsolidationMigration, MinimalSteadyArchiveMigrates)
 TEST(TestBCConsolidationMigration, TransientTypeRecordBindsWithoutAnEmbeddedRecord)
 {
     ThermFile::ThermModel model;
+    model.properties.calculationOptions.calculationMode = ThermFile::CalculationMode::cmTransient;
     ThermFile::Boundary face{};
     face.name = "Project:Model:Fixed film coefficient - Indoor";
     face.transientRecordData = ThermFile::TransientData{};
@@ -117,5 +118,27 @@ TEST(TestBCConsolidationMigration, TransientTypeRecordBindsWithoutAnEmbeddedReco
     const ThermFile::Migration::BCConsolidation::LegacyBCCapture emptyCapture;
     const auto migrated{ThermFile::Migration::BCConsolidation::applyToModel(emptyCapture, model)};
     EXPECT_EQ(migrated.boundaryConditions[0].bcUUID, std::optional<std::string>{"8a0494b0-d5ba-11ea-87d0-0242ac130003"});
+    EXPECT_TRUE(migrated.boundaryConditions[0].transientRecordData.has_value());
+}
+
+//! THERM wrote a face's transient block into steady-state files too, so a steady face may
+//! name a transient type record it never ran under. In a steady-state model the steady
+//! record's name is the live binding; the transient block is carried along, not bound
+//! (2026-11-02: a steady archive opened with every such face on "Fixed film coefficient -
+//! Outdoor", which cannot run in steady state).
+TEST(TestBCConsolidationMigration, ASteadyFaceBindsItsSteadyRecordWhateverTransientBlockItCarries)
+{
+    const auto legacy{ThermFile::Migration::BCConsolidation::capture(legacySteadyLibraryXml(), "")};
+
+    ThermFile::ThermModel model;
+    model.properties.calculationOptions.calculationMode = ThermFile::CalculationMode::cmSteadyState;
+    ThermFile::Boundary face{};
+    face.name = "Exterior";
+    face.transientRecordData = ThermFile::TransientData{};
+    face.transientRecordData->typeRecordUUID = "8a0494b0-d5ba-11ea-87d0-0242ac130003";
+    model.boundaryConditions.push_back(face);
+
+    const auto migrated{ThermFile::Migration::BCConsolidation::applyToModel(legacy, model)};
+    EXPECT_EQ(migrated.boundaryConditions[0].bcUUID, std::optional<std::string>{"11111111-2222-3333-4444-555555555555"});
     EXPECT_TRUE(migrated.boundaryConditions[0].transientRecordData.has_value());
 }

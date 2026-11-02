@@ -42,18 +42,25 @@ namespace ThermFile::Migration::BCConsolidation
             }
         }
 
-        //! A transient face names its type record by UUID, and that UUID is the record's
-        //! identity in the unified library too, whether the archive embedded the record or
-        //! the record is one THERM ships ("Fixed film coefficient - Indoor" and the like):
-        //! the binding is carried over as it is, and resolves wherever the record is.
-        void bindSegment(const LegacyBCCapture & legacy, ThermFile::Boundary & segment)
+        //! A legacy face carries both bindings at once: the steady record's name, and the
+        //! transient type record's UUID when the face was ever given one. THERM wrote the
+        //! transient block into steady-state files too, so the file's calculation mode says
+        //! which binding is live. A transient face names its type record by UUID, and that
+        //! UUID is the record's identity in the unified library too, whether the archive
+        //! embedded the record or the record is one THERM ships ("Fixed film coefficient -
+        //! Indoor" and the like): the binding is carried over as it is.
+        void bindSegment(const LegacyBCCapture & legacy,
+                         const ThermFile::CalculationMode mode,
+                         ThermFile::Boundary & segment)
         {
             if(segment.bcUUID.has_value())
             {
                 return;
             }
             const auto & transient{segment.transientRecordData};
-            if(transient.has_value())
+            const bool transientFace{mode == ThermFile::CalculationMode::cmTransient
+                                     && transient.has_value()};
+            if(transientFace)
             {
                 if(!transient->typeRecordUUID.empty())
                 {
@@ -93,9 +100,10 @@ namespace ThermFile::Migration::BCConsolidation
 
     ThermFile::ThermModel applyToModel(const LegacyBCCapture & legacy, ThermFile::ThermModel model)
     {
+        const auto mode{model.properties.calculationOptions.calculationMode};
         for(auto & segment : model.boundaryConditions)
         {
-            bindSegment(legacy, segment);
+            bindSegment(legacy, mode, segment);
         }
 
         return model;

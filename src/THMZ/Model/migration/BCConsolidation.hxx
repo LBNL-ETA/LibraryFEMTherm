@@ -36,12 +36,13 @@ namespace ThermFile::Migration::BCConsolidation
     [[nodiscard]] LegacyBCCapture captureFromArchive(const std::string & zipFileName);
 
     //! \brief Model-side migration: returns a copy of the input model where every segment
-    //! whose unified record binding is absent gets it filled from the legacy binding --
-    //! bcUUID from the steady record name, or the transient type-record UUID as it is, since
-    //! that UUID is the record's identity in the unified library whether the archive embeds
-    //! the record or THERM ships it. Legacy fields stay in place; a steady name with no
-    //! captured counterpart is left untouched. Idempotent: a model already carrying unified
-    //! bindings is a no-op.
+    //! whose unified record binding is absent gets it filled from the legacy binding the
+    //! model's calculation mode makes live -- bcUUID from the steady record name in a
+    //! steady-state model, or the transient type-record UUID as it is in a transient model,
+    //! since that UUID is the record's identity in the unified library whether the archive
+    //! embeds the record or THERM ships it. Legacy fields stay in place; a steady name with
+    //! no captured counterpart is left untouched. Idempotent: a model already carrying
+    //! unified bindings is a no-op.
     [[nodiscard]] ThermFile::ThermModel applyToModel(const LegacyBCCapture & legacy,
                                                      ThermFile::ThermModel model);
 }   // namespace ThermFile::Migration::BCConsolidation
