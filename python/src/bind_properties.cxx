@@ -266,13 +266,51 @@ void bind_properties(py::module_ & mod)
                 try { exp.crossSection = val.cast<ThermFile::OtherCrossSectionType>(); return; } catch(py::cast_error &) {}
                 throw py::type_error("Expected WindowCrossSectionType, OpaqueCrossSectionType, or OtherCrossSectionType");
             })
-        .def_readwrite("assembly_type", &ThermFile::ExposureType::assemblyType);
+        .def_property(
+          "assembly_type",
+          [](const ThermFile::ExposureType & exp) -> py::object {
+              if(!exp.assemblyType.has_value())
+              {
+                  return py::none();
+              }
+              return std::visit([](const auto & val) -> py::object { return py::cast(val); }, *exp.assemblyType);
+          },
+          [](ThermFile::ExposureType & exp, py::object val) {
+              if(val.is_none())
+              {
+                  exp.assemblyType = std::nullopt;
+                  return;
+              }
+              try { exp.assemblyType = val.cast<ThermFile::WindowAssemblyType>(); return; } catch(py::cast_error &) {}
+              try { exp.assemblyType = val.cast<ThermFile::OpaqueAssemblyType>(); return; } catch(py::cast_error &) {}
+              throw py::type_error("Expected WindowAssemblyType, OpaqueAssemblyType, or None");
+          },
+          "The assembly the cross section belongs to: a WindowAssemblyType for a window or transparent "
+          "facade, an OpaqueAssemblyType for an opaque facade, None for anything else.");
+
+    py::class_<ThermFile::BuildingData>(mod, "BuildingData",
+                                        "The building the cross section belongs to, in metres: one pair per "
+                                        "file, read by the Montazeri convection model alone.")
+        .def(py::init<>())
+        .def(py::init([](const double width, const double height) {
+                 return ThermFile::BuildingData{.width = width, .height = height};
+             }),
+             py::arg("width"),
+             py::arg("height"))
+        .def_readwrite("width", &ThermFile::BuildingData::width)
+        .def_readwrite("height", &ThermFile::BuildingData::height)
+        .def("__eq__", [](const ThermFile::BuildingData & lhs, const ThermFile::BuildingData & rhs) { return lhs == rhs; })
+        .def("__repr__", [](const ThermFile::BuildingData & building) {
+            return "BuildingData(width=" + std::to_string(building.width) + ", height=" + std::to_string(building.height)
+                   + ")";
+        });
 
     py::class_<ThermFile::ModelExposure>(mod, "ModelExposure")
         .def(py::init<>())
         .def_readwrite("model_orientation", &ThermFile::ModelExposure::modelOrientation)
         .def_readwrite("gravity_orientation", &ThermFile::ModelExposure::gravityOrientation)
-        .def_readwrite("exposure_type", &ThermFile::ModelExposure::exposureType);
+        .def_readwrite("exposure_type", &ThermFile::ModelExposure::exposureType)
+        .def_readwrite("building", &ThermFile::ModelExposure::building);
 
     py::class_<ThermFile::Miscellaneous>(mod, "Miscellaneous")
         .def(py::init<>())

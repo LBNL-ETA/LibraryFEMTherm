@@ -23,7 +23,7 @@ namespace ThermFile
 
     struct ThermModel
     {
-        std::string version{"4"};
+        std::string version{"5"};
         bool calculationReady{false};
         Preferences preferences;
         Properties properties;

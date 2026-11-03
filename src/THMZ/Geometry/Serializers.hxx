@@ -121,24 +121,6 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
-    const NodeAdapter & operator>>(const NodeAdapter & node, BuildingData & building)
-    {
-        node >> FileParse::Child{"Width", building.width};
-        node >> FileParse::Child{"Height", building.height};
-
-        return node;
-    }
-
-    template<typename NodeAdapter>
-    NodeAdapter & operator<<(NodeAdapter & node, const BuildingData & building)
-    {
-        node << FileParse::Child{"Width", building.width};
-        node << FileParse::Child{"Height", building.height};
-
-        return node;
-    }
-
-    template<typename NodeAdapter>
     const NodeAdapter & operator>>(const NodeAdapter & node, ThermalEmissionProperties & thermalEmissionProperties)
     {
         node >> FileParse::Child{"Emissivity", thermalEmissionProperties.emissivity};
@@ -182,7 +164,6 @@ namespace ThermFile
         node >> FileParse::Child{"UUID", transientData.typeRecordUUID};
         node >> FileParse::Child{"TimestepFileName", transientData.transientFileName};
         node >> FileParse::Child{"Surface", transientData.surfaceData};
-        node >> FileParse::Child{"Building", transientData.buildingData};
 
         return node;
     }
@@ -193,7 +174,6 @@ namespace ThermFile
         node << FileParse::Child{"UUID", transientData.typeRecordUUID};
         node << FileParse::Child{"TimestepFileName", transientData.transientFileName};
         node << FileParse::Child{"Surface", transientData.surfaceData};
-        node << FileParse::Child{"Building", transientData.buildingData};
 
         return node;
     }

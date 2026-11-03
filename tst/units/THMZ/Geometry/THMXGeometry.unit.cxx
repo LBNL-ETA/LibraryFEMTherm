@@ -192,33 +192,6 @@ TEST_F(TestTHMXGeometry, SurfaceDataSerialization)
     EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNode));
 }
 
-TEST_F(TestTHMXGeometry, BuildingDataDeserialization)
-{
-    auto node{Helper::generateBuildingDataNode({"45", "2000"})};
-    const Helper::MockNodeAdapter adapter{&node};
-
-    ThermFile::BuildingData buildingData;
-    adapter >> buildingData;
-
-    ThermFile::BuildingData correctBuildingData{45.0, 2000.0};
-
-    Helper::expect_near(correctBuildingData, buildingData, 1e-6);
-}
-
-TEST_F(TestTHMXGeometry, BuildingDataSerialization)
-{
-    ThermFile::BuildingData buildingData{55.0, 1890.0};
-
-    Helper::MockNode node{"Building"};
-    Helper::MockNodeAdapter adapter{&node};
-
-    adapter << buildingData;
-
-    auto correctNode{Helper::generateBuildingDataNode({"55", "1890"})};
-
-    EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNode));
-}
-
 TEST_F(TestTHMXGeometry, ThermalEmissionPropertiesDeserialization)
 {
     auto node{Helper::generateThermalEmissionPropertiesNode({"0.9", "20", "true"})};

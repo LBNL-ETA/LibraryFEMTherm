@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 
+#include <algorithm>
 #include <variant>
 
 #include "THMZ/Properties/Serializers.hxx"
@@ -211,6 +212,52 @@ TEST_F(TestFileProperties, HeatTransferModelingOptionsSerialization)
     Helper::MockNode correctNodes{Helper::heatTransferModelingOptionsNode({"false", "-0.05", "34", "false"})};
 
     EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNodes));
+}
+
+TEST_F(TestFileProperties, ModelExposureRoundTripsTheWindowAssemblyAndTheBuilding)
+{
+    ThermFile::ModelExposure exposure;
+    exposure.modelOrientation = 45.0;
+    exposure.exposureType.modelPurpose = ThermFile::ModelPurpose::Window_TransparentFacade;
+    exposure.exposureType.crossSection = ThermFile::WindowCrossSectionType::VerticalMeetingRail;
+    exposure.exposureType.assemblyType = ThermFile::WindowAssemblyType::CurtainwallGlazedWall;
+    exposure.building = ThermFile::BuildingData{.width = 32.5, .height = 11.0};
+
+    Helper::MockNode node{"ModelExposure"};
+    Helper::MockNodeAdapter adapter{&node};
+    adapter << exposure;
+
+    ThermFile::ModelExposure read;
+    adapter >> read;
+
+    EXPECT_DOUBLE_EQ(read.modelOrientation, 45.0);
+    EXPECT_TRUE(read.exposureType.crossSection
+                == ThermFile::CrossSectionType{ThermFile::WindowCrossSectionType::VerticalMeetingRail});
+    ASSERT_TRUE(read.exposureType.assemblyType.has_value());
+    EXPECT_TRUE(read.exposureType.assemblyType.value()
+                == ThermFile::AssemblyType{ThermFile::WindowAssemblyType::CurtainwallGlazedWall});
+    EXPECT_TRUE(read.building == exposure.building);
+}
+
+TEST_F(TestFileProperties, ModelExposureWithoutABuildingReadsTheDefaults)
+{
+    // An archive from before Model version 5 carries no Building under ModelExposure.
+    ThermFile::ModelExposure written;
+    written.exposureType.modelPurpose = ThermFile::ModelPurpose::OpaqueFacade;
+    written.exposureType.crossSection = ThermFile::OpaqueCrossSectionType::Header;
+    written.exposureType.assemblyType = ThermFile::OpaqueAssemblyType::Roof;
+    written.building = ThermFile::BuildingData{.width = 1.0, .height = 1.0};
+
+    Helper::MockNode node{"ModelExposure"};
+    Helper::MockNodeAdapter adapter{&node};
+    adapter << written;
+    std::erase_if(node.child, [](const Helper::MockNode & child) { return child.tag == "Building"; });
+
+    ThermFile::ModelExposure read;
+    adapter >> read;
+
+    EXPECT_TRUE(read.exposureType.assemblyType.value() == ThermFile::AssemblyType{ThermFile::OpaqueAssemblyType::Roof});
+    EXPECT_TRUE(read.building == ThermFile::BuildingData{});
 }
 
 TEST_F(TestFileProperties, ModelOrientationDeserialization)

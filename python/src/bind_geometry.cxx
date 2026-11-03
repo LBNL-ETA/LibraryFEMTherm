@@ -48,11 +48,6 @@ void bind_geometry(py::module_ & mod)
         .def_readwrite("tilt", &ThermFile::SurfaceData::tilt)
         .def_readwrite("length", &ThermFile::SurfaceData::length);
 
-    py::class_<ThermFile::BuildingData>(mod, "BuildingData")
-        .def(py::init<>())
-        .def_readwrite("width", &ThermFile::BuildingData::width)
-        .def_readwrite("height", &ThermFile::BuildingData::height);
-
     py::class_<ThermFile::ThermalEmissionProperties>(mod, "ThermalEmissionProperties")
         .def(py::init<>())
         .def_readwrite("emissivity", &ThermFile::ThermalEmissionProperties::emissivity)
@@ -68,8 +63,7 @@ void bind_geometry(py::module_ & mod)
         .def(py::init<>())
         .def_readwrite("type_record_uuid", &ThermFile::TransientData::typeRecordUUID)
         .def_readwrite("transient_file_name", &ThermFile::TransientData::transientFileName)
-        .def_readwrite("surface_data", &ThermFile::TransientData::surfaceData)
-        .def_readwrite("building_data", &ThermFile::TransientData::buildingData);
+        .def_readwrite("surface_data", &ThermFile::TransientData::surfaceData);
 
     py::class_<ThermFile::Boundary>(mod, "Boundary")
         .def(py::init<>())

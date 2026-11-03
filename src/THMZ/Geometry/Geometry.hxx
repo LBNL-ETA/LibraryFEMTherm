@@ -92,15 +92,6 @@ namespace ThermFile
         double length{1000};
     };
 
-    //! \brief Represents geometry specification that are used in certain boundary condition types.
-    //! @width - width of the boundary condition surface. [m]
-    //! @height - height of the boundary condition surface. [m]
-    struct BuildingData
-    {
-        double width{20};
-        double height{5};
-    };
-
     //! \brief Represents thermal emission properties that are used in certain boundary condition types.
     //! @emissivity - emissivity of the boundary condition surface.
     //! @temperature - temperature of the boundary condition surface.
@@ -129,7 +120,6 @@ namespace ThermFile
         std::string typeRecordUUID;
         std::string transientFileName;
         std::optional<SurfaceData> surfaceData;
-        std::optional<BuildingData> buildingData;
     };
 
     //! \brief Represents boundary condition in THERM model.

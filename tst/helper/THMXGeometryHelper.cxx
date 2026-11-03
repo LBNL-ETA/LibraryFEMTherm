@@ -56,14 +56,6 @@ namespace Helper
         EXPECT_NEAR(expected.length, actual.length, tolerance);
     }
 
-    void expect_near(const ThermFile::BuildingData & expected,
-                     const ThermFile::BuildingData & actual,
-                     const double tolerance)
-    {
-        EXPECT_NEAR(expected.width, actual.width, tolerance);
-        EXPECT_NEAR(expected.height, actual.height, tolerance);
-    }
-
     void expect_near(const ThermFile::ThermalEmissionProperties & expected,
                      const ThermFile::ThermalEmissionProperties & actual,
                      const double tolerance)
@@ -88,11 +80,6 @@ namespace Helper
         if(expected.surfaceData.has_value() && actual.surfaceData.has_value())
         {
             expect_near(*expected.surfaceData, *actual.surfaceData, tolerance);
-        }
-        ASSERT_EQ(expected.buildingData.has_value(), actual.buildingData.has_value());
-        if(expected.buildingData.has_value() && actual.buildingData.has_value())
-        {
-            expect_near(*expected.buildingData, *actual.buildingData, tolerance);
         }
     }
 
@@ -234,19 +221,6 @@ namespace Helper
         return node;
     }
 
-    MockBuildingData::MockBuildingData(std::string width, std::string height) :
-        width(std::move(width)), height(std::move(height))
-    {}
-
-    Helper::MockNode generateBuildingDataNode(MockBuildingData && buildingData)
-    {
-        Helper::MockNode node{"Building"};
-        addChildNode(node, "Width", std::move(buildingData.width));
-        addChildNode(node, "Height", std::move(buildingData.height));
-
-        return node;
-    }
-
     MockThermalEmissionProperties::MockThermalEmissionProperties(std::string emissivity,
                                                                  std::string temperature,
                                                                  std::string useGlobalEmissivity) :
@@ -280,12 +254,10 @@ namespace Helper
 
     MockTransientData::MockTransientData(std::string uuid,
                                          std::string timestepFileName,
-                                         MockSurfaceData && surfaceData,
-                                         MockBuildingData && buildingData) :
+                                         MockSurfaceData && surfaceData) :
         uuid(std::move(uuid)),
         timestepFileName(std::move(timestepFileName)),
-        surfaceData(std::move(surfaceData)),
-        buildingData(std::move(buildingData))
+        surfaceData(std::move(surfaceData))
     {}
 
     Helper::MockNode generateTransientDataNode(MockTransientData && transientData)
@@ -295,8 +267,6 @@ namespace Helper
         addChildNode(node, "TimestepFileName", std::move(transientData.timestepFileName));
         auto surfaceNode = generateSurfaceDataNode(std::move(transientData.surfaceData));
         addChildNode(node, surfaceNode);
-        auto buildingNode = generateBuildingDataNode(std::move(transientData.buildingData));
-        addChildNode(node, buildingNode);
 
         return node;
     }

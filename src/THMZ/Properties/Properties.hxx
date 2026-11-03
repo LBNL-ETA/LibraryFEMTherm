@@ -167,25 +167,41 @@ namespace ThermFile
 
     using CrossSectionType = std::variant<WindowCrossSectionType, OpaqueCrossSectionType, OtherCrossSectionType>;
 
+    //! \brief The assembly a cross section belongs to: a window assembly for a window or
+    //! transparent facade, a wall or roof for an opaque facade, none for anything else.
+    using AssemblyType = std::variant<WindowAssemblyType, OpaqueAssemblyType>;
+
     //! \brief Base class to keep data for assembly and cross-section type.
     struct ExposureType
     {
         ModelPurpose modelPurpose{ModelPurpose::Window_TransparentFacade};
         CrossSectionType crossSection{WindowCrossSectionType::Sill};
-        std::optional<OpaqueAssemblyType> assemblyType{std::nullopt};
+        std::optional<AssemblyType> assemblyType{WindowAssemblyType::SingleLite};
+    };
+
+    //! \brief The building the cross section belongs to, in metres: one pair per file. Only
+    //! the Montazeri convection model reads it, to pick its windward, leeward, side or roof
+    //! coefficient from the model orientation and the wind direction.
+    struct BuildingData
+    {
+        double width{20};
+        double height{5};
+
+        [[nodiscard]] friend bool operator==(const BuildingData & lhs, const BuildingData & rhs) = default;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////
     /// ModelExposure
     ////////////////////////////////////////////////////////////////////////////////////
 
-    //! \brief Keeps all necessary data to used on Calculation Option tab in Therm File Properties screen
+    //! \brief Keeps all necessary data to used on Model Details tab in Therm File Properties screen
     struct ModelExposure
     {
         double modelOrientation{0.0};
         Gravity::Orientation gravityOrientation{Gravity::Orientation::Down};
 
         ExposureType exposureType;
+        BuildingData building;
     };
 
     void setGravityOrientation(const Geometry::GravityVector & vector, ModelExposure & modelExposure);

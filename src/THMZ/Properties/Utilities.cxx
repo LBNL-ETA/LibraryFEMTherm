@@ -22,11 +22,14 @@ namespace ThermFile
     ExposureType createExposureType(ThermFile::ModelPurpose model)
     {
         using CrossSectionVariant = std::variant<WindowCrossSectionType, OpaqueCrossSectionType, OtherCrossSectionType>;
-        using AssemblyTypeOptional = std::optional<OpaqueAssemblyType>;
+        using AssemblyTypeOptional = std::optional<AssemblyType>;
 
+        // A window starts as a single lite at its sill, an opaque facade as a wall at its
+        // sill plate; anything else has no assembly.
         static const std::map<ThermFile::ModelPurpose, std::pair<CrossSectionVariant, AssemblyTypeOptional>>
           exposureParamsMap = {
-            {ThermFile::ModelPurpose::Window_TransparentFacade, {WindowCrossSectionType::Sill, std::nullopt}},
+            {ThermFile::ModelPurpose::Window_TransparentFacade,
+             {WindowCrossSectionType::Sill, WindowAssemblyType::SingleLite}},
             {ThermFile::ModelPurpose::OpaqueFacade, {OpaqueCrossSectionType::SillPlate, OpaqueAssemblyType::Wall}},
             {ThermFile::ModelPurpose::Other, {OtherCrossSectionType::GeneralCrossSection, std::nullopt}}};
 

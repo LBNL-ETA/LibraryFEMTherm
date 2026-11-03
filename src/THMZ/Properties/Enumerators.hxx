@@ -150,6 +150,37 @@ namespace ThermFile
     //! \return String representation of opaque assembly type
     std::string opaqueAssemblyTypeToString(OpaqueAssemblyType opaqueAssemblyType);
 
+    //! \brief The assembly a window or transparent facade cross section belongs to. Each
+    //! assembly admits its own cross sections, see windowCrossSectionsFor.
+    enum class WindowAssemblyType
+    {
+        Unknown,
+        SingleLite,
+        HorizontalSliderCasementDual,
+        CurtainwallGlazedWall,
+        VerticalSliderProjectingDual
+    };
+
+    //! \brief Returns all available window assembly types
+    std::vector<std::string> windowAssemblyTypeStrings();
+
+    //! \brief Returns window assembly type from string
+    //! \param value String representation of window assembly type
+    //! \return Window assembly type
+    WindowAssemblyType windowAssemblyTypeFromString(std::string_view value);
+
+    //! \brief Returns string representation of window assembly type
+    //! \param windowAssemblyType Window assembly type
+    //! \return String representation of window assembly type
+    std::string windowAssemblyTypeToString(WindowAssemblyType windowAssemblyType);
+
+    //! \brief The cross sections a window assembly admits: sill, jamb and head for every
+    //! assembly, plus the meeting rail of a dual assembly (vertical for a horizontal slider
+    //! or casement and for a curtainwall, horizontal for a vertical slider or projecting).
+    //! \param windowAssemblyType Window assembly type
+    //! \return The admitted cross sections, in the order a list shows them
+    std::vector<WindowCrossSectionType> windowCrossSectionsFor(WindowAssemblyType windowAssemblyType);
+
     enum class OpaqueCrossSectionType
     {
         Unknown,

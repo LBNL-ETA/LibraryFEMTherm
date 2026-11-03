@@ -124,6 +124,20 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, ThermFile::WindowAssemblyType & windowAssemblyType)
+    {
+        return FileParse::deserializeEnum<NodeAdapter, ThermFile::WindowAssemblyType>(
+          node, windowAssemblyType, ThermFile::windowAssemblyTypeFromString);
+    }
+
+    template<typename NodeAdapter>
+    inline NodeAdapter & operator<<(NodeAdapter & node, const ThermFile::WindowAssemblyType & windowAssemblyType)
+    {
+        return FileParse::serializeEnum<NodeAdapter, ThermFile::WindowAssemblyType>(
+          node, windowAssemblyType, ThermFile::windowAssemblyTypeToString);
+    }
+
+    template<typename NodeAdapter>
     inline const NodeAdapter & operator>>(const NodeAdapter & node,
                                           ThermFile::OpaqueCrossSectionType & opaqueCrossSection)
     {

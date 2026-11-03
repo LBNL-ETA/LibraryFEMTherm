@@ -19,9 +19,6 @@ namespace Helper
 
     void expect_near(const ThermFile::SurfaceData & expected, const ThermFile::SurfaceData & actual, double tolerance);
 
-    void
-      expect_near(const ThermFile::BuildingData & expected, const ThermFile::BuildingData & actual, double tolerance);
-
     void expect_near(const ThermFile::ThermalEmissionProperties & expected,
                      const ThermFile::ThermalEmissionProperties & actual,
                      double tolerance);
@@ -100,16 +97,6 @@ namespace Helper
 
     Helper::MockNode generateSurfaceDataNode(MockSurfaceData && surfaceData);
 
-    struct MockBuildingData
-    {
-        std::string width;
-        std::string height;
-
-        [[maybe_unused]] MockBuildingData(std::string width, std::string height);
-    };
-
-    Helper::MockNode generateBuildingDataNode(MockBuildingData && buildingData);
-
     struct MockThermalEmissionProperties
     {
         std::string emissivity;
@@ -138,13 +125,11 @@ namespace Helper
         std::string uuid;
         std::string timestepFileName;
         MockSurfaceData surfaceData;
-        MockBuildingData buildingData;
 
 
         [[maybe_unused]] MockTransientData(std::string uuid,
                                            std::string timestepFileName,
-                                           MockSurfaceData && surfaceData,
-                                           MockBuildingData && buildingData);
+                                           MockSurfaceData && surfaceData);
     };
 
     Helper::MockNode generateTransientDataNode(MockTransientData && transientData);

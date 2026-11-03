@@ -52,6 +52,18 @@
 			<xs:enumeration value="Roof"/>
 		</xs:restriction>
 	</xs:simpleType>
+	<!-- The assembly a window or transparent facade cross section belongs to (Model version 5).
+	     Each admits its own cross sections: sill, jamb and head for every assembly, plus the
+	     vertical meeting rail of a horizontal slider/casement or a curtainwall and the horizontal
+	     meeting rail of a vertical slider/projecting. -->
+	<xs:simpleType name="WindowAssemblyType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Single lite"/>
+			<xs:enumeration value="Horizontal Slider/Casement - Dual"/>
+			<xs:enumeration value="Curtainwall/Glazed Wall"/>
+			<xs:enumeration value="Vertical Slider/Projecting - Dual"/>
+		</xs:restriction>
+	</xs:simpleType>
 	<!-- Enumeration for WindowCrossSectionType -->
 	<xs:simpleType name="WindowCrossSectionType">
 		<xs:restriction base="xs:string">
@@ -272,14 +284,30 @@
 				<xs:element name="OpaqueCrossSection" type="OpaqueCrossSectionType"/>
 				<xs:element name="OtherCrossSection" type="OtherCrossSectionType"/>
 			</xs:choice>
-			<xs:element name="AssemblyType" type="OpaqueAssemblyType" minOccurs="0"/>
+			<!-- The assembly, when the purpose has one: Assembly (a wall or roof) for an opaque
+			     facade, as every version wrote it; WindowAssembly for a window or transparent
+			     facade since Model version 5. -->
+			<xs:choice minOccurs="0">
+				<xs:element name="WindowAssembly" type="WindowAssemblyType"/>
+				<xs:element name="Assembly" type="OpaqueAssemblyType"/>
+			</xs:choice>
 		</xs:sequence>
+	</xs:complexType>
+	<!-- The building the cross section belongs to, in metres: one pair per file (Model
+	     version 5; before that each transient boundary carried its own pair, which is not
+	     carried over). Only the Montazeri convection model reads it. -->
+	<xs:complexType name="BuildingType">
+		<xs:all>
+			<xs:element name="Width" type="xs:double" default="20"/>
+			<xs:element name="Height" type="xs:double" default="5"/>
+		</xs:all>
 	</xs:complexType>
 	<xs:complexType name="ModelExposureType">
 		<xs:all>
 			<xs:element name="ModelOrientation" type="xs:double" default="0" minOccurs="0"/>
 			<xs:element name="GravityOrientation" type="GravityOrientationType"/>
 			<xs:element name="Exposure" type="ExposureType"/>
+			<xs:element name="Building" type="BuildingType" minOccurs="0"/>
 		</xs:all>
 	</xs:complexType>
 	<xs:complexType name="MiscellaneousType">

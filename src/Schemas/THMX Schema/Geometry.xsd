@@ -108,12 +108,13 @@
 			</xs:element>
 		</xs:sequence>
 	</xs:complexType>
-	<xs:complexType name="GeometrySpecification">
+	<!-- The surface a transient boundary presents to the convection correlations: its tilt
+	     in degrees and its length in millimetres. The building dimensions moved to
+	     ModelExposure in Model version 5. -->
+	<xs:complexType name="SurfaceData">
 		<xs:all>
 			<xs:element name="Tilt" type="xs:double" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="length" type="xs:double" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="BuildingWidth" type="xs:double" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="BuildingHeight" type="xs:double" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Length" type="xs:double" minOccurs="1" maxOccurs="1"/>
 		</xs:all>
 	</xs:complexType>
 	<xs:complexType name="ThermalEmissionProperties">
@@ -133,23 +134,8 @@
 		<xs:all>
 			<xs:element name="UUID" type="xs:string" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="TimestepFileName" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="Surface" type="SurfaceData" minOccurs="0" maxOccurs="1"/>
 		</xs:all>
-	</xs:complexType>
-	<xs:complexType name="TransientBCData">
-		<xs:sequence>
-			<xs:element name="BCTypeName" type="xs:string" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="TransientFileName" type="xs:string" minOccurs="1" maxOccurs="1"/>
-			<xs:element name="SurfaceAndBuildData" minOccurs="0" maxOccurs="1">
-				<xs:complexType>
-					<xs:all>
-						<xs:element name="SurfaceTilt" type="xs:double" minOccurs="1" maxOccurs="1"/>
-						<xs:element name="SurfaceLength" type="xs:double" minOccurs="1" maxOccurs="1"/>
-						<xs:element name="BuildingWidth" type="xs:double" minOccurs="1" maxOccurs="1"/>
-						<xs:element name="BuildingHeight" type="xs:double" minOccurs="1" maxOccurs="1"/>
-					</xs:all>
-				</xs:complexType>
-			</xs:element>
-		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="BoundaryConditionGeometry">
 		<xs:sequence>
@@ -176,10 +162,8 @@
 			<xs:element name="IsIlluminated" type="xs:boolean" minOccurs="0" maxOccurs="1"/>
 			<xs:element name="MaterialSide" type="MaterialSide" minOccurs="0" maxOccurs="1"/>
 			<xs:element name="TransientData" type="TransientData" minOccurs="0" maxOccurs="1"/>
-			<xs:element name="GeometrySpecification" type="GeometrySpecification" minOccurs="0" maxOccurs="1"/>
 			<xs:element name="EdgeID" type="xs:integer" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="EnclosureNumber" type="xs:integer" minOccurs="0" maxOccurs="1"/>
-			<xs:element name="Transient" type="TransientBCData" minOccurs="0" maxOccurs="1"/>
 			<xs:element name="Type" type="SurfaceType" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="Color" type="xs:string" minOccurs="1" maxOccurs="1"/>
 			<xs:element name="Status" type="xs:integer" minOccurs="1" maxOccurs="1"/>

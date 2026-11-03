@@ -402,7 +402,9 @@ namespace ThermFile
           node,
           {"WindowCrossSection", "OpaqueCrossSection", "OtherCrossSection"},
           exposureType.crossSection);
-        node >> FileParse::Child{"Assembly", exposureType.assemblyType};
+        // "Assembly" is the element every archive up to Model version 4 wrote for a wall or
+        // roof; the window assembly came with version 5 under its own name.
+        FileParse::deserializeOptionalVariant(node, {"WindowAssembly", "Assembly"}, exposureType.assemblyType);
 
         return node;
     }
@@ -415,7 +417,25 @@ namespace ThermFile
           node,
           {"WindowCrossSection", "OpaqueCrossSection", "OtherCrossSection"},
           exposureType.crossSection);
-        node << FileParse::Child{"Assembly", exposureType.assemblyType};
+        FileParse::serializeOptionalVariant(node, {"WindowAssembly", "Assembly"}, exposureType.assemblyType);
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, BuildingData & building)
+    {
+        node >> FileParse::Child{"Width", building.width};
+        node >> FileParse::Child{"Height", building.height};
+
+        return node;
+    }
+
+    template<typename NodeAdapter>
+    inline NodeAdapter & operator<<(NodeAdapter & node, const BuildingData & building)
+    {
+        node << FileParse::Child{"Width", building.width};
+        node << FileParse::Child{"Height", building.height};
 
         return node;
     }
@@ -426,6 +446,9 @@ namespace ThermFile
         node >> FileParse::Child{"ModelOrientation", exposure.modelOrientation};
         node >> FileParse::Child{"GravityOrientation", exposure.gravityOrientation};
         node >> FileParse::Child{"Exposure", exposure.exposureType};
+        // Absent before Model version 5, when the dimensions sat on each transient boundary;
+        // those are not carried over, an older file opens with the defaults.
+        node >> FileParse::Child{"Building", exposure.building};
 
         return node;
     }
@@ -436,6 +459,7 @@ namespace ThermFile
         node << FileParse::Child{"ModelOrientation", exposure.modelOrientation};
         node << FileParse::Child{"GravityOrientation", exposure.gravityOrientation};
         node << FileParse::Child{"Exposure", exposure.exposureType};
+        node << FileParse::Child{"Building", exposure.building};
 
         return node;
     }

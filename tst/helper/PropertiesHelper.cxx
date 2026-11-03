@@ -109,7 +109,7 @@ namespace Helper
         ASSERT_EQ(expected.assemblyType.has_value(), actual.assemblyType.has_value());
         if(expected.assemblyType.has_value() && actual.assemblyType.has_value())
         {
-            EXPECT_EQ(expected.assemblyType.value(), actual.assemblyType.value());
+            EXPECT_TRUE(expected.assemblyType.value() == actual.assemblyType.value());
         }
     }
 

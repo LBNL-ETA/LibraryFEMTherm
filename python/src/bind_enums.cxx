@@ -1,4 +1,5 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include "THMZ/Geometry/Enumerators.hxx"
 #include "THMZ/Preferences/Enumerators.hxx"
@@ -122,6 +123,23 @@ void bind_enums(py::module_ & mod)
         .value("Unknown", ThermFile::OpaqueAssemblyType::Unknown)
         .value("Wall", ThermFile::OpaqueAssemblyType::Wall)
         .value("Roof", ThermFile::OpaqueAssemblyType::Roof);
+
+    py::enum_<ThermFile::WindowAssemblyType>(
+      mod,
+      "WindowAssemblyType",
+      "The assembly a window or transparent facade cross section belongs to. Each admits its own "
+      "cross sections, see window_cross_sections_for.")
+        .value("Unknown", ThermFile::WindowAssemblyType::Unknown)
+        .value("SingleLite", ThermFile::WindowAssemblyType::SingleLite)
+        .value("HorizontalSliderCasementDual", ThermFile::WindowAssemblyType::HorizontalSliderCasementDual)
+        .value("CurtainwallGlazedWall", ThermFile::WindowAssemblyType::CurtainwallGlazedWall)
+        .value("VerticalSliderProjectingDual", ThermFile::WindowAssemblyType::VerticalSliderProjectingDual);
+
+    mod.def("window_cross_sections_for",
+            &ThermFile::windowCrossSectionsFor,
+            py::arg("window_assembly_type"),
+            "The cross sections a window assembly admits: sill, jamb and head for every assembly, plus the "
+            "meeting rail of a dual assembly.");
 
     py::enum_<ThermFile::OpaqueCrossSectionType>(mod, "OpaqueCrossSectionType")
         .value("Unknown", ThermFile::OpaqueCrossSectionType::Unknown)

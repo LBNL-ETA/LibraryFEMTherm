@@ -153,6 +153,60 @@ namespace ThermFile
         return LibraryCommon::enumToString(opaqueAssemblyType, opaqueAssemblyTypeString);
     }
 
+    std::map<WindowAssemblyType, std::string> windowAssemblyTypeString{
+      {WindowAssemblyType::SingleLite, "Single lite"},
+      {WindowAssemblyType::HorizontalSliderCasementDual, "Horizontal Slider/Casement - Dual"},
+      {WindowAssemblyType::CurtainwallGlazedWall, "Curtainwall/Glazed Wall"},
+      {WindowAssemblyType::VerticalSliderProjectingDual, "Vertical Slider/Projecting - Dual"}};
+
+    std::vector<std::string> windowAssemblyTypeStrings()
+    {
+        std::vector<std::string> result;
+        result.reserve(windowAssemblyTypeString.size());
+        for(const auto & [key, strValue] : windowAssemblyTypeString)
+        {
+            result.emplace_back(strValue);
+        }
+        return result;
+    }
+
+    WindowAssemblyType windowAssemblyTypeFromString(std::string_view value)
+    {
+        return LibraryCommon::enumFromString(value, windowAssemblyTypeString);
+    }
+
+    std::string windowAssemblyTypeToString(WindowAssemblyType windowAssemblyType)
+    {
+        return LibraryCommon::enumToString(windowAssemblyType, windowAssemblyTypeString);
+    }
+
+    std::vector<WindowCrossSectionType> windowCrossSectionsFor(const WindowAssemblyType windowAssemblyType)
+    {
+        static const std::vector<WindowCrossSectionType> singleLite{
+          WindowCrossSectionType::Sill, WindowCrossSectionType::Jamb, WindowCrossSectionType::Head};
+        static const std::vector<WindowCrossSectionType> verticalMeetingRail{WindowCrossSectionType::Sill,
+                                                                             WindowCrossSectionType::Jamb,
+                                                                             WindowCrossSectionType::Head,
+                                                                             WindowCrossSectionType::VerticalMeetingRail};
+        static const std::vector<WindowCrossSectionType> horizontalMeetingRail{
+          WindowCrossSectionType::Sill,
+          WindowCrossSectionType::Jamb,
+          WindowCrossSectionType::Head,
+          WindowCrossSectionType::HorizontalMeetingRail};
+        switch(windowAssemblyType)
+        {
+            case WindowAssemblyType::HorizontalSliderCasementDual:
+            case WindowAssemblyType::CurtainwallGlazedWall:
+                return verticalMeetingRail;
+            case WindowAssemblyType::VerticalSliderProjectingDual:
+                return horizontalMeetingRail;
+            case WindowAssemblyType::SingleLite:
+            case WindowAssemblyType::Unknown:
+                return singleLite;
+        }
+        return singleLite;
+    }
+
     std::map<OpaqueCrossSectionType, std::string> opaqueCrossSectionString{
       {OpaqueCrossSectionType::SillPlate, "Sill Plate"},
       {OpaqueCrossSectionType::Header, "Header"},

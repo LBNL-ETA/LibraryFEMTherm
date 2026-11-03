@@ -11,7 +11,8 @@ TEST_F(TestFilePropertiesUtilities, CreateExposureTypeWindowTransparentFacade)
     auto exposureType = createExposureType(ThermFile::ModelPurpose::Window_TransparentFacade);
     ASSERT_EQ(std::get<ThermFile::WindowCrossSectionType>(exposureType.crossSection),
               ThermFile::WindowCrossSectionType::Sill);
-    ASSERT_FALSE(exposureType.assemblyType.has_value());
+    ASSERT_TRUE(exposureType.assemblyType.has_value());
+    ASSERT_TRUE(exposureType.assemblyType.value() == ThermFile::AssemblyType{ThermFile::WindowAssemblyType::SingleLite});
 }
 
 TEST_F(TestFilePropertiesUtilities, CreateExposureTypeOpaqueFacade)
@@ -20,7 +21,7 @@ TEST_F(TestFilePropertiesUtilities, CreateExposureTypeOpaqueFacade)
     ASSERT_EQ(std::get<ThermFile::OpaqueCrossSectionType>(exposureType.crossSection),
               ThermFile::OpaqueCrossSectionType::SillPlate);
     ASSERT_TRUE(exposureType.assemblyType.has_value());
-    ASSERT_EQ(exposureType.assemblyType.value(), ThermFile::OpaqueAssemblyType::Wall);
+    ASSERT_TRUE(exposureType.assemblyType.value() == ThermFile::AssemblyType{ThermFile::OpaqueAssemblyType::Wall});
 }
 
 TEST_F(TestFilePropertiesUtilities, CreateExposureTypeOther)
@@ -43,7 +44,11 @@ TEST_F(TestFilePropertiesUtilities, CreateModelExposureWindow)
 
     ASSERT_EQ(std::get<ThermFile::WindowCrossSectionType>(modelExposure.exposureType.crossSection),
               ThermFile::WindowCrossSectionType::Sill);
-    ASSERT_FALSE(modelExposure.exposureType.assemblyType.has_value());
+    ASSERT_TRUE(modelExposure.exposureType.assemblyType.has_value());
+    ASSERT_TRUE(modelExposure.exposureType.assemblyType.value()
+                == ThermFile::AssemblyType{ThermFile::WindowAssemblyType::SingleLite});
+    EXPECT_DOUBLE_EQ(modelExposure.building.width, 20.0);
+    EXPECT_DOUBLE_EQ(modelExposure.building.height, 5.0);
 }
 
 TEST_F(TestFilePropertiesUtilities, CreateModelExposureOpaque)
@@ -53,7 +58,8 @@ TEST_F(TestFilePropertiesUtilities, CreateModelExposureOpaque)
     ASSERT_EQ(std::get<ThermFile::OpaqueCrossSectionType>(modelExposure.exposureType.crossSection),
               ThermFile::OpaqueCrossSectionType::SillPlate);
     ASSERT_TRUE(modelExposure.exposureType.assemblyType.has_value());
-    ASSERT_EQ(modelExposure.exposureType.assemblyType.value(), ThermFile::OpaqueAssemblyType::Wall);
+    ASSERT_TRUE(modelExposure.exposureType.assemblyType.value()
+                == ThermFile::AssemblyType{ThermFile::OpaqueAssemblyType::Wall});
 }
 
 TEST_F(TestFilePropertiesUtilities, CreateModelExposureOther)
