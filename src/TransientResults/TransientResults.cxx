@@ -1,10 +1,9 @@
 #include <array>
-#include <charconv>
 #include <format>
 #include <sstream>
-#include <system_error>
 #include <utility>
 
+#include "Common/ParseNumber.hxx"
 #include "THMZ/ZipModule/ZipModule.hxx"
 
 #include "TransientResults.hxx"
@@ -25,14 +24,13 @@ namespace ThermFile::TransientResults
             const char * const end{line.data() + line.size()};
             while(cursor < end && *cursor != '\r')
             {
-                double value{0.0};
-                const auto [next, errc]{std::from_chars(cursor, end, value)};
-                if(errc != std::errc{})
+                const auto parsed{Common::parseDouble(cursor, end)};
+                if(!parsed.has_value())
                 {
                     return {};
                 }
-                row.push_back(value);
-                cursor = next;
+                row.push_back(parsed->value);
+                cursor = parsed->next;
                 if(cursor < end && *cursor == ',')
                 {
                     ++cursor;

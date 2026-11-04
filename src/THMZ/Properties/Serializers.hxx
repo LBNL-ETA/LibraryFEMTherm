@@ -488,7 +488,7 @@ namespace ThermFile
     {
         node >> FileParse::Child{"General", properties.general};
         node >> FileParse::Child{"CalculationOptions", properties.calculationOptions};
-        node >> FileParse::RenamedChild{.current = "ModelDetails", .legacy = {"ModelExposure"}, .data = properties.modelDetails};
+        node >> FileParse::RenamedChild<ModelDetails>{.current = "ModelDetails", .legacy = {"ModelExposure"}, .data = properties.modelDetails};
         node >> FileParse::Child{"Miscellaneous", properties.miscellaneous};
 
         return node;
@@ -499,7 +499,7 @@ namespace ThermFile
     {
         node << FileParse::Child{"General", properties.general};
         node << FileParse::Child{"CalculationOptions", properties.calculationOptions};
-        node << FileParse::RenamedChild{.current = "ModelDetails", .legacy = {"ModelExposure"}, .data = properties.modelDetails};
+        node << FileParse::RenamedChild<const ModelDetails>{.current = "ModelDetails", .legacy = {"ModelExposure"}, .data = properties.modelDetails};
         node << FileParse::Child{"Miscellaneous", properties.miscellaneous};
 
         return node;

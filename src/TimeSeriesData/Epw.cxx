@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <charconv>
 #include <cmath>
 #include <filesystem>
 #include <map>
@@ -10,6 +9,7 @@
 
 #include "ContentHash.hxx"
 
+#include "Common/ParseNumber.hxx"
 #include "LibraryUtilities/FileManipulation.hxx"
 
 namespace TimeSeriesLibrary::Epw
@@ -91,11 +91,7 @@ namespace TimeSeriesLibrary::Epw
 
         std::optional<double> toDouble(std::string_view cell)
         {
-            const auto plain{trimmed(cell)};
-            double value{};
-            const auto [ptr, ec]{std::from_chars(plain.data(), plain.data() + plain.size(), value)};
-            const bool complete{ec == std::errc{} && ptr == plain.data() + plain.size()};
-            return complete ? std::optional{value} : std::nullopt;
+            return Common::wholeDouble(trimmed(cell));
         }
 
         std::vector<std::string> splitCommas(std::string_view line)

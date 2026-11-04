@@ -20,6 +20,7 @@
 #include "ContentHash.hxx"
 #include "Tags.hxx"
 
+#include "Common/ParseNumber.hxx"
 #include "LibraryUtilities/FileManipulation.hxx"
 
 namespace TimeSeriesLibrary::Csv
@@ -147,25 +148,18 @@ namespace TimeSeriesLibrary::Csv
         //! Locale-tolerant number parse: standard first, then decimal comma.
         std::optional<double> toDouble(std::string_view cell)
         {
-            auto parse{[](const std::string & text) -> std::optional<double> {
-                double value{};
-                const auto [ptr, ec]{std::from_chars(text.data(), text.data() + text.size(), value)};
-                const bool complete{ec == std::errc{} && ptr == text.data() + text.size()};
-                return complete ? std::optional{value} : std::nullopt;
-            }};
-
             const auto plain{trimmed(cell)};
             if(plain.empty())
             {
                 return std::nullopt;
             }
-            if(const auto value{parse(plain)}; value.has_value())
+            if(const auto value{Common::wholeDouble(plain)}; value.has_value())
             {
                 return value;
             }
             auto commas{plain};
             std::ranges::replace(commas, ',', '.');
-            return parse(commas);
+            return Common::wholeDouble(commas);
         }
 
         //! Carry the last good reading across a gap: a blank cell mid-run is not a
