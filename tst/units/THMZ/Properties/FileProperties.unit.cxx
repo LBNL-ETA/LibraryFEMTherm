@@ -89,6 +89,32 @@ TEST_F(TestFileProperties, TransientStartRoundTrips)
     EXPECT_TRUE(read == written);
 }
 
+TEST_F(TestFileProperties, AUniformStartSolvedFirstBecomesASteadyStartAtItsValues)
+{
+    const ThermFile::UniformStart values{.temperature = 12.0, .humidity = 0.4};
+
+    const auto solved{ThermFile::solvedStartFrom(ThermFile::InitialConditions{ThermFile::UniformStart{}}, values)};
+
+    const ThermFile::InitialConditions expected{ThermFile::SteadyStart{.start = values}};
+    EXPECT_TRUE(solved == expected);
+    EXPECT_TRUE(ThermFile::uniformStartOf(solved) == values);
+}
+
+TEST_F(TestFileProperties, ASolvedStartKeepsItsConditionsAtNewValues)
+{
+    const ThermFile::UniformStart values{.temperature = 12.0, .humidity = 0.4};
+    const std::vector<ThermFile::StartCondition> conditions{{.segment = 2U, .bcUUID = "outside at start"}};
+    const ThermFile::InitialConditions steady{ThermFile::SteadyStart{.conditions = conditions}};
+    const ThermFile::InitialConditions transient{
+      ThermFile::TransientStart{.conditions = conditions, .stepLengths = {3600.0}}};
+
+    const ThermFile::InitialConditions expectedSteady{ThermFile::SteadyStart{.conditions = conditions, .start = values}};
+    const ThermFile::InitialConditions expectedTransient{
+      ThermFile::TransientStart{.conditions = conditions, .stepLengths = {3600.0}, .start = values}};
+    EXPECT_TRUE(ThermFile::solvedStartFrom(steady, values) == expectedSteady);
+    EXPECT_TRUE(ThermFile::solvedStartFrom(transient, values) == expectedTransient);
+}
+
 TEST_F(TestFileProperties, ModelingOptionsDeserializer)
 {
     auto elementNode(Helper::modelingOptionsNode({"true", "false", "true", "false", "true", "false", "true"}));

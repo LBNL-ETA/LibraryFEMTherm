@@ -99,4 +99,27 @@ namespace ThermFile
           },
           initialConditions.state);
     }
+
+    //! \brief A start solved first that begins at `values`. A solved start keeps its conditions
+    //! and physics; a uniform start becomes a steady one. The values matter beyond the solve's
+    //! first iterate: a field the start does not solve keeps them.
+    [[nodiscard]] inline InitialConditions solvedStartFrom(const InitialConditions & initialConditions,
+                                                           const UniformStart & values)
+    {
+        return std::visit(
+          [&values](const auto & start) -> InitialConditions {
+              using Start = std::decay_t<decltype(start)>;
+              if constexpr(std::is_same_v<Start, UniformStart>)
+              {
+                  return InitialConditions{SteadyStart{.start = values}};
+              }
+              else
+              {
+                  auto solved{start};
+                  solved.start = values;
+                  return InitialConditions{solved};
+              }
+          },
+          initialConditions.state);
+    }
 }   // namespace ThermFile
