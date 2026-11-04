@@ -6,11 +6,6 @@
 	<xs:include schemaLocation="GlazingSystem.xsd"/>
 	<xs:include schemaLocation="SteadyStateResults.xsd"/>
 	<xs:include schemaLocation="CMA.xsd"/>
-	<xs:complexType name="Cavities">
-		<xs:sequence>
-			<xs:element name="Cavity" type="Cavity" minOccurs="0" maxOccurs="unbounded"/>
-		</xs:sequence>
-	</xs:complexType>
 	<xs:complexType name="Polygons">
 		<xs:sequence>
 			<xs:element name="Polygon" type="PolygonGeometry" minOccurs="0" maxOccurs="unbounded"/>
@@ -44,7 +39,6 @@
 				<xs:element name="Properties" type="Properties" minOccurs="1" maxOccurs="1"/>
 				<xs:element name="GlazingOrigin" type="Point" minOccurs="1" maxOccurs="1"/>
 				<xs:element name="RadianceTags" type="RadianceTags" minOccurs="0" maxOccurs="1" />
-				<xs:element name="Cavities" type="Cavities" minOccurs="0" maxOccurs="1"/>
 				<xs:element name="Polygons" type="Polygons" minOccurs="0" maxOccurs="1"/>
 				<xs:element name="Boundaries" type="Boundaries" minOccurs="0" maxOccurs="1"/>
 				<xs:element name="GlazingSystems" type="GlazingSystems" minOccurs="0" maxOccurs="1"/>

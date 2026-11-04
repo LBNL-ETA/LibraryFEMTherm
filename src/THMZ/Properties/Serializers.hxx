@@ -442,25 +442,25 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
-    inline const NodeAdapter & operator>>(const NodeAdapter & node, ModelDetails & exposure)
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, ModelDetails & details)
     {
-        node >> FileParse::Child{"ModelOrientation", exposure.modelOrientation};
-        node >> FileParse::Child{"GravityOrientation", exposure.gravityOrientation};
-        node >> FileParse::Child{"Exposure", exposure.exposureType};
+        node >> FileParse::Child{"ModelOrientation", details.modelOrientation};
+        node >> FileParse::Child{"GravityOrientation", details.gravityOrientation};
+        node >> FileParse::Child{"Exposure", details.exposureType};
         // Absent before Model version 5, when the dimensions sat on each transient boundary;
         // those are not carried over, an older file opens with the defaults.
-        node >> FileParse::Child{"Building", exposure.building};
+        node >> FileParse::Child{"Building", details.building};
 
         return node;
     }
 
     template<typename NodeAdapter>
-    inline NodeAdapter & operator<<(NodeAdapter & node, const ModelDetails & exposure)
+    inline NodeAdapter & operator<<(NodeAdapter & node, const ModelDetails & details)
     {
-        node << FileParse::Child{"ModelOrientation", exposure.modelOrientation};
-        node << FileParse::Child{"GravityOrientation", exposure.gravityOrientation};
-        node << FileParse::Child{"Exposure", exposure.exposureType};
-        node << FileParse::Child{"Building", exposure.building};
+        node << FileParse::Child{"ModelOrientation", details.modelOrientation};
+        node << FileParse::Child{"GravityOrientation", details.gravityOrientation};
+        node << FileParse::Child{"Exposure", details.exposureType};
+        node << FileParse::Child{"Building", details.building};
 
         return node;
     }
