@@ -471,6 +471,12 @@ namespace Helper
 
         addChildNode(node, exposureNode);
 
+        // Model version 5 writes the building under ModelExposure; these models keep the default.
+        Helper::MockNode buildingNode{"Building"};
+        addChildNode(buildingNode, "Width", "20");
+        addChildNode(buildingNode, "Height", "5");
+        addChildNode(node, buildingNode);
+
         return node;
     }
 

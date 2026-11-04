@@ -249,7 +249,7 @@ TEST_F(TestTHMXGeometry, ShadeDataSerialization)
 TEST_F(TestTHMXGeometry, TransientDataDeserialization)
 {
     auto node{Helper::generateTransientDataNode(
-      {"7a863ad6-c537-11ea-87d0-0242ac130003", "SomeFileName", {"45", "2000"}, {"25", "10"}})};
+      {"7a863ad6-c537-11ea-87d0-0242ac130003", "SomeFileName", {"45", "2000"}})};
     const Helper::MockNodeAdapter adapter{&node};
 
     ThermFile::TransientData transientData;
@@ -257,8 +257,7 @@ TEST_F(TestTHMXGeometry, TransientDataDeserialization)
 
     ThermFile::TransientData correctTransientData{"7a863ad6-c537-11ea-87d0-0242ac130003",
                                                   "SomeFileName",
-                                                  ThermFile::SurfaceData{45.0, 2000.0},
-                                                  ThermFile::BuildingData{25.0, 10.0}};
+                                                  ThermFile::SurfaceData{45.0, 2000.0}};
 
     Helper::expect_near(correctTransientData, transientData, 1e-6);
 }
@@ -267,8 +266,7 @@ TEST_F(TestTHMXGeometry, TransientDataSerialization)
 {
     ThermFile::TransientData transientData{"7a863ad6-c537-11ea-87d0-0242ac130003",
                                            "SomeFileName",
-                                           ThermFile::SurfaceData{45.0, 2000.0},
-                                           ThermFile::BuildingData{25.0, 10.0}};
+                                           ThermFile::SurfaceData{45.0, 2000.0}};
 
     Helper::MockNode node{"Transient"};
     Helper::MockNodeAdapter adapter{&node};
@@ -276,7 +274,7 @@ TEST_F(TestTHMXGeometry, TransientDataSerialization)
     adapter << transientData;
 
     auto correctNode{Helper::generateTransientDataNode(
-      {"7a863ad6-c537-11ea-87d0-0242ac130003", "SomeFileName", {"45", "2000"}, {"25", "10"}})};
+      {"7a863ad6-c537-11ea-87d0-0242ac130003", "SomeFileName", {"45", "2000"}})};
 
     EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNode));
 }
@@ -298,7 +296,7 @@ TEST_F(TestTHMXGeometry, BoundaryConditionDeserialization)
        {"Interior", "125"},
        "true",
        "",
-       {"7a863ad6-c537-11ea-87d0-0242ac130003", "SomeFileName", {"45", "2000"}, {"25", "10"}},
+       {"7a863ad6-c537-11ea-87d0-0242ac130003", "SomeFileName", {"45", "2000"}},
        "2",
        "",
        "Boundary Condition",
@@ -328,8 +326,7 @@ TEST_F(TestTHMXGeometry, BoundaryConditionDeserialization)
                                                  std::nullopt,
                                                  ThermFile::TransientData{"7a863ad6-c537-11ea-87d0-0242ac130003",
                                                                           "SomeFileName",
-                                                                          ThermFile::SurfaceData{45.0, 2000.0},
-                                                                          ThermFile::BuildingData{25.0, 10.0}},
+                                                                          ThermFile::SurfaceData{45.0, 2000.0}},
                                                  2u,
                                                  std::nullopt,
                                                  ThermFile::SurfaceType::BoundaryCondition,
@@ -360,8 +357,7 @@ TEST_F(TestTHMXGeometry, BoundaryConditionSerialization)
                                           std::nullopt,
                                           ThermFile::TransientData{"7a863ad6-c537-11ea-87d0-0242ac130003",
                                                                    "SomeFileName",
-                                                                   ThermFile::SurfaceData{45.0, 2000.0},
-                                                                   ThermFile::BuildingData{25.0, 10.0}},
+                                                                   ThermFile::SurfaceData{45.0, 2000.0}},
                                           2u,
                                           std::nullopt,
                                           ThermFile::SurfaceType::BoundaryCondition,
@@ -388,7 +384,7 @@ TEST_F(TestTHMXGeometry, BoundaryConditionSerialization)
        {"Interior", "125"},
        "true",
        "",
-       {"7a863ad6-c537-11ea-87d0-0242ac130003", "SomeFileName", {"45", "2000"}, {"25", "10"}},
+       {"7a863ad6-c537-11ea-87d0-0242ac130003", "SomeFileName", {"45", "2000"}},
        "2",
        "",
        "Boundary Condition",

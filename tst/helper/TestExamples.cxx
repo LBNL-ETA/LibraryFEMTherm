@@ -243,7 +243,7 @@ namespace Helper
                {"Exterior", "150"},
                "false",
                "",
-               {"7a863ad6-c537-11ea-87d0-0242ac130004", "Some other FileName", {"50", "2500"}, {"30", "15"}},
+               {"7a863ad6-c537-11ea-87d0-0242ac130004", "Some other FileName", {"50", "2500"}},
                "3",
                "",
                "Glazing Cavity",

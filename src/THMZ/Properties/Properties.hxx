@@ -176,7 +176,7 @@ namespace ThermFile
     {
         ModelPurpose modelPurpose{ModelPurpose::Window_TransparentFacade};
         CrossSectionType crossSection{WindowCrossSectionType::Sill};
-        std::optional<AssemblyType> assemblyType{WindowAssemblyType::SingleLite};
+        std::optional<AssemblyType> assemblyType{std::nullopt};
     };
 
     //! \brief The building the cross section belongs to, in metres: one pair per file. Only
