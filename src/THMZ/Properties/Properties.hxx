@@ -191,11 +191,11 @@ namespace ThermFile
     };
 
     ////////////////////////////////////////////////////////////////////////////////////
-    /// ModelExposure
+    /// ModelDetails
     ////////////////////////////////////////////////////////////////////////////////////
 
     //! \brief Keeps all necessary data to used on Model Details tab in Therm File Properties screen
-    struct ModelExposure
+    struct ModelDetails
     {
         double modelOrientation{0.0};
         Gravity::Orientation gravityOrientation{Gravity::Orientation::Down};
@@ -204,7 +204,7 @@ namespace ThermFile
         BuildingData building;
     };
 
-    void setGravityOrientation(const Geometry::GravityVector & vector, ModelExposure & modelExposure);
+    void setGravityOrientation(const Geometry::GravityVector & vector, ModelDetails & modelDetails);
 
     struct Miscellaneous
     {
@@ -221,7 +221,7 @@ namespace ThermFile
     {
         General general;
         CalculationOptions calculationOptions;
-        ModelExposure modelExposure;
+        ModelDetails modelDetails;
         Miscellaneous miscellaneous;
     };
 

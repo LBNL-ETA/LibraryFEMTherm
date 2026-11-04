@@ -36,7 +36,7 @@ namespace Helper
 
     void expect_eq(const ThermFile::ExposureType & expected, const ThermFile::ExposureType & actual);
 
-    void expect_eq(const ThermFile::ModelExposure & expected, const ThermFile::ModelExposure & actual);
+    void expect_eq(const ThermFile::ModelDetails & expected, const ThermFile::ModelDetails & actual);
 
     void
       expect_near(const ThermFile::Miscellaneous & expected, const ThermFile::Miscellaneous & actual, double tolerance);
@@ -238,7 +238,7 @@ namespace Helper
     //! \brief Creates exposure type node for Other cross section.
     Helper::MockNode exposureTypeOtherNode(std::string_view crossSection);
 
-    struct MockModelExposure
+    struct MockModelDetails
     {
         std::string modelOrientation;
         std::string gravityOrientation;
@@ -246,14 +246,14 @@ namespace Helper
         std::string crossSection;
         std::string assembly;
 
-        MockModelExposure(std::string modelOrientation,
+        MockModelDetails(std::string modelOrientation,
                           std::string gravityOrientation,
                           ThermFile::ModelPurpose modelPurpose,
                           std::string crossSection,
                           std::string assembly);
     };
 
-    Helper::MockNode modelExposureNode(const MockModelExposure & exposure);
+    Helper::MockNode modelDetailsNode(const MockModelDetails & exposure);
 
     struct MockMiscellaneous
     {
@@ -270,7 +270,7 @@ namespace Helper
     {
         MockGeneral general;
         MockCalculationOptions calculationOptions;
-        MockModelExposure modelExposure;
+        MockModelDetails modelDetails;
         MockMiscellaneous miscellaneous;
     };
 }   // namespace Helper

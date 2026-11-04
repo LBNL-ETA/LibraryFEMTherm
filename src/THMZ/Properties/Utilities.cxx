@@ -43,9 +43,9 @@ namespace ThermFile
         return ExposureType{model, crossSection, assemblyType};
     }
 
-    ModelExposure createModelExposure(ThermFile::ModelPurpose model)
+    ModelDetails createModelDetails(ThermFile::ModelPurpose model)
     {
-        ModelExposure exposure;
+        ModelDetails exposure;
         exposure.exposureType = createExposureType(model);
         return exposure;
     }

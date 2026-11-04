@@ -305,12 +305,12 @@ void bind_properties(py::module_ & mod)
                    + ")";
         });
 
-    py::class_<ThermFile::ModelExposure>(mod, "ModelExposure")
+    py::class_<ThermFile::ModelDetails>(mod, "ModelDetails")
         .def(py::init<>())
-        .def_readwrite("model_orientation", &ThermFile::ModelExposure::modelOrientation)
-        .def_readwrite("gravity_orientation", &ThermFile::ModelExposure::gravityOrientation)
-        .def_readwrite("exposure_type", &ThermFile::ModelExposure::exposureType)
-        .def_readwrite("building", &ThermFile::ModelExposure::building);
+        .def_readwrite("model_orientation", &ThermFile::ModelDetails::modelOrientation)
+        .def_readwrite("gravity_orientation", &ThermFile::ModelDetails::gravityOrientation)
+        .def_readwrite("exposure_type", &ThermFile::ModelDetails::exposureType)
+        .def_readwrite("building", &ThermFile::ModelDetails::building);
 
     py::class_<ThermFile::Miscellaneous>(mod, "Miscellaneous")
         .def(py::init<>())
@@ -321,6 +321,6 @@ void bind_properties(py::module_ & mod)
         .def(py::init<>())
         .def_readwrite("general", &ThermFile::Properties::general)
         .def_readwrite("calculation_options", &ThermFile::Properties::calculationOptions)
-        .def_readwrite("model_exposure", &ThermFile::Properties::modelExposure)
+        .def_readwrite("model_details", &ThermFile::Properties::modelDetails)
         .def_readwrite("miscellaneous", &ThermFile::Properties::miscellaneous);
 }

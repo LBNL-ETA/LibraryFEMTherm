@@ -41,7 +41,7 @@ print(f"Glazing:    {len(model.glazing_systems)}")
 props = model.properties
 print(f"Title:      {props.general.title}")
 print(f"Engine:     {props.calculation_options.simulation_engine}")
-print(f"Cross-sect: {props.model_exposure.exposure_type.cross_section}")
+print(f"Cross-sect: {props.model_details.exposure_type.cross_section}")
 
 # Save to a new THMZ file
 fem.save_model(model, "output.thmz")
@@ -606,7 +606,7 @@ print(f"Mesh parameter:   {calc.mesh_control.mesh_parameter}")
 print(f"Convergence tol:  {calc.engine_parameters.convergence_tolerance}")
 
 # Model exposure / cross-section type
-exp = model.properties.model_exposure
+exp = model.properties.model_details
 print(f"Purpose:     {exp.exposure_type.model_purpose}")
 print(f"Cross-sect:  {exp.exposure_type.cross_section}")
 print(f"Orientation: {exp.model_orientation.orientation}")

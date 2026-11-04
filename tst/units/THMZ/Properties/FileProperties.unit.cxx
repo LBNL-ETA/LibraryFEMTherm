@@ -240,20 +240,20 @@ TEST_F(TestFileProperties, HeatTransferModelingOptionsSerialization)
     EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), correctNodes));
 }
 
-TEST_F(TestFileProperties, ModelExposureRoundTripsTheWindowAssemblyAndTheBuilding)
+TEST_F(TestFileProperties, ModelDetailsRoundTripsTheWindowAssemblyAndTheBuilding)
 {
-    ThermFile::ModelExposure exposure;
+    ThermFile::ModelDetails exposure;
     exposure.modelOrientation = 45.0;
     exposure.exposureType.modelPurpose = ThermFile::ModelPurpose::Window_TransparentFacade;
     exposure.exposureType.crossSection = ThermFile::WindowCrossSectionType::VerticalMeetingRail;
     exposure.exposureType.assemblyType = ThermFile::WindowAssemblyType::CurtainwallGlazedWall;
     exposure.building = ThermFile::BuildingData{.width = 32.5, .height = 11.0};
 
-    Helper::MockNode node{"ModelExposure"};
+    Helper::MockNode node{"ModelDetails"};
     Helper::MockNodeAdapter adapter{&node};
     adapter << exposure;
 
-    ThermFile::ModelExposure read;
+    ThermFile::ModelDetails read;
     adapter >> read;
 
     EXPECT_DOUBLE_EQ(read.modelOrientation, 45.0);
@@ -265,25 +265,55 @@ TEST_F(TestFileProperties, ModelExposureRoundTripsTheWindowAssemblyAndTheBuildin
     EXPECT_TRUE(read.building == exposure.building);
 }
 
-TEST_F(TestFileProperties, ModelExposureWithoutABuildingReadsTheDefaults)
+TEST_F(TestFileProperties, ModelDetailsWithoutABuildingReadsTheDefaults)
 {
-    // An archive from before Model version 5 carries no Building under ModelExposure.
-    ThermFile::ModelExposure written;
+    // An archive from before Model version 5 carries no Building under ModelDetails.
+    ThermFile::ModelDetails written;
     written.exposureType.modelPurpose = ThermFile::ModelPurpose::OpaqueFacade;
     written.exposureType.crossSection = ThermFile::OpaqueCrossSectionType::Header;
     written.exposureType.assemblyType = ThermFile::OpaqueAssemblyType::Roof;
     written.building = ThermFile::BuildingData{.width = 1.0, .height = 1.0};
 
-    Helper::MockNode node{"ModelExposure"};
+    Helper::MockNode node{"ModelDetails"};
     Helper::MockNodeAdapter adapter{&node};
     adapter << written;
     std::erase_if(node.child, [](const Helper::MockNode & child) { return child.tag == "Building"; });
 
-    ThermFile::ModelExposure read;
+    ThermFile::ModelDetails read;
     adapter >> read;
 
     EXPECT_TRUE(read.exposureType.assemblyType.value() == ThermFile::AssemblyType{ThermFile::OpaqueAssemblyType::Roof});
     EXPECT_TRUE(read.building == ThermFile::BuildingData{});
+}
+
+//! Files from 8.1.75 and earlier name the node ModelExposure, and the building is new.
+TEST_F(TestFileProperties, ModelDetailsOfAnOlderFileReadFromModelExposure)
+{
+    Helper::MockNode top{"Properties"};
+    top.addChild("ModelExposure").addChild("ModelOrientation").text = "90";
+    const Helper::MockNodeAdapter adapter{&top};
+
+    ThermFile::Properties read;
+    adapter >> read;
+
+    EXPECT_DOUBLE_EQ(read.modelDetails.modelOrientation, 90.0);
+    EXPECT_DOUBLE_EQ(read.modelDetails.building.width, ThermFile::BuildingData{}.width);
+    EXPECT_DOUBLE_EQ(read.modelDetails.building.height, ThermFile::BuildingData{}.height);
+}
+
+TEST_F(TestFileProperties, ModelDetailsAreWrittenUnderTheirCurrentName)
+{
+    const ThermFile::Properties properties{};
+    Helper::MockNode top{"Properties"};
+    Helper::MockNodeAdapter adapter{&top};
+
+    adapter << properties;
+
+    const auto named{[&top](const std::string & tag) {
+        return std::ranges::any_of(top.child, [&tag](const Helper::MockNode & node) { return node.tag == tag; });
+    }};
+    EXPECT_TRUE(named("ModelDetails"));
+    EXPECT_FALSE(named("ModelExposure"));
 }
 
 TEST_F(TestFileProperties, ModelOrientationDeserialization)
@@ -533,22 +563,22 @@ TEST_F(TestFileProperties, ExposureTypeOtherSerialization)
     EXPECT_TRUE(Helper::compareNodes(adapter.getNode(), Helper::exposureTypeOtherNode("Common Thermal Bridge")));
 }
 
-TEST_F(TestFileProperties, ModelExposureDeserialization)
+TEST_F(TestFileProperties, ModelDetailsDeserialization)
 {
     auto elementNode(
-      Helper::modelExposureNode({"112", "Down", ThermFile::ModelPurpose::OpaqueFacade, "End Section", "Wall"}));
+      Helper::modelDetailsNode({"112", "Down", ThermFile::ModelPurpose::OpaqueFacade, "End Section", "Wall"}));
     const Helper::MockNodeAdapter adapter{&elementNode};
 
-    ThermFile::ModelExposure modelExposure;
-    adapter >> modelExposure;
+    ThermFile::ModelDetails modelDetails;
+    adapter >> modelDetails;
 
-    ThermFile::ModelExposure correctExposure{112,
+    ThermFile::ModelDetails correctExposure{112,
                                              ThermFile::Gravity::Orientation::Down,
                                              {ThermFile::ModelPurpose::OpaqueFacade,
                                               ThermFile::OpaqueCrossSectionType::EndSection,
                                               ThermFile::OpaqueAssemblyType::Wall}};
 
-    Helper::expect_eq(correctExposure, modelExposure);
+    Helper::expect_eq(correctExposure, modelDetails);
 }
 
 TEST_F(TestFileProperties, MiscellaneousSerialization)

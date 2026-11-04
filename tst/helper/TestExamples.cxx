@@ -35,7 +35,7 @@ namespace Helper
               .heatTransferModelingOptions = {false, -0.01, 28u, true},
               .miscProperties = {false, true, true},
               .frameCavityProperties = {}};
-            ThermFile::ModelExposure exposure{112,
+            ThermFile::ModelDetails exposure{112,
                                               ThermFile::Gravity::Orientation::Down,
                                               {ThermFile::ModelPurpose::OpaqueFacade,
                                                ThermFile::OpaqueCrossSectionType::EndSection,
@@ -76,7 +76,7 @@ namespace Helper
                                                          {"false", "true", "true"}}));
             addChildNode(
               node,
-              Helper::modelExposureNode({"112", "Down", ThermFile::ModelPurpose::OpaqueFacade, "End Section", "Wall"}));
+              Helper::modelDetailsNode({"112", "Down", ThermFile::ModelPurpose::OpaqueFacade, "End Section", "Wall"}));
 
             addChildNode(node, Helper::miscellaneousNode({"0.1", "0.01"}));
 

@@ -21,5 +21,5 @@ namespace ThermFile
     Limits getIterationLimits();
 
     [[nodiscard]] ExposureType createExposureType(ThermFile::ModelPurpose model);
-    [[nodiscard]] ModelExposure createModelExposure(ThermFile::ModelPurpose model);
+    [[nodiscard]] ModelDetails createModelDetails(ThermFile::ModelPurpose model);
 }   // namespace Therm

@@ -110,7 +110,7 @@
 	</xs:complexType>
 	<!-- The surface a transient boundary presents to the convection correlations: its tilt
 	     in degrees and its length in millimetres. The building dimensions moved to
-	     ModelExposure in Model version 5. -->
+	     ModelDetails in Model version 5. -->
 	<xs:complexType name="SurfaceData">
 		<xs:all>
 			<xs:element name="Tilt" type="xs:double" minOccurs="1" maxOccurs="1"/>

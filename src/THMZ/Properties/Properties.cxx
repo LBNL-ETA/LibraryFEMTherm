@@ -12,7 +12,7 @@ namespace ThermFile
         lastModifiedVersion = creationVersion;
     }
 
-    void setGravityOrientation(const Geometry::GravityVector & vector, ModelExposure & exposure)
+    void setGravityOrientation(const Geometry::GravityVector & vector, ModelDetails & exposure)
     {
         exposure.gravityOrientation = ThermFile::Gravity::getOrientation(vector);
     }

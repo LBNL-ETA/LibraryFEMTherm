@@ -302,7 +302,7 @@
 			<xs:element name="Height" type="xs:double" default="5"/>
 		</xs:all>
 	</xs:complexType>
-	<xs:complexType name="ModelExposureType">
+	<xs:complexType name="ModelDetailsType">
 		<xs:all>
 			<xs:element name="ModelOrientation" type="xs:double" default="0" minOccurs="0"/>
 			<xs:element name="GravityOrientation" type="GravityOrientationType"/>
@@ -320,7 +320,8 @@
 		<xs:all>
 			<xs:element name="General" type="GeneralType"/>
 			<xs:element name="CalculationOptions" type="CalculationOptionsType"/>
-			<xs:element name="ModelExposure" type="ModelExposureType"/>
+			<!-- Files from 8.1.75 and earlier name this element ModelExposure. -->
+			<xs:element name="ModelDetails" type="ModelDetailsType"/>
 			<xs:element name="Miscellaneous" type="MiscellaneousType"/>
 		</xs:all>
 	</xs:complexType>

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fileParse/Optional.hxx>
+#include <fileParse/RenamedChild.hxx>
 #include <fileParse/Variant.hxx>
 #include <fileParse/Vector.hxx>
 
@@ -441,7 +442,7 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
-    inline const NodeAdapter & operator>>(const NodeAdapter & node, ModelExposure & exposure)
+    inline const NodeAdapter & operator>>(const NodeAdapter & node, ModelDetails & exposure)
     {
         node >> FileParse::Child{"ModelOrientation", exposure.modelOrientation};
         node >> FileParse::Child{"GravityOrientation", exposure.gravityOrientation};
@@ -454,7 +455,7 @@ namespace ThermFile
     }
 
     template<typename NodeAdapter>
-    inline NodeAdapter & operator<<(NodeAdapter & node, const ModelExposure & exposure)
+    inline NodeAdapter & operator<<(NodeAdapter & node, const ModelDetails & exposure)
     {
         node << FileParse::Child{"ModelOrientation", exposure.modelOrientation};
         node << FileParse::Child{"GravityOrientation", exposure.gravityOrientation};
@@ -487,7 +488,7 @@ namespace ThermFile
     {
         node >> FileParse::Child{"General", properties.general};
         node >> FileParse::Child{"CalculationOptions", properties.calculationOptions};
-        node >> FileParse::Child{"ModelExposure", properties.modelExposure};
+        node >> FileParse::RenamedChild{.current = "ModelDetails", .legacy = {"ModelExposure"}, .data = properties.modelDetails};
         node >> FileParse::Child{"Miscellaneous", properties.miscellaneous};
 
         return node;
@@ -498,7 +499,7 @@ namespace ThermFile
     {
         node << FileParse::Child{"General", properties.general};
         node << FileParse::Child{"CalculationOptions", properties.calculationOptions};
-        node << FileParse::Child{"ModelExposure", properties.modelExposure};
+        node << FileParse::RenamedChild{.current = "ModelDetails", .legacy = {"ModelExposure"}, .data = properties.modelDetails};
         node << FileParse::Child{"Miscellaneous", properties.miscellaneous};
 
         return node;

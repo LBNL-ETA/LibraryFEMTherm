@@ -113,7 +113,7 @@ namespace Helper
         }
     }
 
-    void expect_eq(const ThermFile::ModelExposure & expected, const ThermFile::ModelExposure & actual)
+    void expect_eq(const ThermFile::ModelDetails & expected, const ThermFile::ModelDetails & actual)
     {
         EXPECT_EQ(expected.modelOrientation, actual.modelOrientation);
         EXPECT_EQ(expected.gravityOrientation, actual.gravityOrientation);
@@ -131,7 +131,7 @@ namespace Helper
     {
         expect_eq(expected.general, actual.general);
         expect_near(expected.calculationOptions, actual.calculationOptions, tolerance);
-        expect_eq(expected.modelExposure, actual.modelExposure);
+        expect_eq(expected.modelDetails, actual.modelDetails);
         expect_near(expected.miscellaneous, actual.miscellaneous, tolerance);
     }
 
@@ -428,7 +428,7 @@ namespace Helper
         return node;
     }
 
-    MockModelExposure::MockModelExposure(std::string modelOrientation,
+    MockModelDetails::MockModelDetails(std::string modelOrientation,
                                          std::string gravityOrientation,
                                          ThermFile::ModelPurpose modelPurpose,
                                          std::string crossSection,
@@ -440,10 +440,10 @@ namespace Helper
         assembly(std::move(assembly))
     {}
 
-    Helper::MockNode modelExposureNode(const MockModelExposure & exposure)
+    Helper::MockNode modelDetailsNode(const MockModelDetails & exposure)
     {
-        Helper::MockNode node{"ModelExposure"};
-        // Add ModelExposure specific properties
+        Helper::MockNode node{"ModelDetails"};
+        // Add ModelDetails specific properties
         addChildNode(node, "ModelOrientation", exposure.modelOrientation);
         addChildNode(node, "GravityOrientation", exposure.gravityOrientation);
 
@@ -471,7 +471,7 @@ namespace Helper
 
         addChildNode(node, exposureNode);
 
-        // Model version 5 writes the building under ModelExposure; these models keep the default.
+        // Model version 5 writes the building under ModelDetails; these models keep the default.
         Helper::MockNode buildingNode{"Building"};
         addChildNode(buildingNode, "Width", "20");
         addChildNode(buildingNode, "Height", "5");
