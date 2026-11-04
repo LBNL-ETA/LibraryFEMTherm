@@ -125,6 +125,10 @@ jobs:
         if: matrix.arch != 'x86_64'
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
+      - name: Show the dependency chart on the run's summary page
+        if: matrix.arch == 'x86_64'
+        run: cat doc/LibraryFEMTHERM.md >> "$GITHUB_STEP_SUMMARY"
+
       - name: Build
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 

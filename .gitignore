@@ -33,3 +33,4 @@ src/Schemas/Materials Schema/Materials_Full.xml
 *.gcov
 *.profraw
 *.profdata
+doc/LibraryFEMTHERM.md
