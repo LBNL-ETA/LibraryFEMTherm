@@ -116,7 +116,7 @@ TEST(TestUnifiedBC, PrescribedStateRoundTrip)
     BoundaryCondition record;
     record.UUID = "12121212-3434-5656-7878-909090909090";
     record.Name = "Fixed temperature and humidity";
-    record.data = PrescribedState{.temperature = FromTimeSeries{SeriesRole::PrescribedTemperature},
+    record.data = PrescribedState{.temperature = FromTimeSeries{SeriesRole::SurfaceTemperature},
                                   .relativeHumidity = Constant{0.65}};
 
     DB source;
@@ -131,13 +131,13 @@ TEST(TestUnifiedBC, PrescribedStateRoundTrip)
     const auto * prescribed{std::get_if<PrescribedState>(&reloaded->data)};
     ASSERT_NE(prescribed, nullptr);
     ASSERT_TRUE(prescribed->temperature.has_value());
-    EXPECT_EQ(environmentRole(prescribed->temperature.value()), SeriesRole::PrescribedTemperature);
+    EXPECT_EQ(environmentRole(prescribed->temperature.value()), SeriesRole::SurfaceTemperature);
     ASSERT_TRUE(prescribed->relativeHumidity.has_value());
     EXPECT_NEAR(constantValue(prescribed->relativeHumidity.value()), 0.65, 1e-9);
 
     const auto roles{requiredRoles(reloaded.value())};
     ASSERT_EQ(roles.size(), 1U);
-    EXPECT_EQ(roles[0], SeriesRole::PrescribedTemperature);
+    EXPECT_EQ(roles[0], SeriesRole::SurfaceTemperature);
 }
 
 TEST(TestUnifiedBC, NoExchangeRoundTrip)

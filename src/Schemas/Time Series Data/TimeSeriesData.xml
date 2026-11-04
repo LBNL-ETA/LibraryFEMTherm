@@ -173,11 +173,11 @@
 		<Name>FixedTemperatureAndHumidityInside</Name>
 		<Protected>false</Protected>
 		<Series>
-			<Role>PrescribedTemperature</Role>
+			<Role>SurfaceTemperature</Role>
 			<Values>20,21,21,21,21,22,22,23,22,20</Values>
 		</Series>
 		<Series>
-			<Role>PrescribedHumidity</Role>
+			<Role>SurfaceHumidity</Role>
 			<Values>0,0,0,0,0,0,0,0,0,0</Values>
 		</Series>
 	</TimeSeries>
@@ -186,11 +186,11 @@
 		<Name>FixedTemperatureAndHumidityOutside</Name>
 		<Protected>false</Protected>
 		<Series>
-			<Role>PrescribedTemperature</Role>
+			<Role>SurfaceTemperature</Role>
 			<Values>-18,-18,-19,-19,-18,-18,-20,-20,-21,-21</Values>
 		</Series>
 		<Series>
-			<Role>PrescribedHumidity</Role>
+			<Role>SurfaceHumidity</Role>
 			<Values>0.3,0.4,0.4,0.5,0.6,0.6,0.6,0.6,0.6,0.7</Values>
 		</Series>
 	</TimeSeries>

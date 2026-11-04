@@ -16,8 +16,8 @@ def _prescribed(uuid: str = "p-1") -> fem.BoundaryCondition:
     record.uuid = uuid
     record.name = "Fixed temperature and humidity"
     state = fem.PrescribedState()
-    state.temperature = fem.SeriesRole.PrescribedTemperature
-    state.relative_humidity = fem.SeriesRole.PrescribedHumidity
+    state.temperature = fem.SeriesRole.SurfaceTemperature
+    state.relative_humidity = fem.SeriesRole.SurfaceHumidity
     record.data = state
     return record
 
@@ -61,9 +61,9 @@ class TestSources:
 
     def test_role_becomes_from_time_series(self):
         state = fem.PrescribedState()
-        state.relative_humidity = fem.SeriesRole.PrescribedHumidity
+        state.relative_humidity = fem.SeriesRole.SurfaceHumidity
         assert isinstance(state.relative_humidity, fem.FromTimeSeries)
-        assert state.relative_humidity.role == fem.SeriesRole.PrescribedHumidity
+        assert state.relative_humidity.role == fem.SeriesRole.SurfaceHumidity
         assert fem.is_from_time_series(state.relative_humidity)
 
     def test_explicit_wrappers(self):
@@ -80,8 +80,8 @@ class TestRecordKinds:
         record = _prescribed()
         assert isinstance(record.data, fem.PrescribedState)
         assert fem.required_roles(record) == [
-            fem.SeriesRole.PrescribedTemperature,
-            fem.SeriesRole.PrescribedHumidity,
+            fem.SeriesRole.SurfaceTemperature,
+            fem.SeriesRole.SurfaceHumidity,
         ]
         assert not fem.is_steady_capable(record)
 
@@ -120,7 +120,7 @@ class TestLibraryRoundTrip:
         library.add(_adiabatic())
         text = library.save_to_string()
         assert "<PrescribedState>" in text
-        assert "<FromTimeSeries>PrescribedTemperature</FromTimeSeries>" in text
+        assert "<FromTimeSeries>SurfaceTemperature</FromTimeSeries>" in text
         assert "<SurfaceExchange>" in text
         assert "<Constant>20</Constant>" in text
 
@@ -134,7 +134,7 @@ class TestLibraryRoundTrip:
 
         prescribed = loaded.get_by_uuid("p-1")
         assert prescribed is not None
-        assert prescribed.data.temperature.role == fem.SeriesRole.PrescribedTemperature
+        assert prescribed.data.temperature.role == fem.SeriesRole.SurfaceTemperature
 
         convective = loaded.get_by_name("Fixed film, 20 C")
         assert convective is not None

@@ -396,8 +396,8 @@ TEST(Model, RecordDataCarriesTheInputsAsStated)
 
     // Constants read nothing; the kinds map to THERM's record shapes.
     EXPECT_TRUE(rolesOf(Convective{.airTemperature = -5.0, .filmCoefficient = 8.0}).empty());
-    EXPECT_EQ(rolesOf(Prescribed{.temperature = SeriesRole::PrescribedTemperature, .humidity = 0.8}),
-              (std::vector<SeriesRole>{SeriesRole::PrescribedTemperature}));
+    EXPECT_EQ(rolesOf(Prescribed{.temperature = SeriesRole::SurfaceTemperature, .humidity = 0.8}),
+              (std::vector<SeriesRole>{SeriesRole::SurfaceTemperature}));
     EXPECT_TRUE(std::holds_alternative<BCLibrary::PrescribedState>(recordData(Prescribed{})));
     EXPECT_TRUE(std::holds_alternative<BCLibrary::NoExchange>(recordData(Adiabatic{})));
 }
@@ -446,8 +446,8 @@ TEST(Model, DatasetsAreNotComparedWithOneAnother)
     // HygroTherm before it solves; the case states what it binds.
     auto modelCase{strip()};
     modelCase.schedule = Schedule{};
-    std::get<Prescribed>(modelCase.segments[0].kind).temperature = SeriesRole::PrescribedTemperature;
-    modelCase.segments[0].dataset = providing({SeriesRole::PrescribedTemperature}, 24U);
+    std::get<Prescribed>(modelCase.segments[0].kind).temperature = SeriesRole::SurfaceTemperature;
+    modelCase.segments[0].dataset = providing({SeriesRole::SurfaceTemperature}, 24U);
     convectiveEnd(modelCase).airTemperature = SeriesRole::AirTemperature;
     modelCase.segments[2].dataset = providing({SeriesRole::AirTemperature}, 10U);
     EXPECT_TRUE(issues(modelCase).empty());

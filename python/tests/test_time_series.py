@@ -248,7 +248,7 @@ def _epw_text(dry_bulbs: list[str]) -> str:
     return header + "\n".join(records) + "\n"
 
 
-CSV_TEXT = "Time,Air Temperature,RelativeHumidity,Comfort Index\n2026-01-01 00:00,21.3,0.52,5\n2026-01-01 01:00,21.1,0.55,6\n"
+CSV_TEXT = "Time,Air Temperature,Relative Humidity,Comfort Index\n2026-01-01 00:00,21.3,0.52,5\n2026-01-01 01:00,21.1,0.55,6\n"
 
 
 class TestSeriesValues:

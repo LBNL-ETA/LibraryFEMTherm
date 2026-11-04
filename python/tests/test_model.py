@@ -419,13 +419,13 @@ class TestLibraryRecords:
                                                               film_coefficient=8.0))
         assert data.convection.air_temperature == fem.FromTimeSeries(fem.SeriesRole.AirTemperature)
         assert data.convection.film_coefficient == fem.Constant(8.0)
-        prescribed = model.record_data(boundary=model.bc.Prescribed(temperature=fem.SeriesRole.PrescribedTemperature,
+        prescribed = model.record_data(boundary=model.bc.Prescribed(temperature=fem.SeriesRole.SurfaceTemperature,
                                                                     humidity=0.8))
-        assert prescribed.temperature == fem.FromTimeSeries(fem.SeriesRole.PrescribedTemperature)
+        assert prescribed.temperature == fem.FromTimeSeries(fem.SeriesRole.SurfaceTemperature)
         assert prescribed.relative_humidity == fem.Constant(0.8)
         record = fem.BoundaryCondition()
         record.data = prescribed
-        assert fem.required_roles(boundary_condition=record) == [fem.SeriesRole.PrescribedTemperature]
+        assert fem.required_roles(boundary_condition=record) == [fem.SeriesRole.SurfaceTemperature]
 
     def test_an_input_is_a_number_or_a_role(self):
         convective = model.bc.Convective(air_temperature=fem.SeriesRole.AirTemperature, film_coefficient=8.0)
@@ -498,12 +498,12 @@ class TestLibraryRecords:
     def test_a_role_needs_a_dataset_that_provides_it(self):
         case = sealed_strip()
         segments = list(case.segments)
-        warm_end = model.bc.Prescribed(temperature=fem.SeriesRole.PrescribedTemperature)
+        warm_end = model.bc.Prescribed(temperature=fem.SeriesRole.SurfaceTemperature)
         segments[1] = model.Segment(kind=warm_end, start=(0.1, 0.0), end=(0.1, 0.005))
         case.segments = segments
         found: list[model.Issue] = model.issues(model_case=case)
         assert kinds(found=found) == [model.IssueKind.RoleWithoutDataset]
-        assert (found[0].segment, found[0].roles) == (1, [fem.SeriesRole.PrescribedTemperature])
+        assert (found[0].segment, found[0].roles) == (1, [fem.SeriesRole.SurfaceTemperature])
 
         segments[1].dataset = hourly(role=fem.SeriesRole.RelativeHumidity, values=[0.5] * 300, step_seconds=36000.0)
         case.segments = segments
@@ -511,7 +511,7 @@ class TestLibraryRecords:
 
         # Ten steps against a stated schedule of 300: the case says so; left unstated, the
         # schedule is the dataset's.
-        segments[1].dataset = hourly(role=fem.SeriesRole.PrescribedTemperature, values=[20.0] * 10,
+        segments[1].dataset = hourly(role=fem.SeriesRole.SurfaceTemperature, values=[20.0] * 10,
                                      step_seconds=36000.0)
         case.segments = segments
         assert kinds(found=model.issues(model_case=case)) == [model.IssueKind.ScheduleDisagrees]

@@ -451,10 +451,10 @@
 		<IGUSurface>false</IGUSurface>
 		<PrescribedState>
 			<Temperature>
-				<FromTimeSeries>PrescribedTemperature</FromTimeSeries>
+				<FromTimeSeries>SurfaceTemperature</FromTimeSeries>
 			</Temperature>
 			<RelativeHumidity>
-				<FromTimeSeries>PrescribedHumidity</FromTimeSeries>
+				<FromTimeSeries>SurfaceHumidity</FromTimeSeries>
 			</RelativeHumidity>
 		</PrescribedState>
 	</BoundaryCondition>
@@ -532,7 +532,7 @@
 		<IGUSurface>false</IGUSurface>
 		<PrescribedState>
 			<Temperature>
-				<FromTimeSeries>PrescribedTemperature</FromTimeSeries>
+				<FromTimeSeries>SurfaceTemperature</FromTimeSeries>
 			</Temperature>
 		</PrescribedState>
 	</BoundaryCondition>

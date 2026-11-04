@@ -24,9 +24,9 @@ namespace
     }
 }   // namespace
 
-TEST(TestCsvSeries, ImportAcceptsBothRoleSpellings)
+TEST(TestCsvSeries, ImportReadsRoleHeadersAndReportsTheRest)
 {
-    const std::string content{"Time,Air Temperature,RelativeHumidity,Comfort Index\n"
+    const std::string content{"Time,Air Temperature,Relative Humidity,Comfort Index\n"
                               "2026-01-01 00:00,21.3,0.52,5\n"
                               "2026-01-01 01:00,21.1,0.55,6\n"};
 
@@ -49,6 +49,34 @@ TEST(TestCsvSeries, ImportAcceptsBothRoleSpellings)
     EXPECT_NEAR(humidity->at(1), 0.55, 1e-9);
 
     EXPECT_EQ(imported.UUID, TimeSeriesLibrary::contentUuid(imported));
+}
+
+//! The twelve headers of the role table's vocabulary, each exactly as it is written.
+TEST(TestCsvSeries, EveryRoleHeaderIsRead)
+{
+    for(const std::string header : {"Air Temperature", "Relative Humidity", "Wind Speed", "Wind Direction",
+                                    "Solar Irradiance", "Heat Flux", "Radiant Temperature", "Surface Temperature",
+                                    "Surface Humidity", "Convective Coefficient", "Radiative Coefficient", "Emissivity"})
+    {
+        const auto result{Csv::readFromString(header + "\n1\n2\n", "accepted", hourly)};
+        ASSERT_TRUE(result.has_value()) << header << ": " << result.error();
+        EXPECT_TRUE(result->ignoredHeaders.empty()) << header;
+    }
+}
+
+//! A header names a role exactly. Case and inner spacing are part of the name, the stored
+//! spelling is a file tag and not a header, and the role names the table does not list are
+//! not read.
+TEST(TestCsvSeries, AnyOtherSpellingIsSkippedAndReported)
+{
+    for(const std::string header : {"WindSpeed", "wind speed", "WIND SPEED", "windSpeed", "Wind  Speed",
+                                    "SurfaceTemperature", "Prescribed Temperature", "Prescribed Humidity"})
+    {
+        const auto result{Csv::readFromString("Air Temperature," + header + "\n21,1\n21,2\n", "denied", hourly)};
+        ASSERT_TRUE(result.has_value()) << header << ": " << result.error();
+        EXPECT_EQ(result->ignoredHeaders, (std::vector<std::string>{header}));
+        EXPECT_EQ(result->data.series.size(), 1U) << header;
+    }
 }
 
 TEST(TestCsvSeries, ImportReadsSemicolonSeparatedDecimalCommas)
@@ -88,7 +116,7 @@ TEST(TestCsvSeries, ImportCarriesLastReadingAcrossGaps)
 
 TEST(TestCsvSeries, ImportKeepsLastColumnOnDuplicateRole)
 {
-    const std::string content{"Air Temperature,AirTemperature\n"
+    const std::string content{"Air Temperature,Air Temperature\n"
                               "20,25\n"};
 
     const auto result{Csv::readFromString(content, "duplicate", hourly)};
@@ -119,10 +147,10 @@ TEST(TestCsvSeries, ExportRoundTripsThroughImportByTimestep)
     TimeSeriesData data;
     data.Name = "round trip";
     data.series = {Series{SeriesRole::AirTemperature, {21.3, 21.1, 20.8}},
-                     Series{SeriesRole::PrescribedHumidity, {0.52, 0.55, 0.57}}};
+                     Series{SeriesRole::SurfaceHumidity, {0.52, 0.55, 0.57}}};
 
     const auto content{Csv::writeToString(data)};
-    EXPECT_NE(content.find("Time,Timestep,Air Temperature,Prescribed Humidity"), std::string::npos);
+    EXPECT_NE(content.find("Time,Timestep,Air Temperature,Surface Humidity"), std::string::npos);
 
     const auto result{Csv::readFromString(content, "round trip", byTimestep)};
     ASSERT_TRUE(result.has_value()) << result.error();
@@ -131,7 +159,7 @@ TEST(TestCsvSeries, ExportRoundTripsThroughImportByTimestep)
     EXPECT_EQ(result->data.axis, data.axis);
     ASSERT_EQ(result->data.series.size(), 2U);
     EXPECT_EQ(result->data.series[0].role, SeriesRole::AirTemperature);
-    EXPECT_EQ(result->data.series[1].role, SeriesRole::PrescribedHumidity);
+    EXPECT_EQ(result->data.series[1].role, SeriesRole::SurfaceHumidity);
     for(size_t index = 0; index < 3U; ++index)
     {
         EXPECT_NEAR(result->data.series[0].values[index],
@@ -243,6 +271,141 @@ TEST(TestCsvSeries, ImportKeepsSpacingAcrossNewYear)
     EXPECT_EQ(temperatures(result.value()), (std::vector<double>{1.0, 2.0, 3.0}));
 }
 
+//! A dataset from June to June crosses into the next year, whatever years the stamps state.
+TEST(TestCsvSeries, JuneToJuneCrossesIntoTheNextYear)
+{
+    const std::string sameYearWritten{"Time,Air Temperature\n"
+                                      "2026-06-15 00:00,1\n"
+                                      "2026-12-31 23:00,2\n"
+                                      "2026-01-01 00:00,3\n"
+                                      "2026-06-15 00:00,4\n"};
+
+    const auto result{Csv::readFromString(sameYearWritten, "june to june", byTime)};
+
+    ASSERT_TRUE(result.has_value()) << result.error();
+    const auto lengths{stepLengths(result->data.axis, steps(result->data))};
+    EXPECT_DOUBLE_EQ(lengths[2], 3600.0);
+    EXPECT_DOUBLE_EQ(lengths[3], 165.0 * 86400.0);
+}
+
+TEST(TestCsvSeries, EveryDecemberToJanuaryStartsAnotherYear)
+{
+    const std::string threeYears{"Time,Air Temperature\n"
+                                 "2026-12-31 23:00,1\n"
+                                 "2027-01-01 00:00,2\n"
+                                 "2027-12-31 23:00,3\n"
+                                 "2028-01-01 00:00,4\n"};
+
+    const auto result{Csv::readFromString(threeYears, "years", byTime)};
+
+    ASSERT_TRUE(result.has_value()) << result.error();
+    const auto lengths{stepLengths(result->data.axis, steps(result->data))};
+    EXPECT_DOUBLE_EQ(lengths[1], 3600.0);
+    EXPECT_DOUBLE_EQ(lengths[2], (365.0 * 86400.0) - 3600.0);
+    EXPECT_DOUBLE_EQ(lengths[3], 3600.0);
+}
+
+//! A typical year mixes years month by month, as weather files do: only the calendar counts.
+TEST(TestCsvSeries, MixedYearsReadAsOneCalendar)
+{
+    const std::string typicalYear{"Time,Air Temperature\n"
+                                  "2005-01-31 22:00,1\n"
+                                  "2005-01-31 23:00,2\n"
+                                  "2011-02-01 00:00,3\n"
+                                  "1998-02-01 01:00,4\n"};
+
+    const auto result{Csv::readFromString(typicalYear, "typical", byTime)};
+
+    ASSERT_TRUE(result.has_value()) << result.error();
+    EXPECT_EQ(stepLengths(result->data.axis, steps(result->data)), (std::vector<double>(4U, 3600.0)));
+}
+
+TEST(TestCsvSeries, TwentyNinthOfFebruaryIsADayWhenTheFileWritesIt)
+{
+    const std::string hourly{"Time,Air Temperature\n"
+                             "2028-02-28 22:00,1\n"
+                             "2028-02-28 23:00,2\n"
+                             "2028-02-29 00:00,3\n"
+                             "2028-02-29 23:00,4\n"
+                             "2028-03-01 00:00,5\n"};
+
+    const auto result{Csv::readFromString(hourly, "leap", byTime)};
+
+    ASSERT_TRUE(result.has_value()) << result.error();
+    EXPECT_EQ(stepLengths(result->data.axis, steps(result->data)),
+              (std::vector<double>{3600.0, 3600.0, 3600.0, 23.0 * 3600.0, 3600.0}));
+}
+
+TEST(TestCsvSeries, DailyRowsCountTheLeapDayOnce)
+{
+    const std::string daily{"Time,Air Temperature\n"
+                            "2028-02-27 00:00,1\n"
+                            "2028-02-28 00:00,2\n"
+                            "2028-02-29 00:00,3\n"
+                            "2028-03-01 00:00,4\n"};
+
+    const auto result{Csv::readFromString(daily, "leap daily", byTime)};
+
+    ASSERT_TRUE(result.has_value()) << result.error();
+    EXPECT_EQ(stepLengths(result->data.axis, steps(result->data)), (std::vector<double>(4U, 86400.0)));
+}
+
+//! The file decides: without 29 February, 28 February runs straight into 1 March.
+TEST(TestCsvSeries, WithoutTheLeapDayFebruaryRunsIntoMarch)
+{
+    const std::string leapYearWithoutTheDay{"Time,Air Temperature\n"
+                                            "2028-02-28 22:00,1\n"
+                                            "2028-02-28 23:00,2\n"
+                                            "2028-03-01 00:00,3\n"
+                                            "2028-03-01 01:00,4\n"};
+
+    const auto result{Csv::readFromString(leapYearWithoutTheDay, "no leap day", byTime)};
+
+    ASSERT_TRUE(result.has_value()) << result.error();
+    EXPECT_EQ(stepLengths(result->data.axis, steps(result->data)), (std::vector<double>(4U, 3600.0)));
+}
+
+//! The stated years are not read, so nothing stops two leap days in a row; datasets that
+//! share the stamps stay in step whatever the stamps say.
+TEST(TestCsvSeries, TwoLeapDaysInARowImportAndStayAligned)
+{
+    const std::string stamps{"2028-02-29 00:00,1\n"
+                             "2028-03-01 00:00,2\n"
+                             "2028-12-31 23:00,3\n"
+                             "2029-01-01 00:00,4\n"
+                             "2029-02-28 00:00,5\n"
+                             "2029-02-29 00:00,6\n"
+                             "2029-03-01 00:00,7\n"};
+
+    const auto exterior{Csv::readFromString("Time,Air Temperature\n" + stamps, "exterior", byTime)};
+    const auto interior{Csv::readFromString("Time,Relative Humidity\n" + stamps, "interior", byTime)};
+
+    ASSERT_TRUE(exterior.has_value()) << exterior.error();
+    ASSERT_TRUE(interior.has_value()) << interior.error();
+    const std::vector<double> expected{86400.0,
+                                       86400.0,
+                                       (305.0 * 86400.0) + (23.0 * 3600.0),
+                                       3600.0,
+                                       58.0 * 86400.0,
+                                       86400.0,
+                                       86400.0};
+    EXPECT_EQ(stepLengths(exterior->data.axis, steps(exterior->data)), expected);
+    EXPECT_TRUE(TimeSeriesLibrary::alignmentIssues({exterior->data, interior->data}).empty());
+}
+
+TEST(TestCsvSeries, RowsSwappedAroundTheLeapDayAreRefused)
+{
+    const std::string swapped{"Time,Air Temperature\n"
+                              "2028-02-29 22:00,1\n"
+                              "2028-03-01 00:00,2\n"
+                              "2028-02-29 23:00,3\n"};
+
+    const auto result{Csv::readFromString(swapped, "swapped leap", byTime)};
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "swapped leap data row 3 (29 Feb 23:00) does not come after data row 2 (1 Mar 00:00)");
+}
+
 TEST(TestCsvSeries, UnevenTimesBecomeStepLengths)
 {
     const std::string content{"Time,Air Temperature\n"
@@ -331,6 +494,46 @@ TEST(TestCsvSeries, AStartPlacesARunWithoutStamps)
     EXPECT_EQ(ignored->data.axis, Csv::readFromString(stamped, "stamped", byTimestep)->data.axis);
 }
 
+//! Two rows swapped must not read as a year-long step: only December to January turns the year.
+TEST(TestCsvSeries, SwappedRowsAreRefusedAndNamedByTheirTimes)
+{
+    const std::string swapped{"Time,Air Temperature\n"
+                              "2026-03-05 01:00,1\n"
+                              "2026-03-05 03:00,2\n"
+                              "2026-03-05 02:00,3\n"
+                              "2026-03-05 04:00,4\n"};
+
+    const auto result{Csv::readFromString(swapped, "swapped", byTime)};
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "swapped data row 3 (5 Mar 02:00) does not come after data row 2 (5 Mar 03:00)");
+}
+
+TEST(TestCsvSeries, AStampWithSecondsIsNamedWithThem)
+{
+    const std::string swapped{"Time,Air Temperature\n"
+                              "2026-03-05 01:00:30,1\n"
+                              "2026-03-05 01:00:15,2\n"};
+
+    const auto result{Csv::readFromString(swapped, "seconds", byTime)};
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "seconds data row 2 (5 Mar 01:00:15) does not come after data row 1 (5 Mar 01:00:30)");
+}
+
+TEST(TestCsvSeries, RowsSwappedAfterNewYearAreStillRefused)
+{
+    const std::string swapped{"Time,Air Temperature\n"
+                              "2025-12-31 23:00,1\n"
+                              "2026-01-01 01:00,2\n"
+                              "2026-01-01 00:00,3\n"};
+
+    const auto result{Csv::readFromString(swapped, "after new year", byTime)};
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "after new year data row 3 (1 Jan 00:00) does not come after data row 2 (1 Jan 01:00)");
+}
+
 TEST(TestCsvSeries, TimeRuleRejectsTimesOutOfOrderOrASingleRowWithoutAStart)
 {
     const std::string repeated{"Time,Air Temperature\n"
@@ -339,7 +542,7 @@ TEST(TestCsvSeries, TimeRuleRejectsTimesOutOfOrderOrASingleRowWithoutAStart)
                                "2026-01-01 01:00,3\n"};
     const auto duplicate{Csv::readFromString(repeated, "dup", byTime)};
     ASSERT_FALSE(duplicate.has_value());
-    EXPECT_EQ(duplicate.error(), "dup data row 3 does not come after data row 2");
+    EXPECT_EQ(duplicate.error(), "dup data row 3 (1 Jan 01:00) does not come after data row 2 (1 Jan 01:00)");
 
     const std::string oneRow{"Time,Air Temperature\n2026-01-01 01:00,1\n"};
     const auto single{Csv::readFromString(oneRow, "one", byTime)};

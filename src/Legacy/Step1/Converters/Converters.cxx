@@ -487,12 +487,12 @@ namespace BCLibrary
             if(legacy.UseTemperature)
             {
                 prescribed.temperature =
-                  inferSource(isTransient, SeriesRole::PrescribedTemperature, legacy.Temperature, 0.0);
+                  inferSource(isTransient, SeriesRole::SurfaceTemperature, legacy.Temperature, 0.0);
             }
             if(legacy.UseHumidity)
             {
                 prescribed.relativeHumidity =
-                  inferSource(isTransient, SeriesRole::PrescribedHumidity, legacy.Humidity, 0.5);
+                  inferSource(isTransient, SeriesRole::SurfaceHumidity, legacy.Humidity, 0.5);
             }
             converted.data = prescribed;
             return converted;

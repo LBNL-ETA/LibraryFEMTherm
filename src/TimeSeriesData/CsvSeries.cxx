@@ -56,15 +56,16 @@ namespace TimeSeriesLibrary::Csv
             return lbnl::contains(stepHeaders, normalise(header));
         }
 
-        const std::map<std::string, SeriesRole> & rolesByNormalisedHeader()
+        //! The one header of every role, exactly as the role table writes it: Wind Speed.
+        //! Case and inner spacing are part of the name.
+        const std::map<std::string, SeriesRole, std::less<>> & rolesByHeader()
         {
             static const auto roles{[]() {
-                std::map<std::string, SeriesRole> result;
+                std::map<std::string, SeriesRole, std::less<>> result;
                 for(const auto & name : seriesRoleStrings())
                 {
                     const auto role{seriesRoleFromString(name)};
-                    result[normalise(name)] = role;
-                    result[normalise(displayHeaderForRole(role))] = role;
+                    result[displayHeaderForRole(role)] = role;
                 }
                 return result;
             }()};
@@ -73,8 +74,8 @@ namespace TimeSeriesLibrary::Csv
 
         std::optional<SeriesRole> roleForHeader(std::string_view header)
         {
-            const auto & roles{rolesByNormalisedHeader()};
-            const auto found{roles.find(normalise(header))};
+            const auto & roles{rolesByHeader()};
+            const auto found{roles.find(header)};
             return found != roles.end() ? std::optional{found->second} : std::nullopt;
         }
 
@@ -344,21 +345,56 @@ namespace TimeSeriesLibrary::Csv
             return moments;
         }
 
-        //! Seconds from the first row to each row. Years are dropped, so a run that crosses
-        //! New Year continues into the next nominal year instead of jumping back.
+        //! The one place the calendar may step back: years are dropped, so December to
+        //! January is the turn of the year. Any other step back is a row out of order.
+        bool crossesNewYear(const Moment & earlier, const Moment & later)
+        {
+            return earlier.month == 12U && later.month == 1U;
+        }
+
+        constexpr double secondsPerDay{86400.0};
+
+        bool isLeapDay(const Moment & moment)
+        {
+            return moment.month == 2U && moment.day == 29U;
+        }
+
+        //! A file that steps from February into a later month without writing 29 February
+        //! has no such day. One that writes it has it: the day is the file's, not the year's.
+        bool skipsLeapDay(const Moment & earlier, const Moment & later)
+        {
+            return earlier.month <= 2U && !isLeapDay(earlier) && later.month > 2U;
+        }
+
+        //! Position in a calendar that holds 29 February, so the day keeps its own place
+        //! between 28 February and 1 March.
+        double secondsIntoLeapCalendar(const Moment & moment)
+        {
+            const double nominal{secondsIntoYear(moment.month, moment.day, moment.hour, moment.minute, moment.second)};
+            return moment.month > 2U ? nominal + secondsPerDay : nominal;
+        }
+
+        //! What the step between two rows adds to the leap calendar's positions: the turn of
+        //! the year, or the leap day the file did not write.
+        double calendarTurn(const Moment & earlier, const Moment & later)
+        {
+            if(crossesNewYear(earlier, later))
+            {
+                return secondsPerNominalYear() + secondsPerDay;
+            }
+            return skipsLeapDay(earlier, later) ? -secondsPerDay : 0.0;
+        }
+
+        //! Seconds from the start of the first row's year to each row. A run that crosses
+        //! New Year continues into the next year instead of jumping back.
         std::vector<double> offsetsFrom(const std::vector<Moment> & moments)
         {
             std::vector<double> offsets;
-            double wraps{0.0};
-            for(const auto & moment : moments)
+            double turns{0.0};
+            for(size_t index = 0; index < moments.size(); ++index)
             {
-                const double inYear{
-                  secondsIntoYear(moment.month, moment.day, moment.hour, moment.minute, moment.second)};
-                if(!offsets.empty() && inYear + wraps < offsets.back())
-                {
-                    wraps += secondsPerNominalYear();
-                }
-                offsets.push_back(inYear + wraps);
+                turns += index > 0U ? calendarTurn(moments[index - 1U], moments[index]) : 0.0;
+                offsets.push_back(turns + secondsIntoLeapCalendar(moments[index]));
             }
             return offsets;
         }
@@ -448,18 +484,30 @@ namespace TimeSeriesLibrary::Csv
             return axis;
         }
 
+        //! A stamp as a reader finds it in the file, without the year the import drops.
+        std::string momentLabel(const Moment & moment)
+        {
+            const auto label{startLabel(startAxis(moment))};
+            return moment.second == 0U ? label : std::format("{}:{:02}", label, moment.second);
+        }
+
         //! The gaps between consecutive times, each of which must be positive.
-        lbnl::ExpectedExt<std::vector<double>, std::string> gapsBetween(const std::vector<double> & offsets,
+        lbnl::ExpectedExt<std::vector<double>, std::string> gapsBetween(const std::vector<Moment> & moments,
                                                                        const std::string & datasetName)
         {
+            const auto offsets{offsetsFrom(moments)};
             std::vector<double> gaps;
             for(size_t index = 1; index < offsets.size(); ++index)
             {
                 const double gap{offsets[index] - offsets[index - 1]};
                 if(gap <= 0.0)
                 {
-                    return Failure{
-                      std::format("{} data row {} does not come after data row {}", datasetName, index + 1, index)};
+                    return Failure{std::format("{} data row {} ({}) does not come after data row {} ({})",
+                                               datasetName,
+                                               index + 1,
+                                               momentLabel(moments[index]),
+                                               index,
+                                               momentLabel(moments[index - 1]))};
                 }
                 gaps.push_back(gap);
             }
@@ -596,7 +644,7 @@ namespace TimeSeriesLibrary::Csv
         {
             return readMoments(rows, layout.time.value(), datasetName)
               .and_then([&](const std::vector<Moment> & moments) -> ClockResult {
-                  return gapsBetween(offsetsFrom(moments), datasetName)
+                  return gapsBetween(moments, datasetName)
                     .and_then([&](const std::vector<double> & gaps) -> ClockResult {
                         return firstLengthFor(rows, layout, start, moments, gaps, datasetName)
                           .transform([&](const FirstLength & first) {

@@ -193,8 +193,8 @@ TEST(TestUnifiedBCConverters, DirichletTypeRecordBecomesPrescribedState)
 
     const auto * prescribed{std::get_if<PrescribedState>(&converted.data)};
     ASSERT_NE(prescribed, nullptr);
-    EXPECT_EQ(environmentRole(prescribed->temperature.value()), SeriesRole::PrescribedTemperature);
-    EXPECT_EQ(environmentRole(prescribed->relativeHumidity.value()), SeriesRole::PrescribedHumidity);
+    EXPECT_EQ(environmentRole(prescribed->temperature.value()), SeriesRole::SurfaceTemperature);
+    EXPECT_EQ(environmentRole(prescribed->relativeHumidity.value()), SeriesRole::SurfaceHumidity);
 }
 
 namespace

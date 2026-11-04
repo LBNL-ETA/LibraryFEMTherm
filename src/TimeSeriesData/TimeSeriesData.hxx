@@ -23,8 +23,8 @@ namespace TimeSeriesLibrary
         RadiantTemperature,
         RadiativeCoefficient,
         Emissivity,
-        PrescribedTemperature,
-        PrescribedHumidity
+        SurfaceTemperature,
+        SurfaceHumidity
     };
 
     //! One time series: a role plus its values. Rows are indexed; the dataset's TimeAxis says

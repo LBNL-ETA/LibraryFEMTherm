@@ -17,8 +17,8 @@
 			<xs:enumeration value="RadiantTemperature"/>
 			<xs:enumeration value="RadiativeCoefficient"/>
 			<xs:enumeration value="Emissivity"/>
-			<xs:enumeration value="PrescribedTemperature"/>
-			<xs:enumeration value="PrescribedHumidity"/>
+			<xs:enumeration value="SurfaceTemperature"/>
+			<xs:enumeration value="SurfaceHumidity"/>
 		</xs:restriction>
 	</xs:simpleType>
 

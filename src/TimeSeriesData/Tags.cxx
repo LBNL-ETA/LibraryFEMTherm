@@ -19,8 +19,8 @@ namespace TimeSeriesLibrary
               {SeriesRole::RadiantTemperature, "RadiantTemperature"},
               {SeriesRole::RadiativeCoefficient, "RadiativeCoefficient"},
               {SeriesRole::Emissivity, "Emissivity"},
-              {SeriesRole::PrescribedTemperature, "PrescribedTemperature"},
-              {SeriesRole::PrescribedHumidity, "PrescribedHumidity"}};
+              {SeriesRole::SurfaceTemperature, "SurfaceTemperature"},
+              {SeriesRole::SurfaceHumidity, "SurfaceHumidity"}};
             return roles;
         }
     }   // namespace

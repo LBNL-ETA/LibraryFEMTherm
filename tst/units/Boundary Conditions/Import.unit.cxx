@@ -51,7 +51,7 @@ namespace
         return content + epwRecord("21.3") + epwRecord("21.1");
     }
 
-    const std::string csvContent{"Time,Air Temperature,RelativeHumidity,Comfort Index\n"
+    const std::string csvContent{"Time,Air Temperature,Relative Humidity,Comfort Index\n"
                                  "2026-01-01 00:00,21.3,0.52,5\n"
                                  "2026-01-01 01:00,21.1,0.55,6\n"};
 
