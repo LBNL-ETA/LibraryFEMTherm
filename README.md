@@ -153,6 +153,9 @@ cmake/               # CMake macros and compiler config
 
 ## Dependencies (fetched automatically)
 
+The dependency chart for each build is on the summary page of its
+[CI run](https://github.com/LBNL-ETA/LibraryFEMTherm/actions/workflows/build.yml).
+
 - [FileParse](https://github.com/LBNL-ETA/FileParse) - XML/JSON serialization
 - [LBNLCPPCommon](https://github.com/LBNL-ETA/LBNLCPPCommon) - Common utilities
 - [miniz](https://github.com/richgel999/miniz) - ZIP compression
