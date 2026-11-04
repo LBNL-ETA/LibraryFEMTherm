@@ -7,18 +7,18 @@
 	     transient runs, where its constants apply at every timestep. -->
 	<xs:simpleType name="SeriesRole" final="restriction">
 		<xs:restriction base="xs:string">
-			<xs:enumeration value="AirTemperature"/>
-			<xs:enumeration value="RelativeHumidity"/>
-			<xs:enumeration value="WindSpeed"/>
-			<xs:enumeration value="WindDirection"/>
-			<xs:enumeration value="SolarIrradiance"/>
-			<xs:enumeration value="HeatFlux"/>
-			<xs:enumeration value="ConvectiveCoefficient"/>
-			<xs:enumeration value="RadiantTemperature"/>
-			<xs:enumeration value="RadiativeCoefficient"/>
+			<xs:enumeration value="Air Temperature"/>
+			<xs:enumeration value="Relative Humidity"/>
+			<xs:enumeration value="Wind Speed"/>
+			<xs:enumeration value="Wind Direction"/>
+			<xs:enumeration value="Solar Irradiance"/>
+			<xs:enumeration value="Heat Flux"/>
+			<xs:enumeration value="Convective Coefficient"/>
+			<xs:enumeration value="Radiant Temperature"/>
+			<xs:enumeration value="Radiative Coefficient"/>
 			<xs:enumeration value="Emissivity"/>
-			<xs:enumeration value="SurfaceTemperature"/>
-			<xs:enumeration value="SurfaceHumidity"/>
+			<xs:enumeration value="Surface Temperature"/>
+			<xs:enumeration value="Surface Humidity"/>
 		</xs:restriction>
 	</xs:simpleType>
 

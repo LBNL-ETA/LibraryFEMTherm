@@ -82,7 +82,7 @@ TEST(TestBCCapability, EnvironmentSourcesNeedTransientHygroThermFEM)
 
     const auto steadyIssues{capabilityIssues(record, SimulationEngine::HygroThermFEM, CalculationMode::cmSteadyState)};
     ASSERT_EQ(steadyIssues.size(), 1U);
-    EXPECT_EQ(steadyIssues[0].feature, "AirTemperature");
+    EXPECT_EQ(steadyIssues[0].feature, "Air Temperature");
     EXPECT_EQ(steadyIssues[0].reason, "requires the transient calculation mode");
 
     EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::cmTransient));

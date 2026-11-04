@@ -57,6 +57,8 @@ namespace TimeSeriesLibrary
     };
 
     [[nodiscard]] std::string seriesRoleToString(SeriesRole role);
+    //! The role of its one name, as the role table writes it (Relative Humidity). Any other
+    //! text throws std::invalid_argument: a role is never guessed.
     [[nodiscard]] SeriesRole seriesRoleFromString(std::string_view value);
     [[nodiscard]] std::vector<std::string> seriesRoleStrings();
 }   // namespace TimeSeriesLibrary

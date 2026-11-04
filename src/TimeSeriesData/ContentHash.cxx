@@ -17,6 +17,15 @@ namespace TimeSeriesLibrary
         using LibraryCommon::fnvOffsetBasis;
         using LibraryCommon::fnvSecondSeed;
 
+        //! A role hashes as its name without the spaces, so a dataset keeps the identity it
+        //! already carries in archives.
+        std::string hashedRoleName(const SeriesRole role)
+        {
+            auto name{seriesRoleToString(role)};
+            std::erase(name, ' ');
+            return name;
+        }
+
         //! Doubles are hashed by their IEEE-754 bit patterns, so no formatting is involved.
         void consumeSeries(Fnv1a & hasher, const std::vector<Series> & seriesList)
         {
@@ -28,7 +37,7 @@ namespace TimeSeriesLibrary
             for(const auto & series : seriesList)
             {
                 Fnv1a seriesHasher{fnvOffsetBasis};
-                seriesHasher.consume(seriesRoleToString(series.role));
+                seriesHasher.consume(hashedRoleName(series.role));
                 for(const double value : series.values)
                 {
                     seriesHasher.consume(std::bit_cast<uint64_t>(value));

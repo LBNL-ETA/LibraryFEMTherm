@@ -56,7 +56,7 @@ namespace TimeSeriesLibrary::Csv
             return lbnl::contains(stepHeaders, normalise(header));
         }
 
-        //! The one header of every role, exactly as the role table writes it: Wind Speed.
+        //! Every role by its one name, exactly as the role table writes it: Wind Speed.
         //! Case and inner spacing are part of the name.
         const std::map<std::string, SeriesRole, std::less<>> & rolesByHeader()
         {
@@ -64,8 +64,7 @@ namespace TimeSeriesLibrary::Csv
                 std::map<std::string, SeriesRole, std::less<>> result;
                 for(const auto & name : seriesRoleStrings())
                 {
-                    const auto role{seriesRoleFromString(name)};
-                    result[displayHeaderForRole(role)] = role;
+                    result[name] = seriesRoleFromString(name);
                 }
                 return result;
             }()};
@@ -775,6 +774,13 @@ namespace TimeSeriesLibrary::Csv
             return data.series;
         }
 
+        //! The SeriesRole member a role's name belongs to: the name without its spaces.
+        std::string memberName(std::string name)
+        {
+            std::erase(name, ' ');
+            return name;
+        }
+
         //! Exported stamps need a year to be well-formed dates. It is a fixed non-leap year
         //! that import drops again; the axis carries no year of its own.
         constexpr int nominalYear{2026};
@@ -797,30 +803,18 @@ namespace TimeSeriesLibrary::Csv
 
     std::string displayHeaderForRole(const SeriesRole role)
     {
-        const auto stored{seriesRoleToString(role)};
-        std::string spelled;
-        for(const char letter : stored)
-        {
-            const bool boundary{!spelled.empty() && std::isupper(static_cast<unsigned char>(letter))
-                                && std::islower(static_cast<unsigned char>(spelled.back()))};
-            if(boundary)
-            {
-                spelled.push_back(' ');
-            }
-            spelled.push_back(letter);
-        }
-        return spelled;
+        return seriesRoleToString(role);
     }
 
     std::string describeRoles()
     {
         const auto names{seriesRoleStrings()};
-        const auto widest{std::ranges::max(names | std::views::transform([](const std::string & name) { return name.size(); }))};
+        const auto widest{std::ranges::max(names | std::views::transform([](const std::string & name) { return memberName(name).size(); }))};
         const auto row{[width = widest + 2U](const std::string & left, const std::string & right) {
             return std::format("{:<{}}{}", left, width, right);
         }};
         return std::accumulate(names.begin(), names.end(), row("Role", "CSV header"), [&row](std::string table, const std::string & name) {
-            return std::move(table) + "\n" + row(name, displayHeaderForRole(seriesRoleFromString(name)));
+            return std::move(table) + "\n" + row(memberName(name), name);
         });
     }
 

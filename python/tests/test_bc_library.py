@@ -120,7 +120,7 @@ class TestLibraryRoundTrip:
         library.add(_adiabatic())
         text = library.save_to_string()
         assert "<PrescribedState>" in text
-        assert "<FromTimeSeries>SurfaceTemperature</FromTimeSeries>" in text
+        assert "<FromTimeSeries>Surface Temperature</FromTimeSeries>" in text
         assert "<SurfaceExchange>" in text
         assert "<Constant>20</Constant>" in text
 

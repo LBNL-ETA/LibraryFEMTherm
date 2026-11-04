@@ -1,9 +1,11 @@
 #include <algorithm>
+#include <stdexcept>
 
 #include <gtest/gtest.h>
 
 #include "TimeSeriesData/ContentHash.hxx"
 #include "TimeSeriesData/CsvSeries.hxx"
+#include "TimeSeriesData/Tags.hxx"
 
 using TimeSeriesLibrary::Series;
 using TimeSeriesLibrary::SeriesRole;
@@ -76,6 +78,26 @@ TEST(TestCsvSeries, AnyOtherSpellingIsSkippedAndReported)
         ASSERT_TRUE(result.has_value()) << header << ": " << result.error();
         EXPECT_EQ(result->ignoredHeaders, (std::vector<std::string>{header}));
         EXPECT_EQ(result->data.series.size(), 1U) << header;
+    }
+}
+
+//! A role has one name. Any other text is refused, never read as the first role.
+TEST(TestCsvSeries, ARoleNameIsRefusedUnlessItIsExact)
+{
+    EXPECT_EQ(TimeSeriesLibrary::seriesRoleFromString("Relative Humidity"), SeriesRole::RelativeHumidity);
+
+    for(const std::string text : {"RelativeHumidity", "relative humidity", "Prescribed Temperature", ""})
+    {
+        EXPECT_THROW(static_cast<void>(TimeSeriesLibrary::seriesRoleFromString(text)), std::invalid_argument) << text;
+    }
+}
+
+TEST(TestCsvSeries, EveryRoleKeepsItsNameThroughAString)
+{
+    for(const auto & name : TimeSeriesLibrary::seriesRoleStrings())
+    {
+        EXPECT_EQ(TimeSeriesLibrary::seriesRoleToString(TimeSeriesLibrary::seriesRoleFromString(name)), name);
+        EXPECT_EQ(Csv::displayHeaderForRole(TimeSeriesLibrary::seriesRoleFromString(name)), name);
     }
 }
 

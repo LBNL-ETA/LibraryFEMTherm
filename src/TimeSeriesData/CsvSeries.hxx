@@ -14,10 +14,9 @@ namespace TimeSeriesLibrary::Csv
     //! CSV is the interchange format for time series datasets: import with header
     //! matching and export back, so a dataset is never trapped in the library format.
     //!
-    //! A column is imported when its header is a role's CSV header exactly (Air Temperature,
-    //! in that case and spacing) and is otherwise ignored and reported. The stored spelling
-    //! (AirTemperature) is a file tag, not a header. No keyword guessing: a header either is
-    //! a role's header or it is not.
+    //! A column is imported when its header is a role's name exactly (Air Temperature, in
+    //! that case and spacing) and is otherwise ignored and reported. No keyword guessing:
+    //! a header either is a role's name or it is not.
     //!
     //! How rows become steps is the caller's choice (see StepChoice); stated as nothing,
     //! AutoStep, the file's columns decide. Two clock columns are recognised: a
@@ -83,12 +82,11 @@ namespace TimeSeriesLibrary::Csv
     //! length came from, so a reader can see what the file did not state.
     [[nodiscard]] std::string describeFirstStep(const ImportResult & result);
 
-    //! Spelled-out spelling of a role (AirTemperature -> "Air Temperature"): the one
-    //! header written on export and accepted on import.
+    //! A role's name, the one header written on export and accepted on import.
     [[nodiscard]] std::string displayHeaderForRole(SeriesRole role);
 
-    //! Every role as a table, a heading row and one row per role: the role's name and the
-    //! CSV header that writes it out, columns aligned. A CSV file uses the header, exactly.
+    //! Every role as a table, a heading row and one row per role: the SeriesRole member and
+    //! the name a CSV file and a library file write, columns aligned.
     [[nodiscard]] std::string describeRoles();
 
     //! The imported dataset's UUID is the deterministic content hash, so importing the

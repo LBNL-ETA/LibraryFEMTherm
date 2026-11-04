@@ -1,3 +1,7 @@
+#include <algorithm>
+#include <format>
+#include <stdexcept>
+
 #include "Tags.hxx"
 
 #include "LibraryUtilities/Common.hxx"
@@ -9,18 +13,18 @@ namespace TimeSeriesLibrary
         const std::map<SeriesRole, std::string> & seriesRoleMap()
         {
             static const std::map<SeriesRole, std::string> roles{
-              {SeriesRole::AirTemperature, "AirTemperature"},
-              {SeriesRole::RelativeHumidity, "RelativeHumidity"},
-              {SeriesRole::WindSpeed, "WindSpeed"},
-              {SeriesRole::WindDirection, "WindDirection"},
-              {SeriesRole::SolarIrradiance, "SolarIrradiance"},
-              {SeriesRole::HeatFlux, "HeatFlux"},
-              {SeriesRole::ConvectiveCoefficient, "ConvectiveCoefficient"},
-              {SeriesRole::RadiantTemperature, "RadiantTemperature"},
-              {SeriesRole::RadiativeCoefficient, "RadiativeCoefficient"},
+              {SeriesRole::AirTemperature, "Air Temperature"},
+              {SeriesRole::RelativeHumidity, "Relative Humidity"},
+              {SeriesRole::WindSpeed, "Wind Speed"},
+              {SeriesRole::WindDirection, "Wind Direction"},
+              {SeriesRole::SolarIrradiance, "Solar Irradiance"},
+              {SeriesRole::HeatFlux, "Heat Flux"},
+              {SeriesRole::ConvectiveCoefficient, "Convective Coefficient"},
+              {SeriesRole::RadiantTemperature, "Radiant Temperature"},
+              {SeriesRole::RadiativeCoefficient, "Radiative Coefficient"},
               {SeriesRole::Emissivity, "Emissivity"},
-              {SeriesRole::SurfaceTemperature, "SurfaceTemperature"},
-              {SeriesRole::SurfaceHumidity, "SurfaceHumidity"}};
+              {SeriesRole::SurfaceTemperature, "Surface Temperature"},
+              {SeriesRole::SurfaceHumidity, "Surface Humidity"}};
             return roles;
         }
     }   // namespace
@@ -132,7 +136,13 @@ namespace TimeSeriesLibrary
 
     SeriesRole seriesRoleFromString(std::string_view value)
     {
-        return LibraryCommon::enumFromString(value, seriesRoleMap());
+        const auto & roles{seriesRoleMap()};
+        const auto found{std::ranges::find_if(roles, [value](const auto & entry) { return entry.second == value; })};
+        if(found == roles.end())
+        {
+            throw std::invalid_argument(std::format("'{}' is not a time series role", value));
+        }
+        return found->first;
     }
 
     std::vector<std::string> seriesRoleStrings()

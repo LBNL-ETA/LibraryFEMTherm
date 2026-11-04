@@ -169,7 +169,7 @@ class TestLibraryRoundTrip:
         text = library.save_to_string()
         assert "<TimeSeriesData>" in text
         assert "<StepSeconds>1800</StepSeconds>" in text
-        assert "<Role>AirTemperature</Role>" in text
+        assert "<Role>Air Temperature</Role>" in text
 
         loaded = fem.TimeSeriesDB()
         loaded.load_from_string(text)
@@ -188,7 +188,7 @@ class TestLibraryRoundTrip:
         text = (
             "<TimeSeriesData><Version>1</Version><TimeSeries>"
             "<UUID>old-record</UUID><Name>Legacy</Name><Protected>false</Protected>"
-            "<Series><Role>AirTemperature</Role><Values>1,2,3</Values></Series>"
+            "<Series><Role>Air Temperature</Role><Values>1,2,3</Values></Series>"
             "</TimeSeries></TimeSeriesData>"
         )
         library = fem.TimeSeriesDB()
@@ -255,7 +255,7 @@ class TestSeriesValues:
     def test_series_values_is_the_non_optional_form(self):
         assert fem.series_values(_dataset(), fem.SeriesRole.AirTemperature) == [20.0, 21.0]
         assert fem.values_for_role(_dataset(), fem.SeriesRole.WindSpeed) is None
-        with pytest.raises(KeyError, match="Two steps of constant weather carries no WindSpeed series"):
+        with pytest.raises(KeyError, match="Two steps of constant weather carries no Wind Speed series"):
             fem.series_values(_dataset(), fem.SeriesRole.WindSpeed)
 
 

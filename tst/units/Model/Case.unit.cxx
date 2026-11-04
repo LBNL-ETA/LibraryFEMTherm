@@ -408,7 +408,7 @@ TEST(Model, ASegmentReadingARoleNeedsADataset)
     convectiveEnd(modelCase).airTemperature = SeriesRole::AirTemperature;
     expectOneIssue(modelCase,
                    Issue{.kind = IssueKind::RoleWithoutDataset, .segment = 2U, .roles = {SeriesRole::AirTemperature}},
-                   "segment 2 from (0.1, 0) to (0.1, 0.01) reads AirTemperature from a dataset but binds none");
+                   "segment 2 from (0.1, 0) to (0.1, 0.01) reads Air Temperature from a dataset but binds none");
 
     modelCase.segments[2].dataset = providing({SeriesRole::AirTemperature});
     EXPECT_TRUE(issues(modelCase).empty());
@@ -422,7 +422,7 @@ TEST(Model, TheDatasetMustProvideEveryRoleRead)
     modelCase.segments[2].dataset = providing({SeriesRole::AirTemperature});
     expectOneIssue(modelCase,
                    Issue{.kind = IssueKind::RoleNotProvided, .segment = 2U, .roles = {SeriesRole::RelativeHumidity}},
-                   "segment 2 from (0.1, 0) to (0.1, 0.01): its dataset 'weather' provides no RelativeHumidity");
+                   "segment 2 from (0.1, 0) to (0.1, 0.01): its dataset 'weather' provides no Relative Humidity");
 }
 
 TEST(Model, AStatedScheduleMustAgreeWithTheDatasets)
@@ -537,7 +537,7 @@ TEST(Model, SteadyStateRefusesAnyRoleAndAnyDataset)
     convectiveEnd(modelCase).airTemperature = SeriesRole::AirTemperature;
     expectOneIssue(modelCase,
                    Issue{.kind = IssueKind::RoleInSteadyState, .segment = 2U, .roles = {SeriesRole::AirTemperature}},
-                   "segment 2 from (0.1, 0) to (0.1, 0.01) reads AirTemperature from a dataset, which a steady-state "
+                   "segment 2 from (0.1, 0) to (0.1, 0.01) reads Air Temperature from a dataset, which a steady-state "
                    "case has none of; state it as a constant");
 
     convectiveEnd(modelCase).airTemperature = -5.0;

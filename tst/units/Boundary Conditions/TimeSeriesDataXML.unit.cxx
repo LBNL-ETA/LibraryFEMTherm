@@ -215,7 +215,7 @@ TEST(TestTimeSeriesData, TimeAxisDefaultsWhenAbsent)
     // A dataset written before the axis existed: hourly from 1 January 00:00.
     const std::string content{"<TimeSeriesData><Version>1</Version><TimeSeries>"
                               "<UUID>old-record</UUID><Name>Legacy</Name><Protected>false</Protected>"
-                              "<Series><Role>AirTemperature</Role><Values>1,2,3</Values></Series>"
+                              "<Series><Role>Air Temperature</Role><Values>1,2,3</Values></Series>"
                               "</TimeSeries></TimeSeriesData>"};
 
     TimeSeriesLibrary::DB loaded;
