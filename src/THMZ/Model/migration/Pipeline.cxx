@@ -2,13 +2,13 @@
 
 #include <algorithm>
 #include <charconv>
-#include <stdexcept>
 #include <string>
 #include <utility>
 
 #include "THMZ/Model/migration/BCConsolidation.hxx"
 #include "THMZ/Model/migration/ConradTolerance.hxx"
 #include "THMZ/Model/migration/FrameCavity.hxx"
+#include "THMZ/Model/migration/TimestepFiles.hxx"
 #include "THMZ/ZipModule/ZipModule.hxx"
 
 namespace ThermFile::Migration
@@ -25,41 +25,48 @@ namespace ThermFile::Migration
         }
     }   // namespace
 
+    std::map<std::string, std::string> applyAllToEntries(std::map<std::string, std::string> entries)
+    {
+        // Timestep files of earlier versions become embedded time series datasets.
+        entries = TimestepFiles::withConvertedFiles(std::move(entries));
+
+        // New archive conversions go here.
+
+        return entries;
+    }
+
+    std::map<std::string, std::string> openArchive(const std::string & zipFileName)
+    {
+        return applyAllToEntries(ThermZip::unzipFiles(zipFileName));
+    }
+
     ThermFile::ThermModel applyAllToModel(const std::map<std::string, std::string> & entries,
                                           ThermFile::ThermModel model)
     {
         const int fileVersion{parsedVersion(model.version)};
 
-        // --- Frame-cavity migration -----------------------------------------
-        // Legacy archives express cavity polygons as <Type>Material</Type>
-        // referencing a cavity-typed material in the materials entry. The new
-        // schema makes cavity flavour polygon-level. Capture the legacy hints
-        // and rewrite the polygons.
+        // Cavity polygons become polygon-level instead of cavity-typed materials.
         if(const auto materialsEntry{ThermZip::findEntry(entries, ThermZip::MaterialsFileName)};
            !materialsEntry.empty())
         {
-            const auto legacy{FrameCavity::capture(materialsEntry)};
-            model = FrameCavity::applyToModel(legacy, std::move(model));
+            model = FrameCavity::applyToModel(FrameCavity::capture(materialsEntry), std::move(model));
         }
 
-        // --- BC consolidation migration ---------------------------------------
-        // Pre-consolidation archives bind segments by steady record name or by
-        // transient type-record UUID. Capture the embedded legacy BC records,
-        // convert them to the unified form, and fill each segment's bcUUID binding.
-        // Legacy per-boundary timestep files are not migrated.
-        const auto legacyBCs{BCConsolidation::captureFromEntries(entries)};
-        model = BCConsolidation::applyToModel(legacyBCs, std::move(model));
+        // Boundaries bound by steady record name or transient type record take the unified binding.
+        model = BCConsolidation::applyToModel(BCConsolidation::captureFromEntries(entries), std::move(model));
 
-        // --- Conrad tolerance migration ----------------------------------------
-        // Version-gated: a stored number has no legacy shape to recognize, so only the
-        // file's version can tell whether this already ran.
-        model = ConradTolerance::applyToModel(fileVersion, std::move(model));
+        // Boundaries take the datasets their timestep files became in applyAllToEntries.
+        model = TimestepFiles::applyToModel(entries, std::move(model));
 
-        // --- Future migrations go below this line ----------------------------
-        // Pattern: add a nested namespace under ThermFile::Migration (sibling
-        // to FrameCavity), expose `capture` + `applyToModel`, then call them
-        // here; read legacy hints from the entries map. Chain via
-        // `model = X::applyToModel(legacy, std::move(model));`.
+        // A stored number has no old shape to recognize, so only the version can say this ran.
+        if(fileVersion < ConradTolerance::firstVersionWithConradTolerance)
+        {
+            model = ConradTolerance::applyToModel(std::move(model));
+        }
+
+        // New model conversions go here. A conversion is one file in this folder, with an
+        // applyToModel that changes nothing on a model it does not concern; one that cannot
+        // tell that from the model is gated on the version here, and the version goes up.
 
         // A file from a newer build keeps its number: this build has not migrated it to that.
         model.version = std::to_string(std::max(fileVersion, currentModelVersion));
@@ -67,16 +74,21 @@ namespace ThermFile::Migration
         return model;
     }
 
-    ThermFile::ThermModel applyAllToModel(const std::string & zipFileName, ThermFile::ThermModel model)
+    MaterialsLibrary::DB applyAllToMaterials(const std::map<std::string, std::string> & entries,
+                                             MaterialsLibrary::DB materials)
     {
-        try
-        {
-            return applyAllToModel(ThermZip::unzipFiles(zipFileName), std::move(model));
-        }
-        catch(const std::runtime_error &)
-        {
-            // Archive unreadable for migration hints -- nothing to migrate.
-            return model;
-        }
+        // Cavity and radiation enclosure records are polygon kinds now, not materials.
+        const auto legacy{FrameCavity::capture(ThermZip::findEntry(entries, ThermZip::MaterialsFileName))};
+        materials = FrameCavity::applyToMaterials(legacy, std::move(materials));
+
+        // New materials conversions go here.
+
+        return materials;
+    }
+
+    std::vector<BCLibrary::BoundaryCondition>
+      legacyBoundaryConditions(const std::map<std::string, std::string> & entries)
+    {
+        return BCConsolidation::captureFromEntries(entries).boundaryConditions;
     }
 }   // namespace ThermFile::Migration

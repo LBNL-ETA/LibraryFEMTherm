@@ -11,11 +11,10 @@ namespace ThermFile::Migration::ConradTolerance
         constexpr double applicationDefaultTolerance{1e-6};
     }   // namespace
 
-    ThermFile::ThermModel applyToModel(const int fileVersion, ThermFile::ThermModel model)
+    ThermFile::ThermModel applyToModel(ThermFile::ThermModel model)
     {
         auto & options{model.properties.calculationOptions};
-        if(fileVersion < firstVersionWithConradTolerance
-           && options.simulationEngine == ThermFile::SimulationEngine::Conrad)
+        if(options.simulationEngine == ThermFile::SimulationEngine::Conrad)
         {
             options.engineParameters.convergenceTolerance = applicationDefaultTolerance;
         }

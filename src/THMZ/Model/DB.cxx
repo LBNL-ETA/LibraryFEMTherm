@@ -40,7 +40,7 @@ namespace ThermFile
 
         try
         {
-            return loadThermModelFromEntries(ThermZip::unzipFiles(zipFileName));
+            return loadThermModelFromEntries(Migration::openArchive(zipFileName));
         }
         catch(const std::runtime_error &)
         {

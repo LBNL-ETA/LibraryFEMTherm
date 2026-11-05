@@ -13,8 +13,7 @@ namespace ThermFile::Migration::BCConsolidation
     //! converted to the unified form: the embedded steady-state library and transient type
     //! records become unified records (UUIDs preserved). The lookup map translates the
     //! legacy per-segment steady binding -- record name -- into the unified UUID binding.
-    //! Legacy per-boundary timestep files are not converted: transient models predating
-    //! the time series library are re-authored, not migrated.
+    //! Per-boundary timestep files are the concern of TimestepFiles.
     struct LegacyBCCapture
     {
         std::vector<BCLibrary::BoundaryCondition> boundaryConditions;

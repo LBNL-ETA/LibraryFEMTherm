@@ -1,10 +1,14 @@
 #include <filesystem>
+#include <map>
+#include <string>
 
 #include <gtest/gtest.h>
 
 #include "Legacy/Step1/BCSteadyState/DB.hxx"
 #include "THMZ/Model/DB.hxx"
 #include "THMZ/Model/migration/BCConsolidation.hxx"
+#include "THMZ/Model/migration/Pipeline.hxx"
+#include "THMZ/ZipModule/ZipModule.hxx"
 
 namespace
 {
@@ -100,6 +104,16 @@ TEST(TestBCConsolidationMigration, MinimalSteadyArchiveMigrates)
 
     const auto legacy{ThermFile::Migration::BCConsolidation::captureFromArchive(zipPath)};
     EXPECT_FALSE(ThermFile::Migration::BCConsolidation::isEmpty(legacy));
+}
+
+TEST(TestBCConsolidationMigration, PipelineReturnsTheArchivesLegacyRecords)
+{
+    const std::map<std::string, std::string> entries{{ThermZip::SteadyStateBCFileName + ".xml", legacySteadyLibraryXml()}};
+
+    const auto records{ThermFile::Migration::legacyBoundaryConditions(entries)};
+
+    ASSERT_EQ(records.size(), 1U);
+    EXPECT_EQ(records.front().UUID, "11111111-2222-3333-4444-555555555555");
 }
 
 //! A transient face of a pre-consolidation archive binds to the type record it names, even

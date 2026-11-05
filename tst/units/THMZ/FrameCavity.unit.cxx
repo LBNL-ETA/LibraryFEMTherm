@@ -1,9 +1,13 @@
 #include <gtest/gtest.h>
 
+#include <map>
+#include <string>
 #include <utility>
 
 #include "THMZ/Model/migration/FrameCavity.hxx"
+#include "THMZ/Model/migration/Pipeline.hxx"
 #include "THMZ/Model/THMX.hxx"
+#include "THMZ/ZipModule/ZipModule.hxx"
 #include "Materials/DB.hxx"
 
 namespace
@@ -237,6 +241,30 @@ TEST_F(TestFrameCavityMigration, CaptureLegacyMaterialsParsesCavityAndRadiationE
 
     ASSERT_EQ(capture.radiationEnclosures.size(), 1u);
     EXPECT_TRUE(capture.radiationEnclosures.contains("enclosure-uuid"));
+}
+
+TEST_F(TestFrameCavityMigration, PipelineStripsCavityRecordsFromMaterials)
+{
+    const std::map<std::string, std::string> entries{{ThermZip::MaterialsFileName + ".xml", R"(<Materials>
+<Version>1</Version>
+<Material>
+    <UUID>cavity-uuid</UUID>
+    <Name>Frame Cavity NFRC 100</Name>
+    <Cavity>
+        <CavityStandard>ISO15099Ventilated</CavityStandard>
+        <Gas>Argon</Gas>
+    </Cavity>
+</Material>
+</Materials>
+)"}};
+    MaterialsLibrary::DB materials;
+    materials.add(makeSolidMaterial("solid-uuid", "Steel"));
+    materials.add(makeSolidMaterial("cavity-uuid", "Frame Cavity NFRC 100"));
+
+    const auto migrated = ThermFile::Migration::applyAllToMaterials(entries, std::move(materials));
+
+    ASSERT_EQ(migrated.getMaterials().size(), 1u);
+    EXPECT_EQ(migrated.getMaterials().front().UUID, "solid-uuid");
 }
 
 TEST_F(TestFrameCavityMigration, CaptureLegacyMaterialsReturnsEmptyForCleanXml)

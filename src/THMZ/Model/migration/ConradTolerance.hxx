@@ -13,5 +13,5 @@ namespace ThermFile::Migration::ConradTolerance
     //! default, and never read the one stored in the file. Files therefore carry 1e-5 for
     //! Conrad without ever having run at it, and keeping that value would loosen the solve
     //! tenfold. A HygroThermFEM model keeps its value: that engine always read it.
-    [[nodiscard]] ThermFile::ThermModel applyToModel(int fileVersion, ThermFile::ThermModel model);
+    [[nodiscard]] ThermFile::ThermModel applyToModel(ThermFile::ThermModel model);
 }   // namespace ThermFile::Migration::ConradTolerance
