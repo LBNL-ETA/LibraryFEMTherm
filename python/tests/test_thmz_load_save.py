@@ -89,7 +89,7 @@ class TestModelFields:
     """Verify model struct fields are accessible."""
 
     def test_version(self, sample_model):
-        assert sample_model.version == "1"
+        assert sample_model.version == "6"
 
     def test_preferences_accessible(self, sample_model):
         prefs = sample_model.preferences

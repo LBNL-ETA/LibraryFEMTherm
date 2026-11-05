@@ -31,7 +31,7 @@ namespace ThermFile
     //! time series datasets its boundaries bind set both.
     struct EngineParameters
     {
-        double convergenceTolerance{1e-5};
+        double convergenceTolerance{1e-6};
         double relaxationParameter{1.0};
     };
 

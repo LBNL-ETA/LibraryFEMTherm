@@ -21,9 +21,13 @@ namespace ThermFile
         std::string shadeOutTag;
     };
 
+    //! The Model.xml version this library writes. Loading through the migration pipeline stamps
+    //! it on the model, so a saved file records which migrations it has been through.
+    inline constexpr int currentModelVersion{6};
+
     struct ThermModel
     {
-        std::string version{"5"};
+        std::string version{std::to_string(currentModelVersion)};
         bool calculationReady{false};
         Preferences preferences;
         Properties properties;

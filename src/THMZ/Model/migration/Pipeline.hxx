@@ -11,7 +11,8 @@ namespace ThermFile::Migration
     //! path needs, returning the migrated model. Each migration reads the raw
     //! legacy hints it needs out of the extracted archive entries (e.g. the
     //! materials entry for the frame-cavity migration) and yields a rewritten
-    //! model. Idempotent for already-migrated archives.
+    //! model. Idempotent for already-migrated archives. The returned model carries the current
+    //! version, so version-gated migrations run once per file: a later save records it.
     //!
     //! This is the **only** function the model loaders call on the migration
     //! side. Register new model-side migrations in this orchestrator so the
