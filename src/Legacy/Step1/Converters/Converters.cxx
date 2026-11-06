@@ -269,27 +269,32 @@ namespace BCLibrary
 
     namespace
     {
+        //! A series is not known to be zero, so only a constant counts.
+        bool isConstantZero(const std::optional<Source> & source)
+        {
+            return lbnl::extend(source)
+              .and_then([](const Source & held) { return lbnl::get_if_opt<Constant>(held); })
+              .transform([](const Constant & constant) { return constant.value == 0.0; })
+              .value_or(false);
+        }
+
         //! The legacy library expressed adiabatic as a fixed convection with a zero film
-        //! coefficient and nothing else. That exchanges nothing - no heat, and by the
-        //! Lewis relation no moisture either - so the conversion names it: the dedicated
-        //! NoExchange kind, instead of carrying the degenerate zeros forward.
+        //! coefficient and nothing else, and an advanced record could add an explicit zero
+        //! flux. That exchanges nothing - no heat, and by the Lewis relation no moisture
+        //! either - so the conversion names it: the dedicated NoExchange kind, instead of
+        //! carrying the degenerate zeros forward.
         bool convertsToNoExchange(
           const std::variant<SurfaceExchange, PrescribedState, RadiationSurface, NoExchange> & data)
         {
             const auto * exchange{std::get_if<SurfaceExchange>(&data)};
-            if(exchange == nullptr || exchange->radiation.has_value() || exchange->solar.has_value()
-               || exchange->flux.has_value())
+            if(exchange == nullptr || exchange->radiation.has_value() || exchange->solar.has_value())
             {
                 return false;
             }
-            if(!exchange->convection.has_value())
-            {
-                return true;
-            }
-            return lbnl::extend(exchange->convection->filmCoefficient)
-              .and_then([](const Source & source) { return lbnl::get_if_opt<Constant>(source); })
-              .transform([](const Constant & film) { return film.value == 0.0; })
-              .value_or(false);
+            const bool noFlux{!exchange->flux.has_value() || isConstantZero(exchange->flux)};
+            const bool noConvection{!exchange->convection.has_value()
+                                    || isConstantZero(exchange->convection->filmCoefficient)};
+            return noFlux && noConvection;
         }
     }   // namespace
 

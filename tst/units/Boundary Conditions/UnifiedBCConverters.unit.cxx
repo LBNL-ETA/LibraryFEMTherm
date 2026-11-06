@@ -119,6 +119,21 @@ TEST(TestUnifiedBCConverters, SteadyAdiabaticBecomesNoExchange)
     EXPECT_TRUE(std::holds_alternative<SurfaceExchange>(convertedRadiating.data));
 }
 
+TEST(TestUnifiedBCConverters, ZeroFluxExchangesNothingButARealFluxDoes)
+{
+    BCSteadyStateLibrary::BoundaryCondition zeroFlux;
+    zeroFlux.UUID = "z1";
+    zeroFlux.data = BCSteadyStateLibrary::Comprehensive{
+      0.5, BCSteadyStateLibrary::Convection{0.0, 0.0}, BCSteadyStateLibrary::ConstantFlux{0.0}, std::nullopt};
+    EXPECT_TRUE(std::holds_alternative<NoExchange>(fromSteadyState(zeroFlux).data));
+
+    BCSteadyStateLibrary::BoundaryCondition heated;
+    heated.UUID = "h1";
+    heated.data = BCSteadyStateLibrary::Comprehensive{
+      0.5, BCSteadyStateLibrary::Convection{0.0, 0.0}, BCSteadyStateLibrary::ConstantFlux{25.0}, std::nullopt};
+    EXPECT_TRUE(std::holds_alternative<SurfaceExchange>(fromSteadyState(heated).data));
+}
+
 TEST(TestUnifiedBCConverters, TransientTypeRecordInfersEnvironmentSources)
 {
     BCTypesLibrary::TypeRecord legacy;

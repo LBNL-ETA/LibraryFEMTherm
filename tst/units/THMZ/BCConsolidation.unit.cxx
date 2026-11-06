@@ -31,6 +31,37 @@ namespace
     }
 }   // namespace
 
+//! The Adiabatic of a released archive, as stored: a comprehensive record with an empty
+//! convection and an explicit zero flux. It must open as the library's NoExchange kind, or
+//! THERM reports a difference in "Type" the user can do nothing about.
+TEST(TestBCConsolidationMigration, StoredComprehensiveAdiabaticCapturedAsNoExchange)
+{
+    const std::string steadyStateEntry{R"(<BoundaryConditions>
+	<Version>1</Version>
+	<BoundaryCondition>
+		<UUID>683dbe3b-6aa3-c424-8c8c149c15f2</UUID>
+		<Name>Adiabatic</Name>
+		<ProjectNameTag>Project</ProjectNameTag>
+		<Protected>false</Protected>
+		<Color>0x000000</Color>
+		<IGUSurface>false</IGUSurface>
+		<Comprehensive>
+			<RelativeHumidity>0.5</RelativeHumidity>
+			<Convection/>
+			<ConstantFlux>
+				<Flux>0</Flux>
+			</ConstantFlux>
+			<Radiation/>
+		</Comprehensive>
+	</BoundaryCondition>
+</BoundaryConditions>)"};
+
+    const auto legacy{ThermFile::Migration::BCConsolidation::capture(steadyStateEntry, "")};
+
+    ASSERT_EQ(legacy.boundaryConditions.size(), 1U);
+    EXPECT_TRUE(std::holds_alternative<BCLibrary::NoExchange>(legacy.boundaryConditions[0].data));
+}
+
 TEST(TestBCConsolidationMigration, SteadyNameBindingBecomesUUIDBinding)
 {
     const auto legacy{ThermFile::Migration::BCConsolidation::capture(legacySteadyLibraryXml(), "")};
