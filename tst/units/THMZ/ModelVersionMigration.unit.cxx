@@ -88,3 +88,36 @@ TEST(ModelVersionMigration, SecondLoadLeavesTheUsersToleranceAlone)
 
     EXPECT_NEAR(storedTolerance, toleranceOf(reloaded), comparisonLimit);
 }
+
+namespace
+{
+    ThermFile::ThermModel makeUnderlayModel(const std::string & version, const std::string & name, const bool shown)
+    {
+        ThermFile::ThermModel model;
+        model.version = version;
+        model.preferences.underlay.name = name;
+        model.preferences.underlay.isUnderlayOn = shown;
+        return model;
+    }
+}   // namespace
+
+TEST(ModelVersionMigration, OlderFileShowsTheUnderlayItNames)
+{
+    const auto model{migrate(makeUnderlayModel("6", "sill.dxf", false))};
+
+    EXPECT_TRUE(model.preferences.underlay.isUnderlayOn);
+}
+
+TEST(ModelVersionMigration, OlderFileWithoutAnUnderlayShowsNone)
+{
+    const auto model{migrate(makeUnderlayModel("6", "", false))};
+
+    EXPECT_FALSE(model.preferences.underlay.isUnderlayOn);
+}
+
+TEST(ModelVersionMigration, CurrentFileKeepsAnUnderlayTheUserTurnedOff)
+{
+    const auto model{migrate(makeUnderlayModel(std::to_string(ThermFile::currentModelVersion), "sill.dxf", false))};
+
+    EXPECT_FALSE(model.preferences.underlay.isUnderlayOn);
+}

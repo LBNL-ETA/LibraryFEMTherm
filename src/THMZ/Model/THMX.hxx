@@ -23,7 +23,7 @@ namespace ThermFile
 
     //! The Model.xml version this library writes. Loading through the migration pipeline stamps
     //! it on the model, so a saved file records which migrations it has been through.
-    inline constexpr int currentModelVersion{6};
+    inline constexpr int currentModelVersion{7};
 
     struct ThermModel
     {

@@ -9,6 +9,7 @@
 #include "THMZ/Model/migration/ConradTolerance.hxx"
 #include "THMZ/Model/migration/FrameCavity.hxx"
 #include "THMZ/Model/migration/TimestepFiles.hxx"
+#include "THMZ/Model/migration/UnderlayState.hxx"
 #include "THMZ/ZipModule/ZipModule.hxx"
 
 namespace ThermFile::Migration
@@ -62,6 +63,12 @@ namespace ThermFile::Migration
         if(fileVersion < ConradTolerance::firstVersionWithConradTolerance)
         {
             model = ConradTolerance::applyToModel(std::move(model));
+        }
+
+        // Nor can an unset flag be told from one the user turned off.
+        if(fileVersion < UnderlayState::firstVersionWithUnderlayState)
+        {
+            model = UnderlayState::applyToModel(std::move(model));
         }
 
         // New model conversions go here. A conversion is one file in this folder, with an
