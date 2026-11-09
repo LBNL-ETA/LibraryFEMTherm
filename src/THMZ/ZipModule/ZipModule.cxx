@@ -4,6 +4,7 @@
 #include <future>
 #include <iterator>
 #include <map>
+#include <memory>
 #include <sstream>
 #include <vector>
 
@@ -80,10 +81,94 @@ namespace ThermZip
         return true;
     }
 
+    namespace
+    {
+        //! Entries from this size up are compressed on their own threads. Smaller ones are
+        //! added by miniz directly: a thread gains nothing there, and miniz stores entries of
+        //! three bytes or less uncompressed, which the pre-compressed path cannot express.
+        constexpr std::size_t parallelCompressionThreshold{1024u * 1024u};
+
+        struct MzFree
+        {
+            void operator()(void * data) const
+            {
+                mz_free(data);
+            }
+        };
+
+        struct CompressedEntry
+        {
+            std::unique_ptr<void, MzFree> data;
+            std::size_t size{0u};
+            mz_uint32 crc{0u};
+        };
+
+        //! Raw deflate with the flags miniz's own writer uses (mz_zip_writer_add_mem_ex_v2),
+        //! so the archive gets the same bytes it would have had from mz_zip_writer_add_mem.
+        //! A failed compression leaves data empty; the caller reports it.
+        CompressedEntry compressEntry(const std::string & content, const int compressionLevel)
+        {
+            const auto flags{
+              tdefl_create_comp_flags_from_zip_params(compressionLevel, -MZ_DEFAULT_WINDOW_BITS, MZ_DEFAULT_STRATEGY)};
+            std::size_t size{0u};
+            void * data{tdefl_compress_mem_to_heap(content.data(), content.size(), &size, static_cast<int>(flags))};
+            const auto crc{
+              mz_crc32(MZ_CRC32_INIT, reinterpret_cast<const unsigned char *>(content.data()), content.size())};
+            return {.data = std::unique_ptr<void, MzFree>{data}, .size = size, .crc = static_cast<mz_uint32>(crc)};
+        }
+
+        //! One future per entry, in map order: a compression running on its own thread for a
+        //! large entry, an empty future for the rest. The futures read the map's contents, so
+        //! the map must outlive them.
+        std::vector<std::future<CompressedEntry>>
+          startCompression(const std::map<std::string, std::string> & fileContents, const int compressionLevel)
+        {
+            std::vector<std::future<CompressedEntry>> compressed;
+            compressed.reserve(fileContents.size());
+            for(const auto & [filePath, content] : fileContents)
+            {
+                const bool parallel{compressionLevel > 0 && content.size() >= parallelCompressionThreshold};
+                compressed.push_back(parallel ? std::async(std::launch::async,
+                                                           [&content, compressionLevel]
+                                                           { return compressEntry(content, compressionLevel); })
+                                              : std::future<CompressedEntry>{});
+            }
+            return compressed;
+        }
+
+        bool addEntry(mz_zip_archive & zipArchive,
+                      const std::string & filePath,
+                      const std::string & content,
+                      std::future<CompressedEntry> & compressed,
+                      const int compressionLevel)
+        {
+            if(!compressed.valid())
+            {
+                return mz_zip_writer_add_mem(
+                  &zipArchive, filePath.c_str(), content.data(), content.size(), static_cast<mz_uint>(compressionLevel));
+            }
+            const auto entry{compressed.get()};
+            return entry.data != nullptr
+                   && mz_zip_writer_add_mem_ex(&zipArchive,
+                                               filePath.c_str(),
+                                               entry.data.get(),
+                                               entry.size,
+                                               nullptr,
+                                               0,
+                                               static_cast<mz_uint>(compressionLevel) | MZ_ZIP_FLAG_COMPRESSED_DATA,
+                                               content.size(),
+                                               entry.crc);
+        }
+    }   // namespace
+
     void zipFiles(const std::map<std::string, std::string> & fileContents,
                   const std::string & zipFileName,
                   int compressionLevel)
     {
+        // Large entries compress in parallel while the archive is opened and the small ones
+        // are written; each is added in map order as its compression completes.
+        auto compressed{startCompression(fileContents, compressionLevel)};
+
         mz_zip_archive zipArchive;
         memset(&zipArchive, 0, sizeof(zipArchive));
 
@@ -93,12 +178,12 @@ namespace ThermZip
             throw std::runtime_error("Failed to initialize zip archive for writing");
         }
 
-        // Iterate over each file in the map
+        std::size_t index{0u};
         for(const auto & [filePath, content] : fileContents)
         {
-            // Add the file content to the zip archive
-            if(!mz_zip_writer_add_mem(
-                 &zipArchive, filePath.c_str(), content.data(), content.size(), static_cast<mz_uint>(compressionLevel)))
+            const bool added{addEntry(zipArchive, filePath, content, compressed[index], compressionLevel)};
+            ++index;
+            if(!added)
             {
                 mz_zip_writer_end(&zipArchive);
                 std::stringstream msg;

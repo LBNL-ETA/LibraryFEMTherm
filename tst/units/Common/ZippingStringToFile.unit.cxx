@@ -1,4 +1,6 @@
 #include <filesystem>
+#include <map>
+#include <string>
 
 #include <gtest/gtest.h>
 
@@ -106,5 +108,30 @@ TEST(TestZippingStringToFile, HandleEmptyString)
     EXPECT_EQ(extractedFiles[fileName], emptyString);
 
     // Remove the zip file after the test
+    std::filesystem::remove(zipFileName);
+}
+
+//! zipFiles compresses entries of 1 MiB and up on their own threads and adds the rest
+//! directly; both kinds, including the empty and three-byte entries miniz stores
+//! uncompressed, must come back unchanged, compressed or stored.
+TEST(TestZippingStringToFile, ZipFilesRoundTripsLargeAndSmallEntries)
+{
+    std::string large;
+    large.reserve(3000000U);
+    for(std::size_t row = 0U; large.size() < 3000000U; ++row)
+    {
+        large += std::to_string(row) + ",21.5," + std::to_string(row * 7U % 1013U) + "\n";
+    }
+    const std::map<std::string, std::string> entries{{"Model.xml", "<Model/>"},
+                                                     {"empty.txt", ""},
+                                                     {"three.txt", "abc"},
+                                                     {"transient results/HeatFlux.csv", large},
+                                                     {"transient results/Temperatures.csv", large + large}};
+    const std::string zipFileName{"ParallelZip.zip"};
+    for(const int level : {ThermZip::FastCompressionLevel, 0})
+    {
+        ThermZip::zipFiles(entries, zipFileName, level);
+        EXPECT_EQ(ThermZip::unzipFiles(zipFileName), entries) << "level " << level;
+    }
     std::filesystem::remove(zipFileName);
 }
