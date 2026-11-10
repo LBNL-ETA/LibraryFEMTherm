@@ -506,15 +506,30 @@ TEST(Model, TransientAllowsFixedRadiationFromADataset)
                 Issue{.kind = IssueKind::RoleNotProvided, .segment = 2U, .roles = {SeriesRole::RadiantTemperature}}}));
 }
 
-TEST(Model, TransientRefusesWhatTheEngineDoesNotRunThroughAClock)
+TEST(Model, TransientHoldsAnAutomaticEnclosureAtConstants)
 {
     auto modelCase{strip()};
-    modelCase.segments[2].dataset = providing({SeriesRole::RadiantTemperature});
     convectiveEnd(modelCase).radiation = BCLibrary::AutomaticEnclosure{};
-    expectOneIssue(modelCase,
-                   Issue{.kind = IssueKind::EnclosureInTransient, .segment = 2U},
-                   "segment 2 from (0.1, 0) to (0.1, 0.01) radiates into an enclosure, which a transient run does "
-                   "not model; state fixed radiation or a black body");
+    EXPECT_TRUE(issues(modelCase).empty());
+
+    convectiveEnd(modelCase).radiation = BCLibrary::AutomaticEnclosure{.temperature = BCLibrary::Source{21.0}};
+    EXPECT_TRUE(issues(modelCase).empty());
+}
+
+TEST(Model, TransientRefusesWhatTheEngineDoesNotRunThroughAClock)
+{
+    const std::string enclosureText{
+      "segment 2 from (0.1, 0) to (0.1, 0.01) radiates into an enclosure a transient run cannot hold: a manual "
+      "enclosure, or an automatic one whose temperature or emissivity follows a series; state an automatic "
+      "enclosure of constants, fixed radiation or a black body"};
+    auto modelCase{strip()};
+    modelCase.segments[2].dataset = providing({SeriesRole::RadiantTemperature});
+    convectiveEnd(modelCase).radiation =
+      BCLibrary::AutomaticEnclosure{.temperature = BCLibrary::Source{SeriesRole::RadiantTemperature}};
+    expectOneIssue(modelCase, Issue{.kind = IssueKind::EnclosureInTransient, .segment = 2U}, enclosureText);
+
+    convectiveEnd(modelCase).radiation = BCLibrary::ManualEnclosure{};
+    expectOneIssue(modelCase, Issue{.kind = IssueKind::EnclosureInTransient, .segment = 2U}, enclosureText);
 
     convectiveEnd(modelCase).radiation = BCLibrary::BlackBodyRadiation{
       .temperature = SeriesRole::RadiantTemperature};

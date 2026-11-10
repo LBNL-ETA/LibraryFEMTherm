@@ -254,9 +254,9 @@ namespace
                                  "that tell windward from leeward, `wind_direction` (degrees). `flux` is an imposed "
                                  "heat flux in W/m2. `radiation` is one of THERM's radiation models: "
                                  "BCFixedCoefficientRadiation, the one the engine reads step by step; "
-                                 "BCBlackBodyRadiation with constants; BCAutomaticEnclosure and BCManualEnclosure in "
-                                 "a steady-state case only. Every input is a number, or a SeriesRole read from the "
-                                 "segment's dataset.")
+                                 "BCBlackBodyRadiation with constants; BCAutomaticEnclosure, which a transient case "
+                                 "holds at constants; BCManualEnclosure in a steady-state case only. Every input is "
+                                 "a number, or a SeriesRole read from the segment's dataset.")
             .def(py::init([](const SourceLike & airTemperature,
                              const std::optional<SourceLike> & filmCoefficient,
                              const SourceLike & humidity,

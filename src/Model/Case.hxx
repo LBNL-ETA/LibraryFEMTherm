@@ -69,8 +69,9 @@ namespace ThermFile::Model
     //! A surface's radiative exchange, as THERM's records state it. Fixed-coefficient
     //! radiation is the one model the engine reads step by step, and the one a weather file
     //! feeds (its sky temperature is a radiant temperature); a black body must hold
-    //! constants; the enclosures are steady-state only, since the engine does not run them
-    //! through a clock.
+    //! constants. An automatic enclosure runs in a transient case too, held at one
+    //! temperature for the whole run, so it must hold constants there; a manual enclosure
+    //! is steady-state only.
     using Radiation = BCLibrary::RadiationOptions;
 
     //! Exchange with an environment: air temperature in °C, relative humidity as a fraction,
@@ -336,7 +337,7 @@ namespace ThermFile::Model
         ConvectionInputMissing,    //!< `segment`'s convection model reads `input`, which it does not give
         RoleWithoutDataset,        //!< `segment` reads `roles` but binds no dataset
         RoleNotProvided,           //!< `segment`'s dataset provides none of `roles`, which it reads
-        EnclosureInTransient,      //!< `segment` radiates into an enclosure in a transient case
+        EnclosureInTransient,      //!< `segment`'s enclosure is manual, or reads a dataset, in a transient case
         BlackBodyFromDataset,      //!< `segment`'s black body reads a dataset in a transient case
         RoleInSteadyState,         //!< `segment` reads `roles` in a steady-state case
         DatasetInSteadyState,      //!< `segment` binds a dataset in a steady-state case

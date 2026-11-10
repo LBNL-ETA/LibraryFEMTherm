@@ -533,12 +533,28 @@ namespace ThermFile::Model
             }
         }
 
-        //! The radiation the engine runs through a clock: fixed radiation, step by step, and
-        //! a black body held at constants. An enclosure is not run at all in a transient run.
-        std::optional<IssueKind> transientRadiationIssue(const Radiation & radiation)
+        //! Whether the segment's automatic enclosure reads an input from a dataset series.
+        //! An enclosure that states no temperature of its own closes at the air's.
+        bool automaticEnclosureReadsSeries(const Convective & convective)
         {
-            if(std::holds_alternative<BCLibrary::AutomaticEnclosure>(radiation)
-               || std::holds_alternative<BCLibrary::ManualEnclosure>(radiation))
+            const auto * automatic{std::get_if<BCLibrary::AutomaticEnclosure>(&convective.radiation.value())};
+            if(automatic == nullptr)
+            {
+                return false;
+            }
+            const auto & temperature{automatic->temperature.has_value() ? automatic->temperature.value()
+                                                                        : convective.airTemperature};
+            return BCLibrary::isFromTimeSeries(temperature) || BCLibrary::isFromTimeSeries(automatic->emissivity);
+        }
+
+        //! The radiation a transient run models: fixed radiation, step by step; a black body
+        //! held at constants; and an automatic enclosure held at one temperature for the
+        //! whole run. A manual enclosure is not run in a transient run.
+        std::optional<IssueKind> transientRadiationIssue(const Convective & convective)
+        {
+            const auto & radiation{convective.radiation.value()};
+            if(std::holds_alternative<BCLibrary::ManualEnclosure>(radiation)
+               || automaticEnclosureReadsSeries(convective))
             {
                 return IssueKind::EnclosureInTransient;
             }
@@ -553,12 +569,12 @@ namespace ThermFile::Model
         {
             for(std::size_t index = 0U; index < modelCase.segments.size(); ++index)
             {
-                const auto * radiation{radiationOf(modelCase.segments[index])};
-                if(radiation == nullptr)
+                const auto * convective{std::get_if<Convective>(&modelCase.segments[index].kind)};
+                if(convective == nullptr || !convective->radiation.has_value())
                 {
                     continue;
                 }
-                if(const auto kind{transientRadiationIssue(*radiation)})
+                if(const auto kind{transientRadiationIssue(*convective)})
                 {
                     found.push_back(Issue{.kind = kind.value(), .segment = index});
                 }
@@ -763,8 +779,9 @@ namespace ThermFile::Model
             switch(issue.kind)
             {
                 case IssueKind::EnclosureInTransient:
-                    return " radiates into an enclosure, which a transient run does not model; state fixed "
-                           "radiation or a black body";
+                    return " radiates into an enclosure a transient run cannot hold: a manual enclosure, or an "
+                           "automatic one whose temperature or emissivity follows a series; state an automatic "
+                           "enclosure of constants, fixed radiation or a black body";
                 case IssueKind::BlackBodyFromDataset:
                     return " radiates as a black body read from a series, which a transient run holds constant; "
                            "state constants, or fixed-coefficient radiation to read a dataset";

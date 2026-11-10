@@ -143,6 +143,12 @@ class TestSteadyState:
             model.bc.Convective(air_temperature=20.0, film_coefficient=8.0, radiation=fem.BCAutomaticEnclosure(emissivity=0.9)),
             (0.0, 0.0), (0.1, 0.0))
         case.segments = segments
+        assert model.issues(model_case=case) == []
+
+        segments[0] = model.Segment(
+            model.bc.Convective(air_temperature=20.0, film_coefficient=8.0, radiation=fem.BCManualEnclosure()),
+            (0.0, 0.0), (0.1, 0.0))
+        case.segments = segments
         assert model.IssueKind.EnclosureInTransient in kinds(found=model.issues(model_case=case))
 
     def test_a_steady_case_may_prescribe_a_face(self):
