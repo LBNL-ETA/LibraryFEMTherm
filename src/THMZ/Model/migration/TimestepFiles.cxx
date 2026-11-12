@@ -1,11 +1,11 @@
 #include "TimestepFiles.hxx"
 
 #include <algorithm>
-#include <charconv>
 #include <filesystem>
 #include <optional>
 #include <utility>
 
+#include "Common/ParseNumber.hxx"
 #include "Legacy/Step1/BCTransient/Timestep.hxx"
 #include "Legacy/Step1/Converters/Converters.hxx"
 #include "THMZ/Model/DB.hxx"
@@ -30,9 +30,10 @@ namespace ThermFile::Migration::TimestepFiles
                 return std::nullopt;
             }
             const auto * const first{modelText.data() + start + opening.size()};
-            double value{0.0};
-            const auto [position, error]{std::from_chars(first, modelText.data() + modelText.size(), value)};
-            return error == std::errc{} && position != first ? std::optional{value} : std::nullopt;
+            // Common::parseDouble, not std::from_chars: older Apple standard libraries have no
+            // from_chars for double.
+            const auto parsed{Common::parseDouble(first, modelText.data() + modelText.size())};
+            return parsed.has_value() ? std::optional{parsed->value} : std::nullopt;
         }
 
         std::string fileContent(const Entries & entries, const std::string & fileName)
