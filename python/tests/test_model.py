@@ -5,7 +5,7 @@ Python surface: keyword construction, tuples where points and curve samples go,
 defaults, value equality, and the two error paths surfacing as ValueError.
 """
 
-import os
+import pathlib
 
 import pytest
 
@@ -395,7 +395,7 @@ class TestIssues:
         assert [own_wording(issue=issue) for issue in raised.value.issues] == ["Polygon 1 needs a material name."]
         target = tmp_path / "invalid.thmz"
         with pytest.raises(ValueError, match="no name"):
-            build.thmz(case, str(target))
+            build.thmz(case, target)
         assert not target.exists()
 
 
@@ -569,9 +569,10 @@ class TestArchive:
         assert sum(name.startswith("time series/") for name in entries) == 1
 
     def test_written_archive_round_trips(self, tmp_path):
-        path = str(tmp_path / "nested" / "strip.thmz")
-        assert build.thmz(sealed_strip(), path) == path
-        assert os.path.exists(path)
+        written = tmp_path / "nested" / "strip.thmz"
+        assert build.thmz(sealed_strip(), written) == written
+        assert written.exists()
+        path = str(written)
 
         loaded = fem.load_model(path)
         assert loaded is not None
@@ -588,7 +589,15 @@ class TestArchive:
         assert materials.get_names() == ["linear-sorption"]
 
         # Overwrites in place.
-        assert build.thmz(sealed_strip(), path) == path
+        assert build.thmz(sealed_strip(), written) == written
+
+    def test_the_archive_path_is_a_path(self, tmp_path):
+        """A path is given and returned as a pathlib.Path; a string is refused."""
+        written = build.thmz(sealed_strip(), tmp_path / "strip.thmz")
+        assert isinstance(written, pathlib.Path)
+        with pytest.raises(TypeError):
+            build.thmz(sealed_strip(), str(tmp_path / "text.thmz"))
+        assert not (tmp_path / "text.thmz").exists()
 
     def test_identity_is_stable(self):
         case = sealed_strip()
