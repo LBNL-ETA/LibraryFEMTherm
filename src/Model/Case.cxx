@@ -617,7 +617,7 @@ namespace ThermFile::Model
 
         void checkStart(const ModelCase & modelCase, std::vector<Issue> & found)
         {
-            const auto * conditions{startConditions(modelCase.initial)};
+            const auto * conditions{startConditions(modelCase.initializer)};
             if(conditions == nullptr)
             {
                 return;
@@ -895,7 +895,7 @@ namespace ThermFile::Model
         return result;
     }
 
-    Uniform initialValues(const Initial & initial)
+    Uniform initialValues(const Initializer & initializer)
     {
         return std::visit(
           [](const auto & start) -> Uniform {
@@ -913,16 +913,16 @@ namespace ThermFile::Model
                   return start.start;
               }
           },
-          initial);
+          initializer);
     }
 
-    const std::map<std::string, Boundary> * startConditions(const Initial & initial)
+    const std::map<std::string, Boundary> * startConditions(const Initializer & initializer)
     {
-        if(const auto * steady{std::get_if<FromSteadyState>(&initial)})
+        if(const auto * steady{std::get_if<FromSteadyState>(&initializer)})
         {
             return &steady->conditions;
         }
-        if(const auto * transient{std::get_if<FromTransient>(&initial)})
+        if(const auto * transient{std::get_if<FromTransient>(&initializer)})
         {
             return &transient->conditions;
         }
@@ -957,7 +957,7 @@ namespace ThermFile::Model
             auto result{withConditions(modelCase, conditions)};
             result.id = modelCase.id + "/initializer";
             result.title = (modelCase.title.empty() ? modelCase.id : modelCase.title) + " (initializer)";
-            result.initial = start;
+            result.initializer = start;
             result.physics = physics.value_or(modelCase.physics);
             return result;
         }
@@ -965,14 +965,14 @@ namespace ThermFile::Model
 
     std::optional<ModelCase> initializerCase(const ModelCase & modelCase)
     {
-        if(const auto * steady{std::get_if<FromSteadyState>(&modelCase.initial)})
+        if(const auto * steady{std::get_if<FromSteadyState>(&modelCase.initializer)})
         {
             auto result{initializerOf(modelCase, steady->conditions, steady->start.value_or(Uniform{}), steady->physics)};
             result.mode = ThermFile::CalculationMode::cmSteadyState;
             result.schedule = Schedule{};
             return result;
         }
-        if(const auto * transient{std::get_if<FromTransient>(&modelCase.initial)})
+        if(const auto * transient{std::get_if<FromTransient>(&modelCase.initializer)})
         {
             auto result{initializerOf(modelCase, transient->conditions, transient->start, transient->physics)};
             result.schedule = transient->schedule;

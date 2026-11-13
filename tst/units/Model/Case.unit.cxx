@@ -32,7 +32,7 @@ namespace
                         .start = {0.1, 0.0},
                         .end = {0.1, 0.01}},
                        {.kind = Adiabatic{}, .start = {0.1, 0.01}, .end = {0.0, 0.01}}},
-          .initial = Uniform{.temperature = 20.0, .humidity = 0.5},
+          .initializer = Uniform{.temperature = 20.0, .humidity = 0.5},
           .schedule = uniformSchedule(3600.0, 24U),
         };
     }
@@ -363,7 +363,7 @@ TEST(Model, CasesCompareByValue)
 {
     EXPECT_EQ(strip(), strip());
     auto changed{strip()};
-    changed.initial = Uniform{.temperature = 20.0, .humidity = 0.6};
+    changed.initializer = Uniform{.temperature = 20.0, .humidity = 0.6};
     EXPECT_NE(changed, strip());
 }
 
@@ -632,38 +632,38 @@ TEST(Model, TheSteadyInitializerIsTheSwappedCaseAtSteadyState)
     auto modelCase{strip()};
     modelCase.title = "Strip";
     modelCase.segments[2].name = "cold end";
-    modelCase.initial = FromSteadyState{.conditions = {{"cold end", Prescribed{.temperature = 40.0}}}};
+    modelCase.initializer = FromSteadyState{.conditions = {{"cold end", Prescribed{.temperature = 40.0}}}};
     const auto found{initializerCase(modelCase)};
     ASSERT_TRUE(found.has_value());
     EXPECT_EQ(found->id, "strip/initializer");
     EXPECT_EQ(found->title, "Strip (initializer)");
     EXPECT_TRUE(isSteadyState(found.value()));
     EXPECT_TRUE(found->schedule.stepLengths.empty());
-    EXPECT_EQ(std::get<Uniform>(found->initial), Uniform{});
+    EXPECT_EQ(std::get<Uniform>(found->initializer), Uniform{});
     EXPECT_EQ(found->segments[2].kind, Boundary{Prescribed{.temperature = 40.0}});
     EXPECT_EQ(found->regions, modelCase.regions);
 
-    modelCase.initial = FromSteadyState{.start = Uniform{.temperature = 5.0, .humidity = 0.9}};
-    EXPECT_EQ(std::get<Uniform>(initializerCase(modelCase)->initial), (Uniform{.temperature = 5.0, .humidity = 0.9}));
+    modelCase.initializer = FromSteadyState{.start = Uniform{.temperature = 5.0, .humidity = 0.9}};
+    EXPECT_EQ(std::get<Uniform>(initializerCase(modelCase)->initializer), (Uniform{.temperature = 5.0, .humidity = 0.9}));
 }
 
 TEST(Model, TheTransientInitializerRunsTheStartsSchedule)
 {
     auto modelCase{strip()};
-    modelCase.initial = FromTransient{.schedule = uniformSchedule(600.0, 3U),
+    modelCase.initializer = FromTransient{.schedule = uniformSchedule(600.0, 3U),
                                       .start = Uniform{.temperature = 10.0, .humidity = 0.9}};
     const auto found{initializerCase(modelCase)};
     ASSERT_TRUE(found.has_value());
     EXPECT_FALSE(isSteadyState(found.value()));
     EXPECT_EQ(found->schedule, uniformSchedule(600.0, 3U));
-    EXPECT_EQ(std::get<Uniform>(found->initial), (Uniform{.temperature = 10.0, .humidity = 0.9}));
+    EXPECT_EQ(std::get<Uniform>(found->initializer), (Uniform{.temperature = 10.0, .humidity = 0.9}));
     EXPECT_EQ(found->segments, modelCase.segments);
 }
 
 TEST(Model, AStartNamingNoFaceIsAnIssue)
 {
     auto modelCase{strip()};
-    modelCase.initial = FromSteadyState{.conditions = {{"nowhere", Adiabatic{}}}};
+    modelCase.initializer = FromSteadyState{.conditions = {{"nowhere", Adiabatic{}}}};
     expectOneIssue(modelCase,
                    Issue{.kind = IssueKind::StartConditionUnknownName, .name = "nowhere"},
                    "the start names a face 'nowhere' that no segment carries");
@@ -673,7 +673,7 @@ TEST(Model, AStartConditionReadingARoleIsAnIssue)
 {
     auto modelCase{strip()};
     modelCase.segments[2].name = "cold end";
-    modelCase.initial = FromTransient{
+    modelCase.initializer = FromTransient{
       .conditions = {{"cold end", Convective{.airTemperature = SeriesRole::AirTemperature, .filmCoefficient = 8.0}}},
       .schedule = uniformSchedule(3600.0, 2U)};
     const auto found{issues(modelCase)};
@@ -688,7 +688,7 @@ TEST(Model, AStartConditionMissingItsInputIsAnIssue)
 {
     auto modelCase{strip()};
     modelCase.segments[2].name = "cold end";
-    modelCase.initial = FromSteadyState{.conditions = {{"cold end", Convective{.airTemperature = -10.0}}}};
+    modelCase.initializer = FromSteadyState{.conditions = {{"cold end", Convective{.airTemperature = -10.0}}}};
     expectOneIssue(modelCase,
                    Issue{.kind = IssueKind::StartConditionInputMissing,
                          .input = ConvectionInput::FilmCoefficient,
@@ -700,7 +700,7 @@ TEST(Model, ASteadyStateCaseStartsUniform)
 {
     auto modelCase{strip()};
     modelCase.mode = ThermFile::CalculationMode::cmSteadyState;
-    modelCase.initial = FromSteadyState{};
+    modelCase.initializer = FromSteadyState{};
     expectOneIssue(modelCase,
                    Issue{.kind = IssueKind::SolvedStartInSteadyState},
                    "a steady-state case starts uniform; a start solved first is for a transient case");
@@ -716,13 +716,13 @@ TEST(Model, ASteadyStateCaseMayPrescribeAFace)
 TEST(Model, TheInitializerMaySolveOtherPhysicsThanTheRun)
 {
     auto modelCase{strip()};
-    modelCase.initial = FromSteadyState{.physics = Physics{.moisture = false}};
+    modelCase.initializer = FromSteadyState{.physics = Physics{.moisture = false}};
     const auto found{initializerCase(modelCase)};
     ASSERT_TRUE(found.has_value());
     EXPECT_FALSE(found->physics.moisture);
     EXPECT_TRUE(found->physics.thermal);
     EXPECT_TRUE(issues(modelCase).empty());
 
-    modelCase.initial = FromTransient{.schedule = uniformSchedule(600.0, 2U)};
+    modelCase.initializer = FromTransient{.schedule = uniformSchedule(600.0, 2U)};
     EXPECT_EQ(initializerCase(modelCase)->physics, modelCase.physics);
 }

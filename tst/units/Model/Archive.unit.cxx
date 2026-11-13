@@ -61,7 +61,7 @@ namespace
                         .start = {0.0, 0.05},
                         .end = {0.0, 0.0},
                         .region = 0U}},
-          .initial = Uniform{.temperature = 20.0, .humidity = 0.5},
+          .initializer = Uniform{.temperature = 20.0, .humidity = 0.5},
           .schedule = uniformSchedule(3600.0, 24U),
         };
     }
@@ -78,7 +78,7 @@ namespace
                        {.kind = Prescribed{.temperature = 20.0}, .start = {0.1, 0.0}, .end = {0.1, 0.005}},
                        {.kind = Adiabatic{}, .start = {0.1, 0.005}, .end = {0.0, 0.005}},
                        {.kind = Prescribed{.temperature = 40.0}, .start = {0.0, 0.005}, .end = {0.0, 0.0}}},
-          .initial = Uniform{.temperature = 30.0, .humidity = 0.4},
+          .initializer = Uniform{.temperature = 30.0, .humidity = 0.4},
           .schedule = uniformSchedule(36000.0, 300U),
           .physics = {.liquidTransport = false, .heatOfEvaporation = false},
         };
@@ -153,7 +153,7 @@ namespace
                         .end = {0.3, 0.3},
                         .name = "room side"},
                        {.kind = outside, .start = {0.3, 0.3}, .end = {0.0, 0.3}, .name = "top", .dataset = outdoor}},
-          .initial = Uniform{.temperature = 20.0, .humidity = 0.5},
+          .initializer = Uniform{.temperature = 20.0, .humidity = 0.5},
         };
     }
 
@@ -715,7 +715,7 @@ TEST(Build, TransientCaseWritesFixedRadiation)
 TEST(Build, ASolvedStartWritesItsConditionsAsRecords)
 {
     auto modelCase{weatherWall(weather({SeriesRole::AirTemperature}, 48U))};
-    modelCase.initial = FromSteadyState{
+    modelCase.initializer = FromSteadyState{
       .conditions = {{"outside", Convective{.airTemperature = -10.0, .filmCoefficient = 25.0, .humidity = 0.8}}}};
     ASSERT_TRUE(issues(modelCase).empty());
 
@@ -736,7 +736,7 @@ TEST(Build, ASolvedStartWritesItsConditionsAsRecords)
 TEST(Build, AStartConditionOfKnownContentSharesTheRecord)
 {
     auto modelCase{weatherWall(weather({SeriesRole::AirTemperature}, 48U))};
-    modelCase.initial = FromSteadyState{
+    modelCase.initializer = FromSteadyState{
       .conditions = {{"outside", Convective{.airTemperature = 20.0, .filmCoefficient = 8.0, .humidity = 0.5}}},
       .start = Uniform{.temperature = 5.0, .humidity = 0.9}};
 
@@ -752,7 +752,7 @@ TEST(Build, AStartConditionOfKnownContentSharesTheRecord)
 TEST(Build, ATransientStartWritesItsScheduleAndRoundTrips)
 {
     auto modelCase{weatherWall(weather({SeriesRole::AirTemperature}, 48U))};
-    modelCase.initial = FromTransient{.schedule = uniformSchedule(1800.0, 4U),
+    modelCase.initializer = FromTransient{.schedule = uniformSchedule(1800.0, 4U),
                                       .start = Uniform{.temperature = 5.0, .humidity = 0.9}};
     const ThermFile::InitialConditions expected{
       ThermFile::TransientStart{.stepLengths = {1800.0, 1800.0, 1800.0, 1800.0}, .start = {5.0, 0.9}}};
@@ -769,7 +769,7 @@ TEST(Build, ATransientStartWritesItsScheduleAndRoundTrips)
 TEST(Build, TheClockReadsTheStartTemperature)
 {
     auto modelCase{sealedStrip()};
-    modelCase.initial = FromTransient{.schedule = uniformSchedule(3600.0, 2U),
+    modelCase.initializer = FromTransient{.schedule = uniformSchedule(3600.0, 2U),
                                       .start = Uniform{.temperature = 12.0, .humidity = 0.3}};
     const auto datasets{boundaryDatasets(modelCase)};
     ASSERT_TRUE(datasets.contains(0U));
@@ -785,7 +785,7 @@ TEST(Build, ASteadyStateCaseWritesItsUniformStart)
 TEST(Build, ASolvedStartWritesItsOwnPhysics)
 {
     auto modelCase{sealedStrip()};
-    modelCase.initial = FromSteadyState{.start = Uniform{.temperature = 30.0, .humidity = 0.4},
+    modelCase.initializer = FromSteadyState{.start = Uniform{.temperature = 30.0, .humidity = 0.4},
                                         .physics = Physics{.moisture = false, .liquidTransport = false}};
     const auto & options{model(modelCase).properties.calculationOptions};
     EXPECT_TRUE(options.simulateMoisture);
@@ -796,7 +796,7 @@ TEST(Build, ASolvedStartWritesItsOwnPhysics)
     EXPECT_TRUE(steady->physics->simulateThermal);
     EXPECT_TRUE(steady->physics->modelingOptions.excludeWaterLiquidTransportation);
 
-    modelCase.initial = FromSteadyState{};
+    modelCase.initializer = FromSteadyState{};
     const auto & plainOptions{model(modelCase).properties.calculationOptions};
     const auto * plain{std::get_if<ThermFile::SteadyStart>(&plainOptions.initialConditions.state)};
     ASSERT_NE(plain, nullptr);

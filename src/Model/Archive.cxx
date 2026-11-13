@@ -162,7 +162,7 @@ namespace ThermFile::Build
                                               std::vector<BCLibrary::BoundaryCondition> & records)
         {
             std::vector<StartRecord> found;
-            const auto * conditions{Model::startConditions(modelCase.initial)};
+            const auto * conditions{Model::startConditions(modelCase.initializer)};
             if(conditions == nullptr)
             {
                 return found;
@@ -214,7 +214,7 @@ namespace ThermFile::Build
               .axis = Model::axisOf(modelCase.schedule),
               .series = {Series{.role = SeriesRole::AirTemperature,
                                 .values = std::vector<double>(Model::nSteps(modelCase.schedule),
-                                                              Model::initialValues(modelCase.initial).temperature)}}};
+                                                              Model::initialValues(modelCase.initializer).temperature)}}};
         }
 
         //! The dataset of every segment of the completed case: the one it binds, as given;
@@ -358,7 +358,7 @@ namespace ThermFile::Build
                                                               .physics = fileStartPhysics(start.physics)}};
                   }
               },
-              modelCase.initial);
+              modelCase.initializer);
         }
 
         //! A transient case runs no estimator: the estimator is a steady-state tool. A

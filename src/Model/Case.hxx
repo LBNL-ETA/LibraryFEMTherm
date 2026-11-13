@@ -280,16 +280,17 @@ namespace ThermFile::Model
         [[nodiscard]] friend bool operator==(const FromTransient & lhs, const FromTransient & rhs) = default;
     };
 
-    //! How a case starts: uniform, or from a state solved first.
-    using Initial = std::variant<Uniform, FromSteadyState, FromTransient>;
+    //! How a case gets its starting state: uniform values, or a state solved first. Named for
+    //! what it is: the whole object that may run a calculation, not only the initial values.
+    using Initializer = std::variant<Uniform, FromSteadyState, FromTransient>;
 
     //! The uniform values a start is stated with: the constant itself, or where the
     //! initializer begins (20 °C and 0.5 standing in when a steady start names none). Not
     //! where a solved start's run begins: that is the field the initializer ends with.
-    [[nodiscard]] Uniform initialValues(const Initial & initial);
+    [[nodiscard]] Uniform initialValues(const Initializer & initializer);
 
     //! The conditions a solved start swaps in, by face name; none for a uniform start.
-    [[nodiscard]] const std::map<std::string, Boundary> * startConditions(const Initial & initial);
+    [[nodiscard]] const std::map<std::string, Boundary> * startConditions(const Initializer & initializer);
 
     // ------------------------------------------------------------------------------------
     // The case
@@ -300,8 +301,8 @@ namespace ThermFile::Model
     //!
     //! `mode` is the calculation the archive is set up for. A transient case runs through
     //! its clock -- the datasets its segments bind, or `schedule` when they bind none -- from
-    //! `initial`, uniform or solved first. A steady-state case has no clock: `schedule` is
-    //! not written, `initial` is the uniform start of its iteration, each condition is a
+    //! what `initializer` states, uniform or solved first. A steady-state case has no clock:
+    //! `schedule` is not written, `initializer` is the uniform start of its iteration, each condition is a
     //! constant on its own record, and `meshControl` -- THERM's own error target and pass
     //! budget -- drives the error estimator.
     struct ModelCase
@@ -310,7 +311,7 @@ namespace ThermFile::Model
         std::string title{};
         std::vector<Region> regions{};
         std::vector<Segment> segments{};
-        Initial initial{};
+        Initializer initializer{};
         Schedule schedule{};
         Physics physics{};
         Numerics numerics{};

@@ -471,7 +471,7 @@ namespace
     }
 
     //! The two starts solved first. Bound after Schedule, which FromTransient's signature
-    //! names, and before ModelCase, whose `initial` names all three forms.
+    //! names, and before ModelCase, whose `initializer` names all three forms.
     void bindSolvedStarts(py::module_ & model)
     {
         auto initializer{model.attr("initializer").cast<py::module_>()};
@@ -548,7 +548,7 @@ namespace
             .def(py::init([](std::string id,
                              std::vector<Region> regions,
                              std::vector<Segment> segments,
-                             const Initial & initial,
+                             const Initializer & initializer,
                              const Schedule & schedule,
                              const Physics & physics,
                              const Numerics & numerics,
@@ -559,7 +559,7 @@ namespace
                                       .title = std::move(title),
                                       .regions = std::move(regions),
                                       .segments = std::move(segments),
-                                      .initial = initial,
+                                      .initializer = initializer,
                                       .schedule = schedule,
                                       .physics = physics,
                                       .numerics = numerics,
@@ -569,7 +569,7 @@ namespace
                  py::arg("id"),
                  py::arg("regions"),
                  py::arg("segments"),
-                 py::arg("initializer") = Initial{},
+                 py::arg("initializer") = Initializer{},
                  py::arg("schedule") = Schedule{},
                  py::arg("physics") = Physics{},
                  py::arg("numerics") = Numerics{},
@@ -580,7 +580,7 @@ namespace
             .def_readwrite("title", &ModelCase::title)
             .def_readwrite("regions", &ModelCase::regions)
             .def_readwrite("segments", &ModelCase::segments)
-            .def_readwrite("initializer", &ModelCase::initial)
+            .def_readwrite("initializer", &ModelCase::initializer)
             .def_readwrite("schedule", &ModelCase::schedule)
             .def_readwrite("physics", &ModelCase::physics)
             .def_readwrite("numerics", &ModelCase::numerics)
