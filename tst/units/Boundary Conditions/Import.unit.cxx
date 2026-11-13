@@ -136,13 +136,13 @@ TEST(TestImport, ReadWeatherTakesTheOneWeatherFileOfAZip)
 TEST(TestImport, FailedZipEntriesAreListedBesideTheGoodOnes)
 {
     const std::map<std::string, std::string> entries{{"indoor.csv", csvContent}, {"broken.csv", "nothing,here\n1,2\n"}};
-    const auto result{Import::importDatasetsFromEntries(entries, hourly)};
+    const auto result{Import::datasetsFromFileEntries(entries, hourly)};
     ASSERT_TRUE(result.has_value()) << result.error();
     EXPECT_EQ(result->datasets.size(), 1U);
     ASSERT_EQ(result->failedEntries.size(), 1U);
     EXPECT_EQ(result->failedEntries[0].rfind("broken.csv: ", 0U), 0U);
 
-    const auto nothing{Import::importDatasetsFromEntries({{"city.stat", "not a dataset"}}, hourly)};
+    const auto nothing{Import::datasetsFromFileEntries({{"city.stat", "not a dataset"}}, hourly)};
     ASSERT_FALSE(nothing.has_value());
     EXPECT_NE(nothing.error().find("no EnergyPlus weather"), std::string::npos);
 }

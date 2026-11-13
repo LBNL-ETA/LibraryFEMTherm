@@ -66,7 +66,7 @@ namespace TimeSeriesLibrary::Import
         {
             try
             {
-                return importDatasetsFromEntries(ThermZip::unzipFiles(file.string()), stepChoice);
+                return datasetsFromFileEntries(ThermZip::unzipFiles(file.string()), stepChoice);
             }
             catch(const std::runtime_error &)
             {
@@ -156,7 +156,7 @@ namespace TimeSeriesLibrary::Import
     }
 
     lbnl::ExpectedExt<ImportOutcome, std::string>
-      importDatasetsFromEntries(const std::map<std::string, std::string> & entries, const Csv::StepChoice & stepChoice)
+      datasetsFromFileEntries(const std::map<std::string, std::string> & entries, const Csv::StepChoice & stepChoice)
     {
         ImportOutcome outcome;
         for(const auto & [entryName, content] : entries)

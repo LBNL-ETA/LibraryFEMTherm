@@ -51,6 +51,6 @@ namespace TimeSeriesLibrary::Import
     //! The zip case on its contents: entry name -> content, each .epw or .csv entry
     //! imported under its stem, every other entry ignored.
     [[nodiscard]] lbnl::ExpectedExt<ImportOutcome, std::string>
-      importDatasetsFromEntries(const std::map<std::string, std::string> & entries,
+      datasetsFromFileEntries(const std::map<std::string, std::string> & entries,
                                 const Csv::StepChoice & stepChoice = {});
 }   // namespace TimeSeriesLibrary::Import

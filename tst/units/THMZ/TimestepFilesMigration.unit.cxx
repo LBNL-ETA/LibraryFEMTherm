@@ -65,7 +65,7 @@ namespace
 
     TimeSeriesLibrary::TimeSeriesData onlyDataset(const Entries & entries)
     {
-        const auto datasets{TimeSeriesLibrary::datasetsFromEntries(entries)};
+        const auto datasets{TimeSeriesLibrary::datasetsFromThmzEntries(entries)};
         EXPECT_EQ(1u, datasets.size());
         return datasets.front();
     }
@@ -105,7 +105,7 @@ TEST(TimestepFilesMigration, FilesOfDifferentLengthsLineUp)
     auto entries{archiveEntries(model, 500)};
     entries[ThermZip::TimestepFilesDir + "/" + otherFile] = timestepFile(1000, 100);
 
-    const auto datasets{TimeSeriesLibrary::datasetsFromEntries(ThermFile::Migration::TimestepFiles::withConvertedFiles(entries))};
+    const auto datasets{TimeSeriesLibrary::datasetsFromThmzEntries(ThermFile::Migration::TimestepFiles::withConvertedFiles(entries))};
 
     ASSERT_EQ(2u, datasets.size());
     EXPECT_EQ(TimeSeriesLibrary::steps(datasets[0]), TimeSeriesLibrary::steps(datasets[1]));
@@ -139,7 +139,7 @@ TEST(TimestepFilesMigration, SteadyStateModelIsLeftAlone)
 
     const auto entries{ThermFile::Migration::TimestepFiles::withConvertedFiles(archiveEntries(model))};
 
-    EXPECT_TRUE(TimeSeriesLibrary::datasetsFromEntries(entries).empty());
+    EXPECT_TRUE(TimeSeriesLibrary::datasetsFromThmzEntries(entries).empty());
 }
 
 TEST(TimestepFilesMigration, BoundaryWithADatasetIsLeftAlone)
@@ -149,7 +149,7 @@ TEST(TimestepFilesMigration, BoundaryWithADatasetIsLeftAlone)
 
     const auto entries{ThermFile::Migration::TimestepFiles::withConvertedFiles(archiveEntries(model))};
 
-    EXPECT_TRUE(TimeSeriesLibrary::datasetsFromEntries(entries).empty());
+    EXPECT_TRUE(TimeSeriesLibrary::datasetsFromThmzEntries(entries).empty());
 }
 
 TEST(TimestepFilesMigration, UnreadableFileKeepsItsBoundary)
@@ -161,7 +161,7 @@ TEST(TimestepFilesMigration, UnreadableFileKeepsItsBoundary)
     const auto entries{ThermFile::Migration::TimestepFiles::withConvertedFiles(source)};
     const auto loaded{ThermFile::loadThermModelFromEntries(entries)};
 
-    EXPECT_TRUE(TimeSeriesLibrary::datasetsFromEntries(entries).empty());
+    EXPECT_TRUE(TimeSeriesLibrary::datasetsFromThmzEntries(entries).empty());
     ASSERT_TRUE(loaded.has_value());
     EXPECT_FALSE(loaded->boundaryConditions.front().timeSeriesUUID.has_value());
     EXPECT_EQ(fileName, loaded->boundaryConditions.front().transientRecordData->transientFileName);

@@ -343,7 +343,7 @@ namespace
         // THMZ storage: one archive entry per dataset, independent of any library file.
         mod.def("load_datasets", PathBinding::pathFirst(&TimeSeriesLibrary::loadDatasetsFromZipFile), py::arg("thmz_file_path"),
                 "Every \"time series/<uuid>\" entry of a THMZ; empty for a pre-consolidation file.");
-        mod.def("datasets_from_entries", &TimeSeriesLibrary::datasetsFromEntries, py::arg("entries"),
+        mod.def("datasets_from_thmz_entries", &TimeSeriesLibrary::datasetsFromThmzEntries, py::arg("entries"),
                 "Same, from an already-extracted archive dict.");
         mod.def("save_datasets", PathBinding::pathSecond(&TimeSeriesLibrary::saveDatasetsToZipFile),
                 py::arg("datasets"), py::arg("thmz_file_path"), py::arg("format") = FileParse::FileFormat::XML,
@@ -523,9 +523,9 @@ namespace
           "its own clock and ignores it. Raises ValueError for an unsupported extension, an unreadable file or a "
           "zip with nothing importable.");
         mod.def(
-          "import_datasets_from_entries",
+          "datasets_from_file_entries",
           [](const std::map<std::string, std::string> & entries, const Csv::StepChoice & steps) {
-              return unwrap(Import::importDatasetsFromEntries(entries, steps));
+              return unwrap(Import::datasetsFromFileEntries(entries, steps));
           },
           py::arg("entries"),
           py::arg("steps") = Csv::StepChoice{},

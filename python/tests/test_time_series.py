@@ -225,7 +225,7 @@ class TestArchiveEntries:
 
         entries = fem.thmz.read_entries(archive)
         assert fem.thmz.time_series_entry_name(_dataset().uuid) in entries
-        from_entries = fem.datasets_from_entries(entries)
+        from_entries = fem.datasets_from_thmz_entries(entries)
         assert len(from_entries) == 1
         assert fem.values_for_role(from_entries[0], fem.SeriesRole.RelativeHumidity) == [0.5, 0.55]
 
