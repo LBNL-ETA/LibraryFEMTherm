@@ -64,7 +64,7 @@ TEST(TestEpw, ImportReadsSeriesAndLocation)
                               + makeRecord("11", "999", infraredForSevenDegrees, "190", "6")
                               + makeRecord("12", "60", infraredForSevenDegrees, "200", "7")};
 
-    const auto result{Epw::readFromString(content, "sydney")};
+    const auto result{Epw::fromString(content, "sydney")};
     ASSERT_TRUE(result.has_value());
 
     const auto & imported{result->data};
@@ -115,7 +115,7 @@ TEST(TestEpw, ImportReadsAxisFromFirstRecordAndIgnoresYear)
                               + datedRecord(record, "1987,3,15,8,")
                               + datedRecord(record, "1990,3,15,9,")};
 
-    const auto result{Epw::readFromString(content, "typical year")};
+    const auto result{Epw::fromString(content, "typical year")};
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result->data.axis,
               (TimeSeriesLibrary::TimeAxis{.month = 3U, .day = 15U, .hour = 7U}));
@@ -127,7 +127,7 @@ TEST(TestEpw, ImportDetectsSubHourlyRecords)
     const std::string content{makeHeader() + record + record
                               + datedRecord(record, "2026,1,1,2,") + datedRecord(record, "2026,1,1,2,")};
 
-    const auto result{Epw::readFromString(content, "half hourly")};
+    const auto result{Epw::fromString(content, "half hourly")};
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result->data.axis.stepSeconds, TimeSeriesLibrary::StepSeconds{1800.0});
     EXPECT_EQ(result->data.axis.hour, 1U);
@@ -138,7 +138,7 @@ TEST(TestEpw, ImportDerivesRadiantTemperatureFromInfrared)
     const std::string content{makeHeader()
                               + makeRecord("10", "50", infraredForSevenDegrees, "180", "5")};
 
-    const auto result{Epw::readFromString(content, "sky")};
+    const auto result{Epw::fromString(content, "sky")};
     ASSERT_TRUE(result.has_value());
 
     const auto radiant{
@@ -152,7 +152,7 @@ TEST(TestEpw, ImportReportsUnmappedColumnsAndDropsAllMissingOnes)
     const std::string content{makeHeader()
                               + makeRecord("10", "50", infraredForSevenDegrees, "180", "5")};
 
-    const auto result{Epw::readFromString(content, "columns")};
+    const auto result{Epw::fromString(content, "columns")};
     ASSERT_TRUE(result.has_value());
 
     const auto & unmapped{result->unmappedColumns};
@@ -165,14 +165,14 @@ TEST(TestEpw, ImportReportsUnmappedColumnsAndDropsAllMissingOnes)
 
 TEST(TestEpw, ImportRejectsContentWithoutLocationHeader)
 {
-    const auto result{Epw::readFromString("NOT A WEATHER FILE\n", "broken")};
+    const auto result{Epw::fromString("NOT A WEATHER FILE\n", "broken")};
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), "broken has no LOCATION header");
 }
 
 TEST(TestEpw, ImportRejectsContentWithoutRecords)
 {
-    const auto result{Epw::readFromString(makeHeader(), "headerOnly")};
+    const auto result{Epw::fromString(makeHeader(), "headerOnly")};
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), "headerOnly has no data records");
 }

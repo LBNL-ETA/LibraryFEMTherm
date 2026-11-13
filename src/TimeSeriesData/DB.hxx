@@ -65,7 +65,7 @@ namespace TimeSeriesLibrary
     [[nodiscard]] std::vector<TimeSeriesData> loadDatasetsFromZipFile(const std::string & zipFileName);
 
     //! Same, but from already-extracted archive entries (no further extraction).
-    [[nodiscard]] std::vector<TimeSeriesData> loadDatasetsFromEntries(const std::map<std::string, std::string> & entries);
+    [[nodiscard]] std::vector<TimeSeriesData> datasetsFromEntries(const std::map<std::string, std::string> & entries);
 
     //! Writes every dataset as its own entry; returns the number of entries written.
     int saveDatasetsToZipFile(const std::vector<TimeSeriesData> & datasets,

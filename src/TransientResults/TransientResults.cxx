@@ -262,7 +262,7 @@ namespace ThermFile::TransientResults
         return results;
     }
 
-    lbnl::ExpectedExt<Results, std::string> readFromZipFile(const std::string & zipFileName)
+    lbnl::ExpectedExt<Results, std::string> loadFromZipFile(const std::string & zipFileName)
     {
         return read(ThermZip::unzipFiles(zipFileName));
     }

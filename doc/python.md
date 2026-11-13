@@ -202,7 +202,7 @@ library.load(Path("model.thmz"))
 
 # Or from entries already extracted, when several libraries are read from one archive
 entries = fem.thmz.read_entries(Path("model.thmz"))
-library.load_from_entries(entries)
+library.from_entries(entries)
 ```
 
 ### Querying
@@ -709,7 +709,7 @@ fem.is_degenerate(x_projected)
 ```python
 from pylibraryfemtherm import steady_state_field
 
-field = steady_state_field.read(Path("model.thmz"), fem.RunType.UFactor)
+field = steady_state_field.load(Path("model.thmz"), fem.RunType.UFactor)
 field.nodes, field.elements          # MeshNode / MeshElement, as the mesh stores them
 field.temperature                    # one value per node; NaN where the run has none
 field.x_flux, field.y_flux, field.flux_magnitude

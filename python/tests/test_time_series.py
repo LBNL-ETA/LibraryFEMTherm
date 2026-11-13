@@ -116,11 +116,11 @@ class TestConstruction:
 
     def test_without_steps_the_columns_decide(self):
         both = "Time,Timestep,Air Temperature\n2026-01-01 00:15,900,1\n2026-01-01 00:30,900,2\n"
-        assert (fem.read_csv_string(content=both, name="both").data.axis
-                == fem.read_csv_string(content=both, name="both", steps=fem.StepColumn.Time).data.axis)
-        timestep_only = fem.read_csv_string(content="Timestep,Air Temperature\n900,1\n1800,2\n", name="timestep")
+        assert (fem.csv_from_string(content=both, name="both").data.axis
+                == fem.csv_from_string(content=both, name="both", steps=fem.StepColumn.Time).data.axis)
+        timestep_only = fem.csv_from_string(content="Timestep,Air Temperature\n900,1\n1800,2\n", name="timestep")
         assert fem.step_lengths(data=timestep_only.data) == [900.0, 1800.0]
-        neither = fem.read_csv_string(content="Air Temperature\n1\n2\n", name="neither")
+        neither = fem.csv_from_string(content="Air Temperature\n1\n2\n", name="neither")
         assert neither.data.axis == fem.TimeAxis()
         assert repr(fem.AutoStep()) == "AutoStep()"
 
@@ -225,7 +225,7 @@ class TestArchiveEntries:
 
         entries = fem.thmz.read_entries(archive)
         assert fem.thmz.time_series_entry_name(_dataset().uuid) in entries
-        from_entries = fem.load_datasets_from_entries(entries)
+        from_entries = fem.datasets_from_entries(entries)
         assert len(from_entries) == 1
         assert fem.values_for_role(from_entries[0], fem.SeriesRole.RelativeHumidity) == [0.5, 0.55]
 
@@ -301,7 +301,7 @@ class TestCreation:
         }
         assert fem.values_for_role(result.data, fem.SeriesRole.AirTemperature) == [21.3, 21.1, 20.8]
         assert result.data.uuid == fem.content_uuid(result.data)
-        assert fem.read_epw_string(_epw_text(["1"]), "probe").data.name == "probe"
+        assert fem.epw_from_string(_epw_text(["1"]), "probe").data.name == "probe"
         with pytest.raises(ValueError):
             fem.read_epw(tmp_path / "missing.epw")
 
@@ -311,13 +311,13 @@ class TestCreation:
         assert fem.read_epw(zipped).location.city == "Sydney"
 
     def test_read_and_write_csv(self, tmp_path):
-        result = fem.read_csv_string(CSV_TEXT, "indoor", steps=fem.FixedStep(seconds=3600.0))
+        result = fem.csv_from_string(CSV_TEXT, "indoor", steps=fem.FixedStep(seconds=3600.0))
         assert result.had_time_column and not result.had_timestep_column
         assert result.ignored_headers == ["Comfort Index"]
         assert fem.values_for_role(result.data, fem.SeriesRole.RelativeHumidity) == [0.52, 0.55]
         # A stamp is the end of its step: the run starts one step before the first stamp.
         assert fem.describe_axis(result.data) == "31 Dec 23:00, step 1 h, 2 rows"
-        text = fem.write_csv(result.data)
+        text = fem.to_csv(result.data)
         assert text.splitlines()[0].startswith("Time,Timestep,")
         assert fem.csv_header_for_role(fem.SeriesRole.AirTemperature) in text.splitlines()[0]
         path = tmp_path / "again.csv"
@@ -328,13 +328,13 @@ class TestCreation:
         assert again.data.axis == result.data.axis
 
     def test_the_time_rule_ends_a_step_at_each_stamp(self):
-        result = fem.read_csv_string(CSV_TEXT, "indoor", fem.StepColumn.Time)
+        result = fem.csv_from_string(CSV_TEXT, "indoor", fem.StepColumn.Time)
         # Stamps alone: every row is a step, and the first is taken as long as the gap to the second.
         assert result.first_step == fem.FirstStep.Assumed
         assert fem.values_for_role(result.data, fem.SeriesRole.AirTemperature) == [21.3, 21.1]
         assert fem.describe_axis(result.data) == "31 Dec 23:00, step 1 h, 2 rows"
         assert fem.describe_first_step(result) == "first step 1 h, assumed from the gap to the second row"
-        uneven = fem.read_csv_string(
+        uneven = fem.csv_from_string(
             "Time,Air Temperature\n2026-01-01 00:00,1\n2026-01-01 00:15,2\n2026-01-01 02:15,3\n",
             "uneven", fem.StepColumn.Time)
         assert not fem.evenly_stepped(uneven.data)
@@ -342,30 +342,30 @@ class TestCreation:
         assert uneven.data.axis == fem.TimeAxis(month=12, day=31, hour=24, minute=45, step_seconds=[900.0, 900.0, 7200.0])
         assert fem.describe_axis(uneven.data) == "31 Dec 23:45, steps 15 min to 2 h, 3 rows"
         with pytest.raises(ValueError, match="has no Time column"):
-            fem.read_csv_string("Air Temperature\n1\n2\n", "bare", fem.StepColumn.Time)
+            fem.csv_from_string("Air Temperature\n1\n2\n", "bare", fem.StepColumn.Time)
 
     def test_a_stated_start_sets_the_first_step(self):
-        stated = fem.read_csv_string(CSV_TEXT, "indoor", fem.StepColumn.Time, start="2025-12-31 22:00")
+        stated = fem.csv_from_string(CSV_TEXT, "indoor", fem.StepColumn.Time, start="2025-12-31 22:00")
         assert stated.first_step == fem.FirstStep.Stated
         assert fem.step_lengths(stated.data) == [7200.0, 3600.0]
         assert fem.describe_axis(stated.data) == "31 Dec 22:00, steps 1 h to 2 h, 2 rows"
         assert fem.describe_first_step(stated) == "first step 2 h, as stated"
         with pytest.raises(ValueError, match="leaves no first step"):
-            fem.read_csv_string(CSV_TEXT, "indoor", fem.StepColumn.Time, start="2026-01-01 00:00")
+            fem.csv_from_string(CSV_TEXT, "indoor", fem.StepColumn.Time, start="2026-01-01 00:00")
         with pytest.raises(ValueError, match="cannot read the start"):
-            fem.read_csv_string(CSV_TEXT, "indoor", start="dawn")
+            fem.csv_from_string(CSV_TEXT, "indoor", start="dawn")
         # A Timestep column that agrees with the stamps supplies the first step without any assumption.
         both = "Time,Timestep,Air Temperature\n2026-01-01 00:15,900,1\n2026-01-01 00:30,900,2\n2026-01-01 01:30,3600,3\n"
-        by_time = fem.read_csv_string(both, "both", fem.StepColumn.Time)
+        by_time = fem.csv_from_string(both, "both", fem.StepColumn.Time)
         assert by_time.first_step == fem.FirstStep.FromColumn
-        assert by_time.data == fem.read_csv_string(both, "both", fem.StepColumn.Timestep).data
+        assert by_time.data == fem.csv_from_string(both, "both", fem.StepColumn.Timestep).data
         # Without stamps, the start places the run; beside stamps it is not read.
-        placed = fem.read_csv_string("Timestep,Air Temperature\n900,1\n", "placed", start="2026-02-01 06:00")
+        placed = fem.csv_from_string("Timestep,Air Temperature\n900,1\n", "placed", start="2026-02-01 06:00")
         assert placed.data.axis == fem.TimeAxis(month=2, day=1, hour=7, step_seconds=900.0)
-        assert fem.read_csv_string(both, "both", fem.StepColumn.Timestep, start="2026-02-01 06:00").data == by_time.data
+        assert fem.csv_from_string(both, "both", fem.StepColumn.Timestep, start="2026-02-01 06:00").data == by_time.data
 
     def test_the_timestep_column_states_every_step(self):
-        result = fem.read_csv_string("dt,Air Temperature\n900,1\n900,2\n1800,3\n", "logger", fem.StepColumn.Timestep)
+        result = fem.csv_from_string("dt,Air Temperature\n900,1\n900,2\n1800,3\n", "logger", fem.StepColumn.Timestep)
         assert result.had_timestep_column and result.first_step == fem.FirstStep.FromColumn
         assert fem.values_for_role(result.data, fem.SeriesRole.AirTemperature) == [1.0, 2.0, 3.0]
         assert result.data.axis == fem.TimeAxis(step_seconds=[900.0, 900.0, 1800.0])
@@ -373,12 +373,12 @@ class TestCreation:
             "TimeAxis(month=1, day=1, hour=1, minute=0, step_seconds=[900.0, 900.0, 1800.0])")
         assert repr(fem.FixedStep(900.0)) == "FixedStep(seconds=900.0)"
         with pytest.raises(ValueError, match="has no Timestep column"):
-            fem.read_csv_string(CSV_TEXT, "indoor", fem.StepColumn.Timestep)
+            fem.csv_from_string(CSV_TEXT, "indoor", fem.StepColumn.Timestep)
         with pytest.raises(ValueError, match="must be positive"):
-            fem.read_csv_string("Step,Air Temperature\n0,1\n", "zero", fem.StepColumn.Timestep)
+            fem.csv_from_string("Step,Air Temperature\n0,1\n", "zero", fem.StepColumn.Timestep)
 
     def test_generate_interior_inherits_the_axis(self):
-        exterior = fem.read_epw_string(_epw_text(["-5"] * 48), "city").data
+        exterior = fem.epw_from_string(_epw_text(["-5"] * 48), "city").data
         interior = fem.generate_interior(exterior, fem.InteriorStandard.EN_15026_DIN_4108, fem.MoistureLoad.Normal)
         assert interior.axis == exterior.axis
         assert fem.time_series_steps(interior) == 48
@@ -390,7 +390,7 @@ class TestCreation:
             fem.generate_interior(no_temperature, fem.InteriorStandard.ISO_13788, fem.MoistureLoad.High)
 
     def test_window_is_a_dataset_of_its_own(self):
-        year = fem.read_epw_string(_epw_text([str(hour) for hour in range(72)]), "city").data
+        year = fem.epw_from_string(_epw_text([str(hour) for hour in range(72)]), "city").data
         january_second = fem.time_series_window(year, 24, 24)
         assert january_second.axis == fem.TimeAxis(month=1, day=2)
         assert fem.values_for_role(january_second, fem.SeriesRole.AirTemperature)[0] == 24.0

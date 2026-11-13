@@ -235,7 +235,7 @@ namespace TimeSeriesLibrary::Epw
     }
 
     lbnl::ExpectedExt<ImportResult, std::string>
-      readFromString(const std::string & content, const std::string & datasetName)
+      fromString(const std::string & content, const std::string & datasetName)
     {
         using Failure = lbnl::Unexpected<std::string>;
 
@@ -297,6 +297,6 @@ namespace TimeSeriesLibrary::Epw
               std::filesystem::path{fileName}.filename().string() + " does not exist"};
         }
         const auto datasetName{std::filesystem::path{fileName}.stem().string()};
-        return readFromString(File::loadToString(fileName), datasetName);
+        return fromString(File::loadToString(fileName), datasetName);
     }
 }   // namespace TimeSeriesLibrary::Epw

@@ -46,9 +46,9 @@ void bind_steady_state_field(py::module_ & mod)
       "Reads the run's field out of extracted entries. Raises ValueError when the archive has no stored mesh, no "
       "nodal results, or no case of that run type.");
     field.def(
-      "read",
+      "load",
       [](const PathOnly & zipFilePath, const ThermFile::RunType runType) {
-          const auto result{readFromZipFile(PathBinding::utf8Of(zipFilePath.value), runType)};
+          const auto result{loadFromZipFile(PathBinding::utf8Of(zipFilePath.value), runType)};
           if(!result.has_value())
           {
               throw py::value_error(result.error());

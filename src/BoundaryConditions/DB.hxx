@@ -27,7 +27,7 @@ namespace BCLibrary
         //! leaves the DB unchanged (pre-consolidation file; migration handles it).
         void loadFromZipFile(const std::string & zipFileName);
         //! Same, but from already-extracted archive entries (no further extraction).
-        void loadFromEntries(const std::map<std::string, std::string> & entries);
+        void fromEntries(const std::map<std::string, std::string> & entries);
         [[nodiscard]] int saveToZipFile(std::string_view zipFileName,
                                         FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 

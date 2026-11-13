@@ -71,7 +71,7 @@ namespace BCLibrary
         {
             const auto entries{
               ThermZip::unzipFiles(zipFileName, ThermZip::entryNameCandidates(ThermZip::BoundaryConditionsFileName))};
-            loadFromEntries(entries);
+            fromEntries(entries);
         }
         catch(const std::runtime_error &)
         {
@@ -79,7 +79,7 @@ namespace BCLibrary
         }
     }
 
-    void DB::loadFromEntries(const std::map<std::string, std::string> & entries)
+    void DB::fromEntries(const std::map<std::string, std::string> & entries)
     {
         if(const auto entry{ThermZip::findEntry(entries, ThermZip::BoundaryConditionsFileName)}; !entry.empty())
         {

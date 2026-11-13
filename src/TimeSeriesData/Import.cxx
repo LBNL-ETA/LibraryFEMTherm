@@ -32,13 +32,13 @@ namespace TimeSeriesLibrary::Import
         {
             if(extension == weatherExtension)
             {
-                return Epw::readFromString(content, datasetName).transform([](const Epw::ImportResult & result) {
+                return Epw::fromString(content, datasetName).transform([](const Epw::ImportResult & result) {
                     return ImportedDataset{.data = result.data, .skippedColumns = {}};
                 });
             }
             if(extension == csvExtension)
             {
-                return Csv::readFromString(content, datasetName, stepChoice)
+                return Csv::fromString(content, datasetName, stepChoice)
                   .transform([](const Csv::ImportResult & result) {
                       return ImportedDataset{.data = result.data, .skippedColumns = result.ignoredHeaders};
                   });
@@ -118,7 +118,7 @@ namespace TimeSeriesLibrary::Import
                                                        ? std::string{"The archive holds no EnergyPlus weather (*.epw) entry."}
                                                        : "The archive holds more than one weather file: " + listed};
             }
-            return Epw::readFromString(entries.at(names.front()), std::filesystem::path{names.front()}.stem().string());
+            return Epw::fromString(entries.at(names.front()), std::filesystem::path{names.front()}.stem().string());
         }
     }   // namespace
 

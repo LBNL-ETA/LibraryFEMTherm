@@ -114,9 +114,9 @@ void bind_transient_results(py::module_ & mod)
       "Reads the transient results out of extracted entries. Raises ValueError when the archive carries none "
       "or they are inconsistent.");
     transient.def(
-      "read",
+      "load",
       [](const PathOnly & zipFilePath) {
-          const auto results{readFromZipFile(PathBinding::utf8Of(zipFilePath.value))};
+          const auto results{loadFromZipFile(PathBinding::utf8Of(zipFilePath.value))};
           if(!results.has_value())
           {
               throw py::value_error(results.error());

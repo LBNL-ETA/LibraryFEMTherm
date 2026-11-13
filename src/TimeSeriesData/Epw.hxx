@@ -57,7 +57,7 @@ namespace TimeSeriesLibrary::Epw
 
     //! The imported dataset's UUID is the deterministic content hash.
     [[nodiscard]] lbnl::ExpectedExt<ImportResult, std::string>
-      readFromString(const std::string & content, const std::string & datasetName);
+      fromString(const std::string & content, const std::string & datasetName);
 
     //! Reads the file and imports it under its stem as the dataset name.
     [[nodiscard]] lbnl::ExpectedExt<ImportResult, std::string> read(const std::string & fileName);

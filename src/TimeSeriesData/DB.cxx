@@ -207,10 +207,10 @@ namespace TimeSeriesLibrary
             return {};
         }
 
-        return loadDatasetsFromEntries(ThermZip::unzipFiles(zipFileName));
+        return datasetsFromEntries(ThermZip::unzipFiles(zipFileName));
     }
 
-    std::vector<TimeSeriesData> loadDatasetsFromEntries(const std::map<std::string, std::string> & entries)
+    std::vector<TimeSeriesData> datasetsFromEntries(const std::map<std::string, std::string> & entries)
     {
         std::vector<TimeSeriesData> datasets;
 

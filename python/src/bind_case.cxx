@@ -794,7 +794,7 @@ namespace
               return PathOnly{.value = PathBinding::pathOf(written.value())};
           },
           py::arg("model_case"),
-          py::arg("path"),
+          py::arg("thmz_file_path"),
           "Writes the case's THMZ and returns the path. The path is a `pathlib.Path`, given and returned; a "
           "string is refused. Creates the parent directory and overwrites an existing file. Raises ValueError "
           "with the case's issues worded one per line, and the issues themselves as its `issues`, when it cannot "

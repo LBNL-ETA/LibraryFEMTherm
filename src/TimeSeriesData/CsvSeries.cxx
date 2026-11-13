@@ -827,7 +827,7 @@ namespace TimeSeriesLibrary::Csv
         return {};
     }
 
-    lbnl::ExpectedExt<ImportResult, std::string> readFromString(const std::string & content,
+    lbnl::ExpectedExt<ImportResult, std::string> fromString(const std::string & content,
                                                                 const std::string & datasetName,
                                                                 const StepChoice & stepChoice,
                                                                 const std::optional<std::string> & start)
@@ -867,10 +867,10 @@ namespace TimeSeriesLibrary::Csv
             return Failure{std::filesystem::path{fileName}.filename().string() + " does not exist"};
         }
         const auto datasetName{std::filesystem::path{fileName}.stem().string()};
-        return readFromString(File::loadToString(fileName), datasetName, stepChoice, start);
+        return fromString(File::loadToString(fileName), datasetName, stepChoice, start);
     }
 
-    std::string writeToString(const TimeSeriesData & data)
+    std::string toString(const TimeSeriesData & data)
     {
         std::string content{"Time,Timestep"};
         for(const auto & series : data.series)
@@ -902,6 +902,6 @@ namespace TimeSeriesLibrary::Csv
 
     void writeToFile(const TimeSeriesData & data, const std::string & fileName)
     {
-        File::createFileFromString(fileName, writeToString(data));
+        File::createFileFromString(fileName, toString(data));
     }
 }   // namespace TimeSeriesLibrary::Csv

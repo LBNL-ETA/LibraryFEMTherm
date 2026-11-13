@@ -66,7 +66,7 @@ namespace
         watch.lap("model + migrations from entries   ");
 
         BCLibrary::DB unified;
-        unified.loadFromEntries(entries);
+        unified.fromEntries(entries);
         watch.lap("BC library from entries           ");
 
         auto mesh{ThermFile::Mesh::meshFromString(ThermZip::findEntry(entries, ThermZip::MeshName))};

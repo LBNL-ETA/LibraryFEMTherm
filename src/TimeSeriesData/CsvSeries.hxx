@@ -106,7 +106,7 @@ namespace TimeSeriesLibrary::Csv
     //! is the year before, so "2025-12-31 23:00" begins a file whose first stamp is
     //! 1 January 00:00.
     [[nodiscard]] lbnl::ExpectedExt<ImportResult, std::string>
-      readFromString(const std::string & content,
+      fromString(const std::string & content,
                      const std::string & datasetName,
                      const StepChoice & stepChoice = {},
                      const std::optional<std::string> & start = std::nullopt);
@@ -122,6 +122,6 @@ namespace TimeSeriesLibrary::Csv
     //! column per role under its spelled-out name. Read back under either column it is
     //! the same dataset: under the Time rule the Timestep column, agreeing with the
     //! stamps, supplies the first step's length.
-    [[nodiscard]] std::string writeToString(const TimeSeriesData & data);
+    [[nodiscard]] std::string toString(const TimeSeriesData & data);
     void writeToFile(const TimeSeriesData & data, const std::string & fileName);
 }   // namespace TimeSeriesLibrary::Csv

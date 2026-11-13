@@ -328,7 +328,7 @@ namespace
                                           "The time-series library: a list of datasets with lookup and edit.")
             .def(py::init<>())
             .def(PathBinding::fromFile<TimeSeriesLibrary::DB>(), py::arg("xml_file_path"))
-            .def("from_string", &TimeSeriesLibrary::DB::fromString, py::arg("str"))
+            .def("from_string", &TimeSeriesLibrary::DB::fromString, py::arg("text"))
             .def("to_string", &TimeSeriesLibrary::DB::toString, py::arg("format") = FileParse::FileFormat::XML)
             .def("get_time_series_data", &TimeSeriesLibrary::DB::getTimeSeriesData, py::return_value_policy::reference_internal)
             .def("get_by_uuid", &TimeSeriesLibrary::DB::getByUUID, py::arg("uuid"))
@@ -343,7 +343,7 @@ namespace
         // THMZ storage: one archive entry per dataset, independent of any library file.
         mod.def("load_datasets", PathBinding::pathFirst(&TimeSeriesLibrary::loadDatasetsFromZipFile), py::arg("thmz_file_path"),
                 "Every \"time series/<uuid>\" entry of a THMZ; empty for a pre-consolidation file.");
-        mod.def("load_datasets_from_entries", &TimeSeriesLibrary::loadDatasetsFromEntries, py::arg("entries"),
+        mod.def("datasets_from_entries", &TimeSeriesLibrary::datasetsFromEntries, py::arg("entries"),
                 "Same, from an already-extracted archive dict.");
         mod.def("save_datasets", PathBinding::pathSecond(&TimeSeriesLibrary::saveDatasetsToZipFile),
                 py::arg("datasets"), py::arg("thmz_file_path"), py::arg("format") = FileParse::FileFormat::XML,
@@ -386,13 +386,13 @@ namespace
         mod.def(
           "read_epw",
           [](const PathOnly & path) { return unwrap(Import::readWeather(path.value)); },
-          py::arg("path"),
+          py::arg("epw_file_path"),
           "Reads an EnergyPlus weather file, or a zip holding exactly one (as weather files are distributed, "
           "beside their .ddy and .stat); the dataset is named after the file's stem and its UUID is its content. "
           "Raises ValueError when the file cannot be read.");
         mod.def(
-          "read_epw_string",
-          [](const std::string & content, const std::string & name) { return unwrap(Epw::readFromString(content, name)); },
+          "epw_from_string",
+          [](const std::string & content, const std::string & name) { return unwrap(Epw::fromString(content, name)); },
           py::arg("content"),
           py::arg("name"),
           "The same from the file's text, under the given dataset name.");
@@ -447,7 +447,7 @@ namespace
           [](const PathOnly & path, const Csv::StepChoice & steps, const std::optional<std::string> & start) {
               return unwrap(Csv::read(path.value.string(), steps, start));
           },
-          py::arg("path"),
+          py::arg("csv_file_path"),
           py::arg("steps") = Csv::StepChoice{},
           py::arg("start") = py::none(),
           "Reads a CSV whose headers are the series roles' CSV headers, exactly (Air Temperature). "
@@ -460,17 +460,17 @@ namespace
           "places the run, which otherwise starts on 1 January 00:00. A column the choice asks for and the file "
           "lacks raises ValueError, as does anything unreadable. Blank value cells carry the last reading forward.");
         mod.def(
-          "read_csv_string",
+          "csv_from_string",
           [](const std::string & content,
              const std::string & name,
              const Csv::StepChoice & steps,
-             const std::optional<std::string> & start) { return unwrap(Csv::readFromString(content, name, steps, start)); },
+             const std::optional<std::string> & start) { return unwrap(Csv::fromString(content, name, steps, start)); },
           py::arg("content"),
           py::arg("name"),
           py::arg("steps") = Csv::StepChoice{},
           py::arg("start") = py::none(),
           "The same from the CSV text, under the given dataset name.");
-        mod.def("write_csv", &Csv::writeToString, py::arg("data"),
+        mod.def("to_csv", &Csv::toString, py::arg("data"),
                 "The dataset as the CSV read_csv accepts: a Time column stamping the end of each step, a Timestep "
                 "column of the step lengths in seconds, then one column per role. Read back by either column it is "
                 "the same dataset.");
@@ -478,9 +478,9 @@ namespace
           "write_csv_file",
           [](const TimeSeriesData & data, const PathOnly & path) { Csv::writeToFile(data, path.value.string()); },
           py::arg("data"),
-          py::arg("path"));
+          py::arg("csv_file_path"));
         mod.def("csv_header_for_role", &Csv::displayHeaderForRole, py::arg("role"),
-                "The spelled-out column header of a role, as write_csv writes it (\"Air Temperature\").");
+                "The spelled-out column header of a role, as to_csv writes it (\"Air Temperature\").");
         mod.def("describe_roles", &Csv::describeRoles,
                 "Every role as a table: a heading row, then the role's name and the CSV header that writes it "
                 "out, columns aligned. A CSV file uses the header, exactly.");
@@ -516,7 +516,7 @@ namespace
           [](const PathOnly & path, const Csv::StepChoice & steps) {
               return unwrap(Import::importDatasets(path.value, steps));
           },
-          py::arg("path"),
+          py::arg("file_path"),
           py::arg("steps") = Csv::StepChoice{},
           "Datasets from a file by its extension: .epw, .csv, or a .zip holding any number of either (each "
           "under its entry's stem). `steps` is how a CSV's rows become steps, as for read_csv; a weather file has "

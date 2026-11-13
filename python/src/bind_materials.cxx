@@ -150,7 +150,7 @@ void bind_materials(py::module_ & mod)
     py::class_<MaterialsLibrary::DB>(mod, "MaterialsDB")
         .def(py::init<>())
         .def(PathBinding::fromFile<MaterialsLibrary::DB>(), py::arg("xml_file_path"))
-        .def("from_string", &MaterialsLibrary::DB::fromString, py::arg("str"))
+        .def("from_string", &MaterialsLibrary::DB::fromString, py::arg("text"))
         .def("to_string", &MaterialsLibrary::DB::toString,
              py::arg("format") = FileParse::FileFormat::XML)
         .def("get_materials",

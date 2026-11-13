@@ -143,7 +143,7 @@ namespace ThermFile::SteadyStateField
         return joined(meshCase.value(), resultsCase.value(), runType);
     }
 
-    lbnl::ExpectedExt<Field, std::string> readFromZipFile(const std::string & zipFileName, const RunType runType)
+    lbnl::ExpectedExt<Field, std::string> loadFromZipFile(const std::string & zipFileName, const RunType runType)
     {
         if(!std::filesystem::exists(zipFileName))
         {

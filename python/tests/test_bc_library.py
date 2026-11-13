@@ -173,7 +173,7 @@ class TestEmbeddedLibrary:
         entries = fem.thmz.read_entries(mullion_path)
         assert fem.thmz.find_entry(entries, fem.thmz.BOUNDARY_CONDITIONS_FILE_NAME)
         library = fem.BoundaryConditionsDB()
-        library.load_from_entries(entries)
+        library.from_entries(entries)
         names = library.get_names()
         assert "Adiabatic" in names
         adiabatic = library.get_by_name("Adiabatic")

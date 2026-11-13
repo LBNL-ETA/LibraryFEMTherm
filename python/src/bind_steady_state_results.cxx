@@ -123,7 +123,7 @@ void bind_steady_state_results(py::module_ & mod)
 
     mod.def("steady_state_results_from_string",
             &ThermFile::steadyStateResultsFromString,
-            py::arg("str"), py::arg("format") = FileParse::FileFormat::XML);
+            py::arg("text"), py::arg("format") = FileParse::FileFormat::XML);
 
     mod.def("steady_state_results_to_string",
             static_cast<std::string(*)(const ThermFile::SteadyStateResults &,
