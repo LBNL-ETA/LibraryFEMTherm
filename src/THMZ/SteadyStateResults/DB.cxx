@@ -29,11 +29,11 @@ namespace ThermFile
             return {};
         }
         return DeferredParse<SteadyStateResults>{std::async(std::launch::async, [entryContent = std::move(content)] {
-            return loadSteadyStateResultsFromString(entryContent);
+            return steadyStateResultsFromString(entryContent);
         })};
     }
 
-    std::optional<SteadyStateResults> loadSteadyStateResultsFromString(const std::string & data,
+    std::optional<SteadyStateResults> steadyStateResultsFromString(const std::string & data,
                                                                        FileParse::FileFormat format)
     {
         const std::string content{Common::stripUTF8BOM(data)};
@@ -59,7 +59,7 @@ namespace ThermFile
         }
     }
 
-    std::string saveToString(const SteadyStateResults & results, FileParse::FileFormat format)
+    std::string toString(const SteadyStateResults & results, FileParse::FileFormat format)
     {
         return Common::saveToString(results, topNodeName, format);
     }

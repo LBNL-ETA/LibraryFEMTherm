@@ -65,11 +65,11 @@ TEST(TestJSONFormat, ModelJSONStringRoundTrip)
 {
     const ThermFile::ThermModel model{Helper::THMXFile1::testObject()};
 
-    const auto jsonContent{ThermFile::saveToString(model, FileParse::FileFormat::JSON)};
+    const auto jsonContent{ThermFile::toString(model, FileParse::FileFormat::JSON)};
     ASSERT_FALSE(jsonContent.empty());
     EXPECT_EQ(jsonContent.front(), '{');
 
-    const auto loaded{ThermFile::loadThermModelFromString(jsonContent, FileParse::FileFormat::JSON)};
+    const auto loaded{ThermFile::thermModelFromString(jsonContent, FileParse::FileFormat::JSON)};
     ASSERT_TRUE(loaded.has_value());
 
     Helper::expect_near(model, loaded.value(), tolerance);

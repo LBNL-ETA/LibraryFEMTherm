@@ -113,8 +113,8 @@ namespace BCTypesLibrary
         //! otherwise saves and clears the flag only when the save reports success (0).
         int saveIfDirty(FileParse::FileFormat format = FileParse::FileFormat::XML);
 
-        void loadFromString(const std::string & str);
-        [[nodiscard]] std::string saveToString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
+        void fromString(const std::string & str);
+        [[nodiscard]] std::string toString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
         [[nodiscard]] std::optional<TypeRecord> getDefaultRecord() const;
 

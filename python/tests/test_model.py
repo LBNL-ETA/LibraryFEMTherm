@@ -585,7 +585,7 @@ class TestArchive:
         assert len(fem.load_datasets(path)) == 1
 
         materials = fem.MaterialsDB()
-        materials.load_from_string(fem.thmz.read_entries(path, ["Materials.xml"])["Materials.xml"])
+        materials.from_string(fem.thmz.read_entries(path, ["Materials.xml"])["Materials.xml"])
         assert materials.get_names() == ["linear-sorption"]
 
         # Overwrites in place.

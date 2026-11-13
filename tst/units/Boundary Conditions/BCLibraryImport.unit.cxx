@@ -80,7 +80,7 @@ TEST(BCLibraryImport, CurrentLibraryIsNotMistakenForTheSteadyStateOne)
     BCLibrary::DB library;
     library.add(record);
 
-    const auto imported{BCLibrary::Import::recordsFromLibrary(library.saveToString())};
+    const auto imported{BCLibrary::Import::recordsFromLibrary(library.toString())};
 
     ASSERT_TRUE(imported.has_value());
     ASSERT_EQ(imported->records.size(), 1u);
@@ -110,7 +110,7 @@ TEST(BCLibraryImport, ProjectRecordsAndRadiationSurfacesStayOut)
     library.add(project);
     library.add(surface);
 
-    const auto imported{BCLibrary::Import::recordsFromLibrary(library.saveToString())};
+    const auto imported{BCLibrary::Import::recordsFromLibrary(library.toString())};
 
     ASSERT_TRUE(imported.has_value());
     EXPECT_TRUE(imported->records.empty());

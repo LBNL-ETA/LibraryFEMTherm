@@ -29,7 +29,7 @@ namespace MaterialsLibrary
         m_Materials = loadMaterialsFromXMLFile(xmlFileName);
     }
 
-    void DB::loadFromString(const std::string & str)
+    void DB::fromString(const std::string & str)
     {
         using MaterialsLibrary::operator>>;
 
@@ -45,7 +45,7 @@ namespace MaterialsLibrary
         }
     }
 
-    std::string DB::saveToString(FileParse::FileFormat format) const
+    std::string DB::toString(FileParse::FileFormat format) const
     {
         using MaterialsLibrary::operator<<;
 

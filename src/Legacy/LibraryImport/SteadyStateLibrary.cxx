@@ -17,7 +17,7 @@ namespace BCLibrary::Import::SteadyStateLibrary
     std::vector<BoundaryCondition> records(const std::string & text)
     {
         BCSteadyStateLibrary::DB legacy;
-        legacy.loadFromString(text);
+        legacy.fromString(text);
         return lbnl::transform_to_vector(legacy.getBoundaryConditions(),
                                          [](const BCSteadyStateLibrary::BoundaryCondition & record) {
                                              return fromSteadyState(record);

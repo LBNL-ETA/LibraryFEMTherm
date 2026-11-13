@@ -440,7 +440,7 @@ TEST(Build, WrittenArchiveRoundTrips)
 
     MaterialsLibrary::DB materials;
     const std::vector<std::string> wanted{"Materials.xml"};
-    materials.loadFromString(ThermZip::unzipFiles(path, wanted).at("Materials.xml"));
+    materials.fromString(ThermZip::unzipFiles(path, wanted).at("Materials.xml"));
     EXPECT_EQ(materials.getNames(), (std::vector<std::string>{"linear-sorption"}));
 
     // Overwrites in place rather than failing on an existing file.

@@ -118,14 +118,14 @@ class TestLibraryRoundTrip:
         library.add(_prescribed())
         library.add(_convective())
         library.add(_adiabatic())
-        text = library.save_to_string()
+        text = library.to_string()
         assert "<PrescribedState>" in text
         assert "<FromTimeSeries>Surface Temperature</FromTimeSeries>" in text
         assert "<SurfaceExchange>" in text
         assert "<Constant>20</Constant>" in text
 
         loaded = fem.BoundaryConditionsDB()
-        loaded.load_from_string(text)
+        loaded.from_string(text)
         assert loaded.get_names() == [
             "Fixed temperature and humidity",
             "Fixed film, 20 C",
@@ -149,10 +149,10 @@ class TestLibraryRoundTrip:
     def test_json_format(self):
         library = fem.BoundaryConditionsDB()
         library.add(_convective())
-        text = library.save_to_string(fem.FileFormat.JSON)
+        text = library.to_string(fem.FileFormat.JSON)
         assert text.lstrip().startswith("{")
         loaded = fem.BoundaryConditionsDB()
-        loaded.load_from_string(text)
+        loaded.from_string(text)
         assert loaded.get_names() == ["Fixed film, 20 C"]
 
     def test_dirty_flag(self):

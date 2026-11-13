@@ -200,7 +200,7 @@ namespace ThermFile::TransientResults
             return Failure{"no transient results: the archive has no " + entryFor(ThermZip::getGeometryFileName())};
         }
         Results results;
-        results.geometry.loadFromString(*geometryXml);
+        results.geometry.fromString(*geometryXml);
         if(results.geometry.nodes.empty())
         {
             return Failure{"transient results geometry has no nodes"};

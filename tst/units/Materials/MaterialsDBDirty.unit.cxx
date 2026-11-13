@@ -21,7 +21,7 @@ namespace
         source.add(makeSample());
 
         MaterialsLibrary::DB loaded;
-        loaded.loadFromString(source.saveToString());
+        loaded.fromString(source.toString());
         return loaded;
     }
 }   // namespace
@@ -60,7 +60,7 @@ TEST(TestMaterialsDBDirty, RenameProjectRecords)
     source.add(marked);
 
     MaterialsLibrary::DB database;
-    database.loadFromString(source.saveToString());
+    database.fromString(source.toString());
 
     database.renameRecordsWithProjectName("No such project", "New project");
     EXPECT_FALSE(database.isDirty());

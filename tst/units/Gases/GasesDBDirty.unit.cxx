@@ -41,7 +41,7 @@ TEST(TestGasesDBDirty, NoOpMutationsStayClean)
     source.addGas(makeMixture());
 
     GasesLibrary::DB database;
-    database.loadFromString(source.saveToString());
+    database.fromString(source.toString());
     EXPECT_FALSE(database.isDirty());
 
     database.deleteWithUUID("no-such-uuid");
@@ -56,7 +56,7 @@ TEST(TestGasesDBDirty, NoOpMutationsStayClean)
 
 TEST(TestGasesDBDirty, RenameProjectRecords)
 {
-    // Project-marked gases never round-trip through saveToString (temporary records
+    // Project-marked gases never round-trip through toString (temporary records
     // are session-only for gases), so the marked record enters through addGas.
     GasesLibrary::DB database;
     auto marked{makeMixture()};
@@ -76,7 +76,7 @@ TEST(TestGasesDBDirty, RenameWithNoMatchStaysClean)
     source.addGas(makeMixture());
 
     GasesLibrary::DB database;
-    database.loadFromString(source.saveToString());
+    database.fromString(source.toString());
     EXPECT_FALSE(database.isDirty());
 
     database.renameRecordsWithProjectName("No such project", "New project");

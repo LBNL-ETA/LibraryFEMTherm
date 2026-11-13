@@ -149,7 +149,7 @@ namespace BCTypesLibrary
         return result;
     }
 
-    void DB::loadFromString(const std::string & str)
+    void DB::fromString(const std::string & str)
     {
         auto node{Common::getTopNodeFromString(str, "BoundaryConditionsType")};
 
@@ -164,7 +164,7 @@ namespace BCTypesLibrary
         }
     }
 
-    std::string DB::saveToString(FileParse::FileFormat format) const
+    std::string DB::toString(FileParse::FileFormat format) const
     {
         auto node{Common::createTopNode("BoundaryConditionsType", format)};
 

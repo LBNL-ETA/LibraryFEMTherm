@@ -18,8 +18,8 @@ namespace BCLibrary
         DB() = default;
         explicit DB(const std::string & xmlFileName);
 
-        void loadFromString(const std::string & str);
-        [[nodiscard]] std::string saveToString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
+        void fromString(const std::string & str);
+        [[nodiscard]] std::string toString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
         [[nodiscard]] int saveToFile(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
         //! THMZ storage: the embedded unified library lives in the archive as the

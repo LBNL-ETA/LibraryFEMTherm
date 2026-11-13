@@ -15,7 +15,7 @@ def bc_db_sill(sample_sill_path):
     """Load BCSteadyStateDB from the sample-sill THMZ."""
     contents = fem.thmz.read_entries(sample_sill_path, ["SteadyStateBC.xml"])
     bdb = fem.BCSteadyStateDB()
-    bdb.load_from_string(contents["SteadyStateBC.xml"])
+    bdb.from_string(contents["SteadyStateBC.xml"])
     return bdb
 
 
@@ -25,7 +25,7 @@ class TestBCDBLoading:
     def test_load_from_id50(self, id50_path):
         contents = fem.thmz.read_entries(id50_path, ["SteadyStateBC.xml"])
         bdb = fem.BCSteadyStateDB()
-        bdb.load_from_string(contents["SteadyStateBC.xml"])
+        bdb.from_string(contents["SteadyStateBC.xml"])
         names = bdb.get_names()
         assert len(names) == 3
         assert names[0] == "Adiabatic"
@@ -91,11 +91,11 @@ class TestBCVariantTypes:
 class TestBCDBSaveLoad:
 
     def test_xml_round_trip(self, bc_db_sill):
-        xml_str = bc_db_sill.save_to_string(fem.FileFormat.XML)
+        xml_str = bc_db_sill.to_string(fem.FileFormat.XML)
         assert len(xml_str) > 0
 
         reloaded = fem.BCSteadyStateDB()
-        reloaded.load_from_string(xml_str)
+        reloaded.from_string(xml_str)
         assert bc_db_sill.get_names() == reloaded.get_names()
 
     def test_add_bc(self, bc_db_sill):

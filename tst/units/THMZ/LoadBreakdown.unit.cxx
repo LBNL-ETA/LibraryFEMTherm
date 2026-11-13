@@ -69,16 +69,16 @@ namespace
         unified.loadFromEntries(entries);
         watch.lap("BC library from entries           ");
 
-        auto mesh{ThermFile::Mesh::loadMeshFromString(ThermZip::findEntry(entries, ThermZip::MeshName))};
+        auto mesh{ThermFile::Mesh::meshFromString(ThermZip::findEntry(entries, ThermZip::MeshName))};
         EXPECT_TRUE(mesh.has_value());
         watch.lap("mesh parse from memory            ");
 
-        auto meshResults{ThermFile::loadSteadyStateMeshResultsFromString(
+        auto meshResults{ThermFile::steadyStateMeshResultsFromString(
           ThermZip::findEntry(entries, ThermZip::SteadyStateMeshResultsName))};
         EXPECT_TRUE(meshResults.has_value());
         watch.lap("mesh results parse from memory    ");
 
-        auto results{ThermFile::loadSteadyStateResultsFromString(
+        auto results{ThermFile::steadyStateResultsFromString(
           ThermZip::findEntry(entries, ThermZip::SteadyStateResultsName))};
         EXPECT_TRUE(results.has_value());
         watch.lap("steady state results from memory  ");

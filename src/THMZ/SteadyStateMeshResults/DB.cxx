@@ -27,7 +27,7 @@ namespace ThermFile
             return {};
         }
         return DeferredParse<MeshResults>{std::async(std::launch::async, [entryContent = std::move(content)] {
-            return loadSteadyStateMeshResultsFromString(entryContent);
+            return steadyStateMeshResultsFromString(entryContent);
         })};
     }
 
@@ -43,7 +43,7 @@ namespace ThermFile
         }
     }
 
-    std::string saveToString(const MeshResults & results, FileParse::FileFormat format)
+    std::string toString(const MeshResults & results, FileParse::FileFormat format)
     {
         return Common::saveToString(results, topNodeName, format);
     }
@@ -53,7 +53,7 @@ namespace ThermFile
         return Common::saveToZIPFile(results, ThermZip::SteadyStateMeshResultsName, zipFileName, topNodeName, format);
     }
 
-    std::optional<MeshResults> loadSteadyStateMeshResultsFromString(const std::string & str)
+    std::optional<MeshResults> steadyStateMeshResultsFromString(const std::string & str)
     {
         return Common::loadFromString<MeshResults>(std::string{Common::stripUTF8BOM(str)}, topNodeName);
     }

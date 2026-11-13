@@ -16,7 +16,7 @@ def materials_db(sample_sill_path):
     """Load MaterialsDB from the sample-sill THMZ."""
     contents = fem.thmz.read_entries(sample_sill_path, ["Materials.xml"])
     mdb = fem.MaterialsDB()
-    mdb.load_from_string(contents["Materials.xml"])
+    mdb.from_string(contents["Materials.xml"])
     return mdb
 
 
@@ -82,10 +82,10 @@ class TestMaterialDatabaseSource:
 
         mdb.add(mat)
 
-        xml_str = mdb.save_to_string(fem.FileFormat.XML)
+        xml_str = mdb.to_string(fem.FileFormat.XML)
 
         reloaded = fem.MaterialsDB()
-        reloaded.load_from_string(xml_str)
+        reloaded.from_string(xml_str)
 
         found = reloaded.get_by_uuid("d1e2f3a4-b5c6-7890-abcd-ef1234567890")
         assert found is not None
@@ -107,9 +107,9 @@ class TestMaterialDatabaseSource:
 
         mdb.add(mat)
 
-        xml_str = mdb.save_to_string(fem.FileFormat.XML)
+        xml_str = mdb.to_string(fem.FileFormat.XML)
         reloaded = fem.MaterialsDB()
-        reloaded.load_from_string(xml_str)
+        reloaded.from_string(xml_str)
 
         found = reloaded.get_by_uuid("test-no-db-uuid")
         assert found is not None
@@ -120,15 +120,15 @@ class TestMaterialsDBSaveLoad:
 
     def test_save_and_reload_xml(self, materials_db):
         """Ported from MaterialsXMLSaving — XML round-trip."""
-        xml_str = materials_db.save_to_string(fem.FileFormat.XML)
+        xml_str = materials_db.to_string(fem.FileFormat.XML)
         assert len(xml_str) > 0
 
         reloaded = fem.MaterialsDB()
-        reloaded.load_from_string(xml_str)
+        reloaded.from_string(xml_str)
         assert materials_db.get_names() == reloaded.get_names()
 
     def test_save_and_reload_json(self, materials_db):
-        json_str = materials_db.save_to_string(fem.FileFormat.JSON)
+        json_str = materials_db.to_string(fem.FileFormat.JSON)
         assert len(json_str) > 0
 
     def test_add_material(self, materials_db):

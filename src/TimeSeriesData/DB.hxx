@@ -18,8 +18,8 @@ namespace TimeSeriesLibrary
         DB() = default;
         explicit DB(const std::string & xmlFileName);
 
-        void loadFromString(const std::string & str);
-        [[nodiscard]] std::string saveToString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
+        void fromString(const std::string & str);
+        [[nodiscard]] std::string toString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
         [[nodiscard]] int saveToFile(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
         //! True once a mutator has effectively changed the records since load or the last

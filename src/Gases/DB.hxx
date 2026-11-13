@@ -48,7 +48,7 @@ namespace GasesLibrary
 
         [[nodiscard]] std::string getFileName() const;
 
-        void loadFromString(const std::string & str);
+        void fromString(const std::string & str);
 
         void addPureGas(const PureGas & pure);
         void updatePureGas(const PureGas & pure);
@@ -59,7 +59,7 @@ namespace GasesLibrary
         void add(const GasesData & gasData);
 
         [[nodiscard]] int saveToFile(FileParse::FileFormat format = FileParse::FileFormat::XML);
-        [[nodiscard]] std::string saveToString(FileParse::FileFormat format = FileParse::FileFormat::XML);
+        [[nodiscard]] std::string toString(FileParse::FileFormat format = FileParse::FileFormat::XML);
 
         //! True once a mutator has effectively changed the records (gases or pure gases)
         //! since load or the last successful saveIfDirty. Mutations that change nothing

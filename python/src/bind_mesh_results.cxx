@@ -106,7 +106,7 @@ void bind_mesh_results(py::module_ & mod)
         .def_readwrite("cases", &ThermFile::MeshResults::cases)
         .def_readwrite("tag_nodes", &ThermFile::MeshResults::tagNodes);
 
-    // --- Free functions (overloaded saveToFile/saveToZipFile/saveToString) ---
+    // --- Free functions (overloaded saveToFile/saveToZipFile/toString) ---
     mod.def("load_steady_state_mesh_results_from_file",
             PathBinding::pathFirst(&ThermFile::loadSteadyStateMeshResultsFromFile),
             py::arg("file_path"));
@@ -129,13 +129,13 @@ void bind_mesh_results(py::module_ & mod)
             py::arg("results"), py::arg("thmz_file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("load_steady_state_mesh_results_from_string",
-            &ThermFile::loadSteadyStateMeshResultsFromString,
+    mod.def("steady_state_mesh_results_from_string",
+            &ThermFile::steadyStateMeshResultsFromString,
             py::arg("xml_string"));
 
-    mod.def("save_steady_state_mesh_results_to_string",
+    mod.def("steady_state_mesh_results_to_string",
             static_cast<std::string(*)(const ThermFile::MeshResults &,
                                        FileParse::FileFormat)>(
-                &ThermFile::saveToString),
+                &ThermFile::toString),
             py::arg("results"), py::arg("format") = FileParse::FileFormat::XML);
 }

@@ -37,8 +37,8 @@ namespace
                                  .nodes = {{.index = 3U, .temperature = 30.0, .xFlux = 3.0, .yFlux = 4.0},
                                            {.index = 2U, .temperature = 20.0},
                                            {.index = 1U, .temperature = 10.0, .humidity = 0.5}}});
-        return {{"Mesh.xml", ThermFile::Mesh::saveToString(mesh)},
-                {"SteadyStateMeshResults.xml", ThermFile::saveToString(results)}};
+        return {{"Mesh.xml", ThermFile::Mesh::toString(mesh)},
+                {"SteadyStateMeshResults.xml", ThermFile::toString(results)}};
     }
 }   // namespace
 

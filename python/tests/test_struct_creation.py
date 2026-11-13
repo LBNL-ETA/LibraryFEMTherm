@@ -111,6 +111,6 @@ class TestThermModelCreation:
         assert len(model.polygons) == 1
         assert model.polygons[0].uuid == "poly-1"
 
-        xml = fem.save_model_to_string(model)
+        xml = fem.model_to_string(model)
         assert len(xml) > 0
         assert "<CalculationReady>true</CalculationReady>" in xml

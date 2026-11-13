@@ -26,7 +26,7 @@ namespace BCSteadyStateLibrary
         m_BoundaryConditions = loadBoundaryConditionsFromFile(xmlFileName);
     }
 
-    void DB::loadFromString(const std::string & str)
+    void DB::fromString(const std::string & str)
     {
         BCSteadyStateLibrary::Tags tags;
         auto node{Common::getTopNodeFromString(str, tags.boundaryConditions())};
@@ -42,7 +42,7 @@ namespace BCSteadyStateLibrary
         }
     }
 
-    std::string DB::saveToString(FileParse::FileFormat format) const
+    std::string DB::toString(FileParse::FileFormat format) const
     {
         BCSteadyStateLibrary::Tags tags;
         auto node{Common::createTopNode(tags.boundaryConditions(), format)};

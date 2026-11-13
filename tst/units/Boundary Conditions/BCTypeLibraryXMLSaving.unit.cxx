@@ -72,8 +72,8 @@ TEST_F(TestBCLibraryXMLSaving, VersionRoundTrip)
                               "</BoundaryConditionsType>"};
 
     BCTypesLibrary::DB bcLibraryDB;
-    bcLibraryDB.loadFromString(content);
+    bcLibraryDB.fromString(content);
 
-    const auto saved{bcLibraryDB.saveToString()};
+    const auto saved{bcLibraryDB.toString()};
     EXPECT_NE(saved.find("<Version>7</Version>"), std::string::npos);
 }

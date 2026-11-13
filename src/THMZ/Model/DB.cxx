@@ -23,7 +23,7 @@ namespace ThermFile
             return std::nullopt;
         }
 
-        auto model{loadThermModelFromString(modelEntry)};
+        auto model{thermModelFromString(modelEntry)};
         if(model.has_value())
         {
             model = Migration::applyAllToModel(entries, std::move(*model));
@@ -60,7 +60,7 @@ namespace ThermFile
         }
     }
 
-    std::string saveToString(const ThermModel & model, FileParse::FileFormat format)
+    std::string toString(const ThermModel & model, FileParse::FileFormat format)
     {
         return Common::saveToString(model, topNodeName, format);
     }
@@ -70,7 +70,7 @@ namespace ThermFile
         return Common::saveToZIPFile(model, ThermZip::ModelFileName, zipFileName, topNodeName, format);
     }
 
-    std::optional<ThermModel> loadThermModelFromString(const std::string & str, FileParse::FileFormat format)
+    std::optional<ThermModel> thermModelFromString(const std::string & str, FileParse::FileFormat format)
     {
         const std::string content{Common::stripUTF8BOM(str)};
         if(format == FileParse::FileFormat::Unknown)

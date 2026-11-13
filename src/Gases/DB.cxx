@@ -89,7 +89,7 @@ namespace GasesLibrary
         }
     }
 
-    void DB::loadFromString(const std::string & str)
+    void DB::fromString(const std::string & str)
     {
         m_PureGases = loadPureGasesFromXMLString(str);
         m_Gases = loadGasesDataFromXMLString(str);
@@ -150,7 +150,7 @@ namespace GasesLibrary
         return result;
     }
 
-    std::string DB::saveToString(FileParse::FileFormat format)
+    std::string DB::toString(FileParse::FileFormat format)
     {
         Tags tag;
         auto node{Common::createTopNode(tag.gases(), format)};

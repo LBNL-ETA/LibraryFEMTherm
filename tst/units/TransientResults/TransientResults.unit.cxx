@@ -42,7 +42,7 @@ namespace
         geometry.addNode(3U, 1.0, 1.0);
         geometry.addNode(4U, 0.0, 1.0);
         geometry.addElement(1U, 1U, 2U, 3U, 4U, 1U);
-        return geometry.saveToString();
+        return geometry.toString();
     }
 
     //! Two frames numbered from 1, as archives written before the initial frame existed.
@@ -201,7 +201,7 @@ TEST(TransientResults, GeometryIdsMustBeContiguous)
     geometry.addNode(5U, 1.0, 1.0);   // a gap
     geometry.addElement(1U, 1U, 2U, 5U, 5U, 1U);
     std::map<std::string, std::string> entries{
-      {geometryEntry(), geometry.saveToString()},
+      {geometryEntry(), geometry.toString()},
       {ThermZip::getTemperatureFileName(), "timestep #,error tolerance,1,2,3\n0,0,1,2,3\n"}};
     const auto results{read(entries)};
     ASSERT_FALSE(results.has_value());

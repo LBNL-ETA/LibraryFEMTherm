@@ -155,7 +155,7 @@ namespace ThermFile::Migration::TimestepFiles
         {
             return entries;
         }
-        const auto model{ThermFile::loadThermModelFromString(modelText)};
+        const auto model{ThermFile::thermModelFromString(modelText)};
         if(!model.has_value())
         {
             return entries;
@@ -164,7 +164,7 @@ namespace ThermFile::Migration::TimestepFiles
         {
             TimeSeriesLibrary::DB single;
             single.add(dataset);
-            entries[ThermZip::timeSeriesEntryName(dataset.UUID)] = single.saveToString();
+            entries[ThermZip::timeSeriesEntryName(dataset.UUID)] = single.toString();
         }
         return entries;
     }

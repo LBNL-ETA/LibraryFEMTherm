@@ -34,7 +34,7 @@ TEST(TestTimeSeriesDBDirty, FreshAndLoadedDBIsClean)
     source.add(makeSample());
 
     TimeSeriesLibrary::DB loaded;
-    loaded.loadFromString(source.saveToString());
+    loaded.fromString(source.toString());
     EXPECT_FALSE(loaded.isDirty());
 }
 
@@ -66,7 +66,7 @@ TEST(TestTimeSeriesDBDirty, UpdateWithIdenticalRecordStaysClean)
     source.add(makeSample());
 
     TimeSeriesLibrary::DB database;
-    database.loadFromString(source.saveToString());
+    database.fromString(source.toString());
 
     database.update(makeSample());
     EXPECT_FALSE(database.isDirty());
@@ -83,7 +83,7 @@ TEST(TestTimeSeriesDBDirty, DeleteMarksDirtyOnlyWhenRecordsShrink)
     source.add(makeSample());
 
     TimeSeriesLibrary::DB database;
-    database.loadFromString(source.saveToString());
+    database.fromString(source.toString());
 
     database.deleteWithUUID("no-such-uuid");
     EXPECT_FALSE(database.isDirty());
@@ -107,7 +107,7 @@ TEST(TestTimeSeriesDBDirty, DeleteTemporaryRecordsMarksDirty)
     source.add(temporary);
 
     TimeSeriesLibrary::DB database;
-    database.loadFromString(source.saveToString());
+    database.fromString(source.toString());
 
     database.deleteTemporaryRecords();
     EXPECT_TRUE(database.isDirty());

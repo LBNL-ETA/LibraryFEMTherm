@@ -27,7 +27,7 @@ namespace ThermFile::Mesh
             return {};
         }
         return DeferredParse<Mesh>{std::async(
-          std::launch::async, [entryContent = std::move(content)] { return loadMeshFromString(entryContent); })};
+          std::launch::async, [entryContent = std::move(content)] { return meshFromString(entryContent); })};
     }
 
     int saveToFile(const Mesh & model, std::string_view fileName, FileParse::FileFormat format)
@@ -42,7 +42,7 @@ namespace ThermFile::Mesh
         }
     }
 
-    std::string saveToString(const Mesh & mesh, FileParse::FileFormat format)
+    std::string toString(const Mesh & mesh, FileParse::FileFormat format)
     {
         return Common::saveToString(mesh, topNodeName, format);
     }
@@ -52,7 +52,7 @@ namespace ThermFile::Mesh
         return Common::saveToZIPFile(mesh, ThermZip::MeshName, zipFileName, topNodeName, format);
     }
 
-    std::optional<Mesh> loadMeshFromString(const std::string & str, FileParse::FileFormat format)
+    std::optional<Mesh> meshFromString(const std::string & str, FileParse::FileFormat format)
     {
         const std::string content{Common::stripUTF8BOM(str)};
         if(format == FileParse::FileFormat::Unknown)

@@ -27,7 +27,7 @@ namespace BCLibrary
         m_BoundaryConditions = loadBoundaryConditionsFromFile(xmlFileName);
     }
 
-    void DB::loadFromString(const std::string & str)
+    void DB::fromString(const std::string & str)
     {
         Tags tags;
         auto node{Common::getTopNodeFromString(Common::stripUTF8BOM(str), tags.boundaryConditions())};
@@ -43,7 +43,7 @@ namespace BCLibrary
         }
     }
 
-    std::string DB::saveToString(FileParse::FileFormat format) const
+    std::string DB::toString(FileParse::FileFormat format) const
     {
         Tags tags;
         auto node{Common::createTopNode(tags.boundaryConditions(), format)};
@@ -83,7 +83,7 @@ namespace BCLibrary
     {
         if(const auto entry{ThermZip::findEntry(entries, ThermZip::BoundaryConditionsFileName)}; !entry.empty())
         {
-            loadFromString(entry);
+            fromString(entry);
         }
     }
 
@@ -92,7 +92,7 @@ namespace BCLibrary
         const auto entryName{ThermZip::entryNameForFormat(ThermZip::BoundaryConditionsFileName, format)};
         auto obsoleteNames{ThermZip::entryNameCandidates(ThermZip::BoundaryConditionsFileName)};
         std::erase(obsoleteNames, entryName);
-        return ThermZip::addToZipFile(zipFileName, entryName, saveToString(format), obsoleteNames);
+        return ThermZip::addToZipFile(zipFileName, entryName, toString(format), obsoleteNames);
     }
 
     int DB::saveToFile(FileParse::FileFormat format) const

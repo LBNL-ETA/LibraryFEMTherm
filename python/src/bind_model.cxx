@@ -43,9 +43,9 @@ void bind_model(py::module_ & mod)
             py::arg("model"), py::arg("thmz_file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("load_model_from_string", &ThermFile::loadThermModelFromString,
+    mod.def("model_from_string", &ThermFile::thermModelFromString,
             py::arg("str"), py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("save_model_to_string", &ThermFile::saveToString,
+    mod.def("model_to_string", &ThermFile::toString,
             py::arg("model"), py::arg("format") = FileParse::FileFormat::XML);
 }

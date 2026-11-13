@@ -55,8 +55,8 @@ void bind_gases(py::module_ & mod)
     py::class_<GasesLibrary::DB>(mod, "GasesDB")
         .def(py::init<>())
         .def(PathBinding::fromFile<GasesLibrary::DB>(), py::arg("file_path"))
-        .def("load_from_string", &GasesLibrary::DB::loadFromString, py::arg("str"))
-        .def("save_to_string", &GasesLibrary::DB::saveToString,
+        .def("from_string", &GasesLibrary::DB::fromString, py::arg("str"))
+        .def("to_string", &GasesLibrary::DB::toString,
              py::arg("format") = FileParse::FileFormat::XML)
         .def("get_gases", &GasesLibrary::DB::getGases,
              py::return_value_policy::reference_internal)

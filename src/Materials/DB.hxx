@@ -20,8 +20,8 @@ namespace MaterialsLibrary
         DB() = default;
         explicit DB(const std::string & xmlFileName);
 
-        void loadFromString(const std::string & str);
-        [[nodiscard]] std::string saveToString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
+        void fromString(const std::string & str);
+        [[nodiscard]] std::string toString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
         //! \brief Returns only solid materials from the XML file.
         //!

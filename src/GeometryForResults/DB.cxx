@@ -85,7 +85,7 @@ namespace GeometryLibrary
         return result;
     }
 
-    void InputGeometryDataRecord::loadFromString(const std::string & str)
+    void InputGeometryDataRecord::fromString(const std::string & str)
     {
         auto nodeOpt{Common::getTopNodeFromString(str, "InputGeometryData")};
 
@@ -99,7 +99,7 @@ namespace GeometryLibrary
         }
     }
 
-    std::string InputGeometryDataRecord::saveToString(FileParse::FileFormat format) const
+    std::string InputGeometryDataRecord::toString(FileParse::FileFormat format) const
     {
         auto node{Common::createTopNode("InputGeometryData", format)};
 

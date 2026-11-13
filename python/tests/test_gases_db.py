@@ -15,7 +15,7 @@ def gases_db(sample_sill_path):
     """Load GasesDB from the sample-sill THMZ."""
     contents = fem.thmz.read_entries(sample_sill_path, ["Gases.xml"])
     gdb = fem.GasesDB()
-    gdb.load_from_string(contents["Gases.xml"])
+    gdb.from_string(contents["Gases.xml"])
     return gdb
 
 
@@ -73,11 +73,11 @@ class TestGasesDBSaveLoad:
 
     def test_xml_round_trip(self, gases_db):
         """Ported from GasesXMLSaving — save and reload."""
-        xml_str = gases_db.save_to_string(fem.FileFormat.XML)
+        xml_str = gases_db.to_string(fem.FileFormat.XML)
         assert len(xml_str) > 0
 
         reloaded = fem.GasesDB()
-        reloaded.load_from_string(xml_str)
+        reloaded.from_string(xml_str)
         assert gases_db.get_names() == reloaded.get_names()
         assert gases_db.get_pure_gas_names() == reloaded.get_pure_gas_names()
 

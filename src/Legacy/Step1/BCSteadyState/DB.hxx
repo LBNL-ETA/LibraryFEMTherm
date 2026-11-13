@@ -18,8 +18,8 @@ namespace BCSteadyStateLibrary
         DB() = default;
         explicit DB(const std::string & xmlFileName);
 
-        void loadFromString(const std::string & str);
-        [[nodiscard]] std::string saveToString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
+        void fromString(const std::string & str);
+        [[nodiscard]] std::string toString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
         void loadFromZipFile(const std::string & zipFileName);
         int saveToZipFile(std::string_view zipFileName) const;

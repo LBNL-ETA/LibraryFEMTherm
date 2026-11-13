@@ -27,7 +27,7 @@ namespace
         record.UUID = "11111111-2222-3333-4444-555555555555";
         record.Name = "Exterior";
         legacyDB.add(record);
-        return legacyDB.saveToString();
+        return legacyDB.toString();
     }
 }   // namespace
 

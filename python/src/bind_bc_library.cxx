@@ -236,8 +236,8 @@ void bind_bc_library(py::module_ & mod)
                               "The consolidated boundary-condition library.")
         .def(py::init<>())
         .def(PathBinding::fromFile<BCLibrary::DB>(), py::arg("xml_file_path"))
-        .def("load_from_string", &BCLibrary::DB::loadFromString, py::arg("str"))
-        .def("save_to_string", &BCLibrary::DB::saveToString,
+        .def("from_string", &BCLibrary::DB::fromString, py::arg("str"))
+        .def("to_string", &BCLibrary::DB::toString,
              py::arg("format") = FileParse::FileFormat::XML)
         .def("load", PathBinding::pathFirst(&BCLibrary::DB::loadFromZipFile), py::arg("thmz_file_path"),
              "Reads the archive's BoundaryConditions entry; leaves the DB unchanged when absent.")

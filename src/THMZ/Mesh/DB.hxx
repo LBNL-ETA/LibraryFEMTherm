@@ -28,8 +28,8 @@ namespace ThermFile::Mesh
                       FileParse::FileFormat format = FileParse::FileFormat::XML);
 
     //! Unknown format means: let the content decide (XML or JSON).
-    std::optional<Mesh> loadMeshFromString(const std::string & str,
+    std::optional<Mesh> meshFromString(const std::string & str,
                                            FileParse::FileFormat format = FileParse::FileFormat::Unknown);
-    std::string saveToString(const Mesh & mesh,
+    std::string toString(const Mesh & mesh,
                              FileParse::FileFormat format = FileParse::FileFormat::XML);
 }   // namespace ThermFile

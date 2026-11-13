@@ -98,7 +98,7 @@ void bind_steady_state_results(py::module_ & mod)
         .def_readwrite("version", &ThermFile::SteadyStateResults::version)
         .def_readwrite("cases", &ThermFile::SteadyStateResults::cases);
 
-    // --- Free functions (overloaded saveToFile/saveToZipFile/saveToString) ---
+    // --- Free functions (overloaded saveToFile/saveToZipFile/toString) ---
     mod.def("load_steady_state_results_from_file",
             PathBinding::pathFirst(&ThermFile::loadSteadyStateResultsFromFile),
             py::arg("file_path"));
@@ -121,14 +121,14 @@ void bind_steady_state_results(py::module_ & mod)
             py::arg("results"), py::arg("thmz_file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("load_steady_state_results_from_string",
-            &ThermFile::loadSteadyStateResultsFromString,
+    mod.def("steady_state_results_from_string",
+            &ThermFile::steadyStateResultsFromString,
             py::arg("str"), py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("save_steady_state_results_to_string",
+    mod.def("steady_state_results_to_string",
             static_cast<std::string(*)(const ThermFile::SteadyStateResults &,
                                        FileParse::FileFormat)>(
-                &ThermFile::saveToString),
+                &ThermFile::toString),
             py::arg("results"), py::arg("format") = FileParse::FileFormat::XML);
 
     // --- Reading a U-factor the way THERM's results screen does ---

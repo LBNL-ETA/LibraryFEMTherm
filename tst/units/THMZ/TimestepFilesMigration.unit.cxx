@@ -51,7 +51,7 @@ namespace
     //! The old format's clock lives in Model.xml, which the current format no longer writes.
     std::string modelEntry(const ThermFile::ThermModel & model)
     {
-        auto text{ThermFile::saveToString(model)};
+        auto text{ThermFile::toString(model)};
         const std::string closing{"</ThermModel>"};
         text.insert(text.rfind(closing), "<TimeStep>360</TimeStep><NumberOfTimesteps>3</NumberOfTimesteps>");
         return text;

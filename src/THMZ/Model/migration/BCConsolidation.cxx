@@ -19,7 +19,7 @@ namespace ThermFile::Migration::BCConsolidation
             }
 
             BCSteadyStateLibrary::DB legacyDB;
-            legacyDB.loadFromString(steadyStateXml);
+            legacyDB.fromString(steadyStateXml);
             for(const auto & record : legacyDB.getBoundaryConditions())
             {
                 result.boundaryConditions.push_back(BCLibrary::fromSteadyState(record));
@@ -35,7 +35,7 @@ namespace ThermFile::Migration::BCConsolidation
             }
 
             BCTypesLibrary::DB legacyDB;
-            legacyDB.loadFromString(typeRecordsXml);
+            legacyDB.fromString(typeRecordsXml);
             for(const auto & record : legacyDB.getBoundaryConditions())
             {
                 result.boundaryConditions.push_back(BCLibrary::fromTypeRecord(record));

@@ -26,7 +26,7 @@ namespace ThermFile
                       std::string_view zipFileName,
                       FileParse::FileFormat format = FileParse::FileFormat::XML);
 
-    std::optional<MeshResults> loadSteadyStateMeshResultsFromString(const std::string & str);
-    std::string saveToString(const MeshResults & results,
+    std::optional<MeshResults> steadyStateMeshResultsFromString(const std::string & str);
+    std::string toString(const MeshResults & results,
                              FileParse::FileFormat format = FileParse::FileFormat::XML);
 }

@@ -14,7 +14,7 @@ namespace LibraryFiles
     //! with diverging content. The conversion runs both ways, so switching the format
     //! back migrates the edits into the returning file.
     //!
-    //! LibraryDB must be constructible from a file path and provide saveToString(format);
+    //! LibraryDB must be constructible from a file path and provide toString(format);
     //! every library DB in this repository (including the legacy Step1 ones) qualifies.
     template<typename LibraryDB>
     std::string resolvedPath(const std::string & xmlPath, FileParse::FileFormat format)
@@ -30,7 +30,7 @@ namespace LibraryFiles
         {
             LibraryDB source{other.string()};
             std::ofstream converted{target};
-            converted << source.saveToString(format);
+            converted << source.toString(format);
         }
 
         if(std::filesystem::exists(target) && std::filesystem::exists(other))

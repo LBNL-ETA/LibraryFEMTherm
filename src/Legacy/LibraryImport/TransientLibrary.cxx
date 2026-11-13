@@ -16,7 +16,7 @@ namespace BCLibrary::Import::TransientLibrary
     std::vector<BoundaryCondition> records(const std::string & text)
     {
         BCTypesLibrary::DB legacy;
-        legacy.loadFromString(text);
+        legacy.fromString(text);
         return lbnl::transform_to_vector(legacy.getBoundaryConditions(), [](const BCTypesLibrary::TypeRecord & record) {
             return fromTypeRecord(record);
         });

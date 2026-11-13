@@ -25,11 +25,16 @@ sys.path.insert(0, "python/Release")  # Windows (MSVC)
 
 ## Quick Start
 
+Every function that names a file takes a `pathlib.Path`; a string is refused with a
+`TypeError`. The later examples assume `from pathlib import Path`.
+
 ```python
+from pathlib import Path
+
 import pylibraryfemtherm as fem
 
 # Load a THMZ file
-model = fem.load_model("sample-sill.thmz")
+model = fem.load_model(Path("sample-sill.thmz"))
 
 # Inspect the model
 print(f"Version:    {model.version}")
@@ -44,7 +49,7 @@ print(f"Engine:     {props.calculation_options.simulation_engine}")
 print(f"Cross-sect: {props.model_details.exposure_type.cross_section}")
 
 # Save to a new THMZ file
-fem.save_model(model, "output.thmz")
+fem.save_model(model, Path("output.thmz"))
 ```
 
 ## Loading and Saving Models
@@ -52,27 +57,27 @@ fem.save_model(model, "output.thmz")
 ### From/to .thmz files
 
 ```python
-model = fem.load_model("path/to/model.thmz")
-fem.save_model(model, "path/to/output.thmz")
+model = fem.load_model(Path("path/to/model.thmz"))
+fem.save_model(model, Path("path/to/output.thmz"))
 ```
 
 ### From/to XML or JSON strings
 
 ```python
 # XML (default)
-xml_str = fem.save_model_to_string(model)
-model = fem.load_model_from_string(xml_str)
+xml_str = fem.model_to_string(model)
+model = fem.model_from_string(xml_str)
 
 # JSON
-json_str = fem.save_model_to_string(model, fem.FileFormat.JSON)
-model = fem.load_model_from_string(json_str, fem.FileFormat.JSON)
+json_str = fem.model_to_string(model, fem.FileFormat.JSON)
+model = fem.model_from_string(json_str, fem.FileFormat.JSON)
 ```
 
 ### From/to XML files
 
 ```python
-model = fem.load_model_from_file("Model.xml")
-fem.save_model_to_file(model, "Model.xml")
+model = fem.load_model_from_file(Path("Model.xml"))
+fem.save_model_to_file(model, Path("Model.xml"))
 ```
 
 ## Working with .thmz Entries Directly
@@ -81,26 +86,26 @@ The `pylibraryfemtherm.thmz` submodule reads and writes a .thmz's entries by nam
 
 ```python
 # Extract all files from a THMZ archive
-contents = fem.thmz.read_entries("sample.thmz")
+contents = fem.thmz.read_entries(Path("sample.thmz"))
 for name, xml in contents.items():
     print(f"{name}: {len(xml)} bytes")
 
 # Extract specific files. Entry names are extension-free bases; the archive stores
 # them as .xml or .json depending on the format it was saved with, so resolve the
 # concrete spellings with entry_name_candidates (JSON first, XML fallback):
-contents = fem.thmz.read_entries("sample.thmz",
+contents = fem.thmz.read_entries(Path("sample.thmz"),
                                fem.thmz.entry_name_candidates(fem.thmz.MODEL_FILE_NAME)
                                + fem.thmz.entry_name_candidates(fem.thmz.MATERIALS_FILE_NAME))
 
 # Or extract everything and look entries up by base name:
-contents = fem.thmz.read_entries("sample.thmz")
+contents = fem.thmz.read_entries(Path("sample.thmz"))
 model_text = fem.thmz.find_entry(contents, fem.thmz.MODEL_FILE_NAME)
 
 # Create a new THMZ from a dictionary of {filename: content}
-fem.thmz.write_entries({"Model.xml": xml_str, "Materials.xml": mat_str}, "new.thmz")
+fem.thmz.write_entries({Path("Model.xml"): xml_str, Path("Materials.xml"): mat_str}, Path("new.thmz"))
 
 # Add or overwrite a file inside an existing THMZ
-fem.thmz.add_entry("existing.thmz", "Materials.xml", new_materials_xml)
+fem.thmz.add_entry(Path("existing.thmz"), Path("Materials.xml"), new_materials_xml)
 ```
 
 ### Standard entry base names inside a THMZ
@@ -124,12 +129,12 @@ Names are extension-free; the serialization format supplies `.xml` or `.json`.
 
 ```python
 # From a THMZ file
-contents = fem.thmz.read_entries("model.thmz", [fem.thmz.MATERIALS_FILE_NAME])
+contents = fem.thmz.read_entries(Path("model.thmz"), [fem.thmz.MATERIALS_FILE_NAME])
 db = fem.MaterialsDB()
-db.load_from_string(contents[fem.thmz.MATERIALS_FILE_NAME])
+db.from_string(contents[fem.thmz.MATERIALS_FILE_NAME])
 
 # Or from a standalone XML file
-db = fem.MaterialsDB("materials.xml")
+db = fem.MaterialsDB(Path("materials.xml"))
 ```
 
 ### Querying materials
@@ -166,10 +171,10 @@ mat.data = solid
 db.add(mat)
 
 # Save back to XML
-xml = db.save_to_string()
+xml = db.to_string()
 
 # Or JSON
-json_str = db.save_to_string(fem.FileFormat.JSON)
+json_str = db.to_string(fem.FileFormat.JSON)
 ```
 
 ## Boundary Conditions
@@ -193,10 +198,10 @@ dataset. Archives saved before this library existed are migrated to it on load.
 
 ```python
 library = fem.BoundaryConditionsDB()
-library.load("model.thmz")
+library.load(Path("model.thmz"))
 
 # Or from entries already extracted, when several libraries are read from one archive
-entries = fem.thmz.read_entries("model.thmz")
+entries = fem.thmz.read_entries(Path("model.thmz"))
 library.load_from_entries(entries)
 ```
 
@@ -274,8 +279,8 @@ when they are marked that way.
 ### Saving
 
 ```python
-library.save("model.thmz")    # writes the BoundaryConditions entry
-xml = library.save_to_string()            # or fem.FileFormat.JSON
+library.save(Path("model.thmz"))    # writes the BoundaryConditions entry
+xml = library.to_string()            # or fem.FileFormat.JSON
 ```
 
 A model's boundary segments refer to records by UUID (`Boundary.bc_uuid`), and a
@@ -324,8 +329,8 @@ weather.series = [
 print(fem.time_series_steps(weather))          # 24
 print(fem.describe_axis(weather))              # "1 Jan 00:00, step 1 h, 24 rows"
 
-fem.save_datasets([weather], "model.thmz")
-datasets = fem.load_datasets("model.thmz")
+fem.save_datasets([weather], Path("model.thmz"))
+datasets = fem.load_datasets(Path("model.thmz"))
 entry = fem.thmz.time_series_entry_name(weather.uuid)   # "time series/<uuid>.xml"
 ```
 
@@ -341,10 +346,10 @@ The record and dataset a boundary refers to are looked up in the archive's libra
 model THERM saved as for one `build` wrote:
 
 ```python
-model = fem.load_model("model.thmz")
+model = fem.load_model(Path("model.thmz"))
 library = fem.BoundaryConditionsDB()
-library.load("model.thmz")
-datasets = fem.load_datasets("model.thmz")
+library.load(Path("model.thmz"))
+datasets = fem.load_datasets(Path("model.thmz"))
 for boundary in model.boundary_conditions:
     record = fem.boundary_record(library=library, boundary=boundary)       # None when not in the library
     dataset = fem.boundary_dataset(datasets=datasets, boundary=boundary)   # None when none is bound
@@ -365,7 +370,7 @@ field in these bindings.
 # An EnergyPlus weather file: AirTemperature, RelativeHumidity, WindSpeed, WindDirection and
 # RadiantTemperature (the sky temperature, from the horizontal infrared). Solar columns are
 # reported in unmapped_columns: what a surface receives depends on its tilt and the sun.
-weather = fem.read_epw("city.epw")                         # an EnergyPlusWeatherFile
+weather = fem.read_epw(Path("city.epw"))                         # an EnergyPlusWeatherFile
 year = weather.data
 print(weather.location.city, fem.describe_axis(year))      # "1 Jan 00:00, step 1 h, 8760 rows"
 
@@ -383,14 +388,14 @@ indoor = fem.generate_interior(outdoor, fem.InteriorStandard.EN_15026_DIN_4108, 
 # which), the Timestep column (one length in seconds per row), or a fixed step for every
 # row. Left unsaid, the file's columns decide: Time when it has one, else Timestep, else
 # an hour per row. A column the choice asks for and the file lacks raises ValueError.
-measured = fem.read_csv("measured.csv").data
-logged = fem.read_csv("logger.csv", steps=fem.FixedStep(seconds=900.0)).data
-begun = fem.read_csv("logger.csv", start="2026-01-01 00:00")          # the first step's length, exact
-print(fem.describe_first_step(fem.read_csv("measured.csv")))          # "first step 1 h, assumed from ..."
-fem.write_csv_file(indoor, "indoor.csv")
+measured = fem.read_csv(Path("measured.csv")).data
+logged = fem.read_csv(Path("logger.csv"), steps=fem.FixedStep(seconds=900.0)).data
+begun = fem.read_csv(Path("logger.csv"), start="2026-01-01 00:00")          # the first step's length, exact
+print(fem.describe_first_step(fem.read_csv(Path("measured.csv"))))          # "first step 1 h, assumed from ..."
+fem.write_csv_file(indoor, Path("indoor.csv"))
 
 # Whatever the file is, by its extension (.epw, .csv, or a .zip of either)
-for imported in fem.import_datasets("weather.zip").datasets:
+for imported in fem.import_datasets(Path("weather.zip")).datasets:
     print(imported.data.name, imported.skipped_columns)
 
 # Or stated outright
@@ -433,7 +438,7 @@ case = model.ModelCase(
               model.Segment(kind=room, start=(0.3, 0.0), end=(0.3, 0.3), name="room side", dataset=indoor)],
 )
 print(model.issues(case))                      # [] -- every role read is provided
-build.thmz(case, "wall.thmz")
+build.thmz(case, Path("wall.thmz"))
 ```
 
 The condition becomes the segment's record as stated (`model.record_data(kind)`): a number
@@ -471,7 +476,7 @@ for issue in model.issues(case):
     print(issue.kind, issue.segment, model.describe(case, issue))
 
 try:
-    build.thmz(case, "wall.thmz")
+    build.thmz(case, Path("wall.thmz"))
 except ValueError as refusal:
     flagged = {issue.segment for issue in refusal.issues if issue.segment is not None}
 ```
@@ -481,9 +486,9 @@ except ValueError as refusal:
 ### Loading the gas database
 
 ```python
-contents = fem.thmz.read_entries("model.thmz", [fem.thmz.GASES_FILE_NAME])
+contents = fem.thmz.read_entries(Path("model.thmz"), [fem.thmz.GASES_FILE_NAME])
 db = fem.GasesDB()
-db.load_from_string(contents[fem.thmz.GASES_FILE_NAME])
+db.from_string(contents[fem.thmz.GASES_FILE_NAME])
 ```
 
 ### Querying gases
@@ -523,7 +528,7 @@ db.add_pure_gas(gas)
 ## Glazing Systems
 
 ```python
-model = fem.load_model("model.thmz")
+model = fem.load_model(Path("model.thmz"))
 
 for gs in model.glazing_systems:
     print(f"Glazing system: {gs.name} (id={gs.id})")
@@ -556,7 +561,7 @@ for gs in model.glazing_systems:
 ## Geometry — Polygons and Boundaries
 
 ```python
-model = fem.load_model("model.thmz")
+model = fem.load_model(Path("model.thmz"))
 
 # Polygons represent material regions
 for poly in model.polygons:
@@ -588,7 +593,7 @@ A point without an `x` or a `y` raises `AttributeError`.
 ## Model Properties and Preferences
 
 ```python
-model = fem.load_model("model.thmz")
+model = fem.load_model(Path("model.thmz"))
 
 # General info
 gen = model.properties.general
@@ -625,10 +630,10 @@ print(f"Snap to grid:     {prefs.snap.snap_to_grid}")
 
 ```python
 # From THMZ
-mesh = fem.load_mesh("model.thmz")
+mesh = fem.load_mesh(Path("model.thmz"))
 
 # From XML string
-mesh = fem.load_mesh_from_string(xml_str)
+mesh = fem.mesh_from_string(xml_str)
 ```
 
 ### Inspecting
@@ -661,8 +666,8 @@ for case in mesh.cases:
 ### Saving
 
 ```python
-xml_str = fem.save_mesh_to_string(mesh)
-fem.save_mesh(mesh, "output.thmz")
+xml_str = fem.mesh_to_string(mesh)
+fem.save_mesh(mesh, Path("output.thmz"))
 ```
 
 ## Steady-State Results
@@ -670,7 +675,7 @@ fem.save_mesh(mesh, "output.thmz")
 ### U-factor results
 
 ```python
-results = fem.load_steady_state_results("model.thmz")
+results = fem.load_steady_state_results(Path("model.thmz"))
 
 for case in results.cases:
     print(f"Case: type={case.model_type}, error={case.simulation_error}")
@@ -704,7 +709,7 @@ fem.is_degenerate(x_projected)
 ```python
 from pylibraryfemtherm import steady_state_field
 
-field = steady_state_field.read("model.thmz", fem.RunType.UFactor)
+field = steady_state_field.read(Path("model.thmz"), fem.RunType.UFactor)
 field.nodes, field.elements          # MeshNode / MeshElement, as the mesh stores them
 field.temperature                    # one value per node; NaN where the run has none
 field.x_flux, field.y_flux, field.flux_magnitude
@@ -716,7 +721,7 @@ field.humidity, field.water_content, field.ice_content   # NaN for a heat-only r
 ### Mesh results (temperatures and fluxes at nodes)
 
 ```python
-mesh_results = fem.load_steady_state_mesh_results("model.thmz")
+mesh_results = fem.load_steady_state_mesh_results(Path("model.thmz"))
 
 for case in mesh_results.cases:
     print(f"Case: type={case.results_type}")
@@ -742,7 +747,7 @@ for case in mesh_results.cases:
 The Component Modeling Approach (CMA) data is stored in the model:
 
 ```python
-model = fem.load_model("model.thmz")
+model = fem.load_model(Path("model.thmz"))
 cma = model.cma_data
 
 print(f"IGU type:      {cma.igu_type}")
@@ -793,7 +798,7 @@ bc.data = comp
 model.boundary_conditions = [bc]
 
 # Serialize
-xml = fem.save_model_to_string(model)
+xml = fem.model_to_string(model)
 print(xml)
 ```
 

@@ -393,7 +393,7 @@ namespace ThermFile::Build
         {
             TimeSeriesLibrary::DB library;
             library.add(data);
-            return {ThermZip::timeSeriesEntryName(data.UUID), library.saveToString()};
+            return {ThermZip::timeSeriesEntryName(data.UUID), library.toString()};
         }
     }   // namespace
 
@@ -517,10 +517,10 @@ namespace ThermFile::Build
         const auto built{libraries(modelCase)};
         const auto xml{FileParse::FileFormat::XML};
         std::map<std::string, std::string> entries{
-          {ThermZip::entryNameForFormat(ThermZip::ModelFileName, xml), saveToString(thermModel)},
-          {ThermZip::entryNameForFormat(ThermZip::MaterialsFileName, xml), built.materials.saveToString()},
+          {ThermZip::entryNameForFormat(ThermZip::ModelFileName, xml), toString(thermModel)},
+          {ThermZip::entryNameForFormat(ThermZip::MaterialsFileName, xml), built.materials.toString()},
           {ThermZip::entryNameForFormat(ThermZip::BoundaryConditionsFileName, xml),
-           built.boundaryConditions.saveToString()},
+           built.boundaryConditions.toString()},
           {ThermZip::entryNameForFormat(ThermZip::GasesFileName, xml), emptyGases},
           {ThermZip::entryNameForFormat(ThermZip::MeshName, xml), emptyMesh},
         };

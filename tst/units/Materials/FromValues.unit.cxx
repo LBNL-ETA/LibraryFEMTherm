@@ -179,7 +179,7 @@ TEST(MaterialsFromValues, DatabaseRoundTripsThroughXml)
     EXPECT_EQ(database.getNames(), (std::vector<std::string>{"Cottaer Sandstone", "Annex material"}));
 
     MaterialsLibrary::DB loaded;
-    loaded.loadFromString(database.saveToString());
+    loaded.fromString(database.toString());
     const auto record{loaded.getByUUID(materialUuid("Cottaer Sandstone"))};
     ASSERT_TRUE(record.has_value());
     EXPECT_NEAR(hygro(*record).BulkDensity.value(), 2050.0, tolerance);

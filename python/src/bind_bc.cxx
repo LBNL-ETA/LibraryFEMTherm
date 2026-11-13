@@ -99,8 +99,8 @@ void bind_bc(py::module_ & mod)
     py::class_<BCSteadyStateLibrary::DB>(mod, "BCSteadyStateDB")
         .def(py::init<>())
         .def(PathBinding::fromFile<BCSteadyStateLibrary::DB>(), py::arg("xml_file_path"))
-        .def("load_from_string", &BCSteadyStateLibrary::DB::loadFromString, py::arg("str"))
-        .def("save_to_string", &BCSteadyStateLibrary::DB::saveToString,
+        .def("from_string", &BCSteadyStateLibrary::DB::fromString, py::arg("str"))
+        .def("to_string", &BCSteadyStateLibrary::DB::toString,
              py::arg("format") = FileParse::FileFormat::XML)
         .def("get_boundary_conditions", &BCSteadyStateLibrary::DB::getBoundaryConditions,
              py::return_value_policy::reference_internal)

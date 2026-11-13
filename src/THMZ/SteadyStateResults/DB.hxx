@@ -27,8 +27,8 @@ namespace ThermFile
                       FileParse::FileFormat format = FileParse::FileFormat::XML);
 
     //! Unknown format means: let the content decide (XML or JSON).
-    std::optional<SteadyStateResults> loadSteadyStateResultsFromString(const std::string & str,
+    std::optional<SteadyStateResults> steadyStateResultsFromString(const std::string & str,
                                                                        FileParse::FileFormat format = FileParse::FileFormat::Unknown);
-    std::string saveToString(const SteadyStateResults & results,
+    std::string toString(const SteadyStateResults & results,
                              FileParse::FileFormat format = FileParse::FileFormat::XML);
 }

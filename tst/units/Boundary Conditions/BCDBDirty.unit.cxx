@@ -20,7 +20,7 @@ TEST(TestBCDBDirty, SteadyStateEffectiveMutations)
     EXPECT_TRUE(source.isDirty());
 
     BCSteadyStateLibrary::DB database;
-    database.loadFromString(source.saveToString());
+    database.fromString(source.toString());
     EXPECT_FALSE(database.isDirty());
 
     database.update(database.getByUUID(sampleUuid).value());
@@ -52,7 +52,7 @@ TEST(TestBCDBDirty, SteadyStateRenameSkipsIGUSurfaces)
     source.add(surface);
 
     BCSteadyStateLibrary::DB database;
-    database.loadFromString(source.saveToString());
+    database.fromString(source.toString());
 
     database.renameRecordsWithProjectName("Old project", "New project");
     EXPECT_TRUE(database.isDirty());
@@ -71,7 +71,7 @@ TEST(TestBCDBDirty, TransientTypeEffectiveMutations)
     EXPECT_TRUE(source.isDirty());
 
     BCTypesLibrary::DB database;
-    database.loadFromString(source.saveToString());
+    database.fromString(source.toString());
     EXPECT_FALSE(database.isDirty());
 
     database.update(database.getByUUID(sampleUuid).value());
@@ -95,7 +95,7 @@ TEST(TestBCDBDirty, UnifiedEffectiveMutations)
     EXPECT_TRUE(source.isDirty());
 
     BCLibrary::DB database;
-    database.loadFromString(source.saveToString());
+    database.fromString(source.toString());
     EXPECT_FALSE(database.isDirty());
 
     database.updateOrAdd(database.getByUUID(sampleUuid).value());
@@ -123,7 +123,7 @@ TEST(TestBCDBDirty, UnifiedRenameSkipsIGUSurfaces)
     source.add(surface);
 
     BCLibrary::DB database;
-    database.loadFromString(source.saveToString());
+    database.fromString(source.toString());
 
     database.renameRecordsWithProjectName("No such project", "New project");
     EXPECT_FALSE(database.isDirty());

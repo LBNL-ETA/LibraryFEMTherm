@@ -14,7 +14,7 @@ namespace BCLibrary::Import::CurrentLibrary
     std::vector<BoundaryCondition> records(const std::string & text)
     {
         DB library;
-        library.loadFromString(text);
+        library.fromString(text);
         return library.getBoundaryConditions();
     }
 }   // namespace BCLibrary::Import::CurrentLibrary

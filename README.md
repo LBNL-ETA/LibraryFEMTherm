@@ -108,23 +108,25 @@ pip install libraryfemtherm
 Or build from source with `BUILD_PYTHON_BINDINGS=ON` (see above).
 
 ```python
+from pathlib import Path
+
 import pylibraryfemtherm as fem
 
 # Load a THMZ file
-model = fem.load_model("sample-sill.thmz")
+model = fem.load_model(Path("sample-sill.thmz"))
 print(f"Polygons:   {len(model.polygons)}")
 print(f"Boundaries: {len(model.boundary_conditions)}")
 
 # Save to XML string
-xml = fem.save_model_to_string(model)
+xml = fem.model_to_string(model)
 
 # Save to a new THMZ file
-fem.save_model(model, "output.thmz")
+fem.save_model(model, Path("output.thmz"))
 
 # Work with .thmz entries directly
-contents = fem.thmz.read_entries("sample.thmz", [fem.thmz.MATERIALS_FILE_NAME])
+contents = fem.thmz.read_entries(Path("sample.thmz"), [fem.thmz.MATERIALS_FILE_NAME])
 db = fem.MaterialsDB()
-db.load_from_string(contents[fem.thmz.MATERIALS_FILE_NAME])
+db.from_string(contents[fem.thmz.MATERIALS_FILE_NAME])
 ```
 
 For comprehensive Python API documentation with examples, see [doc/python.md](doc/python.md).

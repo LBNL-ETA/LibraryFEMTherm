@@ -166,13 +166,13 @@ class TestLibraryRoundTrip:
     def test_save_and_load_string(self):
         library = fem.TimeSeriesDB()
         library.add(_dataset())
-        text = library.save_to_string()
+        text = library.to_string()
         assert "<TimeSeriesData>" in text
         assert "<StepSeconds>1800</StepSeconds>" in text
         assert "<Role>Air Temperature</Role>" in text
 
         loaded = fem.TimeSeriesDB()
-        loaded.load_from_string(text)
+        loaded.from_string(text)
         assert loaded.get_names() == ["Two steps of constant weather"]
         data = loaded.get_by_uuid("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
         assert data is not None
@@ -192,7 +192,7 @@ class TestLibraryRoundTrip:
             "</TimeSeries></TimeSeriesData>"
         )
         library = fem.TimeSeriesDB()
-        library.load_from_string(text)
+        library.from_string(text)
         data = library.get_by_name("Legacy")
         assert data is not None
         assert data.axis.month == 1

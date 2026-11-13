@@ -25,8 +25,8 @@ namespace ThermFile
                       FileParse::FileFormat format = FileParse::FileFormat::XML);
 
     //! Unknown format means: let the content decide (XML or JSON).
-    std::optional<ThermModel> loadThermModelFromString(const std::string & str,
+    std::optional<ThermModel> thermModelFromString(const std::string & str,
                                                        FileParse::FileFormat format = FileParse::FileFormat::Unknown);
-    std::string saveToString(const ThermModel & model,
+    std::string toString(const ThermModel & model,
                              FileParse::FileFormat format = FileParse::FileFormat::XML);
 }   // namespace ThermFile

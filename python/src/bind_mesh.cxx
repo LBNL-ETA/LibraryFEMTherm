@@ -182,9 +182,9 @@ void bind_mesh(py::module_ & mod)
             py::arg("mesh"), py::arg("thmz_file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("load_mesh_from_string", &ThermFile::Mesh::loadMeshFromString,
+    mod.def("mesh_from_string", &ThermFile::Mesh::meshFromString,
             py::arg("str"), py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("save_mesh_to_string", &ThermFile::Mesh::saveToString,
+    mod.def("mesh_to_string", &ThermFile::Mesh::toString,
             py::arg("mesh"), py::arg("format") = FileParse::FileFormat::XML);
 }

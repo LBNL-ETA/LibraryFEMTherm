@@ -27,7 +27,7 @@ namespace TimeSeriesLibrary
         m_TimeSeriesData = loadTimeSeriesDataFromFile(xmlFileName);
     }
 
-    void DB::loadFromString(const std::string & str)
+    void DB::fromString(const std::string & str)
     {
         Tags tags;
         auto node{Common::getTopNodeFromString(Common::stripUTF8BOM(str), tags.timeSeriesData())};
@@ -43,7 +43,7 @@ namespace TimeSeriesLibrary
         }
     }
 
-    std::string DB::saveToString(FileParse::FileFormat format) const
+    std::string DB::toString(FileParse::FileFormat format) const
     {
         Tags tags;
         auto node{Common::createTopNode(tags.timeSeriesData(), format)};
@@ -220,7 +220,7 @@ namespace TimeSeriesLibrary
             if(entryName.starts_with(entryPrefix))
             {
                 DB entryDB;
-                entryDB.loadFromString(content);
+                entryDB.fromString(content);
                 std::ranges::copy(entryDB.getTimeSeriesData(), std::back_inserter(datasets));
             }
         }
@@ -247,7 +247,7 @@ namespace TimeSeriesLibrary
 
             DB entryDB;
             entryDB.add(dataset);
-            entries[ThermZip::timeSeriesEntryName(dataset.UUID, format)] = entryDB.saveToString(format);
+            entries[ThermZip::timeSeriesEntryName(dataset.UUID, format)] = entryDB.toString(format);
         }
 
         ThermZip::zipFiles(entries, zipFileName);

@@ -62,10 +62,10 @@ TEST(TestTimeSeriesData, DBSaveLoadRoundTrip)
     TimeSeriesLibrary::DB source;
     source.add(makeSample());
 
-    const auto content{source.saveToString()};
+    const auto content{source.toString()};
 
     TimeSeriesLibrary::DB loaded;
-    loaded.loadFromString(content);
+    loaded.fromString(content);
 
     const auto record{loaded.getByUUID("11111111-2222-3333-4444-555555555555")};
     ASSERT_TRUE(record.has_value());
@@ -90,7 +90,7 @@ TEST(TestTimeSeriesData, ProjectNameRoundTrip)
     source.add(sample);
 
     TimeSeriesLibrary::DB loaded;
-    loaded.loadFromString(source.saveToString());
+    loaded.fromString(source.toString());
 
     const auto record{loaded.getByUUID(sample.UUID)};
     ASSERT_TRUE(record.has_value());
@@ -199,12 +199,12 @@ TEST(TestTimeSeriesData, TimeAxisRoundTrip)
 
     TimeSeriesLibrary::DB source;
     source.add(sample);
-    const auto content{source.saveToString()};
+    const auto content{source.toString()};
     EXPECT_NE(content.find("<TimeAxis>"), std::string::npos);
     EXPECT_NE(content.find("<StepSeconds>600</StepSeconds>"), std::string::npos);
 
     TimeSeriesLibrary::DB loaded;
-    loaded.loadFromString(content);
+    loaded.fromString(content);
     const auto record{loaded.getByUUID(sample.UUID)};
     ASSERT_TRUE(record.has_value());
     EXPECT_EQ(record->axis, sample.axis);
@@ -219,7 +219,7 @@ TEST(TestTimeSeriesData, TimeAxisDefaultsWhenAbsent)
                               "</TimeSeries></TimeSeriesData>"};
 
     TimeSeriesLibrary::DB loaded;
-    loaded.loadFromString(content);
+    loaded.fromString(content);
     const auto record{loaded.getByUUID("old-record")};
     ASSERT_TRUE(record.has_value());
     EXPECT_EQ(record->axis, TimeSeriesLibrary::TimeAxis{});
@@ -374,7 +374,7 @@ TEST(TestTimeSeriesData, XMLCarriesCommaSeparatedValues)
     TimeSeriesLibrary::DB source;
     source.add(makeSample());
 
-    const auto content{source.saveToString()};
+    const auto content{source.toString()};
 
     EXPECT_NE(content.find("<Values>21.3,21.1,20.8</Values>"), std::string::npos);
     EXPECT_EQ(content.find("<Value>"), std::string::npos);
@@ -385,11 +385,11 @@ TEST(TestTimeSeriesData, JSONRoundTripWithCommaSeparatedValues)
     TimeSeriesLibrary::DB source;
     source.add(makeSample());
 
-    const auto content{source.saveToString(FileParse::FileFormat::JSON)};
+    const auto content{source.toString(FileParse::FileFormat::JSON)};
     EXPECT_NE(content.find("21.3,21.1,20.8"), std::string::npos);
 
     TimeSeriesLibrary::DB loaded;
-    loaded.loadFromString(content);
+    loaded.fromString(content);
 
     const auto record{loaded.getByUUID("11111111-2222-3333-4444-555555555555")};
     ASSERT_TRUE(record.has_value());
@@ -432,7 +432,7 @@ TEST(TestTimeSeriesData, StepFormsKeepTheirFileAndIdentity)
 
     TimeSeriesLibrary::DB library;
     library.add(uneven);
-    EXPECT_NE(library.saveToString().find("<StepSeconds>900</StepSeconds>\n\t\t\t<StepLengths>900,1800,3600</StepLengths>"),
+    EXPECT_NE(library.toString().find("<StepSeconds>900</StepSeconds>\n\t\t\t<StepLengths>900,1800,3600</StepLengths>"),
               std::string::npos);
 }
 
@@ -441,17 +441,17 @@ TEST(TestTimeSeriesData, StepLengthsRoundTripOnlyWhenUneven)
     auto even{makeSample()};
     TimeSeriesLibrary::DB evenSource;
     evenSource.add(even);
-    EXPECT_EQ(evenSource.saveToString().find("<StepLengths>"), std::string::npos);
+    EXPECT_EQ(evenSource.toString().find("<StepLengths>"), std::string::npos);
 
     auto uneven{makeSample()};
     uneven.axis.stepSeconds = std::vector<double>{600.0, 1200.0, 600.0};
     TimeSeriesLibrary::DB source;
     source.add(uneven);
-    const auto content{source.saveToString()};
+    const auto content{source.toString()};
     EXPECT_NE(content.find("<StepLengths>600,1200,600</StepLengths>"), std::string::npos);
 
     TimeSeriesLibrary::DB loaded;
-    loaded.loadFromString(content);
+    loaded.fromString(content);
     const auto record{loaded.getByUUID(uneven.UUID)};
     ASSERT_TRUE(record.has_value());
     EXPECT_EQ(record->axis, uneven.axis);

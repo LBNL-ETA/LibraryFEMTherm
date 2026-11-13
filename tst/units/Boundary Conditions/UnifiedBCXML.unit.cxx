@@ -84,7 +84,7 @@ TEST(TestUnifiedBC, SurfaceExchangeRoundTrip)
     source.add(makeTransientExterior());
 
     DB loaded;
-    loaded.loadFromString(source.saveToString());
+    loaded.fromString(source.toString());
 
     const auto record{loaded.getByUUID("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")};
     ASSERT_TRUE(record.has_value());
@@ -123,7 +123,7 @@ TEST(TestUnifiedBC, PrescribedStateRoundTrip)
     source.add(record);
 
     DB loaded;
-    loaded.loadFromString(source.saveToString());
+    loaded.fromString(source.toString());
 
     const auto reloaded{loaded.getByUUID(record.UUID)};
     ASSERT_TRUE(reloaded.has_value());
@@ -154,7 +154,7 @@ TEST(TestUnifiedBC, NoExchangeRoundTrip)
     source.add(record);
 
     DB loaded;
-    loaded.loadFromString(source.saveToString());
+    loaded.fromString(source.toString());
 
     const auto reloaded{loaded.getByUUID(record.UUID)};
     ASSERT_TRUE(reloaded.has_value());
@@ -175,7 +175,7 @@ TEST(TestUnifiedBC, RadiationSurfaceRoundTripAndDefaultLookup)
     source.add(record);
 
     DB loaded;
-    loaded.loadFromString(source.saveToString());
+    loaded.fromString(source.toString());
 
     const auto defaultSurface{loaded.getDefaultRadiationSurface()};
     ASSERT_TRUE(defaultSurface.has_value());

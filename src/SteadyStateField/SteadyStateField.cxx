@@ -119,13 +119,13 @@ namespace ThermFile::SteadyStateField
     lbnl::ExpectedExt<Field, std::string> read(const std::map<std::string, std::string> & entries,
                                                const RunType runType)
     {
-        const auto mesh{Mesh::loadMeshFromString(ThermZip::findEntry(entries, ThermZip::MeshName))};
+        const auto mesh{Mesh::meshFromString(ThermZip::findEntry(entries, ThermZip::MeshName))};
         if(!mesh.has_value() || mesh->cases.empty())
         {
             return Failure{"The archive has no stored mesh"};
         }
         const auto results{
-          loadSteadyStateMeshResultsFromString(ThermZip::findEntry(entries, ThermZip::SteadyStateMeshResultsName))};
+          steadyStateMeshResultsFromString(ThermZip::findEntry(entries, ThermZip::SteadyStateMeshResultsName))};
         if(!results.has_value() || results->cases.empty())
         {
             return Failure{"The archive has no steady-state nodal results"};
