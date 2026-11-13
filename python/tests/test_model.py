@@ -572,7 +572,7 @@ class TestArchive:
         written = tmp_path / "nested" / "strip.thmz"
         assert build.thmz(sealed_strip(), written) == written
         assert written.exists()
-        path = str(written)
+        path = written
 
         loaded = fem.load_model(path)
         assert loaded is not None

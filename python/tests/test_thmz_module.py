@@ -4,6 +4,7 @@ Covers pylibraryfemtherm.thmz: writing and reading entries, add_entry, and the e
 """
 
 import os
+import pathlib
 import tempfile
 
 import pytest
@@ -61,7 +62,7 @@ class TestThmzEntries:
         }
 
         with tempfile.NamedTemporaryFile(suffix=".thmz", delete=False) as tmp:
-            tmp_path = tmp.name
+            tmp_path = pathlib.Path(tmp.name)
 
         try:
             fem.thmz.write_entries(contents, tmp_path)
@@ -80,7 +81,7 @@ class TestThmzEntries:
         }
 
         with tempfile.NamedTemporaryFile(suffix=".thmz", delete=False) as tmp:
-            tmp_path = tmp.name
+            tmp_path = pathlib.Path(tmp.name)
 
         try:
             fem.thmz.write_entries(contents, tmp_path)
@@ -97,7 +98,7 @@ class TestThmzEntries:
         contents = {"data.xml": "<data>123</data>"}
 
         with tempfile.NamedTemporaryFile(suffix=".thmz", delete=False) as tmp:
-            tmp_path = tmp.name
+            tmp_path = pathlib.Path(tmp.name)
 
         try:
             fem.thmz.write_entries(contents, tmp_path)
@@ -115,7 +116,7 @@ class TestAddEntry:
         file_name = "Test.xml"
 
         with tempfile.NamedTemporaryFile(suffix=".thmz", delete=False) as tmp:
-            thmz_path = tmp.name
+            thmz_path = pathlib.Path(tmp.name)
         os.remove(thmz_path)  # miniz needs to create the file itself
 
         try:
@@ -135,7 +136,7 @@ class TestAddEntry:
         file_name = "Test.xml"
 
         with tempfile.NamedTemporaryFile(suffix=".thmz", delete=False) as tmp:
-            thmz_path = tmp.name
+            thmz_path = pathlib.Path(tmp.name)
         os.remove(thmz_path)
 
         try:
@@ -152,7 +153,7 @@ class TestAddEntry:
         file_name = "Empty.xml"
 
         with tempfile.NamedTemporaryFile(suffix=".thmz", delete=False) as tmp:
-            thmz_path = tmp.name
+            thmz_path = pathlib.Path(tmp.name)
         os.remove(thmz_path)
 
         try:

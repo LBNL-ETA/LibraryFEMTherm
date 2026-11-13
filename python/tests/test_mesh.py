@@ -1,5 +1,7 @@
 """Tests for Mesh bindings: load from THMZ, struct creation, round-trip."""
 
+import pathlib
+
 import pylibraryfemtherm as fem
 
 TOL = 1e-6
@@ -40,7 +42,7 @@ class TestMeshLoadFromTHMZ:
         assert mesh is not None
 
     def test_nonexistent_file_returns_none(self):
-        result = fem.load_mesh("nonexistent.thmz")
+        result = fem.load_mesh(pathlib.Path("nonexistent.thmz"))
         assert result is None
 
 

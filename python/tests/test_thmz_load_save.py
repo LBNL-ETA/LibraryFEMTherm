@@ -4,6 +4,7 @@ Covers THMZ load, XML round-trip, and save-to-zip round-trip.
 """
 
 import os
+import pathlib
 import tempfile
 
 import pytest
@@ -25,7 +26,7 @@ class TestTHMZLoad:
         assert len(model.polygons) > 0
 
     def test_load_nonexistent_file_returns_none(self):
-        result = fem.load_model("nonexistent_file.thmz")
+        result = fem.load_model(pathlib.Path("nonexistent_file.thmz"))
         assert result is None
 
 
@@ -56,7 +57,7 @@ class TestZipRoundTrip:
 
     def test_save_and_reload_zip(self, sample_model):
         with tempfile.NamedTemporaryFile(suffix=".thmz", delete=False) as tmp:
-            tmp_path = tmp.name
+            tmp_path = pathlib.Path(tmp.name)
         os.remove(tmp_path)  # miniz needs to create the file itself
 
         try:

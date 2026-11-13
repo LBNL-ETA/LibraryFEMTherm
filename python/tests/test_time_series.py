@@ -214,7 +214,7 @@ class TestArchiveEntries:
         assert fem.thmz.entry_name_for_format("Model", fem.FileFormat.XML) == "Model.xml"
 
     def test_datasets_through_a_zip(self, tmp_path):
-        archive = str(tmp_path / "datasets.thmz")
+        archive = tmp_path / "datasets.thmz"
         fem.thmz.write_entries({"Model.xml": "<ThermModel/>"}, archive)
         written = fem.save_datasets([_dataset()], archive)
         assert written == 1
@@ -305,7 +305,7 @@ class TestCreation:
         with pytest.raises(ValueError):
             fem.read_epw(tmp_path / "missing.epw")
 
-        zipped = str(tmp_path / "city.zip")
+        zipped = tmp_path / "city.zip"
         fem.thmz.write_entries({"city.epw": _epw_text(["21.3", "21.1", "20.8"]), "city.stat": "x"}, zipped)
         assert fem.read_epw(zipped).data == result.data
         assert fem.read_epw(zipped).location.city == "Sydney"
@@ -407,7 +407,7 @@ class TestCreation:
         assert [imported.data.name for imported in outcome.datasets] == ["indoor"]
         assert outcome.datasets[0].skipped_columns == ["Comfort Index"]
 
-        zip_path = str(tmp_path / "weather.zip")
+        zip_path = tmp_path / "weather.zip"
         fem.thmz.write_entries({"city.epw": _epw_text(["1", "2"]), "indoor.csv": CSV_TEXT, "city.stat": "x"}, zip_path)
         from_zip = fem.import_datasets(zip_path, steps=fem.StepColumn.Time)
         assert sorted(imported.data.name for imported in from_zip.datasets) == ["city", "indoor"]

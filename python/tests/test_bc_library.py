@@ -167,7 +167,7 @@ class TestEmbeddedLibrary:
     def mullion_path(self, test_data_dir):
         import os
 
-        return os.path.join(test_data_dir, "mullion-jamb-json.thmz")
+        return test_data_dir / "mullion-jamb-json.thmz"
 
     def test_load_from_entries(self, mullion_path):
         entries = fem.thmz.read_entries(mullion_path)

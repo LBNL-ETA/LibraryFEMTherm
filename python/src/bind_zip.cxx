@@ -2,6 +2,7 @@
 #include <pybind11/stl.h>
 
 #include "THMZ/ZipModule/ZipModule.hxx"
+#include "PathOnly.hxx"
 
 namespace py = pybind11;
 
@@ -30,24 +31,25 @@ void bind_zip(py::module_ & mod)
              "Appends the format's extension to an entry base name (\"Model\" -> \"Model.xml\")");
 
     thmz.def("write_entries",
-             py::overload_cast<const std::map<std::string, std::string> &, const std::string &, int>(
-                 &ThermZip::zipFiles),
-             py::arg("entries"), py::arg("thmz_file_name"),
+             PathBinding::pathSecond(
+               py::overload_cast<const std::map<std::string, std::string> &, const std::string &, int>(
+                 &ThermZip::zipFiles)),
+             py::arg("entries"), py::arg("thmz_file_path"),
              py::arg("compression_level") = ThermZip::DefaultCompressionLevel,
              "Write a .thmz holding the given entries, name -> content");
 
     thmz.def("read_entries",
-             py::overload_cast<std::string_view, std::vector<std::string> const &>(
-                 &ThermZip::unzipFiles),
-             py::arg("thmz_file_name"), py::arg("names") = std::vector<std::string>(),
+             PathBinding::pathFirst(
+               py::overload_cast<std::string_view, std::vector<std::string> const &>(&ThermZip::unzipFiles)),
+             py::arg("thmz_file_path"), py::arg("names") = std::vector<std::string>(),
              "The .thmz's entries as a dict, name -> content: the named ones, or all when none are named");
 
-    thmz.def("read_entry", &ThermZip::unzipFile,
-             py::arg("thmz_file_name"), py::arg("name"),
+    thmz.def("read_entry", PathBinding::pathFirst(&ThermZip::unzipFile),
+             py::arg("thmz_file_path"), py::arg("name"),
              "One entry of a .thmz, as a string");
 
-    thmz.def("add_entry", &ThermZip::addToZipFile,
-             py::arg("thmz_file_name"), py::arg("name"), py::arg("text"),
+    thmz.def("add_entry", PathBinding::pathFirst(&ThermZip::addToZipFile),
+             py::arg("thmz_file_path"), py::arg("name"), py::arg("text"),
              py::arg("obsolete_names") = std::vector<std::string>(),
              py::arg("compression_level") = ThermZip::DefaultCompressionLevel,
              "Add an entry to an existing .thmz, or replace it; obsolete_names are removed");

@@ -3,6 +3,7 @@
 
 #include "THMZ/SteadyStateMeshResults/Results.hxx"
 #include "THMZ/SteadyStateMeshResults/DB.hxx"
+#include "PathOnly.hxx"
 
 namespace py = pybind11;
 
@@ -107,25 +108,25 @@ void bind_mesh_results(py::module_ & mod)
 
     // --- Free functions (overloaded saveToFile/saveToZipFile/saveToString) ---
     mod.def("load_steady_state_mesh_results_from_file",
-            &ThermFile::loadSteadyStateMeshResultsFromFile,
-            py::arg("file_name"));
+            PathBinding::pathFirst(&ThermFile::loadSteadyStateMeshResultsFromFile),
+            py::arg("file_path"));
 
     mod.def("save_steady_state_mesh_results_to_file",
-            static_cast<int(*)(const ThermFile::MeshResults &, std::string_view,
-                               FileParse::FileFormat)>(
-                &ThermFile::saveToFile),
-            py::arg("results"), py::arg("file_name"),
+            PathBinding::pathSecond(static_cast<int(*)(const ThermFile::MeshResults &, std::string_view,
+                                                    FileParse::FileFormat)>(
+                &ThermFile::saveToFile)),
+            py::arg("results"), py::arg("file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
     mod.def("load_steady_state_mesh_results",
-            &ThermFile::loadSteadyStateMeshResultsFromZipFile,
-            py::arg("thmz_file_name"));
+            PathBinding::pathFirst(&ThermFile::loadSteadyStateMeshResultsFromZipFile),
+            py::arg("thmz_file_path"));
 
     mod.def("save_steady_state_mesh_results",
-            static_cast<int(*)(const ThermFile::MeshResults &, std::string_view,
-                               FileParse::FileFormat)>(
-                &ThermFile::saveToZipFile),
-            py::arg("results"), py::arg("thmz_file_name"),
+            PathBinding::pathSecond(static_cast<int(*)(const ThermFile::MeshResults &, std::string_view,
+                                                    FileParse::FileFormat)>(
+                &ThermFile::saveToZipFile)),
+            py::arg("results"), py::arg("thmz_file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
     mod.def("load_steady_state_mesh_results_from_string",

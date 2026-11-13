@@ -4,6 +4,7 @@
 #include "THMZ/SteadyStateResults/Results.hxx"
 #include "THMZ/SteadyStateResults/DB.hxx"
 #include "THMZ/SteadyStateResults/UFactors.hxx"
+#include "PathOnly.hxx"
 
 namespace py = pybind11;
 
@@ -99,25 +100,25 @@ void bind_steady_state_results(py::module_ & mod)
 
     // --- Free functions (overloaded saveToFile/saveToZipFile/saveToString) ---
     mod.def("load_steady_state_results_from_file",
-            &ThermFile::loadSteadyStateResultsFromFile,
-            py::arg("file_name"));
+            PathBinding::pathFirst(&ThermFile::loadSteadyStateResultsFromFile),
+            py::arg("file_path"));
 
     mod.def("save_steady_state_results_to_file",
-            static_cast<int(*)(const ThermFile::SteadyStateResults &, std::string_view,
-                               FileParse::FileFormat)>(
-                &ThermFile::saveToFile),
-            py::arg("results"), py::arg("file_name"),
+            PathBinding::pathSecond(static_cast<int(*)(const ThermFile::SteadyStateResults &, std::string_view,
+                                                    FileParse::FileFormat)>(
+                &ThermFile::saveToFile)),
+            py::arg("results"), py::arg("file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
     mod.def("load_steady_state_results",
-            &ThermFile::loadSteadyStateResultsFromZipFile,
-            py::arg("thmz_file_name"));
+            PathBinding::pathFirst(&ThermFile::loadSteadyStateResultsFromZipFile),
+            py::arg("thmz_file_path"));
 
     mod.def("save_steady_state_results",
-            static_cast<int(*)(const ThermFile::SteadyStateResults &, std::string_view,
-                               FileParse::FileFormat)>(
-                &ThermFile::saveToZipFile),
-            py::arg("results"), py::arg("thmz_file_name"),
+            PathBinding::pathSecond(static_cast<int(*)(const ThermFile::SteadyStateResults &, std::string_view,
+                                                    FileParse::FileFormat)>(
+                &ThermFile::saveToZipFile)),
+            py::arg("results"), py::arg("thmz_file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
     mod.def("load_steady_state_results_from_string",

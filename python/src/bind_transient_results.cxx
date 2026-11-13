@@ -4,6 +4,7 @@
 #include <format>
 
 #include "TransientResults/TransientResults.hxx"
+#include "PathOnly.hxx"
 
 namespace py = pybind11;
 
@@ -114,14 +115,14 @@ void bind_transient_results(py::module_ & mod)
       "or they are inconsistent.");
     transient.def(
       "read",
-      [](const std::string & zipFileName) {
-          const auto results{readFromZipFile(zipFileName)};
+      [](const PathOnly & zipFilePath) {
+          const auto results{readFromZipFile(PathBinding::utf8Of(zipFilePath.value))};
           if(!results.has_value())
           {
               throw py::value_error(results.error());
           }
           return results.value();
       },
-      py::arg("thmz_file_name"),
+      py::arg("thmz_file_path"),
       "Extracts the archive and reads its transient results. Raises ValueError when it carries none.");
 }

@@ -1,6 +1,7 @@
 """Shared fixtures for LibraryFEMTherm Python binding tests."""
 
 import os
+import pathlib
 import sys
 import pytest
 
@@ -28,27 +29,25 @@ import pylibraryfemtherm as fem  # noqa: E402
 @pytest.fixture()
 def test_data_dir():
     """Return the path to the tst/products/ directory."""
-    return os.path.normpath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "tst", "products")
-    )
+    return pathlib.Path(__file__).resolve().parents[2] / "tst" / "products"
 
 
 @pytest.fixture()
 def sample_sill_path(test_data_dir):
     """Return the full path to sample-sill.thmz."""
-    return os.path.join(test_data_dir, "sample-sill.thmz")
+    return test_data_dir / "sample-sill.thmz"
 
 
 @pytest.fixture()
 def sample_sill_no_results_path(test_data_dir):
     """Return the full path to sample-sill-no-results.thmz."""
-    return os.path.join(test_data_dir, "sample-sill-no-results.thmz")
+    return test_data_dir / "sample-sill-no-results.thmz"
 
 
 @pytest.fixture()
 def id50_path(test_data_dir):
     """Return the full path to ID50_CS_single.thmz."""
-    return os.path.join(test_data_dir, "ID50_CS_single.thmz")
+    return test_data_dir / "ID50_CS_single.thmz"
 
 
 @pytest.fixture()

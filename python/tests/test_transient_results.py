@@ -18,7 +18,7 @@ TOL = 1e-12
 @pytest.fixture()
 def strip_path(test_data_dir):
     """A one-element isothermal strip solved for 24 hourly steps: 22 nodes, 25 frames."""
-    return os.path.join(test_data_dir, "transient-isothermal-strip.thmz")
+    return test_data_dir / "transient-isothermal-strip.thmz"
 
 
 class TestFixture:

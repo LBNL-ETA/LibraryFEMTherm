@@ -5,6 +5,7 @@
 #include <pybind11/stl.h>
 
 #include "SteadyStateField/SteadyStateField.hxx"
+#include "PathOnly.hxx"
 
 namespace py = pybind11;
 
@@ -46,15 +47,15 @@ void bind_steady_state_field(py::module_ & mod)
       "nodal results, or no case of that run type.");
     field.def(
       "read",
-      [](const std::string & zipFileName, const ThermFile::RunType runType) {
-          const auto result{readFromZipFile(zipFileName, runType)};
+      [](const PathOnly & zipFilePath, const ThermFile::RunType runType) {
+          const auto result{readFromZipFile(PathBinding::utf8Of(zipFilePath.value), runType)};
           if(!result.has_value())
           {
               throw py::value_error(result.error());
           }
           return result.value();
       },
-      py::arg("thmz_file_name"),
+      py::arg("thmz_file_path"),
       py::arg("run_type") = ThermFile::RunType::UFactor,
       "Extracts the archive's mesh and nodal results and reads the run's field. Raises ValueError as read_entries() does.");
 }

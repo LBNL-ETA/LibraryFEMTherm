@@ -22,6 +22,7 @@
 #include "TimeSeriesData/Window.hxx"
 
 #include "CalendarPosition.hxx"
+#include "PathOnly.hxx"
 
 namespace py = pybind11;
 
@@ -326,7 +327,7 @@ namespace
         py::class_<TimeSeriesLibrary::DB>(mod, "TimeSeriesDB",
                                           "The time-series library: a list of datasets with lookup and edit.")
             .def(py::init<>())
-            .def(py::init<const std::string &>(), py::arg("xml_file_name"))
+            .def(PathBinding::fromFile<TimeSeriesLibrary::DB>(), py::arg("xml_file_path"))
             .def("load_from_string", &TimeSeriesLibrary::DB::loadFromString, py::arg("str"))
             .def("save_to_string", &TimeSeriesLibrary::DB::saveToString, py::arg("format") = FileParse::FileFormat::XML)
             .def("get_time_series_data", &TimeSeriesLibrary::DB::getTimeSeriesData, py::return_value_policy::reference_internal)
@@ -340,12 +341,12 @@ namespace
             .def("is_dirty", &TimeSeriesLibrary::DB::isDirty);
 
         // THMZ storage: one archive entry per dataset, independent of any library file.
-        mod.def("load_datasets", &TimeSeriesLibrary::loadDatasetsFromZipFile, py::arg("thmz_file_name"),
+        mod.def("load_datasets", PathBinding::pathFirst(&TimeSeriesLibrary::loadDatasetsFromZipFile), py::arg("thmz_file_path"),
                 "Every \"time series/<uuid>\" entry of a THMZ; empty for a pre-consolidation file.");
         mod.def("load_datasets_from_entries", &TimeSeriesLibrary::loadDatasetsFromEntries, py::arg("entries"),
                 "Same, from an already-extracted archive dict.");
-        mod.def("save_datasets", &TimeSeriesLibrary::saveDatasetsToZipFile,
-                py::arg("datasets"), py::arg("thmz_file_name"), py::arg("format") = FileParse::FileFormat::XML,
+        mod.def("save_datasets", PathBinding::pathSecond(&TimeSeriesLibrary::saveDatasetsToZipFile),
+                py::arg("datasets"), py::arg("thmz_file_path"), py::arg("format") = FileParse::FileFormat::XML,
                 "Writes every dataset as its own entry; returns the number written.");
     }
 
@@ -384,7 +385,7 @@ namespace
             .def_readonly("unmapped_columns", &Epw::ImportResult::unmappedColumns);
         mod.def(
           "read_epw",
-          [](const std::filesystem::path & path) { return unwrap(Import::readWeather(path)); },
+          [](const PathOnly & path) { return unwrap(Import::readWeather(path.value)); },
           py::arg("path"),
           "Reads an EnergyPlus weather file, or a zip holding exactly one (as weather files are distributed, "
           "beside their .ddy and .stat); the dataset is named after the file's stem and its UUID is its content. "
@@ -443,8 +444,8 @@ namespace
                 "the file did not state.");
         mod.def(
           "read_csv",
-          [](const std::filesystem::path & path, const Csv::StepChoice & steps, const std::optional<std::string> & start) {
-              return unwrap(Csv::read(path.string(), steps, start));
+          [](const PathOnly & path, const Csv::StepChoice & steps, const std::optional<std::string> & start) {
+              return unwrap(Csv::read(path.value.string(), steps, start));
           },
           py::arg("path"),
           py::arg("steps") = Csv::StepChoice{},
@@ -475,7 +476,7 @@ namespace
                 "the same dataset.");
         mod.def(
           "write_csv_file",
-          [](const TimeSeriesData & data, const std::filesystem::path & path) { Csv::writeToFile(data, path.string()); },
+          [](const TimeSeriesData & data, const PathOnly & path) { Csv::writeToFile(data, path.value.string()); },
           py::arg("data"),
           py::arg("path"));
         mod.def("csv_header_for_role", &Csv::displayHeaderForRole, py::arg("role"),
@@ -512,8 +513,8 @@ namespace
             .def_readonly("failed_entries", &Import::ImportOutcome::failedEntries);
         mod.def(
           "import_datasets",
-          [](const std::filesystem::path & path, const Csv::StepChoice & steps) {
-              return unwrap(Import::importDatasets(path, steps));
+          [](const PathOnly & path, const Csv::StepChoice & steps) {
+              return unwrap(Import::importDatasets(path.value, steps));
           },
           py::arg("path"),
           py::arg("steps") = Csv::StepChoice{},

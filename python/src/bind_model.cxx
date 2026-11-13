@@ -2,6 +2,7 @@
 #include <pybind11/stl.h>
 
 #include "THMZ/Model/DB.hxx"
+#include "PathOnly.hxx"
 
 namespace py = pybind11;
 
@@ -28,18 +29,18 @@ void bind_model(py::module_ & mod)
         .def_readwrite("cma_data", &ThermFile::ThermModel::cmaData);
 
     // Free functions for load/save
-    mod.def("load_model_from_file", &ThermFile::loadThermModelFromFile,
-            py::arg("file_name"));
+    mod.def("load_model_from_file", PathBinding::pathFirst(&ThermFile::loadThermModelFromFile),
+            py::arg("file_path"));
 
-    mod.def("save_model_to_file", &ThermFile::saveToFile,
-            py::arg("model"), py::arg("file_name"),
+    mod.def("save_model_to_file", PathBinding::pathSecond(&ThermFile::saveToFile),
+            py::arg("model"), py::arg("file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("load_model", &ThermFile::loadThermModelFromZipFile,
-            py::arg("thmz_file_name"));
+    mod.def("load_model", PathBinding::pathFirst(&ThermFile::loadThermModelFromZipFile),
+            py::arg("thmz_file_path"));
 
-    mod.def("save_model", &ThermFile::saveToZipFile,
-            py::arg("model"), py::arg("thmz_file_name"),
+    mod.def("save_model", PathBinding::pathSecond(&ThermFile::saveToZipFile),
+            py::arg("model"), py::arg("thmz_file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
     mod.def("load_model_from_string", &ThermFile::loadThermModelFromString,

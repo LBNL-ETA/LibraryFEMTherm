@@ -12,6 +12,7 @@
 #include "BoundaryConditions/Utils.hxx"
 
 #include "SourceLike.hxx"
+#include "PathOnly.hxx"
 
 namespace py = pybind11;
 
@@ -234,15 +235,15 @@ void bind_bc_library(py::module_ & mod)
     py::class_<BCLibrary::DB>(mod, "BoundaryConditionsDB",
                               "The consolidated boundary-condition library.")
         .def(py::init<>())
-        .def(py::init<const std::string &>(), py::arg("xml_file_name"))
+        .def(PathBinding::fromFile<BCLibrary::DB>(), py::arg("xml_file_path"))
         .def("load_from_string", &BCLibrary::DB::loadFromString, py::arg("str"))
         .def("save_to_string", &BCLibrary::DB::saveToString,
              py::arg("format") = FileParse::FileFormat::XML)
-        .def("load", &BCLibrary::DB::loadFromZipFile, py::arg("thmz_file_name"),
+        .def("load", PathBinding::pathFirst(&BCLibrary::DB::loadFromZipFile), py::arg("thmz_file_path"),
              "Reads the archive's BoundaryConditions entry; leaves the DB unchanged when absent.")
         .def("load_from_entries", &BCLibrary::DB::loadFromEntries, py::arg("entries"),
              "Same, from an already-extracted archive dict.")
-        .def("save", &BCLibrary::DB::saveToZipFile, py::arg("thmz_file_name"),
+        .def("save", PathBinding::pathFirst(&BCLibrary::DB::saveToZipFile), py::arg("thmz_file_path"),
              py::arg("format") = FileParse::FileFormat::XML)
         .def("get_boundary_conditions", &BCLibrary::DB::getBoundaryConditions,
              py::return_value_policy::reference_internal)

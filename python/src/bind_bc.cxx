@@ -2,6 +2,7 @@
 #include <pybind11/stl.h>
 
 #include "Legacy/Step1/BCSteadyState/DB.hxx"
+#include "PathOnly.hxx"
 
 namespace py = pybind11;
 
@@ -97,7 +98,7 @@ void bind_bc(py::module_ & mod)
     // --- DB ---
     py::class_<BCSteadyStateLibrary::DB>(mod, "BCSteadyStateDB")
         .def(py::init<>())
-        .def(py::init<const std::string &>(), py::arg("xml_file_name"))
+        .def(PathBinding::fromFile<BCSteadyStateLibrary::DB>(), py::arg("xml_file_path"))
         .def("load_from_string", &BCSteadyStateLibrary::DB::loadFromString, py::arg("str"))
         .def("save_to_string", &BCSteadyStateLibrary::DB::saveToString,
              py::arg("format") = FileParse::FileFormat::XML)

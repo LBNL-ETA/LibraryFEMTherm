@@ -1,5 +1,7 @@
 """Tests for SteadyStateResults bindings: load, round-trip, struct creation."""
 
+import pathlib
+
 import pylibraryfemtherm as fem
 
 TOL = 1e-6
@@ -39,7 +41,7 @@ class TestSteadyStateResultsLoadFromTHMZ:
         assert results is None
 
     def test_nonexistent_file_returns_none(self):
-        result = fem.load_steady_state_results("nonexistent.thmz")
+        result = fem.load_steady_state_results(pathlib.Path("nonexistent.thmz"))
         assert result is None
 
 

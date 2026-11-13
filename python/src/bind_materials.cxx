@@ -3,6 +3,7 @@
 
 #include "Materials/DB.hxx"
 #include "Materials/FromValues.hxx"
+#include "PathOnly.hxx"
 
 namespace py = pybind11;
 
@@ -148,7 +149,7 @@ void bind_materials(py::module_ & mod)
     // --- DB ---
     py::class_<MaterialsLibrary::DB>(mod, "MaterialsDB")
         .def(py::init<>())
-        .def(py::init<const std::string &>(), py::arg("xml_file_name"))
+        .def(PathBinding::fromFile<MaterialsLibrary::DB>(), py::arg("xml_file_path"))
         .def("load_from_string", &MaterialsLibrary::DB::loadFromString, py::arg("str"))
         .def("save_to_string", &MaterialsLibrary::DB::saveToString,
              py::arg("format") = FileParse::FileFormat::XML)

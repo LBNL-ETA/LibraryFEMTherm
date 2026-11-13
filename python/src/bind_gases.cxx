@@ -2,6 +2,7 @@
 #include <pybind11/stl.h>
 
 #include "Gases/DB.hxx"
+#include "PathOnly.hxx"
 
 namespace py = pybind11;
 
@@ -53,7 +54,7 @@ void bind_gases(py::module_ & mod)
     // --- DB ---
     py::class_<GasesLibrary::DB>(mod, "GasesDB")
         .def(py::init<>())
-        .def(py::init<const std::string &>(), py::arg("file_name"))
+        .def(PathBinding::fromFile<GasesLibrary::DB>(), py::arg("file_path"))
         .def("load_from_string", &GasesLibrary::DB::loadFromString, py::arg("str"))
         .def("save_to_string", &GasesLibrary::DB::saveToString,
              py::arg("format") = FileParse::FileFormat::XML)
