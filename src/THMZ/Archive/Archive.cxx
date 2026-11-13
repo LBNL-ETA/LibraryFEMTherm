@@ -156,6 +156,11 @@ namespace ThermArchive
         return library<BCLibrary::DB>(archive, ThermZip::BoundaryConditionsFileName);
     }
 
+    Part<BCSteadyStateLibrary::DB> legacySteadyStateBoundaryConditions(const Archive & archive)
+    {
+        return library<BCSteadyStateLibrary::DB>(archive, ThermZip::SteadyStateBCFileName);
+    }
+
     lbnl::ExpectedExt<std::vector<TimeSeriesLibrary::TimeSeriesData>, std::string> datasets(const Archive & archive)
     {
         if(!hasEntryUnder(archive, ThermZip::TimeSeriesDir))

@@ -3,12 +3,14 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include <lbnl/expected.hxx>
 
 #include "BoundaryConditions/DB.hxx"
 #include "Gases/DB.hxx"
+#include "Legacy/Step1/BCSteadyState/DB.hxx"
 #include "Materials/DB.hxx"
 #include "SteadyStateField/SteadyStateField.hxx"
 #include "THMZ/Common/Enumerators.hxx"
@@ -72,6 +74,10 @@ namespace ThermArchive
     //! libraries were unified.
     [[nodiscard]] Part<BCLibrary::DB> boundaryConditions(const Archive & archive);
 
+    //! The steady-state boundary-condition library of an archive written before the libraries
+    //! were unified (its SteadyStateBC entry); nothing for an archive that has none.
+    [[nodiscard]] Part<BCSteadyStateLibrary::DB> legacySteadyStateBoundaryConditions(const Archive & archive);
+
     //! Every time series dataset the archive stores; none is an empty list, not a failure.
     [[nodiscard]] lbnl::ExpectedExt<std::vector<TimeSeriesLibrary::TimeSeriesData>, std::string>
       datasets(const Archive & archive);
@@ -87,4 +93,22 @@ namespace ThermArchive
                                                                             ThermFile::RunType runType);
 
     [[nodiscard]] Part<ThermFile::TransientResults::Results> transientResults(const Archive & archive);
+
+    //! A part for a caller that treats every way of not getting it alike: the part, or
+    //! nothing when the archive could not be read, has no such part, or the part could not
+    //! be read. `reader` is one of the part functions above:
+    //!     const auto archive{ThermArchive::read(fileName)};
+    //!     const auto mesh{ThermArchive::partOrNothing(archive, &ThermArchive::mesh)};
+    template<typename Reader>
+    [[nodiscard]] auto partOrNothing(const lbnl::ExpectedExt<Archive, std::string> & archive, const Reader & reader)
+      -> std::remove_cvref_t<decltype(reader(archive.value()).value())>
+    {
+        using Result = std::remove_cvref_t<decltype(reader(archive.value()).value())>;
+        if(!archive.has_value())
+        {
+            return Result{};
+        }
+        const auto part{reader(archive.value())};
+        return part.has_value() ? part.value() : Result{};
+    }
 }   // namespace ThermArchive

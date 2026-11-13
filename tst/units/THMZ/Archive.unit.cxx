@@ -142,6 +142,32 @@ TEST(Archive, AnEntryIsGivenAsTextOrNotAtAll)
     EXPECT_FALSE(absent->has_value());
 }
 
+TEST(Archive, PartOrNothingIsThePartOrNothingWhateverWentWrong)
+{
+    const auto sill{ThermArchive::read(product("sample-sill.thmz"))};
+    const auto missing{ThermArchive::read(product("no-such-archive.thmz"))};
+
+    EXPECT_TRUE(ThermArchive::partOrNothing(sill, &ThermArchive::model).has_value());
+    EXPECT_TRUE(ThermArchive::partOrNothing(sill, &ThermArchive::mesh).has_value());
+    // The part is not there, or the archive is not there: nothing, both times.
+    EXPECT_FALSE(ThermArchive::partOrNothing(sill, &ThermArchive::transientResults).has_value());
+    EXPECT_FALSE(ThermArchive::partOrNothing(missing, &ThermArchive::model).has_value());
+}
+
+TEST(Archive, AnArchiveFromBeforeTheUnifiedLibraryGivesItsLegacyBoundaryConditions)
+{
+    const auto archive{ThermArchive::read(product("sample-sill.thmz"))};
+    ASSERT_TRUE(archive.has_value()) << archive.error();
+
+    const auto unified{ThermArchive::boundaryConditions(archive.value())};
+    ASSERT_TRUE(unified.has_value()) << unified.error();
+    EXPECT_FALSE(unified->has_value());
+
+    const auto legacy{ThermArchive::legacySteadyStateBoundaryConditions(archive.value())};
+    ASSERT_TRUE(legacy.has_value()) << legacy.error();
+    EXPECT_TRUE(legacy->has_value());
+}
+
 TEST(Archive, AFileRemovedAfterReadFailsWhenAPartIsAskedFor)
 {
     const auto path{std::filesystem::temp_directory_path() / "archive-that-goes-away.thmz"};
