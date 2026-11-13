@@ -108,6 +108,12 @@ namespace ThermZip
     std::map<std::string, std::string> unzipFiles(std::string_view source,
                                                   std::vector<std::string> const & fnames = std::vector<std::string>());
 
+    //! The names of the files a zip archive holds, in archive order, directories left out.
+    //! Reads the archive's directory only; no file is inflated.
+    //! \param source The name of the zip archive
+    //! \return The names; throws std::runtime_error when the archive cannot be opened
+    std::vector<std::string> entryNames(std::string_view source);
+
     //! Unzips a file from a zip archive and returns the content of the file in a string
     //! \param zipFileName The name of the zip archive
     //! \param fileName The name of the file to extract from the zip archive

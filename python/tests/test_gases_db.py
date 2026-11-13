@@ -13,7 +13,7 @@ TOL = 1e-6
 @pytest.fixture()
 def gases_db(sample_sill_path):
     """Load GasesDB from the sample-sill THMZ."""
-    contents = fem.thmz.read_entries(sample_sill_path, ["Gases.xml"])
+    contents = fem.thmz.read(sample_sill_path).entries(["Gases.xml"])
     gdb = fem.GasesDB()
     gdb.from_string(contents["Gases.xml"])
     return gdb

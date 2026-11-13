@@ -66,7 +66,7 @@ class TestThmzEntries:
 
         try:
             fem.thmz.write_entries(contents, tmp_path)
-            extracted = fem.thmz.read_entries(tmp_path)
+            extracted = fem.thmz.read(tmp_path).entries()
             assert extracted["file1.xml"] == contents["file1.xml"]
             assert extracted["file2.txt"] == contents["file2.txt"]
         finally:
@@ -85,7 +85,7 @@ class TestThmzEntries:
 
         try:
             fem.thmz.write_entries(contents, tmp_path)
-            extracted = fem.thmz.read_entries(tmp_path, ["a.xml", "c.xml"])
+            extracted = fem.thmz.read(tmp_path).entries(["a.xml", "c.xml"])
             assert "a.xml" in extracted
             assert "c.xml" in extracted
             assert extracted["a.xml"] == "<a/>"
@@ -102,7 +102,7 @@ class TestThmzEntries:
 
         try:
             fem.thmz.write_entries(contents, tmp_path)
-            result = fem.thmz.read_entry(tmp_path, "data.xml")
+            result = fem.thmz.read(tmp_path).entry("data.xml")
             assert result == "<data>123</data>"
         finally:
             os.remove(tmp_path)
@@ -123,7 +123,7 @@ class TestAddEntry:
             result = fem.thmz.add_entry(thmz_path, file_name, test_string)
             assert result == 1
 
-            extracted = fem.thmz.read_entries(thmz_path, [file_name])
+            extracted = fem.thmz.read(thmz_path).entries([file_name])
             assert file_name in extracted
             assert extracted[file_name] == test_string
         finally:
@@ -143,7 +143,7 @@ class TestAddEntry:
             fem.thmz.add_entry(thmz_path, file_name, initial)
             fem.thmz.add_entry(thmz_path, file_name, updated)
 
-            extracted = fem.thmz.read_entries(thmz_path, [file_name])
+            extracted = fem.thmz.read(thmz_path).entries([file_name])
             assert extracted[file_name] == updated
         finally:
             os.remove(thmz_path)
@@ -160,7 +160,7 @@ class TestAddEntry:
             result = fem.thmz.add_entry(thmz_path, file_name, "")
             assert result == 1
 
-            extracted = fem.thmz.read_entries(thmz_path, [file_name])
+            extracted = fem.thmz.read(thmz_path).entries([file_name])
             assert file_name in extracted
             assert extracted[file_name] == ""
         finally:
@@ -171,7 +171,7 @@ class TestReadSampleEntries:
     """Test extracting known files from real THMZ archives."""
 
     def test_extract_model_xml(self, sample_sill_path):
-        contents = fem.thmz.read_entries(sample_sill_path, ["Model.xml"])
+        contents = fem.thmz.read(sample_sill_path).entries(["Model.xml"])
         assert "Model.xml" in contents
         assert "<ThermModel>" in contents["Model.xml"]
 
@@ -189,6 +189,6 @@ class TestReadSampleEntries:
             for base in base_names
             for candidate in fem.thmz.entry_name_candidates(base)
         ]
-        contents = fem.thmz.read_entries(sample_sill_path, requested)
+        contents = fem.thmz.read(sample_sill_path).entries(requested)
         for base in base_names:
             assert len(fem.thmz.find_entry(contents, base)) > 0

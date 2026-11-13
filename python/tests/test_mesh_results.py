@@ -2,6 +2,8 @@
 
 import pathlib
 
+import pytest
+
 import pylibraryfemtherm as fem
 
 TOL = 1e-6
@@ -10,17 +12,17 @@ TOL = 1e-6
 class TestMeshResultsLoadFromTHMZ:
 
     def test_load_sample_sill(self, sample_sill_path):
-        results = fem.load_steady_state_mesh_results(sample_sill_path)
+        results = fem.thmz.read(sample_sill_path).steady_state_mesh_results()
         assert results is not None
         assert len(results.cases) > 0
 
     def test_first_case_has_nodes(self, sample_sill_path):
-        results = fem.load_steady_state_mesh_results(sample_sill_path)
+        results = fem.thmz.read(sample_sill_path).steady_state_mesh_results()
         case = results.cases[0]
         assert len(case.nodes) > 0
 
     def test_node_result_fields(self, sample_sill_path):
-        results = fem.load_steady_state_mesh_results(sample_sill_path)
+        results = fem.thmz.read(sample_sill_path).steady_state_mesh_results()
         node = results.cases[0].nodes[0]
         assert isinstance(node.index, int)
         assert isinstance(node.temperature, float)
@@ -28,20 +30,20 @@ class TestMeshResultsLoadFromTHMZ:
         assert isinstance(node.y_flux, float)
 
     def test_no_results_returns_none(self, sample_sill_no_results_path):
-        results = fem.load_steady_state_mesh_results(
+        results = fem.thmz.read(
             sample_sill_no_results_path
-        )
+        ).steady_state_mesh_results()
         assert results is None
 
-    def test_nonexistent_file_returns_none(self):
-        result = fem.load_steady_state_mesh_results(pathlib.Path("nonexistent.thmz"))
-        assert result is None
+    def test_a_missing_file_fails_at_read(self):
+        with pytest.raises(FileNotFoundError):
+            fem.thmz.read(pathlib.Path("nonexistent.thmz"))
 
 
 class TestMeshResultsStringRoundTrip:
 
     def test_save_and_reload(self, sample_sill_path):
-        results = fem.load_steady_state_mesh_results(sample_sill_path)
+        results = fem.thmz.read(sample_sill_path).steady_state_mesh_results()
         assert results is not None
 
         xml = fem.steady_state_mesh_results_to_string(results)

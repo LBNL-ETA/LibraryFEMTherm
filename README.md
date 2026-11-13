@@ -113,7 +113,7 @@ from pathlib import Path
 import pylibraryfemtherm as fem
 
 # Load a THMZ file
-model = fem.load_model(Path("sample-sill.thmz"))
+model = fem.thmz.read(Path("sample-sill.thmz")).model()
 print(f"Polygons:   {len(model.polygons)}")
 print(f"Boundaries: {len(model.boundary_conditions)}")
 
@@ -124,7 +124,7 @@ xml = fem.model_to_string(model)
 fem.save_model(model, Path("output.thmz"))
 
 # Work with .thmz entries directly
-contents = fem.thmz.read_entries(Path("sample.thmz"), [fem.thmz.MATERIALS_FILE_NAME])
+contents = fem.thmz.read(Path("sample.thmz")).entries([fem.thmz.MATERIALS_FILE_NAME])
 db = fem.MaterialsDB()
 db.from_string(contents[fem.thmz.MATERIALS_FILE_NAME])
 ```

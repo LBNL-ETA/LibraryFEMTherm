@@ -219,11 +219,11 @@ class TestArchiveEntries:
         written = fem.save_datasets([_dataset()], archive)
         assert written == 1
 
-        datasets = fem.load_datasets(archive)
+        datasets = fem.thmz.read(archive).datasets()
         assert len(datasets) == 1
         assert datasets[0].name == "Two steps of constant weather"
 
-        entries = fem.thmz.read_entries(archive)
+        entries = fem.thmz.read(archive).entries()
         assert fem.thmz.time_series_entry_name(_dataset().uuid) in entries
         from_entries = fem.datasets_from_thmz_entries(entries)
         assert len(from_entries) == 1

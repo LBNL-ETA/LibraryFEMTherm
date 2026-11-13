@@ -38,16 +38,6 @@ void bind_zip(py::module_ & mod)
              py::arg("compression_level") = ThermZip::DefaultCompressionLevel,
              "Write a .thmz holding the given entries, name -> content");
 
-    thmz.def("read_entries",
-             PathBinding::pathFirst(
-               py::overload_cast<std::string_view, std::vector<std::string> const &>(&ThermZip::unzipFiles)),
-             py::arg("thmz_file_path"), py::arg("names") = std::vector<std::string>(),
-             "The .thmz's entries as a dict, name -> content: the named ones, or all when none are named");
-
-    thmz.def("read_entry", PathBinding::pathFirst(&ThermZip::unzipFile),
-             py::arg("thmz_file_path"), py::arg("name"),
-             "One entry of a .thmz, as a string");
-
     thmz.def("add_entry", PathBinding::pathFirst(&ThermZip::addToZipFile),
              py::arg("thmz_file_path"), py::arg("name"), py::arg("text"),
              py::arg("obsolete_names") = std::vector<std::string>(),

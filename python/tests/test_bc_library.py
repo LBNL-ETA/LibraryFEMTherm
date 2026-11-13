@@ -170,7 +170,7 @@ class TestEmbeddedLibrary:
         return test_data_dir / "mullion-jamb-json.thmz"
 
     def test_load_from_entries(self, mullion_path):
-        entries = fem.thmz.read_entries(mullion_path)
+        entries = fem.thmz.read(mullion_path).entries()
         assert fem.thmz.find_entry(entries, fem.thmz.BOUNDARY_CONDITIONS_FILE_NAME)
         library = fem.BoundaryConditionsDB()
         library.from_entries(entries)
@@ -180,13 +180,10 @@ class TestEmbeddedLibrary:
         assert adiabatic is not None
         assert fem.is_steady_capable(adiabatic)
 
-    def test_load(self, mullion_path):
-        library = fem.BoundaryConditionsDB()
-        library.load(mullion_path)
+    def test_the_archives_library(self, mullion_path):
+        library = fem.thmz.read(mullion_path).boundary_conditions()
+        assert library is not None
         assert len(library.get_boundary_conditions()) > 0
 
-    def test_archive_without_library_leaves_db_unchanged(self, sample_sill_path):
-        library = fem.BoundaryConditionsDB()
-        library.add(_adiabatic())
-        library.load(sample_sill_path)
-        assert library.get_names() == ["Sealed"]
+    def test_an_archive_without_a_library_has_none(self, sample_sill_path):
+        assert fem.thmz.read(sample_sill_path).boundary_conditions() is None

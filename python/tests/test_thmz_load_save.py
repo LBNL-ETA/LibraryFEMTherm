@@ -21,13 +21,13 @@ class TestTHMZLoad:
         assert len(sample_model.boundary_conditions) == 64
 
     def test_load_id50(self, id50_path):
-        model = fem.load_model(id50_path)
+        model = fem.thmz.read(id50_path).model()
         assert model is not None
         assert len(model.polygons) > 0
 
-    def test_load_nonexistent_file_returns_none(self):
-        result = fem.load_model(pathlib.Path("nonexistent_file.thmz"))
-        assert result is None
+    def test_a_missing_file_fails_at_read(self):
+        with pytest.raises(FileNotFoundError):
+            fem.thmz.read(pathlib.Path("nonexistent_file.thmz"))
 
 
 class TestXMLRoundTrip:
@@ -62,7 +62,7 @@ class TestZipRoundTrip:
 
         try:
             fem.save_model(sample_model, tmp_path)
-            reloaded = fem.load_model(tmp_path)
+            reloaded = fem.thmz.read(tmp_path).model()
             assert reloaded is not None
             assert len(reloaded.polygons) == len(sample_model.polygons)
             assert len(reloaded.boundary_conditions) == len(sample_model.boundary_conditions)

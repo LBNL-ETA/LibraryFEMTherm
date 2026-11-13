@@ -101,7 +101,7 @@ void bind_transient_results(py::module_ & mod)
     transient.def("has_transient_results", &hasTransientResults, py::arg("entries"),
                   "Whether extracted entries carry a transient results folder with a nodal CSV.");
     transient.def(
-      "read_entries",
+      "from_entries",
       [](const std::map<std::string, std::string> & entries) {
           const auto results{read(entries)};
           if(!results.has_value())
@@ -113,16 +113,4 @@ void bind_transient_results(py::module_ & mod)
       py::arg("entries"),
       "Reads the transient results out of extracted entries. Raises ValueError when the archive carries none "
       "or they are inconsistent.");
-    transient.def(
-      "load",
-      [](const PathOnly & zipFilePath) {
-          const auto results{loadFromZipFile(PathBinding::utf8Of(zipFilePath.value))};
-          if(!results.has_value())
-          {
-              throw py::value_error(results.error());
-          }
-          return results.value();
-      },
-      py::arg("thmz_file_path"),
-      "Extracts the archive and reads its transient results. Raises ValueError when it carries none.");
 }

@@ -28,13 +28,26 @@ sys.path.insert(0, "python/Release")  # Windows (MSVC)
 Every function that names a file takes a `pathlib.Path`; a string is refused with a
 `TypeError`. The later examples assume `from pathlib import Path`.
 
+A `.thmz` archive is read with `fem.thmz.read(path)`. It returns an `Archive`, which holds
+the path and the names of the archive's entries and no content. Each part is read from the
+file when its method is called: `archive.model()`, `archive.mesh()`, `archive.materials()`,
+`archive.gases()`, `archive.boundary_conditions()`, `archive.datasets()`,
+`archive.steady_state_results()`, `archive.steady_state_mesh_results()`,
+`archive.steady_state_field(run_type)`, `archive.transient_results()`. A part is read again
+on every call, so keep what a method returns.
+
+What can go wrong follows one rule. A missing file raises `FileNotFoundError` at `read`, and
+a file that is not an archive raises `ValueError` there. A part the archive does not hold is
+`None` (no datasets is an empty list). A part that is there and cannot be read raises
+`ValueError`.
+
 ```python
 from pathlib import Path
 
 import pylibraryfemtherm as fem
 
 # Load a THMZ file
-model = fem.load_model(Path("sample-sill.thmz"))
+model = fem.thmz.read(Path("sample-sill.thmz")).model()
 
 # Inspect the model
 print(f"Version:    {model.version}")
@@ -57,7 +70,7 @@ fem.save_model(model, Path("output.thmz"))
 ### From/to .thmz files
 
 ```python
-model = fem.load_model(Path("path/to/model.thmz"))
+model = fem.thmz.read(Path("path/to/model.thmz")).model()
 fem.save_model(model, Path("path/to/output.thmz"))
 ```
 
@@ -86,19 +99,18 @@ The `pylibraryfemtherm.thmz` submodule reads and writes a .thmz's entries by nam
 
 ```python
 # Extract all files from a THMZ archive
-contents = fem.thmz.read_entries(Path("sample.thmz"))
+contents = fem.thmz.read(Path("sample.thmz")).entries()
 for name, xml in contents.items():
     print(f"{name}: {len(xml)} bytes")
 
 # Extract specific files. Entry names are extension-free bases; the archive stores
 # them as .xml or .json depending on the format it was saved with, so resolve the
 # concrete spellings with entry_name_candidates (JSON first, XML fallback):
-contents = fem.thmz.read_entries(Path("sample.thmz"),
-                               fem.thmz.entry_name_candidates(fem.thmz.MODEL_FILE_NAME)
+contents = fem.thmz.read(Path("sample.thmz")).entries(fem.thmz.entry_name_candidates(fem.thmz.MODEL_FILE_NAME)
                                + fem.thmz.entry_name_candidates(fem.thmz.MATERIALS_FILE_NAME))
 
 # Or extract everything and look entries up by base name:
-contents = fem.thmz.read_entries(Path("sample.thmz"))
+contents = fem.thmz.read(Path("sample.thmz")).entries()
 model_text = fem.thmz.find_entry(contents, fem.thmz.MODEL_FILE_NAME)
 
 # Create a new THMZ from a dictionary of {filename: content}
@@ -129,7 +141,7 @@ Names are extension-free; the serialization format supplies `.xml` or `.json`.
 
 ```python
 # From a THMZ file
-contents = fem.thmz.read_entries(Path("model.thmz"), [fem.thmz.MATERIALS_FILE_NAME])
+contents = fem.thmz.read(Path("model.thmz")).entries([fem.thmz.MATERIALS_FILE_NAME])
 db = fem.MaterialsDB()
 db.from_string(contents[fem.thmz.MATERIALS_FILE_NAME])
 
@@ -197,12 +209,12 @@ dataset. Archives saved before this library existed are migrated to it on load.
 ### Loading
 
 ```python
-library = fem.BoundaryConditionsDB()
-library.load(Path("model.thmz"))
+archive = fem.thmz.read(Path("model.thmz"))
+library = archive.boundary_conditions()   # None for an archive written before the libraries were unified
 
-# Or from entries already extracted, when several libraries are read from one archive
-entries = fem.thmz.read_entries(Path("model.thmz"))
-library.from_entries(entries)
+# Or from entries already extracted
+library = fem.BoundaryConditionsDB()
+library.from_entries(archive.entries())
 ```
 
 ### Querying
@@ -330,7 +342,7 @@ print(fem.time_series_steps(weather))          # 24
 print(fem.describe_axis(weather))              # "1 Jan 00:00, step 1 h, 24 rows"
 
 fem.save_datasets([weather], Path("model.thmz"))
-datasets = fem.load_datasets(Path("model.thmz"))
+datasets = fem.thmz.read(Path("model.thmz")).datasets()
 entry = fem.thmz.time_series_entry_name(weather.uuid)   # "time series/<uuid>.xml"
 ```
 
@@ -346,10 +358,10 @@ The record and dataset a boundary refers to are looked up in the archive's libra
 model THERM saved as for one `build` wrote:
 
 ```python
-model = fem.load_model(Path("model.thmz"))
-library = fem.BoundaryConditionsDB()
-library.load(Path("model.thmz"))
-datasets = fem.load_datasets(Path("model.thmz"))
+archive = fem.thmz.read(Path("model.thmz"))
+model = archive.model()
+library = archive.boundary_conditions()
+datasets = archive.datasets()
 for boundary in model.boundary_conditions:
     record = fem.boundary_record(library=library, boundary=boundary)       # None when not in the library
     dataset = fem.boundary_dataset(datasets=datasets, boundary=boundary)   # None when none is bound
@@ -486,7 +498,7 @@ except ValueError as refusal:
 ### Loading the gas database
 
 ```python
-contents = fem.thmz.read_entries(Path("model.thmz"), [fem.thmz.GASES_FILE_NAME])
+contents = fem.thmz.read(Path("model.thmz")).entries([fem.thmz.GASES_FILE_NAME])
 db = fem.GasesDB()
 db.from_string(contents[fem.thmz.GASES_FILE_NAME])
 ```
@@ -528,7 +540,7 @@ db.add_pure_gas(gas)
 ## Glazing Systems
 
 ```python
-model = fem.load_model(Path("model.thmz"))
+model = fem.thmz.read(Path("model.thmz")).model()
 
 for gs in model.glazing_systems:
     print(f"Glazing system: {gs.name} (id={gs.id})")
@@ -561,7 +573,7 @@ for gs in model.glazing_systems:
 ## Geometry — Polygons and Boundaries
 
 ```python
-model = fem.load_model(Path("model.thmz"))
+model = fem.thmz.read(Path("model.thmz")).model()
 
 # Polygons represent material regions
 for poly in model.polygons:
@@ -593,7 +605,7 @@ A point without an `x` or a `y` raises `AttributeError`.
 ## Model Properties and Preferences
 
 ```python
-model = fem.load_model(Path("model.thmz"))
+model = fem.thmz.read(Path("model.thmz")).model()
 
 # General info
 gen = model.properties.general
@@ -630,7 +642,7 @@ print(f"Snap to grid:     {prefs.snap.snap_to_grid}")
 
 ```python
 # From THMZ
-mesh = fem.load_mesh(Path("model.thmz"))
+mesh = fem.thmz.read(Path("model.thmz")).mesh()
 
 # From XML string
 mesh = fem.mesh_from_string(xml_str)
@@ -675,7 +687,7 @@ fem.save_mesh(mesh, Path("output.thmz"))
 ### U-factor results
 
 ```python
-results = fem.load_steady_state_results(Path("model.thmz"))
+results = fem.thmz.read(Path("model.thmz")).steady_state_results()
 
 for case in results.cases:
     print(f"Case: type={case.model_type}, error={case.simulation_error}")
@@ -709,19 +721,19 @@ fem.is_degenerate(x_projected)
 ```python
 from pylibraryfemtherm import steady_state_field
 
-field = steady_state_field.load(Path("model.thmz"), fem.RunType.UFactor)
+field = fem.thmz.read(Path("model.thmz")).steady_state_field(run_type=fem.RunType.UFactor)
 field.nodes, field.elements          # MeshNode / MeshElement, as the mesh stores them
 field.temperature                    # one value per node; NaN where the run has none
 field.x_flux, field.y_flux, field.flux_magnitude
 field.humidity, field.water_content, field.ice_content   # NaN for a heat-only run
 ```
 
-`read` raises `ValueError` when the archive has no stored mesh, no nodal results, or no case of that run type (the message names the run types there are). `read_entries(entries, run_type)` does the same on already-extracted entries. A CMA archive keeps one case per glazing and spacer variant; the first case of the run type is read.
+`steady_state_field` returns `None` when the archive has no stored mesh or no nodal results. It raises `ValueError` when both are there and neither has a case of that run type (the message names the run types there are). `steady_state_field.from_entries(entries, run_type)` reads the field out of already-extracted entries and raises `ValueError` in all three cases. A CMA archive keeps one case per glazing and spacer variant; the first case of the run type is read.
 
 ### Mesh results (temperatures and fluxes at nodes)
 
 ```python
-mesh_results = fem.load_steady_state_mesh_results(Path("model.thmz"))
+mesh_results = fem.thmz.read(Path("model.thmz")).steady_state_mesh_results()
 
 for case in mesh_results.cases:
     print(f"Case: type={case.results_type}")
@@ -747,7 +759,7 @@ for case in mesh_results.cases:
 The Component Modeling Approach (CMA) data is stored in the model:
 
 ```python
-model = fem.load_model(Path("model.thmz"))
+model = fem.thmz.read(Path("model.thmz")).model()
 cma = model.cma_data
 
 print(f"IGU type:      {cma.igu_type}")

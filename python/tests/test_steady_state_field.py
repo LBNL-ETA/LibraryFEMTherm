@@ -11,7 +11,7 @@ from pylibraryfemtherm import steady_state_field
 
 
 def test_the_sills_u_factor_field(sample_sill_path: str) -> None:
-    field: steady_state_field.Field = steady_state_field.load(sample_sill_path)
+    field: steady_state_field.Field = lft.thmz.read(sample_sill_path).steady_state_field()
     assert field.run_type == lft.RunType.UFactor
     assert (len(field.nodes), len(field.elements)) == (425, 417)
     assert len(field.temperature) == len(field.nodes)
@@ -21,20 +21,19 @@ def test_the_sills_u_factor_field(sample_sill_path: str) -> None:
 
 
 def test_the_sills_condensation_resistance_field(sample_sill_path: str) -> None:
-    field: steady_state_field.Field = steady_state_field.load(
-        sample_sill_path, lft.RunType.CondensationResistance
+    field: steady_state_field.Field = lft.thmz.read(sample_sill_path).steady_state_field(
+        run_type=lft.RunType.CondensationResistance
     )
     assert field.run_type == lft.RunType.CondensationResistance
     assert len(field.nodes) > 0
 
 
-def test_an_archive_without_results_raises(sample_sill_no_results_path: str) -> None:
-    with pytest.raises(ValueError, match="nodal results"):
-        steady_state_field.load(sample_sill_no_results_path)
+def test_an_archive_without_results_has_no_field(sample_sill_no_results_path: str) -> None:
+    assert lft.thmz.read(sample_sill_no_results_path).steady_state_field() is None
 
 
 def test_every_tag_of_the_sill_shows_a_u_factor(sample_sill_path: str) -> None:
-    results = lft.load_steady_state_results(sample_sill_path)
+    results = lft.thmz.read(sample_sill_path).steady_state_results()
     for tag in results.cases[0].steady_state_u_factors:
         shown = lft.displayed_projection(tag)
         assert shown is not None

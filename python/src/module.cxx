@@ -23,6 +23,7 @@ void bind_case(py::module_ & mod);
 void bind_transient_results(py::module_ & mod);
 void bind_planar_geometry(py::module_ & mod);
 void bind_steady_state_field(py::module_ & mod);
+void bind_archive(py::module_ & mod);
 
 PYBIND11_MODULE(pylibraryfemtherm, mod)
 {
@@ -55,4 +56,6 @@ PYBIND11_MODULE(pylibraryfemtherm, mod)
     bind_planar_geometry(mod);
     // After bind_mesh: a Field hands out the mesh's MeshNode and MeshElement records.
     bind_steady_state_field(mod);
+    // Last of all: an archive hands out every type bound above.
+    bind_archive(mod);
 }

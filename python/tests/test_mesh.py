@@ -2,6 +2,8 @@
 
 import pathlib
 
+import pytest
+
 import pylibraryfemtherm as fem
 
 TOL = 1e-6
@@ -10,25 +12,25 @@ TOL = 1e-6
 class TestMeshLoadFromTHMZ:
 
     def test_load_sample_sill(self, sample_sill_path):
-        mesh = fem.load_mesh(sample_sill_path)
+        mesh = fem.thmz.read(sample_sill_path).mesh()
         assert mesh is not None
         assert len(mesh.cases) > 0
 
     def test_first_case_has_nodes_and_elements(self, sample_sill_path):
-        mesh = fem.load_mesh(sample_sill_path)
+        mesh = fem.thmz.read(sample_sill_path).mesh()
         case = mesh.cases[0]
         assert len(case.nodes) > 0
         assert len(case.elements) > 0
 
     def test_node_fields(self, sample_sill_path):
-        mesh = fem.load_mesh(sample_sill_path)
+        mesh = fem.thmz.read(sample_sill_path).mesh()
         node = mesh.cases[0].nodes[0]
         assert isinstance(node.index, int)
         assert isinstance(node.x, float)
         assert isinstance(node.y, float)
 
     def test_element_fields(self, sample_sill_path):
-        mesh = fem.load_mesh(sample_sill_path)
+        mesh = fem.thmz.read(sample_sill_path).mesh()
         elm = mesh.cases[0].elements[0]
         assert isinstance(elm.index, int)
         assert isinstance(elm.node1, int)
@@ -38,18 +40,18 @@ class TestMeshLoadFromTHMZ:
 
     def test_no_results_file_still_has_mesh(self, sample_sill_no_results_path):
         """sample-sill-no-results.thmz has Mesh.xml but no results XMLs."""
-        mesh = fem.load_mesh(sample_sill_no_results_path)
+        mesh = fem.thmz.read(sample_sill_no_results_path).mesh()
         assert mesh is not None
 
-    def test_nonexistent_file_returns_none(self):
-        result = fem.load_mesh(pathlib.Path("nonexistent.thmz"))
-        assert result is None
+    def test_a_missing_file_fails_at_read(self):
+        with pytest.raises(FileNotFoundError):
+            fem.thmz.read(pathlib.Path("nonexistent.thmz"))
 
 
 class TestMeshStringRoundTrip:
 
     def test_save_and_reload(self, sample_sill_path):
-        mesh = fem.load_mesh(sample_sill_path)
+        mesh = fem.thmz.read(sample_sill_path).mesh()
         assert mesh is not None
 
         xml = fem.mesh_to_string(mesh)

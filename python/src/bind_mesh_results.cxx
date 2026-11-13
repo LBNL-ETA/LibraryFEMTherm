@@ -118,10 +118,6 @@ void bind_mesh_results(py::module_ & mod)
             py::arg("results"), py::arg("file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("load_steady_state_mesh_results",
-            PathBinding::pathFirst(&ThermFile::loadSteadyStateMeshResultsFromZipFile),
-            py::arg("thmz_file_path"));
-
     mod.def("save_steady_state_mesh_results",
             PathBinding::pathSecond(static_cast<int(*)(const ThermFile::MeshResults &, std::string_view,
                                                     FileParse::FileFormat)>(

@@ -110,10 +110,6 @@ void bind_steady_state_results(py::module_ & mod)
             py::arg("results"), py::arg("file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("load_steady_state_results",
-            PathBinding::pathFirst(&ThermFile::loadSteadyStateResultsFromZipFile),
-            py::arg("thmz_file_path"));
-
     mod.def("save_steady_state_results",
             PathBinding::pathSecond(static_cast<int(*)(const ThermFile::SteadyStateResults &, std::string_view,
                                                     FileParse::FileFormat)>(

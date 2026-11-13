@@ -574,19 +574,15 @@ class TestArchive:
         assert written.exists()
         path = written
 
-        loaded = fem.load_model(path)
+        archive = fem.thmz.read(path)
+        loaded = archive.model()
         assert loaded is not None
         assert len(loaded.polygons) == 1
         assert len(loaded.boundary_conditions) == 4
 
-        records = fem.BoundaryConditionsDB()
-        records.load(path)
-        assert sorted(records.get_names()) == ["Adiabatic", "segment 2", "segment 4"]
-        assert len(fem.load_datasets(path)) == 1
-
-        materials = fem.MaterialsDB()
-        materials.from_string(fem.thmz.read_entries(path, ["Materials.xml"])["Materials.xml"])
-        assert materials.get_names() == ["linear-sorption"]
+        assert sorted(archive.boundary_conditions().get_names()) == ["Adiabatic", "segment 2", "segment 4"]
+        assert len(archive.datasets()) == 1
+        assert archive.materials().get_names() == ["linear-sorption"]
 
         # Overwrites in place.
         assert build.thmz(sealed_strip(), written) == written

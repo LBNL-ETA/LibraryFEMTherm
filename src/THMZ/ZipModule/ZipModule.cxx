@@ -427,6 +427,31 @@ namespace ThermZip
         return baseName + ".xml";
     }
 
+    std::vector<std::string> entryNames(std::string_view source)
+    {
+        const std::string zipFileName{source};
+        mz_zip_archive zipArchive;
+        memset(&zipArchive, 0, sizeof(zipArchive));
+        if(!mz_zip_reader_init_file(&zipArchive, zipFileName.c_str(), 0))
+        {
+            throw std::runtime_error("Failed to open zip archive: " + zipFileName);
+        }
+
+        std::vector<std::string> names;
+        const mz_uint fileCount{mz_zip_reader_get_num_files(&zipArchive)};
+        for(mz_uint index = 0; index < fileCount; ++index)
+        {
+            mz_zip_archive_file_stat fileStat;
+            if(mz_zip_reader_file_stat(&zipArchive, index, &fileStat)
+               && !mz_zip_reader_is_file_a_directory(&zipArchive, index))
+            {
+                names.emplace_back(fileStat.m_filename);
+            }
+        }
+        mz_zip_reader_end(&zipArchive);
+        return names;
+    }
+
     std::vector<std::string> entryNameCandidates(const std::string & baseName)
     {
         return {entryNameForFormat(baseName, FileParse::FileFormat::JSON),

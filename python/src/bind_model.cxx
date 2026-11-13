@@ -36,9 +36,6 @@ void bind_model(py::module_ & mod)
             py::arg("model"), py::arg("file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("load_model", PathBinding::pathFirst(&ThermFile::loadThermModelFromZipFile),
-            py::arg("thmz_file_path"));
-
     mod.def("save_model", PathBinding::pathSecond(&ThermFile::saveToZipFile),
             py::arg("model"), py::arg("thmz_file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
