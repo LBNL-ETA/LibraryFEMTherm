@@ -1,6 +1,8 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 
+#include "THMZ/Archive/Archive.hxx"
+
 #include <Legacy/Step1/BCSteadyState/DB.hxx>
 #include <THMZ/SteadyStateResults/DB.hxx>
 
@@ -11,8 +13,9 @@ TEST(TestSteadyStateBC, Deserialization)
     product_path /= "products";
     product_path /= "ID50_CS_single.thmz";
 
-    BCSteadyStateLibrary::DB lib;
-    lib.loadFromZipFile(product_path.string());
+    auto lib{ThermArchive::partOrNothing(ThermArchive::read(product_path.string()),
+                                         &ThermArchive::legacySteadyStateBoundaryConditions)
+               .value_or(BCSteadyStateLibrary::DB{})};
 
     auto names{lib.getNames()};
 
@@ -28,7 +31,7 @@ TEST(ThermFileLoad, FailsGracefullyWhenResultsMissingInsideZip)
     product_path /= "products";
     product_path /= "sample-sill-no-results.thmz";
 
-    auto result = ThermFile::loadSteadyStateResultsFromZipFile(product_path.string());
+    auto result = ThermArchive::partOrNothing(ThermArchive::read(product_path.string()), &ThermArchive::steadyStateResults);
 
     EXPECT_FALSE(result.has_value()) << "Expected no results from malformed or incomplete THMZ file";
 }

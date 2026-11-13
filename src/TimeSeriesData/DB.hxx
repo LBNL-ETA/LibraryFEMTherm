@@ -59,12 +59,9 @@ namespace TimeSeriesLibrary
         [[nodiscard]] std::vector<TimeSeriesData> loadTimeSeriesDataFromFile(const std::string & xmlFileName);
     };
 
-    //! THMZ storage: each dataset is its own archive entry "time series/<uuid>.xml",
-    //! shaped as a one-record library file so the library schema validates it. An archive
-    //! without such entries yields an empty vector (pre-consolidation file).
-    [[nodiscard]] std::vector<TimeSeriesData> loadDatasetsFromZipFile(const std::string & zipFileName);
-
-    //! Same, but from already-extracted archive entries (no further extraction).
+    //! Every "time series/<uuid>" dataset among already-extracted archive entries; none for
+    //! an archive written before the datasets were stored this way. From a file:
+    //! ThermArchive::datasets.
     [[nodiscard]] std::vector<TimeSeriesData> datasetsFromThmzEntries(const std::map<std::string, std::string> & entries);
 
     //! Writes every dataset as its own entry; returns the number of entries written.

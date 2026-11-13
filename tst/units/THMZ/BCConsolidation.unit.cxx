@@ -4,6 +4,8 @@
 
 #include <gtest/gtest.h>
 
+#include "THMZ/Archive/Archive.hxx"
+
 #include "Legacy/Step1/BCSteadyState/DB.hxx"
 #include "THMZ/Model/DB.hxx"
 #include "THMZ/Model/migration/BCConsolidation.hxx"
@@ -109,7 +111,7 @@ TEST(TestBCConsolidationMigration, SteadyArchiveSegmentsGetUUIDBindings)
     const auto legacy{ThermFile::Migration::BCConsolidation::captureFromArchive(zipPath)};
     EXPECT_FALSE(ThermFile::Migration::BCConsolidation::isEmpty(legacy));
 
-    const auto model{ThermFile::loadThermModelFromZipFile(zipPath)};
+    const auto model{ThermArchive::partOrNothing(ThermArchive::read(zipPath), &ThermArchive::model)};
     ASSERT_TRUE(model.has_value());
 
     size_t bound = 0;
@@ -130,7 +132,7 @@ TEST(TestBCConsolidationMigration, MinimalSteadyArchiveMigrates)
 {
     const auto zipPath{fixturePath("Spacer.thmz")};
 
-    const auto model{ThermFile::loadThermModelFromZipFile(zipPath)};
+    const auto model{ThermArchive::partOrNothing(ThermArchive::read(zipPath), &ThermArchive::model)};
     ASSERT_TRUE(model.has_value());
 
     const auto legacy{ThermFile::Migration::BCConsolidation::captureFromArchive(zipPath)};

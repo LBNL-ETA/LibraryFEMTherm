@@ -21,7 +21,6 @@ namespace ThermFile
                    std::string_view fileName,
                    FileParse::FileFormat format = FileParse::FileFormat::XML);
 
-    std::optional<SteadyStateResults> loadSteadyStateResultsFromZipFile(const std::string & fileName);
     int saveToZipFile(const SteadyStateResults & results,
                       std::string_view zipFileName,
                       FileParse::FileFormat format = FileParse::FileFormat::XML);

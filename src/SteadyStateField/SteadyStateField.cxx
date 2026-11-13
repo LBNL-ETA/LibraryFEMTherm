@@ -143,22 +143,4 @@ namespace ThermFile::SteadyStateField
         return joined(meshCase.value(), resultsCase.value(), runType);
     }
 
-    lbnl::ExpectedExt<Field, std::string> loadFromZipFile(const std::string & zipFileName, const RunType runType)
-    {
-        if(!std::filesystem::exists(zipFileName))
-        {
-            return Failure{"No such archive: " + zipFileName};
-        }
-        auto names{ThermZip::entryNameCandidates(ThermZip::MeshName)};
-        const auto results{ThermZip::entryNameCandidates(ThermZip::SteadyStateMeshResultsName)};
-        names.insert(names.end(), results.begin(), results.end());
-        try
-        {
-            return read(ThermZip::unzipFiles(zipFileName, names), runType);
-        }
-        catch(const std::runtime_error & failure)
-        {
-            return Failure{std::format("{}: {}", zipFileName, failure.what())};
-        }
-    }
 }   // namespace ThermFile::SteadyStateField

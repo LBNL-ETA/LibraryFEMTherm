@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include "THMZ/Archive/Archive.hxx"
+
 #include <filesystem>
 #include <map>
 #include <set>
@@ -57,7 +59,7 @@ namespace
 
 TEST(TransientResults, FixtureReadsCompletely)
 {
-    const auto results{loadFromZipFile(fixturePath())};
+    const auto results{read(ThermZip::unzipFiles(fixturePath()))};
     ASSERT_TRUE(results.has_value()) << results.error();
     const auto & read{results.value()};
 
@@ -90,7 +92,7 @@ TEST(TransientResults, FixtureReadsCompletely)
 
 TEST(TransientResults, NodesAreInColumnOrderWithPositions)
 {
-    const auto results{loadFromZipFile(fixturePath())};
+    const auto results{read(ThermZip::unzipFiles(fixturePath()))};
     ASSERT_TRUE(results.has_value());
     const auto & nodes{results.value().nodes};
     for(std::size_t column = 0U; column < nodes.size(); ++column)
@@ -111,7 +113,7 @@ TEST(TransientResults, EntriesAndZipAgree)
     const auto entries{ThermZip::unzipFiles(fixturePath())};
     EXPECT_TRUE(hasTransientResults(entries));
     const auto fromEntries{read(entries)};
-    const auto fromZip{loadFromZipFile(fixturePath())};
+    const auto fromZip{ThermArchive::partOrNothing(ThermArchive::read(fixturePath()), &ThermArchive::transientResults)};
     ASSERT_TRUE(fromEntries.has_value() && fromZip.has_value());
     EXPECT_EQ(fromEntries.value().frames, fromZip.value().frames);
     EXPECT_EQ(fromEntries.value().nodal.at(Quantity::Humidity).values, fromZip.value().nodal.at(Quantity::Humidity).values);
@@ -123,7 +125,8 @@ TEST(TransientResults, ASteadyArchiveHasNone)
     path /= "products";
     path /= "sample-sill.thmz";
     EXPECT_FALSE(hasTransientResults(ThermZip::unzipFiles(path.string())));
-    const auto results{loadFromZipFile(path.string())};
+    const auto results{
+      ThermArchive::partOrNothing(ThermArchive::read(path.string()), &ThermArchive::transientResults)};
     EXPECT_FALSE(results.has_value());
 }
 

@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include "THMZ/Archive/Archive.hxx"
+
 #include <algorithm>
 #include <filesystem>
 #include <format>
@@ -427,16 +429,17 @@ TEST(Build, WrittenArchiveRoundTrips)
     EXPECT_EQ(written.value(), path);
     ASSERT_TRUE(std::filesystem::exists(path));
 
-    const auto model{ThermFile::loadThermModelFromZipFile(path)};
+    const auto model{ThermArchive::partOrNothing(ThermArchive::read(path), &ThermArchive::model)};
     ASSERT_TRUE(model.has_value());
     EXPECT_EQ(model->polygons.size(), 1U);
     EXPECT_EQ(model->boundaryConditions.size(), 4U);
 
-    BCLibrary::DB records;
-    records.loadFromZipFile(path);
+    auto records{ThermArchive::partOrNothing(ThermArchive::read(path),
+                                              &ThermArchive::boundaryConditions)
+                    .value_or(BCLibrary::DB{})};
     EXPECT_EQ(sortedNames(records), (std::vector<std::string>{"Adiabatic", "segment 2", "segment 4"}));
 
-    EXPECT_EQ(TimeSeriesLibrary::loadDatasetsFromZipFile(path).size(), 1U);
+    EXPECT_EQ(ThermArchive::partOrNothing(ThermArchive::read(path), &ThermArchive::datasets).size(), 1U);
 
     MaterialsLibrary::DB materials;
     const std::vector<std::string> wanted{"Materials.xml"};
@@ -760,7 +763,7 @@ TEST(Build, ATransientStartWritesItsScheduleAndRoundTrips)
 
     const auto path{(std::filesystem::temp_directory_path() / "authoring-transient-start.thmz").string()};
     ASSERT_TRUE(thmz(modelCase, path).has_value());
-    const auto read{ThermFile::loadThermModelFromZipFile(path)};
+    const auto read{ThermArchive::partOrNothing(ThermArchive::read(path), &ThermArchive::model)};
     ASSERT_TRUE(read.has_value());
     EXPECT_TRUE(read->properties.calculationOptions.initialConditions == expected);
     std::filesystem::remove(path);

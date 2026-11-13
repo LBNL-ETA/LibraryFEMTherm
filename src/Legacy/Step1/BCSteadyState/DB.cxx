@@ -59,16 +59,6 @@ namespace BCSteadyStateLibrary
         return content;
     }
 
-    void DB::loadFromZipFile(const std::string & zipFileName)
-    {
-        auto values = Common::loadFromZipFile<std::vector<BoundaryCondition>>(
-          zipFileName, ThermZip::SteadyStateBCFileName, "BoundaryConditions");
-        if(values)
-        {
-            m_BoundaryConditions = values.value();
-        }
-    }
-
     int DB::saveToZipFile(std::string_view zipFileName) const
     {
         return Common::saveToZIPFile(

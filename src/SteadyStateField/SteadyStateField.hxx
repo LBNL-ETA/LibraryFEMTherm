@@ -50,7 +50,4 @@ namespace ThermFile::SteadyStateField
     [[nodiscard]] lbnl::ExpectedExt<Field, std::string> read(const std::map<std::string, std::string> & entries,
                                                              RunType runType);
 
-    //! Extracts the archive's mesh and nodal results and reads the run's field.
-    [[nodiscard]] lbnl::ExpectedExt<Field, std::string> loadFromZipFile(const std::string & zipFileName,
-                                                                        RunType runType);
 }   // namespace ThermFile::SteadyStateField

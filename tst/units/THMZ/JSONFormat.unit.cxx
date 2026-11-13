@@ -4,6 +4,8 @@
 
 #include <gtest/gtest.h>
 
+#include "THMZ/Archive/Archive.hxx"
+
 #include <fileParse/FileFormat.hxx>
 
 #include "BoundaryConditions/DB.hxx"
@@ -104,7 +106,7 @@ TEST(TestJSONFormat, ModelJSONZipRoundTripAndCounterpartRemoval)
     EXPECT_TRUE(entriesAfterJson.contains("Model.json"));
     EXPECT_FALSE(entriesAfterJson.contains("Model.xml"));
 
-    const auto loaded{ThermFile::loadThermModelFromZipFile(zipPath.string())};
+    const auto loaded{ThermArchive::partOrNothing(ThermArchive::read(zipPath.string()), &ThermArchive::model)};
     ASSERT_TRUE(loaded.has_value());
     Helper::expect_near(model, loaded.value(), tolerance);
 
@@ -114,7 +116,7 @@ TEST(TestJSONFormat, ModelJSONZipRoundTripAndCounterpartRemoval)
     EXPECT_TRUE(entriesAfterXml.contains("Model.xml"));
     EXPECT_FALSE(entriesAfterXml.contains("Model.json"));
 
-    const auto reloaded{ThermFile::loadThermModelFromZipFile(zipPath.string())};
+    const auto reloaded{ThermArchive::partOrNothing(ThermArchive::read(zipPath.string()), &ThermArchive::model)};
     ASSERT_TRUE(reloaded.has_value());
     Helper::expect_near(model, reloaded.value(), tolerance);
 
@@ -138,8 +140,9 @@ TEST(TestJSONFormat, BoundaryConditionsJSONZipRoundTrip)
     EXPECT_TRUE(entries.contains("BoundaryConditions.json"));
     EXPECT_FALSE(entries.contains("BoundaryConditions.xml"));
 
-    BCLibrary::DB loaded;
-    loaded.loadFromZipFile(zipPath.string());
+    auto loaded{ThermArchive::partOrNothing(ThermArchive::read(zipPath.string()),
+                                              &ThermArchive::boundaryConditions)
+                    .value_or(BCLibrary::DB{})};
 
     const auto found{loaded.getByUUID("11111111-2222-3333-4444-555555555555")};
     ASSERT_TRUE(found.has_value());
@@ -163,7 +166,7 @@ TEST(TestJSONFormat, TimeSeriesDatasetsJSONZipRoundTrip)
     EXPECT_TRUE(entries.contains("time series/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.json"));
     EXPECT_FALSE(entries.contains("time series/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.xml"));
 
-    const auto loaded{TimeSeriesLibrary::loadDatasetsFromZipFile(zipPath.string())};
+    const auto loaded{ThermArchive::partOrNothing(ThermArchive::read(zipPath.string()), &ThermArchive::datasets)};
     ASSERT_EQ(loaded.size(), 1U);
     EXPECT_EQ(loaded[0].Name, "Golden CO");
     ASSERT_EQ(loaded[0].series.size(), 1U);

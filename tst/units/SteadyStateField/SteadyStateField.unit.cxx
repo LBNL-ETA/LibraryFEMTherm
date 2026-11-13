@@ -5,6 +5,9 @@
 
 #include <gtest/gtest.h>
 
+#include "THMZ/Archive/Archive.hxx"
+#include "THMZ/ZipModule/ZipModule.hxx"
+
 #include "SteadyStateField/SteadyStateField.hxx"
 #include "THMZ/Mesh/DB.hxx"
 #include "THMZ/SteadyStateMeshResults/DB.hxx"
@@ -69,7 +72,7 @@ TEST(SteadyStateField, ReadsBothRunsOfTheSill)
 {
     for(const auto runType : {RunType::UFactor, RunType::CondensationResistance})
     {
-        const auto field{Field::loadFromZipFile(archive("sample-sill.thmz"), runType)};
+        const auto field{Field::read(ThermZip::unzipFiles(archive("sample-sill.thmz")), runType)};
         ASSERT_TRUE(field.has_value()) << field.error();
         ASSERT_FALSE(field->nodes.empty());
         EXPECT_EQ(field->temperature.size(), field->nodes.size());
@@ -88,7 +91,7 @@ TEST(SteadyStateField, ReadsBothRunsOfTheSill)
 
 TEST(SteadyStateField, TheSillsUFactorRunHasItsStoredMesh)
 {
-    const auto field{Field::loadFromZipFile(archive("sample-sill.thmz"), RunType::UFactor)};
+    const auto field{Field::read(ThermZip::unzipFiles(archive("sample-sill.thmz")), RunType::UFactor)};
     ASSERT_TRUE(field.has_value()) << field.error();
     EXPECT_EQ(field->nodes.size(), 425U);
     EXPECT_EQ(field->elements.size(), 417U);
@@ -96,14 +99,14 @@ TEST(SteadyStateField, TheSillsUFactorRunHasItsStoredMesh)
 
 TEST(SteadyStateField, AnArchiveWithoutResultsSaysSo)
 {
-    const auto field{Field::loadFromZipFile(archive("sample-sill-no-results.thmz"), RunType::UFactor)};
+    const auto field{Field::read(ThermZip::unzipFiles(archive("sample-sill-no-results.thmz")), RunType::UFactor)};
     ASSERT_FALSE(field.has_value());
     EXPECT_NE(field.error().find("nodal results"), std::string::npos) << field.error();
 }
 
 TEST(SteadyStateField, AMissingArchiveSaysSo)
 {
-    const auto field{Field::loadFromZipFile(archive("no-such-archive.thmz"), RunType::UFactor)};
-    ASSERT_FALSE(field.has_value());
-    EXPECT_NE(field.error().find("No such archive"), std::string::npos) << field.error();
+    const auto missing{ThermArchive::read(archive("no-such-archive.thmz"))};
+    ASSERT_FALSE(missing.has_value());
+    EXPECT_NE(missing.error().find("No such archive"), std::string::npos) << missing.error();
 }

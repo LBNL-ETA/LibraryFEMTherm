@@ -22,7 +22,6 @@ namespace ThermFile::Mesh
                    std::string_view fileName,
                    FileParse::FileFormat format = FileParse::FileFormat::XML);
 
-    std::optional<Mesh> loadMeshFromZipFile(std::string const & fileName);
     int saveToZipFile(const Mesh & mesh,
                       std::string_view zipFileName,
                       FileParse::FileFormat format = FileParse::FileFormat::XML);

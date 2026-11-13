@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 
+#include "THMZ/Archive/Archive.hxx"
+
 #include "BoundaryConditions/DB.hxx"
 #include "TimeSeriesData/DB.hxx"
 #include "THMZ/ZipModule/ZipModule.hxx"
@@ -50,8 +52,9 @@ TEST(TestUnifiedBCZip, BoundaryConditionsRoundTrip)
 
     EXPECT_EQ(source.saveToZipFile(zipPath.string()), 1);
 
-    BCLibrary::DB loaded;
-    loaded.loadFromZipFile(zipPath.string());
+    auto loaded{ThermArchive::partOrNothing(ThermArchive::read(zipPath.string()),
+                                            &ThermArchive::boundaryConditions)
+                  .value_or(BCLibrary::DB{})};
 
     const auto found{loaded.getByUUID("11111111-2222-3333-4444-555555555555")};
     ASSERT_TRUE(found.has_value());
@@ -60,17 +63,16 @@ TEST(TestUnifiedBCZip, BoundaryConditionsRoundTrip)
     std::filesystem::remove(zipPath);
 }
 
-TEST(TestUnifiedBCZip, BoundaryConditionsMissingEntryLeavesDBUntouched)
+TEST(TestUnifiedBCZip, AnArchiveWithoutTheEntryHasNoLibrary)
 {
     const auto zipPath{scratchZip("unified_bc_missing_entry.thmz")};
     createArchive(zipPath);
 
-    BCLibrary::DB loaded;
-    loaded.loadFromZipFile(zipPath.string());
-    EXPECT_TRUE(loaded.getNames().empty());
+    const auto archive{ThermArchive::read(zipPath.string())};
+    ASSERT_TRUE(archive.has_value()) << archive.error();
+    EXPECT_FALSE(ThermArchive::partOrNothing(archive, &ThermArchive::boundaryConditions).has_value());
 
-    loaded.loadFromZipFile("nonexistent-archive.thmz");
-    EXPECT_TRUE(loaded.getNames().empty());
+    EXPECT_FALSE(ThermArchive::read("nonexistent-archive.thmz").has_value());
 
     std::filesystem::remove(zipPath);
 }
@@ -90,7 +92,7 @@ TEST(TestUnifiedBCZip, TimeSeriesDatasetsRoundTrip)
     EXPECT_TRUE(entries.contains("time series/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.xml"));
     EXPECT_TRUE(entries.contains("time series/ffffffff-0000-1111-2222-333333333333.xml"));
 
-    const auto loaded{TimeSeriesLibrary::loadDatasetsFromZipFile(zipPath.string())};
+    const auto loaded{ThermArchive::partOrNothing(ThermArchive::read(zipPath.string()), &ThermArchive::datasets)};
     ASSERT_EQ(loaded.size(), 2U);
 
     const auto golden{std::ranges::find_if(
@@ -131,8 +133,8 @@ TEST(TestUnifiedBCZip, TimeSeriesDatasetsAbsentYieldEmpty)
     const auto zipPath{scratchZip("unified_env_absent.thmz")};
     createArchive(zipPath);
 
-    EXPECT_TRUE(TimeSeriesLibrary::loadDatasetsFromZipFile(zipPath.string()).empty());
-    EXPECT_TRUE(TimeSeriesLibrary::loadDatasetsFromZipFile("nonexistent-archive.thmz").empty());
+    EXPECT_TRUE(ThermArchive::partOrNothing(ThermArchive::read(zipPath.string()), &ThermArchive::datasets).empty());
+    EXPECT_TRUE(ThermArchive::partOrNothing(ThermArchive::read("nonexistent-archive.thmz"), &ThermArchive::datasets).empty());
 
     std::filesystem::remove(zipPath);
 }

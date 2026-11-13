@@ -22,11 +22,8 @@ namespace BCLibrary
         [[nodiscard]] std::string toString(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
         [[nodiscard]] int saveToFile(FileParse::FileFormat format = FileParse::FileFormat::XML) const;
 
-        //! THMZ storage: the embedded unified library lives in the archive as the
-        //! BoundaryConditions.xml entry. Loading from an archive without that entry
-        //! leaves the DB unchanged (pre-consolidation file; migration handles it).
-        void loadFromZipFile(const std::string & zipFileName);
-        //! Same, but from already-extracted archive entries (no further extraction).
+        //! Reads the BoundaryConditions entry among already-extracted archive entries; leaves
+        //! the library unchanged when there is none. From a file: ThermArchive::boundaryConditions.
         void fromEntries(const std::map<std::string, std::string> & entries);
         [[nodiscard]] int saveToZipFile(std::string_view zipFileName,
                                         FileParse::FileFormat format = FileParse::FileFormat::XML) const;

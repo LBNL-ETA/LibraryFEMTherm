@@ -1,6 +1,8 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 
+#include "THMZ/Archive/Archive.hxx"
+
 #include <THMZ/Model/DB.hxx>
 
 TEST(CRUDeserialization, LoadFromTHMZFile)
@@ -11,7 +13,7 @@ TEST(CRUDeserialization, LoadFromTHMZFile)
     productPath /= "products";
     productPath /= "sample-sill.thmz";
 
-    const auto model = ThermFile::loadThermModelFromZipFile(productPath.string());
+    const auto model = ThermArchive::partOrNothing(ThermArchive::read(productPath.string()), &ThermArchive::model);
     ASSERT_TRUE(model.has_value()) << "Failed to load THMZ model from " << productPath.string();
 
     const auto & glazingSystems = model.value().glazingSystems;

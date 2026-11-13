@@ -14,11 +14,6 @@ namespace ThermFile::Mesh
         return Common::loadFromFile<Mesh>(fileName, topNodeName);
     }
 
-    std::optional<Mesh> loadMeshFromZipFile(std::string const & fileName)
-    {
-        return Common::loadFromZipFile<Mesh>(fileName, ThermZip::MeshName, topNodeName);
-    }
-
     DeferredParse<Mesh> deferredMeshFromEntries(const std::map<std::string, std::string> & entries)
     {
         auto content{ThermZip::findEntry(entries, ThermZip::MeshName)};

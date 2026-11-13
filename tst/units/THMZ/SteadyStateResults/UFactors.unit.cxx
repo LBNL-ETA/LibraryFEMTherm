@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 
+#include "THMZ/Archive/Archive.hxx"
+
 #include "THMZ/SteadyStateResults/DB.hxx"
 #include "THMZ/SteadyStateResults/UFactors.hxx"
 
@@ -66,7 +68,7 @@ TEST(UFactors, EveryTagOfTheSillShowsAUFactor)
     std::filesystem::path path{TEST_DATA_DIR};
     path /= "products";
     path /= "sample-sill.thmz";
-    const auto results{ThermFile::loadSteadyStateResultsFromZipFile(path.string())};
+    const auto results{ThermArchive::partOrNothing(ThermArchive::read(path.string()), &ThermArchive::steadyStateResults)};
     ASSERT_TRUE(results.has_value());
     ASSERT_FALSE(results->cases.empty());
     for(const auto & tag : results->cases.front().steadyStateUFactors)

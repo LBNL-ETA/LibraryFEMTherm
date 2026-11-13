@@ -19,7 +19,6 @@ namespace ThermFile
     //! so a caller that holds the archive in memory pays for no further extraction.
     std::optional<ThermModel> loadThermModelFromEntries(const std::map<std::string, std::string> & entries);
 
-    std::optional<ThermModel> loadThermModelFromZipFile(const std::string & zipFileName);
     int saveToZipFile(const ThermModel & model,
                       std::string_view zipFileName,
                       FileParse::FileFormat format = FileParse::FileFormat::XML);

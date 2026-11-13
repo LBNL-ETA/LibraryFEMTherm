@@ -31,23 +31,6 @@ namespace ThermFile
         return model;
     }
 
-    std::optional<ThermModel> loadThermModelFromZipFile(std::string const & zipFileName)
-    {
-        if(!std::filesystem::exists(zipFileName))
-        {
-            return std::nullopt;
-        }
-
-        try
-        {
-            return loadThermModelFromEntries(Migration::openArchive(zipFileName));
-        }
-        catch(const std::runtime_error &)
-        {
-            return std::nullopt;
-        }
-    }
-
     int saveToFile(const ThermModel & model, std::string_view fileName, FileParse::FileFormat format)
     {
         switch(format)

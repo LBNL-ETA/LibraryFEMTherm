@@ -200,16 +200,6 @@ namespace TimeSeriesLibrary
         m_Dirty = m_Dirty || m_TimeSeriesData.size() != sizeBefore;
     }
 
-    std::vector<TimeSeriesData> loadDatasetsFromZipFile(const std::string & zipFileName)
-    {
-        if(!std::filesystem::exists(zipFileName))
-        {
-            return {};
-        }
-
-        return datasetsFromThmzEntries(ThermZip::unzipFiles(zipFileName));
-    }
-
     std::vector<TimeSeriesData> datasetsFromThmzEntries(const std::map<std::string, std::string> & entries)
     {
         std::vector<TimeSeriesData> datasets;

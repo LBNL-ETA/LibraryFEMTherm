@@ -16,11 +16,6 @@ namespace ThermFile
         return Common::loadFromFile<SteadyStateResults>(fileName, topNodeName);
     }
 
-    std::optional<SteadyStateResults> loadSteadyStateResultsFromZipFile(const std::string & fileName)
-    {
-        return Common::loadFromZipFile<SteadyStateResults>(fileName, ThermZip::SteadyStateResultsName, topNodeName);
-    }
-
     DeferredParse<SteadyStateResults> deferredResultsFromEntries(const std::map<std::string, std::string> & entries)
     {
         auto content{ThermZip::findEntry(entries, ThermZip::SteadyStateResultsName)};

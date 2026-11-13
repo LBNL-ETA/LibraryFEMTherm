@@ -97,6 +97,4 @@ namespace ThermFile::TransientResults
     //! quantities disagree with each other on frame numbering.
     [[nodiscard]] lbnl::ExpectedExt<Results, std::string> read(const std::map<std::string, std::string> & entries);
 
-    //! Extracts the archive and reads its transient results.
-    [[nodiscard]] lbnl::ExpectedExt<Results, std::string> loadFromZipFile(const std::string & zipFileName);
 }   // namespace ThermFile::TransientResults
