@@ -542,7 +542,7 @@ namespace
                                 "ModelCase",
                                 "A THERM model stated in code: regions, each carrying its material, segments, "
                                 "start, clock and settings. `mode` is the calculation the archive is set up for: "
-                                "a transient case runs from `initial` through its clock, the datasets its segments "
+                                "a transient case runs from what `initializer` states through its clock, the datasets its segments "
                                 "bind or `schedule` when they bind none; a steady-state case has no clock, holds "
                                 "each condition as a constant, and `mesh_control` drives its error estimator.")
             .def(py::init([](std::string id,
@@ -569,7 +569,7 @@ namespace
                  py::arg("id"),
                  py::arg("regions"),
                  py::arg("segments"),
-                 py::arg("initial") = Initial{},
+                 py::arg("initializer") = Initial{},
                  py::arg("schedule") = Schedule{},
                  py::arg("physics") = Physics{},
                  py::arg("numerics") = Numerics{},
@@ -580,7 +580,7 @@ namespace
             .def_readwrite("title", &ModelCase::title)
             .def_readwrite("regions", &ModelCase::regions)
             .def_readwrite("segments", &ModelCase::segments)
-            .def_readwrite("initial", &ModelCase::initial)
+            .def_readwrite("initializer", &ModelCase::initial)
             .def_readwrite("schedule", &ModelCase::schedule)
             .def_readwrite("physics", &ModelCase::physics)
             .def_readwrite("numerics", &ModelCase::numerics)
@@ -646,10 +646,6 @@ namespace
     void bindStartFunctions(py::module_ & model)
     {
         auto initializer{model.attr("initializer").cast<py::module_>()};
-        initializer.def("initial_values", &initialValues, py::arg("initial"),
-                  "The uniform values a start is stated with: the constant itself, or where the initializer begins "
-                  "(20 C and 0.5 standing in when a steady start names none). Not where a solved start's run "
-                  "begins: that is the field the initializer ends with.");
         initializer.def("with_conditions", &withConditions, py::arg("model_case"), py::arg("conditions"),
                   "The case with the named faces under other conditions: a copy in which every segment whose name "
                   "is a key of `conditions` carries that condition instead of its own and binds no dataset. "

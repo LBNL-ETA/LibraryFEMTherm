@@ -49,7 +49,7 @@ def sealed_strip() -> model.ModelCase:
             model.Segment(model.bc.Adiabatic(), (0.1, 0.005), (0.0, 0.005)),
             model.Segment(model.bc.Prescribed(temperature=40.0), (0.0, 0.005), (0.0, 0.0)),
         ],
-        initial=model.initializer.Uniform(temperature=30.0, humidity=0.4),
+        initializer=model.initializer.Uniform(temperature=30.0, humidity=0.4),
         schedule=model.Schedule(dtime=36000.0, n_steps=300),
         physics=model.Physics(liquid_transport=False, heat_of_evaporation=False),
     )
@@ -285,7 +285,7 @@ class TestVocabulary:
     def test_cases_compare_by_value(self):
         assert sealed_strip() == sealed_strip()
         changed = sealed_strip()
-        changed.initial = model.initializer.Uniform(temperature=30.0, humidity=0.6)
+        changed.initializer = model.initializer.Uniform(temperature=30.0, humidity=0.6)
         assert changed != sealed_strip()
 
     def test_regions_carry_their_material(self):
@@ -627,12 +627,24 @@ def strip_with_a_named_cold_end() -> model.ModelCase:
 
 
 class TestSolvedStarts:
-    def test_initial_values_of_each_form(self):
-        assert model.initializer.initial_values(initial=model.initializer.Uniform(temperature=30.0, humidity=0.4)) == model.initializer.Uniform(temperature=30.0, humidity=0.4)
-        assert model.initializer.initial_values(initial=model.initializer.FromSteadyState()) == model.initializer.Uniform()
-        schedule = model.Schedule(dtime=3600.0, n_steps=2)
+    def test_the_kinds_are_told_apart_with_match(self):
+        """An initializer is one of three kinds; Python reads it with match, as C++ does with std::visit."""
+        def described(initializer) -> str:
+            match initializer:
+                case model.initializer.Uniform() as uniform:
+                    return f"uniform {uniform.temperature} {uniform.humidity}"
+                case model.initializer.FromSteadyState() as steady:
+                    return f"steady from {steady.start}"
+                case model.initializer.FromTransient() as transient:
+                    return f"transient from {transient.start}"
+            raise AssertionError(initializer)
+
         start = model.initializer.Uniform(temperature=10.0, humidity=0.9)
-        assert model.initializer.initial_values(initial=model.initializer.FromTransient(schedule=schedule, start=start)) == start
+        assert described(model.initializer.Uniform(temperature=30.0, humidity=0.4)) == "uniform 30.0 0.4"
+        assert described(model.initializer.FromSteadyState()) == "steady from None"
+        assert described(model.initializer.FromSteadyState(start=start)) == f"steady from {start}"
+        schedule = model.Schedule(dtime=3600.0, n_steps=2)
+        assert described(model.initializer.FromTransient(schedule=schedule, start=start)) == f"transient from {start}"
 
     def test_reprs(self):
         assert repr(model.initializer.FromSteadyState()) == "FromSteadyState(conditions={})"
@@ -643,7 +655,7 @@ class TestSolvedStarts:
 
     def test_the_initializer_case_is_the_swapped_case_at_steady_state(self):
         case = strip_with_a_named_cold_end()
-        case.initial = model.initializer.FromSteadyState(conditions={"cold end": model.bc.Prescribed(temperature=40.0)})
+        case.initializer = model.initializer.FromSteadyState(conditions={"cold end": model.bc.Prescribed(temperature=40.0)})
         assert model.issues(model_case=case) == []
         assert model.initializer.case(model_case=sealed_strip()) is None
         initializer_case = model.initializer.case(model_case=case)
@@ -651,7 +663,7 @@ class TestSolvedStarts:
         assert model.is_steady_state(model_case=initializer_case)
         assert initializer_case.segments[1].kind == model.bc.Prescribed(temperature=40.0)
         assert initializer_case.segments[3].kind == case.segments[3].kind
-        assert initializer_case.initial == model.initializer.Uniform()
+        assert initializer_case.initializer == model.initializer.Uniform()
 
     def test_with_conditions_leaves_the_case_alone(self):
         case = strip_with_a_named_cold_end()
@@ -661,7 +673,7 @@ class TestSolvedStarts:
 
     def test_a_start_naming_no_face_is_an_issue(self):
         case = sealed_strip()
-        case.initial = model.initializer.FromSteadyState(conditions={"nowhere": model.bc.Adiabatic()})
+        case.initializer = model.initializer.FromSteadyState(conditions={"nowhere": model.bc.Adiabatic()})
         found = model.issues(model_case=case)
         assert kinds(found=found) == [model.IssueKind.StartConditionUnknownName]
         assert found[0].name == "nowhere"
@@ -669,7 +681,7 @@ class TestSolvedStarts:
 
     def test_a_solved_start_writes_its_conditions_as_records(self):
         case = strip_with_a_named_cold_end()
-        case.initial = model.initializer.FromSteadyState(conditions={"cold end": model.bc.Prescribed(temperature=35.0)})
+        case.initializer = model.initializer.FromSteadyState(conditions={"cold end": model.bc.Prescribed(temperature=35.0)})
         records = build.libraries(case).boundary_conditions
         assert sorted(records.get_names()) == ["Adiabatic", "cold end", "cold end at start", "segment 4"]
         state = build.model(case).properties.calculation_options.initial_conditions.state
@@ -679,7 +691,7 @@ class TestSolvedStarts:
 
     def test_a_start_condition_of_known_content_shares_the_record(self):
         case = strip_with_a_named_cold_end()
-        case.initial = model.initializer.FromSteadyState(conditions={"cold end": model.bc.Prescribed(temperature=40.0)})
+        case.initializer = model.initializer.FromSteadyState(conditions={"cold end": model.bc.Prescribed(temperature=40.0)})
         records = build.libraries(case).boundary_conditions
         assert sorted(records.get_names()) == ["Adiabatic", "cold end", "segment 4"]
         state = build.model(case).properties.calculation_options.initial_conditions.state
@@ -687,7 +699,7 @@ class TestSolvedStarts:
 
     def test_a_transient_start_writes_its_schedule(self):
         case = sealed_strip()
-        case.initial = model.initializer.FromTransient(schedule=model.Schedule(dtime=1800.0, n_steps=3),
+        case.initializer = model.initializer.FromTransient(schedule=model.Schedule(dtime=1800.0, n_steps=3),
                                            start=model.initializer.Uniform(temperature=5.0, humidity=0.9))
         state = build.model(case).properties.calculation_options.initial_conditions.state
         assert state == fem.TransientStart(step_lengths=[1800.0, 1800.0, 1800.0],
@@ -695,7 +707,7 @@ class TestSolvedStarts:
 
     def test_the_initializer_may_solve_other_physics_than_the_run(self):
         case = sealed_strip()
-        case.initial = model.initializer.FromSteadyState(start=model.initializer.Uniform(temperature=30.0, humidity=0.4),
+        case.initializer = model.initializer.FromSteadyState(start=model.initializer.Uniform(temperature=30.0, humidity=0.4),
                                                          physics=model.Physics(moisture=False))
         assert model.issues(model_case=case) == []
         initializer_case = model.initializer.case(model_case=case)
@@ -708,4 +720,4 @@ class TestSolvedStarts:
         # The start runs with the physics it is given, every switch of it: a Physics stated
         # as moisture=False keeps liquid transport at its default, on, not at the case's.
         assert state.physics.modeling_options.exclude_water_liquid_transportation is False
-        assert repr(case.initial).endswith(", physics=" + repr(model.Physics(moisture=False)) + ")")
+        assert repr(case.initializer).endswith(", physics=" + repr(model.Physics(moisture=False)) + ")")
