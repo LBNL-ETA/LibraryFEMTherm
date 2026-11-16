@@ -34,9 +34,9 @@ TEST(TestShippedLibraries, TimeSeriesDefaultLibraryLoads)
         EXPECT_FALSE(record.series.empty());
     }
 
-    const auto ashraeInside{database.getByName("ASHRAEInside")};
-    ASSERT_TRUE(ashraeInside.has_value());
-    EXPECT_TRUE(TimeSeriesLibrary::hasRole(ashraeInside.value(),
+    const auto minneapolis{database.getByName("USA_MN_Minneapolis-St.Paul.Intl.AP.726580_TMY3")};
+    ASSERT_TRUE(minneapolis.has_value());
+    EXPECT_TRUE(TimeSeriesLibrary::hasRole(minneapolis.value(),
                                            TimeSeriesLibrary::SeriesRole::AirTemperature));
 }
 
