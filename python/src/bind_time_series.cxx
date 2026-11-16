@@ -357,6 +357,8 @@ namespace
         namespace Csv = TimeSeriesLibrary::Csv;
         namespace Standards = TimeSeriesLibrary::Standards;
         namespace Import = TimeSeriesLibrary::Import;
+        auto epw{mod.def_submodule("epw", "EnergyPlus weather files: load one, or read one from its text.")};
+        auto csv{mod.def_submodule("csv", "CSV files of role-named columns: load, from_string, to_string.")};
 
         py::class_<Epw::Location>(mod, "WeatherStation", "The station a weather file was recorded at.")
             .def_readonly("city", &Epw::Location::city)
@@ -382,15 +384,15 @@ namespace
             .def_readonly("data", &Epw::ImportResult::data)
             .def_readonly("location", &Epw::ImportResult::location)
             .def_readonly("unmapped_columns", &Epw::ImportResult::unmappedColumns);
-        mod.def(
-          "read_epw",
-          [](const PathOnly & path) { return unwrap(Import::readWeather(path.value)); },
+        epw.def(
+          "load",
+          [](const PathOnly & path) { return unwrap(Import::loadWeather(path.value)); },
           py::arg("epw_file_path"),
           "Reads an EnergyPlus weather file, or a zip holding exactly one (as weather files are distributed, "
           "beside their .ddy and .stat); the dataset is named after the file's stem and its UUID is its content. "
           "Raises ValueError when the file cannot be read.");
-        mod.def(
-          "epw_from_string",
+        epw.def(
+          "from_string",
           [](const std::string & content, const std::string & name) { return unwrap(Epw::fromString(content, name)); },
           py::arg("content"),
           py::arg("name"),
@@ -441,10 +443,10 @@ namespace
         mod.def("describe_first_step", &Csv::describeFirstStep, py::arg("result"),
                 "One line on the first step: its length and where the length came from, so a reader sees what "
                 "the file did not state.");
-        mod.def(
-          "read_csv",
+        csv.def(
+          "load",
           [](const PathOnly & path, const Csv::StepChoice & steps, const std::optional<std::string> & start) {
-              return unwrap(Csv::read(path.value.string(), steps, start));
+              return unwrap(Csv::load(path.value.string(), steps, start));
           },
           py::arg("csv_file_path"),
           py::arg("steps") = Csv::StepChoice{},
@@ -458,8 +460,8 @@ namespace
           "file does not say: under StepColumn.Time it sets the first step's length, and without a Time column it "
           "places the run, which otherwise starts on 1 January 00:00. A column the choice asks for and the file "
           "lacks raises ValueError, as does anything unreadable. Blank value cells carry the last reading forward.");
-        mod.def(
-          "csv_from_string",
+        csv.def(
+          "from_string",
           [](const std::string & content,
              const std::string & name,
              const Csv::StepChoice & steps,
@@ -469,8 +471,8 @@ namespace
           py::arg("steps") = Csv::StepChoice{},
           py::arg("start") = py::none(),
           "The same from the CSV text, under the given dataset name.");
-        mod.def("to_csv", &Csv::toString, py::arg("data"),
-                "The dataset as the CSV read_csv accepts: a Time column stamping the end of each step, a Timestep "
+        csv.def("to_string", &Csv::toString, py::arg("data"),
+                "The dataset as the CSV csv.load accepts: a Time column stamping the end of each step, a Timestep "
                 "column of the step lengths in seconds, then one column per role. Read back by either column it is "
                 "the same dataset.");
         mod.def(
@@ -479,7 +481,7 @@ namespace
           py::arg("data"),
           py::arg("csv_file_path"));
         mod.def("csv_header_for_role", &Csv::displayHeaderForRole, py::arg("role"),
-                "The spelled-out column header of a role, as to_csv writes it (\"Air Temperature\").");
+                "The spelled-out column header of a role, as csv.to_string writes it (\"Air Temperature\").");
         mod.def("describe_roles", &Csv::describeRoles,
                 "Every role as a table: a heading row, then the role's name and the CSV header that writes it "
                 "out, columns aligned. A CSV file uses the header, exactly.");
@@ -518,7 +520,7 @@ namespace
           py::arg("file_path"),
           py::arg("steps") = Csv::StepChoice{},
           "Datasets from a file by its extension: .epw, .csv, or a .zip holding any number of either (each "
-          "under its entry's stem). `steps` is how a CSV's rows become steps, as for read_csv; a weather file has "
+          "under its entry's stem). `steps` is how a CSV's rows become steps, as for csv.load; a weather file has "
           "its own clock and ignores it. Raises ValueError for an unsupported extension, an unreadable file or a "
           "zip with nothing importable.");
         mod.def(

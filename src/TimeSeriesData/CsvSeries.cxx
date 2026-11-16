@@ -860,7 +860,7 @@ namespace TimeSeriesLibrary::Csv
     }
 
     lbnl::ExpectedExt<ImportResult, std::string>
-      read(const std::string & fileName, const StepChoice & stepChoice, const std::optional<std::string> & start)
+      load(const std::string & fileName, const StepChoice & stepChoice, const std::optional<std::string> & start)
     {
         if(!std::filesystem::exists(fileName))
         {

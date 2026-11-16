@@ -39,7 +39,7 @@ namespace TimeSeriesLibrary::Import
     //! One weather file, with its station: an .epw, or a .zip holding exactly one (the
     //! way weather files are distributed, beside their .ddy and .stat companions). A zip
     //! with no weather file or with several is refused, naming them.
-    [[nodiscard]] lbnl::ExpectedExt<Epw::ImportResult, std::string> readWeather(const std::filesystem::path & file);
+    [[nodiscard]] lbnl::ExpectedExt<Epw::ImportResult, std::string> loadWeather(const std::filesystem::path & file);
 
     //! Every dataset the file holds. A zip with no importable entry, an unreadable file
     //! and an unsupported extension all fail with a message that says so. `stepChoice`

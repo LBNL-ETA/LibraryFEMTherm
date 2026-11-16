@@ -289,7 +289,7 @@ namespace TimeSeriesLibrary::Epw
         return result;
     }
 
-    lbnl::ExpectedExt<ImportResult, std::string> read(const std::string & fileName)
+    lbnl::ExpectedExt<ImportResult, std::string> load(const std::string & fileName)
     {
         if(!std::filesystem::exists(fileName))
         {

@@ -115,22 +115,22 @@ TEST(TestImport, ReadWeatherTakesTheOneWeatherFileOfAZip)
 {
     const auto path{scratch("import-weather.zip").string()};
     ThermZip::zipFiles({{"city.epw", epwContent()}, {"city.ddy", "design days"}, {"city.stat", "statistics"}}, path);
-    const auto weather{Import::readWeather(path)};
+    const auto weather{Import::loadWeather(path)};
     ASSERT_TRUE(weather.has_value()) << weather.error();
     EXPECT_EQ(weather->data.Name, "city");
     EXPECT_EQ(weather->location.city, "Sydney");
     // Named after the entry rather than the zip, otherwise the same file read.
-    const auto plain{Import::readWeather(written("import-plain.epw", epwContent()))};
+    const auto plain{Import::loadWeather(written("import-plain.epw", epwContent()))};
     ASSERT_TRUE(plain.has_value());
     EXPECT_EQ(weather->data.series, plain->data.series);
     EXPECT_EQ(weather->data.UUID, plain->data.UUID);
 
     const auto two{scratch("import-two-weather.zip").string()};
     ThermZip::zipFiles({{"a.epw", epwContent()}, {"b.epw", epwContent()}}, two);
-    const auto refused{Import::readWeather(two)};
+    const auto refused{Import::loadWeather(two)};
     ASSERT_FALSE(refused.has_value());
     EXPECT_NE(refused.error().find("more than one"), std::string::npos);
-    EXPECT_FALSE(Import::readWeather(written("import-sample.csv", csvContent)).has_value());
+    EXPECT_FALSE(Import::loadWeather(written("import-sample.csv", csvContent)).has_value());
 }
 
 TEST(TestImport, FailedZipEntriesAreListedBesideTheGoodOnes)

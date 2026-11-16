@@ -382,7 +382,7 @@ field in these bindings.
 # An EnergyPlus weather file: AirTemperature, RelativeHumidity, WindSpeed, WindDirection and
 # RadiantTemperature (the sky temperature, from the horizontal infrared). Solar columns are
 # reported in unmapped_columns: what a surface receives depends on its tilt and the sun.
-weather = fem.read_epw(Path("city.epw"))                         # an EnergyPlusWeatherFile
+weather = fem.epw.load(Path("city.epw"))                         # an EnergyPlusWeatherFile
 year = weather.data
 print(weather.location.city, fem.describe_axis(year))      # "1 Jan 00:00, step 1 h, 8760 rows"
 
@@ -400,10 +400,10 @@ indoor = fem.generate_interior(outdoor, fem.InteriorStandard.EN_15026_DIN_4108, 
 # which), the Timestep column (one length in seconds per row), or a fixed step for every
 # row. Left unsaid, the file's columns decide: Time when it has one, else Timestep, else
 # an hour per row. A column the choice asks for and the file lacks raises ValueError.
-measured = fem.read_csv(Path("measured.csv")).data
-logged = fem.read_csv(Path("logger.csv"), steps=fem.FixedStep(seconds=900.0)).data
-begun = fem.read_csv(Path("logger.csv"), start="2026-01-01 00:00")          # the first step's length, exact
-print(fem.describe_first_step(fem.read_csv(Path("measured.csv"))))          # "first step 1 h, assumed from ..."
+measured = fem.csv.load(Path("measured.csv")).data
+logged = fem.csv.load(Path("logger.csv"), steps=fem.FixedStep(seconds=900.0)).data
+begun = fem.csv.load(Path("logger.csv"), start="2026-01-01 00:00")          # the first step's length, exact
+print(fem.describe_first_step(fem.csv.load(Path("measured.csv"))))          # "first step 1 h, assumed from ..."
 fem.write_csv_file(indoor, Path("indoor.csv"))
 
 # Whatever the file is, by its extension (.epw, .csv, or a .zip of either)

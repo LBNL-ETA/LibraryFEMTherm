@@ -52,11 +52,11 @@ namespace TimeSeriesLibrary::Import
         {
             if(extension == weatherExtension)
             {
-                return Epw::read(file.string()).transform([](const Epw::ImportResult & result) {
+                return Epw::load(file.string()).transform([](const Epw::ImportResult & result) {
                     return ImportedDataset{.data = result.data, .skippedColumns = {}};
                 });
             }
-            return Csv::read(file.string(), stepChoice).transform([](const Csv::ImportResult & result) {
+            return Csv::load(file.string(), stepChoice).transform([](const Csv::ImportResult & result) {
                 return ImportedDataset{.data = result.data, .skippedColumns = result.ignoredHeaders};
             });
         }
@@ -95,7 +95,7 @@ namespace TimeSeriesLibrary::Import
             return names;
         }
 
-        lbnl::ExpectedExt<Epw::ImportResult, std::string> readWeatherFromZip(const std::filesystem::path & file)
+        lbnl::ExpectedExt<Epw::ImportResult, std::string> loadWeatherFromZip(const std::filesystem::path & file)
         {
             std::map<std::string, std::string> entries;
             try
@@ -122,16 +122,16 @@ namespace TimeSeriesLibrary::Import
         }
     }   // namespace
 
-    lbnl::ExpectedExt<Epw::ImportResult, std::string> readWeather(const std::filesystem::path & file)
+    lbnl::ExpectedExt<Epw::ImportResult, std::string> loadWeather(const std::filesystem::path & file)
     {
         const auto extension{lowercaseExtension(file)};
         if(extension == zipExtension)
         {
-            return readWeatherFromZip(file);
+            return loadWeatherFromZip(file);
         }
         if(extension == weatherExtension)
         {
-            return Epw::read(file.string());
+            return Epw::load(file.string());
         }
         return lbnl::Unexpected<std::string>{"A weather file is an EnergyPlus weather file (*.epw) or a zip holding one."};
     }

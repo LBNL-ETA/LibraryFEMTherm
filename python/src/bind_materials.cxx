@@ -71,13 +71,13 @@ void bind_materials(py::module_ & mod)
         .def_readwrite("optical", &MaterialsLibrary::Solid::optical);
 
     // --- Database source ---
-    py::class_<MaterialsLibrary::WINDOW>(mod, "WINDOW")
+    py::class_<MaterialsLibrary::WINDOW>(mod, "WINDOWRecord", "Which record of which WINDOW database a material came from.")
         .def(py::init<>())
         .def_readwrite("path", &MaterialsLibrary::WINDOW::Path)
         .def_readwrite("name", &MaterialsLibrary::WINDOW::Name)
         .def_readwrite("id", &MaterialsLibrary::WINDOW::ID);
 
-    py::class_<MaterialsLibrary::Database>(mod, "Database")
+    py::class_<MaterialsLibrary::Database>(mod, "ExternalDatabase", "The external database a material came from; today only WINDOW.")
         .def(py::init<>())
         .def_readwrite("window", &MaterialsLibrary::Database::Window);
 

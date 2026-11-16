@@ -71,12 +71,12 @@ class TestMaterialDatabaseSource:
         mat.color = "0xABCDEF"
         mat.data = fem.Solid()
 
-        window = fem.WINDOW()
+        window = fem.WINDOWRecord()
         window.path = r"C:\WINDOWdb\ShadeDB.mdb"
         window.name = "Roller Shade Dark"
         window.id = 42
 
-        database = fem.Database()
+        database = fem.ExternalDatabase()
         database.window = window
         mat.database = database
 

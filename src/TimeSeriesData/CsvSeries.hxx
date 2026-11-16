@@ -113,7 +113,7 @@ namespace TimeSeriesLibrary::Csv
 
     //! Reads the file and imports it under its stem as the dataset name.
     [[nodiscard]] lbnl::ExpectedExt<ImportResult, std::string>
-      read(const std::string & fileName,
+      load(const std::string & fileName,
            const StepChoice & stepChoice = {},
            const std::optional<std::string> & start = std::nullopt);
 
