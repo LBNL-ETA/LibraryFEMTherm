@@ -28,21 +28,22 @@ void bind_model(py::module_ & mod)
         .def_readwrite("glazing_systems", &ThermFile::ThermModel::glazingSystems)
         .def_readwrite("cma_data", &ThermFile::ThermModel::cmaData);
 
-    // Free functions for load/save
-    mod.def("load_model_from_file", PathBinding::pathFirst(&ThermFile::loadThermModelFromFile),
+    // One file and text: in the part's own submodule. Into an archive: save_to_thmz.
+    auto thermModel{mod.def_submodule("therm_model", "A THERM model as one file or as text: load, save, from_string, to_string.")};
+    thermModel.def("load", PathBinding::pathFirst(&ThermFile::loadThermModelFromFile),
             py::arg("file_path"));
 
-    mod.def("save_model_to_file", PathBinding::pathSecond(&ThermFile::saveToFile),
+    thermModel.def("save", PathBinding::pathSecond(&ThermFile::saveToFile),
             py::arg("model"), py::arg("file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("save_model", PathBinding::pathSecond(&ThermFile::saveToZipFile),
+    thermModel.def("save_to_thmz", PathBinding::pathSecond(&ThermFile::saveToZipFile),
             py::arg("model"), py::arg("thmz_file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("model_from_string", &ThermFile::thermModelFromString,
+    thermModel.def("from_string", &ThermFile::thermModelFromString,
             py::arg("text"), py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("model_to_string", &ThermFile::toString,
+    thermModel.def("to_string", &ThermFile::toString,
             py::arg("model"), py::arg("format") = FileParse::FileFormat::XML);
 }

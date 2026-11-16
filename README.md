@@ -118,10 +118,10 @@ print(f"Polygons:   {len(model.polygons)}")
 print(f"Boundaries: {len(model.boundary_conditions)}")
 
 # Save to XML string
-xml = fem.model_to_string(model)
+xml = fem.therm_model.to_string(model)
 
 # Save to a new THMZ file
-fem.save_model(model, Path("output.thmz"))
+fem.therm_model.save_to_thmz(model, Path("output.thmz"))
 
 # Work with .thmz entries directly
 contents = fem.thmz.read(Path("sample.thmz")).entries([fem.thmz.MATERIALS_FILE_NAME])

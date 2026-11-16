@@ -167,21 +167,22 @@ void bind_mesh(py::module_ & mod)
         .def_readwrite("version", &ThermFile::Mesh::Mesh::version)
         .def_readwrite("cases", &ThermFile::Mesh::Mesh::cases);
 
-    // --- Free functions ---
-    mod.def("load_mesh_from_file", PathBinding::pathFirst(&ThermFile::Mesh::loadMeshFromFile),
+    // One file and text: in the part's own submodule. Into an archive: save_to_thmz.
+    auto mesh{mod.def_submodule("mesh", "A mesh as one file or as text: load, save, from_string, to_string.")};
+    mesh.def("load", PathBinding::pathFirst(&ThermFile::Mesh::loadMeshFromFile),
             py::arg("file_path"));
 
-    mod.def("save_mesh_to_file", PathBinding::pathSecond(&ThermFile::Mesh::saveToFile),
+    mesh.def("save", PathBinding::pathSecond(&ThermFile::Mesh::saveToFile),
             py::arg("mesh"), py::arg("file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("save_mesh", PathBinding::pathSecond(&ThermFile::Mesh::saveToZipFile),
+    mesh.def("save_to_thmz", PathBinding::pathSecond(&ThermFile::Mesh::saveToZipFile),
             py::arg("mesh"), py::arg("thmz_file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("mesh_from_string", &ThermFile::Mesh::meshFromString,
+    mesh.def("from_string", &ThermFile::Mesh::meshFromString,
             py::arg("text"), py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("mesh_to_string", &ThermFile::Mesh::toString,
+    mesh.def("to_string", &ThermFile::Mesh::toString,
             py::arg("mesh"), py::arg("format") = FileParse::FileFormat::XML);
 }

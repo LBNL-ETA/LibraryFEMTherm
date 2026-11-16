@@ -34,20 +34,20 @@ class TestXMLRoundTrip:
     """Ported from THMXFile.unit.cxx — XMLOperations test."""
 
     def test_save_to_string_and_reload(self, sample_model):
-        xml = fem.model_to_string(sample_model)
+        xml = fem.therm_model.to_string(sample_model)
         assert len(xml) > 0
         assert "<CalculationReady>" in xml
 
-        reloaded = fem.model_from_string(xml)
+        reloaded = fem.therm_model.from_string(xml)
         assert reloaded is not None
         assert len(reloaded.polygons) == len(sample_model.polygons)
         assert len(reloaded.boundary_conditions) == len(sample_model.boundary_conditions)
         assert reloaded.calculation_ready == sample_model.calculation_ready
 
     def test_save_to_string_json_format(self, sample_model):
-        json_str = fem.model_to_string(sample_model, fem.FileFormat.JSON)
+        json_str = fem.therm_model.to_string(sample_model, fem.FileFormat.JSON)
         assert len(json_str) > 0
-        reloaded = fem.model_from_string(json_str, fem.FileFormat.JSON)
+        reloaded = fem.therm_model.from_string(json_str, fem.FileFormat.JSON)
         assert reloaded is not None
         assert len(reloaded.polygons) == len(sample_model.polygons)
 
@@ -61,7 +61,7 @@ class TestZipRoundTrip:
         os.remove(tmp_path)  # miniz needs to create the file itself
 
         try:
-            fem.save_model(sample_model, tmp_path)
+            fem.therm_model.save_to_thmz(sample_model, tmp_path)
             reloaded = fem.thmz.read(tmp_path).model()
             assert reloaded is not None
             assert len(reloaded.polygons) == len(sample_model.polygons)
@@ -72,8 +72,8 @@ class TestZipRoundTrip:
 
     def test_polygon_fields_survive_round_trip(self, sample_model):
         """Verify polygon fields are preserved through save/load."""
-        xml = fem.model_to_string(sample_model)
-        reloaded = fem.model_from_string(xml)
+        xml = fem.therm_model.to_string(sample_model)
+        reloaded = fem.therm_model.from_string(xml)
 
         for idx in range(len(sample_model.polygons)):
             orig = sample_model.polygons[idx]

@@ -54,10 +54,10 @@ class TestMeshStringRoundTrip:
         mesh = fem.thmz.read(sample_sill_path).mesh()
         assert mesh is not None
 
-        xml = fem.mesh_to_string(mesh)
+        xml = fem.mesh.to_string(mesh)
         assert len(xml) > 0
 
-        reloaded = fem.mesh_from_string(xml)
+        reloaded = fem.mesh.from_string(xml)
         assert reloaded is not None
         assert len(reloaded.cases) == len(mesh.cases)
         assert len(reloaded.cases[0].nodes) == len(mesh.cases[0].nodes)

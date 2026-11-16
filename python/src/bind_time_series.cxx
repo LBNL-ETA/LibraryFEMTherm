@@ -341,10 +341,11 @@ namespace
             .def("is_dirty", &TimeSeriesLibrary::DB::isDirty);
 
         // THMZ storage: one archive entry per dataset, independent of any library file.
-        mod.def("datasets_from_thmz_entries", &TimeSeriesLibrary::datasetsFromThmzEntries, py::arg("entries"),
+        auto datasets{mod.def_submodule("datasets", "Time series datasets: load them from a weather, CSV or zip file, read them from entries, save them into a .thmz.")};
+        datasets.def("from_thmz_entries", &TimeSeriesLibrary::datasetsFromThmzEntries, py::arg("entries"),
                 "Every \"time series/<uuid>\" entry of an already-extracted archive dict; empty for a "
                 "pre-consolidation file. From a file: thmz.read(...).datasets().");
-        mod.def("save_datasets", PathBinding::pathSecond(&TimeSeriesLibrary::saveDatasetsToZipFile),
+        datasets.def("save_to_thmz", PathBinding::pathSecond(&TimeSeriesLibrary::saveDatasetsToZipFile),
                 py::arg("datasets"), py::arg("thmz_file_path"), py::arg("format") = FileParse::FileFormat::XML,
                 "Writes every dataset as its own entry; returns the number written.");
     }
@@ -440,7 +441,7 @@ namespace
             .def_readonly("had_timestep_column", &Csv::ImportResult::hadTimestepColumn)
             .def_readonly("first_step", &Csv::ImportResult::firstStep,
                           "Where the first step's length came from: FirstStep.Stated, FromColumn or Assumed.");
-        mod.def("describe_first_step", &Csv::describeFirstStep, py::arg("result"),
+        csv.def("describe_first_step", &Csv::describeFirstStep, py::arg("result"),
                 "One line on the first step: its length and where the length came from, so a reader sees what "
                 "the file did not state.");
         csv.def(
@@ -475,14 +476,14 @@ namespace
                 "The dataset as the CSV csv.load accepts: a Time column stamping the end of each step, a Timestep "
                 "column of the step lengths in seconds, then one column per role. Read back by either column it is "
                 "the same dataset.");
-        mod.def(
-          "write_csv_file",
+        csv.def(
+          "save",
           [](const TimeSeriesData & data, const PathOnly & path) { Csv::writeToFile(data, path.value.string()); },
           py::arg("data"),
           py::arg("csv_file_path"));
-        mod.def("csv_header_for_role", &Csv::displayHeaderForRole, py::arg("role"),
+        csv.def("header_for_role", &Csv::displayHeaderForRole, py::arg("role"),
                 "The spelled-out column header of a role, as csv.to_string writes it (\"Air Temperature\").");
-        mod.def("describe_roles", &Csv::describeRoles,
+        csv.def("describe_roles", &Csv::describeRoles,
                 "Every role as a table: a heading row, then the role's name and the CSV header that writes it "
                 "out, columns aligned. A CSV file uses the header, exactly.");
 
@@ -512,8 +513,9 @@ namespace
         py::class_<Import::ImportOutcome>(mod, "ImportOutcome", "Every dataset a file held, and the zip entries that failed.")
             .def_readonly("datasets", &Import::ImportOutcome::datasets)
             .def_readonly("failed_entries", &Import::ImportOutcome::failedEntries);
-        mod.def(
-          "import_datasets",
+        auto datasets{mod.def_submodule("datasets", "Time series datasets: load them from a weather, CSV or zip file, read them from entries, save them into a .thmz.")};
+        datasets.def(
+          "load",
           [](const PathOnly & path, const Csv::StepChoice & steps) {
               return unwrap(Import::importDatasets(path.value, steps));
           },
@@ -523,8 +525,8 @@ namespace
           "under its entry's stem). `steps` is how a CSV's rows become steps, as for csv.load; a weather file has "
           "its own clock and ignores it. Raises ValueError for an unsupported extension, an unreadable file or a "
           "zip with nothing importable.");
-        mod.def(
-          "datasets_from_file_entries",
+        datasets.def(
+          "from_file_entries",
           [](const std::map<std::string, std::string> & entries, const Csv::StepChoice & steps) {
               return unwrap(Import::datasetsFromFileEntries(entries, steps));
           },

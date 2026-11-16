@@ -62,8 +62,23 @@ print(f"Engine:     {props.calculation_options.simulation_engine}")
 print(f"Cross-sect: {props.model_details.exposure_type.cross_section}")
 
 # Save to a new THMZ file
-fem.save_model(model, Path("output.thmz"))
+fem.therm_model.save_to_thmz(model, Path("output.thmz"))
 ```
+
+## How the functions are named
+
+Every part of an archive (the model, the mesh, the results, a CSV or weather file) has its own
+submodule, and the same few verbs mean the same thing in each:
+
+| Verb | Meaning | Examples |
+|---|---|---|
+| `load`, `save` | a whole object, to or from one file | `fem.mesh.load(file_path)`, `fem.therm_model.save(model, file_path)`, `fem.csv.load(csv_file_path)` |
+| `save_to_thmz` | a whole object, written into a `.thmz` | `fem.mesh.save_to_thmz(mesh, thmz_file_path)` |
+| `from_string`, `to_string` | the same object as text in memory | `fem.mesh.from_string(text)` |
+| `read`, `write` | the `.thmz` container itself and its raw entries | `fem.thmz.read(thmz_file_path)`, `fem.thmz.write_entries(entries, thmz_file_path)` |
+
+`fem.thmz.read` is `read` and not `load` because it loads nothing: it reads the list of entry
+names, and each part is parsed only when it is asked for (`archive.mesh()`).
 
 ## Loading and Saving Models
 
@@ -71,26 +86,26 @@ fem.save_model(model, Path("output.thmz"))
 
 ```python
 model = fem.thmz.read(Path("path/to/model.thmz")).model()
-fem.save_model(model, Path("path/to/output.thmz"))
+fem.therm_model.save_to_thmz(model, Path("path/to/output.thmz"))
 ```
 
 ### From/to XML or JSON strings
 
 ```python
 # XML (default)
-xml_str = fem.model_to_string(model)
-model = fem.model_from_string(xml_str)
+xml_str = fem.therm_model.to_string(model)
+model = fem.therm_model.from_string(xml_str)
 
 # JSON
-json_str = fem.model_to_string(model, fem.FileFormat.JSON)
-model = fem.model_from_string(json_str, fem.FileFormat.JSON)
+json_str = fem.therm_model.to_string(model, fem.FileFormat.JSON)
+model = fem.therm_model.from_string(json_str, fem.FileFormat.JSON)
 ```
 
 ### From/to XML files
 
 ```python
-model = fem.load_model_from_file(Path("Model.xml"))
-fem.save_model_to_file(model, Path("Model.xml"))
+model = fem.therm_model.load(Path("Model.xml"))
+fem.therm_model.save(model, Path("Model.xml"))
 ```
 
 ## Working with .thmz Entries Directly
@@ -291,7 +306,7 @@ when they are marked that way.
 ### Saving
 
 ```python
-library.save(Path("model.thmz"))    # writes the BoundaryConditions entry
+library.save_to_thmz(Path("model.thmz"))    # writes the BoundaryConditions entry
 xml = library.to_string()            # or fem.FileFormat.JSON
 ```
 
@@ -326,7 +341,7 @@ meant; `fem.time_series_warnings(data)` gives the same as facts, for other wordi
 `fem.series_values(data, role)` gives one role's values, `fem.series_values_by_role(data)`
 every role's, keyed by role, and `fem.series_values_by_step(data)` the dataset step by
 step: each step's `index` from 0, where it `begins`, its `elapsed_seconds` from the start,
-its length in `timestep_seconds`, and every role's value in it. `fem.describe_roles()` prints every
+its length in `timestep_seconds`, and every role's value in it. `fem.csv.describe_roles()` prints every
 role as a table, its name beside the CSV header that writes it out; a CSV file may use either.
 
 ```python
@@ -341,7 +356,7 @@ weather.series = [
 print(fem.time_series_steps(weather))          # 24
 print(fem.describe_axis(weather))              # "1 Jan 00:00, step 1 h, 24 rows"
 
-fem.save_datasets([weather], Path("model.thmz"))
+fem.datasets.save_to_thmz([weather], Path("model.thmz"))
 datasets = fem.thmz.read(Path("model.thmz")).datasets()
 entry = fem.thmz.time_series_entry_name(weather.uuid)   # "time series/<uuid>.xml"
 ```
@@ -403,11 +418,11 @@ indoor = fem.generate_interior(outdoor, fem.InteriorStandard.EN_15026_DIN_4108, 
 measured = fem.csv.load(Path("measured.csv")).data
 logged = fem.csv.load(Path("logger.csv"), steps=fem.FixedStep(seconds=900.0)).data
 begun = fem.csv.load(Path("logger.csv"), start="2026-01-01 00:00")          # the first step's length, exact
-print(fem.describe_first_step(fem.csv.load(Path("measured.csv"))))          # "first step 1 h, assumed from ..."
-fem.write_csv_file(indoor, Path("indoor.csv"))
+print(fem.csv.describe_first_step(fem.csv.load(Path("measured.csv"))))          # "first step 1 h, assumed from ..."
+fem.csv.save(indoor, Path("indoor.csv"))
 
 # Whatever the file is, by its extension (.epw, .csv, or a .zip of either)
-for imported in fem.import_datasets(Path("weather.zip")).datasets:
+for imported in fem.datasets.load(Path("weather.zip")).datasets:
     print(imported.data.name, imported.skipped_columns)
 
 # Or stated outright
@@ -645,7 +660,7 @@ print(f"Snap to grid:     {prefs.snap.snap_to_grid}")
 mesh = fem.thmz.read(Path("model.thmz")).mesh()
 
 # From XML string
-mesh = fem.mesh_from_string(xml_str)
+mesh = fem.mesh.from_string(xml_str)
 ```
 
 ### Inspecting
@@ -678,8 +693,8 @@ for case in mesh.cases:
 ### Saving
 
 ```python
-xml_str = fem.mesh_to_string(mesh)
-fem.save_mesh(mesh, Path("output.thmz"))
+xml_str = fem.mesh.to_string(mesh)
+fem.mesh.save_to_thmz(mesh, Path("output.thmz"))
 ```
 
 ## Steady-State Results
@@ -810,7 +825,7 @@ bc.data = comp
 model.boundary_conditions = [bc]
 
 # Serialize
-xml = fem.model_to_string(model)
+xml = fem.therm_model.to_string(model)
 print(xml)
 ```
 

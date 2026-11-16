@@ -242,7 +242,7 @@ void bind_bc_library(py::module_ & mod)
         .def("from_entries", &BCLibrary::DB::fromEntries, py::arg("entries"),
              "Reads the BoundaryConditions entry of an already-extracted archive dict; leaves the DB "
              "unchanged when absent. From a file: thmz.read(...).boundary_conditions().")
-        .def("save", PathBinding::pathFirst(&BCLibrary::DB::saveToZipFile), py::arg("thmz_file_path"),
+        .def("save_to_thmz", PathBinding::pathFirst(&BCLibrary::DB::saveToZipFile), py::arg("thmz_file_path"),
              py::arg("format") = FileParse::FileFormat::XML)
         .def("boundary_conditions", &BCLibrary::DB::getBoundaryConditions,
              py::return_value_policy::reference_internal)

@@ -46,10 +46,10 @@ class TestMeshResultsStringRoundTrip:
         results = fem.thmz.read(sample_sill_path).steady_state_mesh_results()
         assert results is not None
 
-        xml = fem.steady_state_mesh_results_to_string(results)
+        xml = fem.steady_state_mesh_results.to_string(results)
         assert len(xml) > 0
 
-        reloaded = fem.steady_state_mesh_results_from_string(xml)
+        reloaded = fem.steady_state_mesh_results.from_string(xml)
         assert reloaded is not None
         assert len(reloaded.cases) == len(results.cases)
         assert len(reloaded.cases[0].nodes) == len(results.cases[0].nodes)

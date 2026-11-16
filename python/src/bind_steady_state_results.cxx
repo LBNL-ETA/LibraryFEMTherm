@@ -98,30 +98,31 @@ void bind_steady_state_results(py::module_ & mod)
         .def_readwrite("version", &ThermFile::SteadyStateResults::version)
         .def_readwrite("cases", &ThermFile::SteadyStateResults::cases);
 
-    // --- Free functions (overloaded saveToFile/saveToZipFile/toString) ---
-    mod.def("load_steady_state_results_from_file",
+    // One file and text: in the part's own submodule. Into an archive: save_to_thmz.
+    auto results{mod.def_submodule("steady_state_results", "Steady-state results as one file or as text: load, save, from_string, to_string.")};
+    results.def("load",
             PathBinding::pathFirst(&ThermFile::loadSteadyStateResultsFromFile),
             py::arg("file_path"));
 
-    mod.def("save_steady_state_results_to_file",
+    results.def("save",
             PathBinding::pathSecond(static_cast<int(*)(const ThermFile::SteadyStateResults &, std::string_view,
                                                     FileParse::FileFormat)>(
                 &ThermFile::saveToFile)),
             py::arg("results"), py::arg("file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("save_steady_state_results",
+    results.def("save_to_thmz",
             PathBinding::pathSecond(static_cast<int(*)(const ThermFile::SteadyStateResults &, std::string_view,
                                                     FileParse::FileFormat)>(
                 &ThermFile::saveToZipFile)),
             py::arg("results"), py::arg("thmz_file_path"),
             py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("steady_state_results_from_string",
+    results.def("from_string",
             &ThermFile::steadyStateResultsFromString,
             py::arg("text"), py::arg("format") = FileParse::FileFormat::XML);
 
-    mod.def("steady_state_results_to_string",
+    results.def("to_string",
             static_cast<std::string(*)(const ThermFile::SteadyStateResults &,
                                        FileParse::FileFormat)>(
                 &ThermFile::toString),
