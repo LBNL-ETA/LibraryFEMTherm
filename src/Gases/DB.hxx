@@ -73,7 +73,7 @@ namespace GasesLibrary
         //! \brief Deletes all gases that have projectName set
         void deleteWithProjectName(const std::string & projectName);
         void deleteTemporaryRecords();
-        void deleteWithUUID(std::string_view uuid);
+        void deleteByUUID(std::string_view uuid);
 
         //! \brief Moves gas records from one project mark to another (document Save As /
         //! rename). Matches the historical behavior: mixtures only, pure gases keep their

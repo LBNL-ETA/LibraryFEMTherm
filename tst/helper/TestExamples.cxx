@@ -25,7 +25,7 @@ namespace Helper
                                        "Test Notes"};
             ThermFile::CalculationOptions calculationOptions{
               .simulationEngine = ThermFile::SimulationEngine::HygroThermFEM,
-              .calculationMode = ThermFile::CalculationMode::cmSteadyState,
+              .calculationMode = ThermFile::CalculationMode::SteadyState,
               .simulateMoisture = true,
               .simulateThermal = true,
               .modelingOptions = {false, true, false, true, false, true, false},

@@ -379,7 +379,7 @@ namespace GasesLibrary
         return result;
     }
 
-    void DB::deleteWithUUID(std::string_view uuid)
+    void DB::deleteByUUID(std::string_view uuid)
     {
         const auto erased{std::erase_if(m_Gases, [&uuid](const Gas & gas) { return gas.UUID == uuid; })};
         m_Dirty = m_Dirty || erased > 0U;

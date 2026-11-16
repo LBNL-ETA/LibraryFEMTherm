@@ -60,8 +60,8 @@ class TestPropertiesEnums:
         assert fem.SimulationEngine.HygroThermFEM is not None
 
     def test_calculation_mode(self):
-        assert fem.CalculationMode.cmTransient is not None
-        assert fem.CalculationMode.cmSteadyState is not None
+        assert fem.CalculationMode.Transient is not None
+        assert fem.CalculationMode.SteadyState is not None
 
     def test_mesher_type(self):
         assert fem.MesherType.QuadTreeMesher is not None

@@ -24,7 +24,7 @@ TEST(TestBCDBDirty, SteadyStateEffectiveMutations)
     EXPECT_FALSE(database.isDirty());
 
     database.update(database.getByUUID(sampleUuid).value());
-    database.deleteWithUUID("no-such-uuid");
+    database.deleteByUUID("no-such-uuid");
     database.deleteRecordsWithProjectName("no such project");
     EXPECT_FALSE(database.isDirty());
 
@@ -75,7 +75,7 @@ TEST(TestBCDBDirty, TransientTypeEffectiveMutations)
     EXPECT_FALSE(database.isDirty());
 
     database.update(database.getByUUID(sampleUuid).value());
-    database.deleteWithUUID("no-such-uuid");
+    database.deleteByUUID("no-such-uuid");
     EXPECT_FALSE(database.isDirty());
 
     auto renamed{database.getByUUID(sampleUuid).value()};
@@ -99,7 +99,7 @@ TEST(TestBCDBDirty, UnifiedEffectiveMutations)
     EXPECT_FALSE(database.isDirty());
 
     database.updateOrAdd(database.getByUUID(sampleUuid).value());
-    database.deleteWithUUID("no-such-uuid");
+    database.deleteByUUID("no-such-uuid");
     database.deleteTemporaryRecords();
     EXPECT_FALSE(database.isDirty());
 

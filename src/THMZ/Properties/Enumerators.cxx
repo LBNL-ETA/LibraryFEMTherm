@@ -47,8 +47,8 @@ namespace ThermFile
         return LibraryCommon::enumToString(simulationEngine, simulationEngineString);
     }
 
-    std::map<CalculationMode, std::string> calculationModeString{{CalculationMode::cmSteadyState, "Steady-State"},
-                                                                 {CalculationMode::cmTransient, "Transient"}};
+    std::map<CalculationMode, std::string> calculationModeString{{CalculationMode::SteadyState, "Steady-State"},
+                                                                 {CalculationMode::Transient, "Transient"}};
 
     CalculationMode calculationModeFromString(std::string_view value)
     {

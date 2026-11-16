@@ -41,7 +41,7 @@ namespace
     {
         ThermFile::ThermModel model;
         model.version = "3";
-        model.properties.calculationOptions.calculationMode = ThermFile::CalculationMode::cmTransient;
+        model.properties.calculationOptions.calculationMode = ThermFile::CalculationMode::Transient;
         ThermFile::Boundary boundary;
         boundary.transientRecordData = ThermFile::TransientData{.typeRecordUUID = "record", .transientFileName = fileName};
         model.boundaryConditions.push_back(boundary);
@@ -135,7 +135,7 @@ TEST(TimestepFilesMigration, FileInTheArchiveRootConverts)
 TEST(TimestepFilesMigration, SteadyStateModelIsLeftAlone)
 {
     auto model{transientModel()};
-    model.properties.calculationOptions.calculationMode = ThermFile::CalculationMode::cmSteadyState;
+    model.properties.calculationOptions.calculationMode = ThermFile::CalculationMode::SteadyState;
 
     const auto entries{ThermFile::Migration::TimestepFiles::withConvertedFiles(archiveEntries(model))};
 

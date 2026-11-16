@@ -352,13 +352,13 @@ namespace
                                            "The clock of a case whose segments bind no dataset: one length in seconds "
                                            "per step, from `start`; the steps need not be even. A case whose segments "
                                            "bind datasets runs on the datasets' clock, and a schedule stated beside them "
-                                           "must agree with them. Schedule(dtime, n_steps) is the usual even clock, "
+                                           "must agree with them. Schedule(step_seconds, steps) is the usual even clock, "
                                            "Schedule(step_lengths=[...]) states every step.")
-                        .def(py::init([](const double dtime, const std::size_t nSteps, const Start & startAt) {
-                                 return uniformSchedule(dtime, nSteps, startAt);
+                        .def(py::init([](const double stepSeconds, const std::size_t steps, const Start & startAt) {
+                                 return uniformSchedule(stepSeconds, steps, startAt);
                              }),
-                             py::arg("dtime"),
-                             py::arg("n_steps"),
+                             py::arg("step_seconds"),
+                             py::arg("steps"),
                              py::arg("start") = Start{})
                         .def(py::init([](const std::vector<double> & stepLengths, const Start & startAt) {
                                  return Schedule{.start = startAt, .stepLengths = stepLengths};
@@ -366,7 +366,7 @@ namespace
                              py::arg("step_lengths"),
                              py::arg("start") = Start{})
                         .def_property_readonly(
-                          "dtime",
+                          "step_seconds",
                           [](const Schedule & schedule) {
                               const auto step{uniformStep(schedule)};
                               if(!step.has_value())
@@ -376,7 +376,7 @@ namespace
                               return step.value();
                           },
                           "The length every step has. Raises ValueError when the steps differ or there are none.")
-                        .def_property_readonly("n_steps", &nSteps)
+                        .def_property_readonly("steps", &nSteps)
                         .def_readwrite("step_lengths", &Schedule::stepLengths, "Seconds per step.")
                         .def_readwrite("start", &Schedule::start)
                         .def_property_readonly("duration", &Schedule::duration)
@@ -386,7 +386,7 @@ namespace
                             const auto step{uniformStep(schedule)};
                             if(step.has_value())
                             {
-                                return std::format("Schedule(dtime={}, n_steps={}{})", pythonRepr(step.value()), nSteps(schedule), startField);
+                                return std::format("Schedule(step_seconds={}, steps={}{})", pythonRepr(step.value()), nSteps(schedule), startField);
                             }
                             return std::format("Schedule(step_lengths={}{})", pythonRepr(schedule.stepLengths), startField);
                         })};
@@ -574,7 +574,7 @@ namespace
                  py::arg("physics") = Physics{},
                  py::arg("numerics") = Numerics{},
                  py::arg("title") = std::string{},
-                 py::arg("mode") = ThermFile::CalculationMode::cmTransient,
+                 py::arg("mode") = ThermFile::CalculationMode::Transient,
                  py::arg("mesh_control") = ThermFile::MeshControl{})
             .def_readwrite("id", &ModelCase::id)
             .def_readwrite("title", &ModelCase::title)
@@ -650,7 +650,7 @@ namespace
                   "The case with the named faces under other conditions: a copy in which every segment whose name "
                   "is a key of `conditions` carries that condition instead of its own and binds no dataset. "
                   "Segments not named are untouched.");
-        initializer.def("case", &initializerCase, py::arg("model_case"),
+        model.def("initializer_case", &initializerCase, py::arg("model_case"),
                   "The case the initializer solves, for a start solved first; None for a uniform start. "
                   "FromSteadyState: the case under the swapped conditions, steady state, starting from `start`, "
                   "with no schedule. FromTransient: the same, transient, over the start's schedule.");

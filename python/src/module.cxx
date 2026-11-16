@@ -47,7 +47,7 @@ PYBIND11_MODULE(pylibraryfemtherm, mod)
     bind_mesh_results(mod);
     bind_steady_state_results(mod);
     // After bind_geometry, bind_bc_library and bind_time_series: the lookups take a
-    // Boundary, a BoundaryConditionsDB and TimeSeriesData.
+    // Boundary, a BoundaryConditionsLibrary and TimeSeriesData.
     bind_boundary_lookup(mod);
     // Last: the model and build layers hand out ThermModel, Material, BoundaryCondition and
     // TimeSeriesData objects, so every one of those must already be registered.

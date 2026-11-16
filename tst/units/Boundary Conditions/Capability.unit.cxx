@@ -56,36 +56,36 @@ TEST(TestBCCapability, AllConstantFixedConvectionRunsEverywhere)
 {
     const auto record{allConstantFixedConvection()};
 
-    EXPECT_TRUE(usable(record, SimulationEngine::Conrad, CalculationMode::cmSteadyState));
-    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::cmSteadyState));
-    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::cmTransient));
+    EXPECT_TRUE(usable(record, SimulationEngine::Conrad, CalculationMode::SteadyState));
+    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::SteadyState));
+    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::Transient));
 }
 
 TEST(TestBCCapability, CorrelationConvectionIsHygroThermFEMOnly)
 {
     const auto record{correlationConvection()};
 
-    const auto issues{capabilityIssues(record, SimulationEngine::Conrad, CalculationMode::cmSteadyState)};
+    const auto issues{capabilityIssues(record, SimulationEngine::Conrad, CalculationMode::SteadyState)};
     ASSERT_EQ(issues.size(), 1U);
     EXPECT_EQ(issues[0].feature, "TARP");
     EXPECT_EQ(issues[0].reason, "not supported by the Conrad engine");
 
-    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::cmSteadyState));
-    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::cmTransient));
+    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::SteadyState));
+    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::Transient));
 }
 
 TEST(TestBCCapability, EnvironmentSourcesNeedTransientHygroThermFEM)
 {
     const auto record{environmentSourced()};
 
-    EXPECT_FALSE(usable(record, SimulationEngine::Conrad, CalculationMode::cmSteadyState));
+    EXPECT_FALSE(usable(record, SimulationEngine::Conrad, CalculationMode::SteadyState));
 
-    const auto steadyIssues{capabilityIssues(record, SimulationEngine::HygroThermFEM, CalculationMode::cmSteadyState)};
+    const auto steadyIssues{capabilityIssues(record, SimulationEngine::HygroThermFEM, CalculationMode::SteadyState)};
     ASSERT_EQ(steadyIssues.size(), 1U);
     EXPECT_EQ(steadyIssues[0].feature, "Air Temperature");
     EXPECT_EQ(steadyIssues[0].reason, "requires the transient calculation mode");
 
-    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::cmTransient));
+    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::Transient));
 }
 
 TEST(TestBCCapability, PrescribedStateHasNoConradPath)
@@ -95,12 +95,12 @@ TEST(TestBCCapability, PrescribedStateHasNoConradPath)
     prescribed.temperature = Constant{20.0};
     record.data = prescribed;
 
-    const auto issues{capabilityIssues(record, SimulationEngine::Conrad, CalculationMode::cmSteadyState)};
+    const auto issues{capabilityIssues(record, SimulationEngine::Conrad, CalculationMode::SteadyState)};
     ASSERT_EQ(issues.size(), 1U);
     EXPECT_EQ(issues[0].feature, "Prescribed state");
 
-    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::cmSteadyState));
-    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::cmTransient));
+    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::SteadyState));
+    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::Transient));
 }
 
 TEST(TestBCCapability, RadiationOnlyFixedCoefficientFlaggedUnderConrad)
@@ -110,11 +110,11 @@ TEST(TestBCCapability, RadiationOnlyFixedCoefficientFlaggedUnderConrad)
     exchange.radiation = FixedCoefficientRadiation{Constant{15.0}, Constant{4.0}};
     record.data = exchange;
 
-    const auto issues{capabilityIssues(record, SimulationEngine::Conrad, CalculationMode::cmSteadyState)};
+    const auto issues{capabilityIssues(record, SimulationEngine::Conrad, CalculationMode::SteadyState)};
     ASSERT_EQ(issues.size(), 1U);
     EXPECT_EQ(issues[0].feature, "Fixed-coefficient radiation");
 
-    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::cmSteadyState));
+    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::SteadyState));
 }
 
 TEST(TestBCCapability, RadiationSurfaceRecordsRunEverywhere)
@@ -122,7 +122,7 @@ TEST(TestBCCapability, RadiationSurfaceRecordsRunEverywhere)
     BoundaryCondition record;
     record.data = RadiationSurface{.isDefault = true, .temperature = 20.0, .emissivity = 0.9};
 
-    EXPECT_TRUE(usable(record, SimulationEngine::Conrad, CalculationMode::cmSteadyState));
-    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::cmSteadyState));
-    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::cmTransient));
+    EXPECT_TRUE(usable(record, SimulationEngine::Conrad, CalculationMode::SteadyState));
+    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::SteadyState));
+    EXPECT_TRUE(usable(record, SimulationEngine::HygroThermFEM, CalculationMode::Transient));
 }

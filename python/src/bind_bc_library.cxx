@@ -232,7 +232,7 @@ void bind_bc_library(py::module_ & mod)
     mod.def("is_radiation_bc", &BCLibrary::isRadiationBC, py::arg("boundary_condition"));
 
     // --- DB ---
-    py::class_<BCLibrary::DB>(mod, "BoundaryConditionsDB",
+    py::class_<BCLibrary::DB>(mod, "BoundaryConditionsLibrary",
                               "The consolidated boundary-condition library.")
         .def(py::init<>())
         .def(PathBinding::fromFile<BCLibrary::DB>(), py::arg("xml_file_path"))
@@ -244,18 +244,18 @@ void bind_bc_library(py::module_ & mod)
              "unchanged when absent. From a file: thmz.read(...).boundary_conditions().")
         .def("save", PathBinding::pathFirst(&BCLibrary::DB::saveToZipFile), py::arg("thmz_file_path"),
              py::arg("format") = FileParse::FileFormat::XML)
-        .def("get_boundary_conditions", &BCLibrary::DB::getBoundaryConditions,
+        .def("boundary_conditions", &BCLibrary::DB::getBoundaryConditions,
              py::return_value_policy::reference_internal)
-        .def("get_by_uuid", &BCLibrary::DB::getByUUID, py::arg("uuid"))
-        .def("get_by_name", &BCLibrary::DB::getByName, py::arg("name"))
-        .def("get_by_display_name", &BCLibrary::DB::getByDisplayName, py::arg("display_name"))
-        .def("get_names", &BCLibrary::DB::getNames)
-        .def("get_display_names", &BCLibrary::DB::getDisplayNames)
+        .def("by_uuid", &BCLibrary::DB::getByUUID, py::arg("uuid"))
+        .def("by_name", &BCLibrary::DB::getByName, py::arg("name"))
+        .def("by_display_name", &BCLibrary::DB::getByDisplayName, py::arg("display_name"))
+        .def("names", &BCLibrary::DB::getNames)
+        .def("display_names", &BCLibrary::DB::getDisplayNames)
         .def("add", &BCLibrary::DB::add, py::arg("condition"))
         .def("update", &BCLibrary::DB::update, py::arg("condition"))
         .def("update_or_add", &BCLibrary::DB::updateOrAdd, py::arg("condition"))
-        .def("delete_with_uuid", &BCLibrary::DB::deleteWithUUID, py::arg("uuid"))
-        .def("get_default_record", &BCLibrary::DB::getDefaultRecord)
-        .def("get_default_radiation_surface", &BCLibrary::DB::getDefaultRadiationSurface)
+        .def("delete_by_uuid", &BCLibrary::DB::deleteByUUID, py::arg("uuid"))
+        .def("default_record", &BCLibrary::DB::getDefaultRecord)
+        .def("default_radiation_surface", &BCLibrary::DB::getDefaultRadiationSurface)
         .def("is_dirty", &BCLibrary::DB::isDirty);
 }

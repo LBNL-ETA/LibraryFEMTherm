@@ -114,7 +114,7 @@ class TestRecordKinds:
 
 class TestLibraryRoundTrip:
     def test_save_and_load_string(self):
-        library = fem.BoundaryConditionsDB()
+        library = fem.BoundaryConditionsLibrary()
         library.add(_prescribed())
         library.add(_convective())
         library.add(_adiabatic())
@@ -124,39 +124,39 @@ class TestLibraryRoundTrip:
         assert "<SurfaceExchange>" in text
         assert "<Constant>20</Constant>" in text
 
-        loaded = fem.BoundaryConditionsDB()
+        loaded = fem.BoundaryConditionsLibrary()
         loaded.from_string(text)
-        assert loaded.get_names() == [
+        assert loaded.names() == [
             "Fixed temperature and humidity",
             "Fixed film, 20 C",
             "Sealed",
         ]
 
-        prescribed = loaded.get_by_uuid("p-1")
+        prescribed = loaded.by_uuid("p-1")
         assert prescribed is not None
         assert prescribed.data.temperature.role == fem.SeriesRole.SurfaceTemperature
 
-        convective = loaded.get_by_name("Fixed film, 20 C")
+        convective = loaded.by_name("Fixed film, 20 C")
         assert convective is not None
         assert abs(convective.data.convection.air_temperature.value - 20.0) < TOL
         assert abs(convective.data.convection.film_coefficient.value - 8.0) < TOL
         assert abs(convective.data.relative_humidity.value - 0.5) < TOL
 
-        sealed = loaded.get_by_uuid("a-1")
+        sealed = loaded.by_uuid("a-1")
         assert sealed is not None
         assert isinstance(sealed.data, fem.NoExchange)
 
     def test_json_format(self):
-        library = fem.BoundaryConditionsDB()
+        library = fem.BoundaryConditionsLibrary()
         library.add(_convective())
         text = library.to_string(fem.FileFormat.JSON)
         assert text.lstrip().startswith("{")
-        loaded = fem.BoundaryConditionsDB()
+        loaded = fem.BoundaryConditionsLibrary()
         loaded.from_string(text)
-        assert loaded.get_names() == ["Fixed film, 20 C"]
+        assert loaded.names() == ["Fixed film, 20 C"]
 
     def test_dirty_flag(self):
-        library = fem.BoundaryConditionsDB()
+        library = fem.BoundaryConditionsLibrary()
         assert not library.is_dirty()
         library.add(_adiabatic())
         assert library.is_dirty()
@@ -172,18 +172,18 @@ class TestEmbeddedLibrary:
     def test_load_from_entries(self, mullion_path):
         entries = fem.thmz.read(mullion_path).entries()
         assert fem.thmz.find_entry(entries, fem.thmz.BOUNDARY_CONDITIONS_FILE_NAME)
-        library = fem.BoundaryConditionsDB()
+        library = fem.BoundaryConditionsLibrary()
         library.from_entries(entries)
-        names = library.get_names()
+        names = library.names()
         assert "Adiabatic" in names
-        adiabatic = library.get_by_name("Adiabatic")
+        adiabatic = library.by_name("Adiabatic")
         assert adiabatic is not None
         assert fem.is_steady_capable(adiabatic)
 
     def test_the_archives_library(self, mullion_path):
         library = fem.thmz.read(mullion_path).boundary_conditions()
         assert library is not None
-        assert len(library.get_boundary_conditions()) > 0
+        assert len(library.boundary_conditions()) > 0
 
     def test_an_archive_without_a_library_has_none(self, sample_sill_path):
         assert fem.thmz.read(sample_sill_path).boundary_conditions() is None

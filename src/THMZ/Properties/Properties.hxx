@@ -153,7 +153,7 @@ namespace ThermFile
     struct CalculationOptions
     {
         SimulationEngine simulationEngine{SimulationEngine::Conrad};
-        CalculationMode calculationMode{CalculationMode::cmSteadyState};
+        CalculationMode calculationMode{CalculationMode::SteadyState};
         bool simulateMoisture{true};
         bool simulateThermal{true};
         ModelingOptions modelingOptions;

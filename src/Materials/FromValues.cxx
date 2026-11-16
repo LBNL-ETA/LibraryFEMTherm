@@ -184,7 +184,7 @@ namespace MaterialsLibrary
         return record;
     }
 
-    DB materialsDatabase(const std::vector<Material> & records)
+    DB fromRecords(const std::vector<Material> & records)
     {
         DB database;
         std::set<std::string> seen;

@@ -50,7 +50,7 @@ def sealed_strip() -> model.ModelCase:
             model.Segment(model.bc.Prescribed(temperature=40.0), (0.0, 0.005), (0.0, 0.0)),
         ],
         initializer=model.initializer.Uniform(temperature=30.0, humidity=0.4),
-        schedule=model.Schedule(dtime=36000.0, n_steps=300),
+        schedule=model.Schedule(step_seconds=36000.0, steps=300),
         physics=model.Physics(liquid_transport=False, heat_of_evaporation=False),
     )
 
@@ -71,14 +71,14 @@ def steady_l() -> model.ModelCase:
                           (0.17, 0.0), (0.17, 0.09)),
         ],
         physics=model.Physics(moisture=False),
-        mode=fem.CalculationMode.cmSteadyState,
+        mode=fem.CalculationMode.SteadyState,
         mesh_control=fem.MeshControl(error_energy_norm=8.0, maximum_iterations=4),
     )
 
 
 class TestSteadyState:
     def test_a_case_is_transient_unless_stated(self):
-        assert sealed_strip().mode == fem.CalculationMode.cmTransient
+        assert sealed_strip().mode == fem.CalculationMode.Transient
         assert not model.is_steady_state(sealed_strip())
 
     def test_a_steady_case_needs_no_clock(self):
@@ -97,7 +97,7 @@ class TestSteadyState:
         assert "SteadyStateBC.xml" not in entries
         assert not [name for name in entries if name.startswith("time series/")]
         options = build.model(steady_l()).properties.calculation_options
-        assert options.calculation_mode == fem.CalculationMode.cmSteadyState
+        assert options.calculation_mode == fem.CalculationMode.SteadyState
         assert options.mesh_control.error_energy_norm == pytest.approx(8.0)
 
     def test_radiation_and_tag_by_keyword(self):
@@ -153,7 +153,7 @@ class TestSteadyState:
 
     def test_a_steady_case_may_prescribe_a_face(self):
         case = sealed_strip()
-        case.mode = fem.CalculationMode.cmSteadyState
+        case.mode = fem.CalculationMode.SteadyState
         assert model.issues(model_case=case) == []
 
 
@@ -227,7 +227,7 @@ class TestVocabulary:
             id="probe",
             regions=[model.Region(linear_sorption(), [(0.0, 0.0), (0.1, 0.0), (0.1, 0.01), (0.0, 0.01)])],
             segments=[model.Segment(convective, (0.1, 0.0), (0.1, 0.01))],
-            schedule=model.Schedule(dtime=3600.0, n_steps=1)))
+            schedule=model.Schedule(step_seconds=3600.0, steps=1)))
         assert any(issue.kind == model.IssueKind.ConvectionInputMissing
                    and issue.input == model.ConvectionInput.FilmCoefficient for issue in found)
 
@@ -255,7 +255,7 @@ class TestVocabulary:
             "Segment(kind=Adiabatic(), start=Point(0, 0), end=Point(0.2, 0), region=1, color='0x1E5A96', name='bottom')"
         )
         assert repr(model.initializer.Uniform(temperature=20.0, humidity=0.5)) == "Uniform(temperature=20, humidity=0.5)"
-        assert repr(model.Schedule(dtime=3600.0, n_steps=24)) == "Schedule(dtime=3600.0, n_steps=24)"
+        assert repr(model.Schedule(step_seconds=3600.0, steps=24)) == "Schedule(step_seconds=3600.0, steps=24)"
         assert repr(model.Physics(moisture=False)) == (
             "Physics(thermal=True, moisture=False, liquid_transport=True, heat_of_evaporation=True, "
             "capillary_conduction=True, vapor_diffusion_conduction=True, latent_heat_of_fusion=True, "
@@ -318,7 +318,7 @@ class TestColours:
         assert therm_model.boundary_conditions[1].color == "0xE07A1F"
         assert therm_model.boundary_conditions[0].color == "0x000000"
         records = build.libraries(case).boundary_conditions
-        assert records.get_by_name("Adiabatic").color == "0x000000"
+        assert records.by_name("Adiabatic").color == "0x000000"
 
 
 class TestOutline:
@@ -353,7 +353,7 @@ class TestIssues:
         nameless = linear_sorption()
         nameless.name = ""
         case.regions = [model.Region(nameless, case.regions[0].points)]
-        case.schedule = model.Schedule(dtime=3600.0, n_steps=0)
+        case.schedule = model.Schedule(step_seconds=3600.0, steps=0)
         found: list[model.Issue] = model.issues(model_case=case)
         assert kinds(found=found) == [model.IssueKind.UnnamedMaterial, model.IssueKind.NoSteps]
         assert [model.describe(model_case=case, issue=issue) for issue in found] == [
@@ -450,7 +450,7 @@ class TestLibraryRecords:
         assert len(therm_model.boundary_conditions) == 4
         options = therm_model.properties.calculation_options
         assert options.simulation_engine == fem.SimulationEngine.HygroThermFEM
-        assert options.calculation_mode == fem.CalculationMode.cmTransient
+        assert options.calculation_mode == fem.CalculationMode.Transient
         assert options.modeling_options.exclude_water_liquid_transportation is True
         assert options.modeling_options.exclude_capillary_conduction is False
         assert options.initial_conditions.state == fem.UniformStart(temperature=30.0, humidity=0.4)
@@ -458,20 +458,20 @@ class TestLibraryRecords:
         assert (origin.x, origin.y) == build.DRAWING_ORIGIN_MM
 
         libraries = build.libraries(case)
-        assert libraries.materials.get_names() == ["linear-sorption"]
-        assert sorted(libraries.boundary_conditions.get_names()) == ["Adiabatic", "segment 2", "segment 4"]
+        assert libraries.materials.names() == ["linear-sorption"]
+        assert sorted(libraries.boundary_conditions.names()) == ["Adiabatic", "segment 2", "segment 4"]
         # Constants everywhere: the clock dataset alone.
         assert len(libraries.datasets) == 1
         schedule = build.schedule_of(libraries.datasets)
-        assert schedule.n_steps == 300
-        assert abs(schedule.dtime - 36000.0) < TOL
+        assert schedule.steps == 300
+        assert abs(schedule.step_seconds - 36000.0) < TOL
 
         datasets = build.boundary_datasets(case)
         assert sorted(datasets) == [0]
         assert fem.time_series_steps(datasets[0]) == 300
         bindings = build.segment_bindings(case)
         assert [bound.dataset_uuid is not None for bound in bindings] == [True, False, False, False]
-        assert bindings[1].record_uuid == libraries.boundary_conditions.get_by_name("segment 2").uuid
+        assert bindings[1].record_uuid == libraries.boundary_conditions.by_name("segment 2").uuid
 
     def test_segments_binding_the_same_weather_share_a_record_and_a_dataset(self):
         outdoor_values: list[float] = [-5.0 + 0.5 * hour for hour in range(48)]
@@ -495,7 +495,7 @@ class TestLibraryRecords:
         dataset = libraries.datasets[0]
         assert (dataset.uuid, dataset.name) == (outdoor.uuid, outdoor.name)   # written as given
         assert fem.values_for_role(dataset, fem.SeriesRole.AirTemperature) == outdoor_values
-        assert build.schedule_of(libraries.datasets) == model.Schedule(dtime=3600.0, n_steps=48)
+        assert build.schedule_of(libraries.datasets) == model.Schedule(step_seconds=3600.0, steps=48)
         bindings = build.segment_bindings(case)
         assert bindings[0].dataset_uuid == dataset.uuid == bindings[2].dataset_uuid
         assert bindings[1].dataset_uuid is None
@@ -531,18 +531,18 @@ class TestLibraryRecords:
             series=[fem.Series(fem.SeriesRole.AirTemperature, [0.0] * 48)],
         )
         schedule = model.schedule_for(weather)
-        assert schedule == model.Schedule(dtime=1800.0, n_steps=48)
+        assert schedule == model.Schedule(step_seconds=1800.0, steps=48)
         assert model.axis_of(schedule) == weather.axis
-        shifted = model.Schedule(dtime=3600.0, n_steps=24, start=model.Start(month=2, day=10, hour=6))
-        assert repr(shifted) == "Schedule(dtime=3600.0, n_steps=24, start=Start(month=2, day=10, hour=6, minute=0))"
+        shifted = model.Schedule(step_seconds=3600.0, steps=24, start=model.Start(month=2, day=10, hour=6))
+        assert repr(shifted) == "Schedule(step_seconds=3600.0, steps=24, start=Start(month=2, day=10, hour=6, minute=0))"
         assert model.axis_of(shifted) == fem.TimeAxis(month=2, day=10, hour=6, minute=0, step_seconds=3600.0)
 
     def test_an_uneven_schedule_states_every_step(self):
         uneven = model.Schedule(step_lengths=[900.0, 1800.0], start=model.Start(month=2))
-        assert uneven.n_steps == 2
+        assert uneven.steps == 2
         assert abs(uneven.duration - 2700.0) < TOL
         with pytest.raises(ValueError):
-            uneven.dtime
+            uneven.step_seconds
         assert repr(uneven) == "Schedule(step_lengths=[900.0, 1800.0], start=Start(month=2, day=1, hour=1, minute=0))"
         assert model.axis_of(uneven) == fem.TimeAxis(month=2, step_seconds=[900.0, 1800.0])
         weather = fem.TimeSeriesData(axis=model.axis_of(uneven),
@@ -559,7 +559,7 @@ class TestLibraryRecords:
         with pytest.raises(ValueError, match="day 31 is not 1..30"):
             start.month = fem.Month.April
         assert start == model.Start(month=1, day=31)
-        assert model.Schedule(step_lengths=[3600.0] * 3) == model.Schedule(dtime=3600.0, n_steps=3)
+        assert model.Schedule(step_lengths=[3600.0] * 3) == model.Schedule(step_seconds=3600.0, steps=3)
 
 
 class TestArchive:
@@ -580,9 +580,9 @@ class TestArchive:
         assert len(loaded.polygons) == 1
         assert len(loaded.boundary_conditions) == 4
 
-        assert sorted(archive.boundary_conditions().get_names()) == ["Adiabatic", "segment 2", "segment 4"]
+        assert sorted(archive.boundary_conditions().names()) == ["Adiabatic", "segment 2", "segment 4"]
         assert len(archive.datasets()) == 1
-        assert archive.materials().get_names() == ["linear-sorption"]
+        assert archive.materials().names() == ["linear-sorption"]
 
         # Overwrites in place.
         assert build.thmz(sealed_strip(), written) == written
@@ -639,7 +639,7 @@ class TestSolvedStarts:
         assert described(model.initializer.Uniform(temperature=30.0, humidity=0.4)) == "uniform 30.0 0.4"
         assert described(model.initializer.FromSteadyState()) == "steady from None"
         assert described(model.initializer.FromSteadyState(start=start)) == f"steady from {start}"
-        schedule = model.Schedule(dtime=3600.0, n_steps=2)
+        schedule = model.Schedule(step_seconds=3600.0, steps=2)
         assert described(model.initializer.FromTransient(schedule=schedule, start=start)) == f"transient from {start}"
 
     def test_reprs(self):
@@ -653,8 +653,8 @@ class TestSolvedStarts:
         case = strip_with_a_named_cold_end()
         case.initializer = model.initializer.FromSteadyState(conditions={"cold end": model.bc.Prescribed(temperature=40.0)})
         assert model.issues(model_case=case) == []
-        assert model.initializer.case(model_case=sealed_strip()) is None
-        initializer_case = model.initializer.case(model_case=case)
+        assert model.initializer_case(model_case=sealed_strip()) is None
+        initializer_case = model.initializer_case(model_case=case)
         assert initializer_case is not None
         assert model.is_steady_state(model_case=initializer_case)
         assert initializer_case.segments[1].kind == model.bc.Prescribed(temperature=40.0)
@@ -679,23 +679,23 @@ class TestSolvedStarts:
         case = strip_with_a_named_cold_end()
         case.initializer = model.initializer.FromSteadyState(conditions={"cold end": model.bc.Prescribed(temperature=35.0)})
         records = build.libraries(case).boundary_conditions
-        assert sorted(records.get_names()) == ["Adiabatic", "cold end", "cold end at start", "segment 4"]
+        assert sorted(records.names()) == ["Adiabatic", "cold end", "cold end at start", "segment 4"]
         state = build.model(case).properties.calculation_options.initial_conditions.state
         assert isinstance(state, fem.SteadyStart)
-        assert state.conditions == [fem.StartCondition(segment=1, bc_uuid=records.get_by_name("cold end at start").uuid)]
+        assert state.conditions == [fem.StartCondition(segment=1, bc_uuid=records.by_name("cold end at start").uuid)]
         assert state.start is None
 
     def test_a_start_condition_of_known_content_shares_the_record(self):
         case = strip_with_a_named_cold_end()
         case.initializer = model.initializer.FromSteadyState(conditions={"cold end": model.bc.Prescribed(temperature=40.0)})
         records = build.libraries(case).boundary_conditions
-        assert sorted(records.get_names()) == ["Adiabatic", "cold end", "segment 4"]
+        assert sorted(records.names()) == ["Adiabatic", "cold end", "segment 4"]
         state = build.model(case).properties.calculation_options.initial_conditions.state
-        assert state.conditions == [fem.StartCondition(segment=1, bc_uuid=records.get_by_name("segment 4").uuid)]
+        assert state.conditions == [fem.StartCondition(segment=1, bc_uuid=records.by_name("segment 4").uuid)]
 
     def test_a_transient_start_writes_its_schedule(self):
         case = sealed_strip()
-        case.initializer = model.initializer.FromTransient(schedule=model.Schedule(dtime=1800.0, n_steps=3),
+        case.initializer = model.initializer.FromTransient(schedule=model.Schedule(step_seconds=1800.0, steps=3),
                                            start=model.initializer.Uniform(temperature=5.0, humidity=0.9))
         state = build.model(case).properties.calculation_options.initial_conditions.state
         assert state == fem.TransientStart(step_lengths=[1800.0, 1800.0, 1800.0],
@@ -706,7 +706,7 @@ class TestSolvedStarts:
         case.initializer = model.initializer.FromSteadyState(start=model.initializer.Uniform(temperature=30.0, humidity=0.4),
                                                          physics=model.Physics(moisture=False))
         assert model.issues(model_case=case) == []
-        initializer_case = model.initializer.case(model_case=case)
+        initializer_case = model.initializer_case(model_case=case)
         assert initializer_case is not None
         assert initializer_case.physics.moisture is False
         assert initializer_case.physics.thermal is True

@@ -142,22 +142,22 @@ Names are extension-free; the serialization format supplies `.xml` or `.json`.
 ```python
 # From a THMZ file
 contents = fem.thmz.read(Path("model.thmz")).entries([fem.thmz.MATERIALS_FILE_NAME])
-db = fem.MaterialsDB()
+db = fem.MaterialsLibrary()
 db.from_string(contents[fem.thmz.MATERIALS_FILE_NAME])
 
 # Or from a standalone XML file
-db = fem.MaterialsDB(Path("materials.xml"))
+db = fem.MaterialsLibrary(Path("materials.xml"))
 ```
 
 ### Querying materials
 
 ```python
 # List all material names
-print(db.get_names())
+print(db.names())
 
 # Look up by name or UUID
-mat = db.get_by_name("PVC/Vinyl")
-mat = db.get_by_uuid("some-uuid-string")
+mat = db.by_name("PVC/Vinyl")
+mat = db.by_uuid("some-uuid-string")
 
 # Every material is a solid; data is a Solid object with hygro-thermal and optical sub-trees.
 solid = mat.data
@@ -165,7 +165,7 @@ print(f"Conductivity: {solid.hygro_thermal.thermal_conductivity_dry}")
 print(f"Density:      {solid.hygro_thermal.bulk_density}")
 
 # Iterate all materials
-for mat in db.get_materials():
+for mat in db.materials():
     print(f"{mat.name} (uuid={mat.uuid})")
 ```
 
@@ -213,16 +213,16 @@ archive = fem.thmz.read(Path("model.thmz"))
 library = archive.boundary_conditions()   # None for an archive written before the libraries were unified
 
 # Or from entries already extracted
-library = fem.BoundaryConditionsDB()
+library = fem.BoundaryConditionsLibrary()
 library.from_entries(archive.entries())
 ```
 
 ### Querying
 
 ```python
-print(library.get_names())
+print(library.names())
 
-record = library.get_by_name("Interior")
+record = library.by_name("Interior")
 print(f"UUID: {record.uuid}")
 print(f"Name: {record.name}")
 
@@ -277,7 +277,7 @@ sealed = fem.BoundaryCondition()
 sealed.name = "Sealed"
 sealed.data = fem.NoExchange()
 
-library = fem.BoundaryConditionsDB()
+library = fem.BoundaryConditionsLibrary()
 for record in (fixed, film, sealed):
     library.add(record)
 print(fem.required_roles(fixed))       # [PrescribedTemperature, PrescribedHumidity]
@@ -499,7 +499,7 @@ except ValueError as refusal:
 
 ```python
 contents = fem.thmz.read(Path("model.thmz")).entries([fem.thmz.GASES_FILE_NAME])
-db = fem.GasesDB()
+db = fem.GasesLibrary()
 db.from_string(contents[fem.thmz.GASES_FILE_NAME])
 ```
 
@@ -507,15 +507,15 @@ db.from_string(contents[fem.thmz.GASES_FILE_NAME])
 
 ```python
 # Pure gases (e.g. Air, Argon, Krypton)
-print(db.get_pure_gas_names())
+print(db.pure_gas_names())
 
-air = db.get_pure_gas_by_name("Air")
+air = db.pure_gas_by_name("Air")
 print(f"Molecular weight: {air.properties.molecular_weight}")
 print(f"Conductivity A:   {air.properties.conductivity.a}")
 
 # Gas mixtures
-print(db.get_names())
-for gas in db.get_gases():
+print(db.names())
+for gas in db.gases():
     print(f"{gas.name}:")
     for comp in gas.components:
         print(f"  {comp.pure_gas_name}: {comp.fraction * 100:.0f}%")
@@ -832,7 +832,7 @@ print(xml)
 |---------------------------|--------|
 | `ModelPurpose`            | `Unknown`, `Window_TransparentFacade`, `OpaqueFacade`, `Other` |
 | `SimulationEngine`        | `Unknown`, `Conrad`, `HygroThermFEM` |
-| `CalculationMode`         | `Unknown`, `cmTransient`, `cmSteadyState` |
+| `CalculationMode`         | `Unknown`, `Transient`, `SteadyState` |
 | `MesherType`              | `Unknown`, `QuadTreeMesher`, `Simmetrix_Version_2022` |
 | `Orientation`             | `Unknown`, `North`, `East`, `South`, `West` |
 | `WindowCrossSectionType`  | `Unknown`, `Sill`, `Jamb`, `Head`, `HorizontalDivider`, `VerticalDivider`, `HorizontalMeetingRail`, `VerticalMeetingRail`, `CommonFrame`, `Spacer` |

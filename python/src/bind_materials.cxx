@@ -147,27 +147,24 @@ void bind_materials(py::module_ & mod)
     mod.def("material_color", &MaterialsLibrary::materialColor, py::arg("name"),
             "THERM's polygon fill colour derived from a material name, 0xRRGGBB, the same in every archive.");
     // --- DB ---
-    py::class_<MaterialsLibrary::DB>(mod, "MaterialsDB")
+    py::class_<MaterialsLibrary::DB>(mod, "MaterialsLibrary")
         .def(py::init<>())
         .def(PathBinding::fromFile<MaterialsLibrary::DB>(), py::arg("xml_file_path"))
         .def("from_string", &MaterialsLibrary::DB::fromString, py::arg("text"))
         .def("to_string", &MaterialsLibrary::DB::toString,
              py::arg("format") = FileParse::FileFormat::XML)
-        .def("get_materials",
+        .def("materials",
              py::overload_cast<>(&MaterialsLibrary::DB::getMaterials, py::const_),
              py::return_value_policy::reference_internal)
-        .def("get_by_name", &MaterialsLibrary::DB::getByName, py::arg("name"))
-        .def("get_by_uuid", &MaterialsLibrary::DB::getByUUID, py::arg("uuid"))
-        .def("get_default_record", &MaterialsLibrary::DB::getDefaultRecord)
-        .def("get_names", &MaterialsLibrary::DB::getNames)
-        .def("get_display_names", &MaterialsLibrary::DB::getDisplayNames)
+        .def("by_name", &MaterialsLibrary::DB::getByName, py::arg("name"))
+        .def("by_uuid", &MaterialsLibrary::DB::getByUUID, py::arg("uuid"))
+        .def("default_record", &MaterialsLibrary::DB::getDefaultRecord)
+        .def("names", &MaterialsLibrary::DB::getNames)
+        .def("display_names", &MaterialsLibrary::DB::getDisplayNames)
         .def("add", &MaterialsLibrary::DB::add, py::arg("material"))
         .def("update", &MaterialsLibrary::DB::update, py::arg("material"))
         .def("update_or_add", &MaterialsLibrary::DB::updateOrAdd, py::arg("material"))
-        .def("delete_with_uuid", &MaterialsLibrary::DB::deleteWithUUID, py::arg("uuid"));
-
-    // After MaterialsDB: a signature names its types by their Python names only once
-    // they are registered, and the generated type stubs are read from those signatures.
-    mod.def("materials_database", &MaterialsLibrary::materialsDatabase, py::arg("records"),
-            "A materials library holding the given records, one per distinct UUID.");
+        .def("delete_by_uuid", &MaterialsLibrary::DB::deleteByUUID, py::arg("uuid"))
+        .def_static("from_records", &MaterialsLibrary::fromRecords, py::arg("records"),
+                    "A materials library holding the given records, one per distinct UUID.");
 }

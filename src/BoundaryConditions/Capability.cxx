@@ -80,7 +80,7 @@ namespace BCLibrary
             return issues;
         }
 
-        if(mode == ThermFile::CalculationMode::cmSteadyState)
+        if(mode == ThermFile::CalculationMode::SteadyState)
         {
             addTimeSeriesSourceIssues(record, transientReason, issues);
         }

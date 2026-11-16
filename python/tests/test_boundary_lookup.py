@@ -71,7 +71,7 @@ class TestAgainstTheWriter:
 
 class TestNothingBound:
     def test_a_record_is_found_by_name_without_a_uuid(self):
-        library: fem.BoundaryConditionsDB = fem.BoundaryConditionsDB()
+        library: fem.BoundaryConditionsLibrary = fem.BoundaryConditionsLibrary()
         record: fem.BoundaryCondition = fem.BoundaryCondition()
         record.uuid = "uuid-outside"
         record.name = "outside"
@@ -88,5 +88,5 @@ class TestNothingBound:
         boundary.name = "attic"
         boundary.bc_uuid = "uuid-gone"
 
-        assert fem.boundary_record(library=fem.BoundaryConditionsDB(), boundary=boundary) is None
+        assert fem.boundary_record(library=fem.BoundaryConditionsLibrary(), boundary=boundary) is None
         assert fem.boundary_dataset(datasets=[], boundary=boundary) is None

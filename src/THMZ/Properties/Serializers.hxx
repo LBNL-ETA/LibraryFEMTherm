@@ -143,7 +143,7 @@ namespace ThermFile
         node >> FileParse::Child{"ConstantInitialConditionsTransient", transientStart};
         node >> FileParse::Child{"ConstantInitialConditionsSteadyState", steadyStart};
         options.initialConditions.state =
-          options.calculationMode == CalculationMode::cmSteadyState ? steadyStart : transientStart;
+          options.calculationMode == CalculationMode::SteadyState ? steadyStart : transientStart;
     }
 
     template<typename NodeAdapter>

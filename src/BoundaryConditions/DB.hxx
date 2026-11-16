@@ -40,7 +40,7 @@ namespace BCLibrary
         void add(const BoundaryCondition & condition);
         void update(const BoundaryCondition & condition);
         void updateOrAdd(const BoundaryCondition & condition);
-        void deleteWithUUID(std::string_view uuid);
+        void deleteByUUID(std::string_view uuid);
 
         void deleteRecordsWithProjectName(std::string_view projectName);
         //! Re-tags the project records of a renamed document. Glazing-system surface

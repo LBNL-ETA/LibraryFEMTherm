@@ -52,26 +52,26 @@ void bind_gases(py::module_ & mod)
         .def_readwrite("protected_", &GasesLibrary::GasesData::Protected);
 
     // --- DB ---
-    py::class_<GasesLibrary::DB>(mod, "GasesDB")
+    py::class_<GasesLibrary::DB>(mod, "GasesLibrary")
         .def(py::init<>())
         .def(PathBinding::fromFile<GasesLibrary::DB>(), py::arg("file_path"))
         .def("from_string", &GasesLibrary::DB::fromString, py::arg("text"))
         .def("to_string", &GasesLibrary::DB::toString,
              py::arg("format") = FileParse::FileFormat::XML)
-        .def("get_gases", &GasesLibrary::DB::getGases,
+        .def("gases", &GasesLibrary::DB::getGases,
              py::return_value_policy::reference_internal)
-        .def("get_pure_gases", &GasesLibrary::DB::getPureGases,
+        .def("pure_gases", &GasesLibrary::DB::getPureGases,
              py::return_value_policy::reference_internal)
-        .def("get_gases_data", &GasesLibrary::DB::getGasesData)
-        .def("get_by_uuid", &GasesLibrary::DB::getByUUID, py::arg("uuid"))
-        .def("get_by_name", &GasesLibrary::DB::getByName, py::arg("name"))
-        .def("get_names", &GasesLibrary::DB::getNames)
-        .def("get_display_names", &GasesLibrary::DB::getDisplayNames)
-        .def("get_pure_gas_names", &GasesLibrary::DB::getPureGasNames)
-        .def("get_pure_gas_by_uuid", &GasesLibrary::DB::getPureGasByUUID, py::arg("uuid"))
-        .def("get_pure_gas_by_name", &GasesLibrary::DB::getPureGasByName, py::arg("name"))
+        .def("gases_data", &GasesLibrary::DB::getGasesData)
+        .def("by_uuid", &GasesLibrary::DB::getByUUID, py::arg("uuid"))
+        .def("by_name", &GasesLibrary::DB::getByName, py::arg("name"))
+        .def("names", &GasesLibrary::DB::getNames)
+        .def("display_names", &GasesLibrary::DB::getDisplayNames)
+        .def("pure_gas_names", &GasesLibrary::DB::getPureGasNames)
+        .def("pure_gas_by_uuid", &GasesLibrary::DB::getPureGasByUUID, py::arg("uuid"))
+        .def("pure_gas_by_name", &GasesLibrary::DB::getPureGasByName, py::arg("name"))
         .def("add_pure_gas", &GasesLibrary::DB::addPureGas, py::arg("pure"))
         .def("add_gas", &GasesLibrary::DB::addGas, py::arg("gas"))
         .def("add", &GasesLibrary::DB::add, py::arg("gas_data"))
-        .def("delete_with_uuid", &GasesLibrary::DB::deleteWithUUID, py::arg("uuid"));
+        .def("delete_by_uuid", &GasesLibrary::DB::deleteByUUID, py::arg("uuid"));
 }

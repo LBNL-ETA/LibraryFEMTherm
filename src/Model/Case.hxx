@@ -315,7 +315,7 @@ namespace ThermFile::Model
         Schedule schedule{};
         Physics physics{};
         Numerics numerics{};
-        ThermFile::CalculationMode mode{ThermFile::CalculationMode::cmTransient};
+        ThermFile::CalculationMode mode{ThermFile::CalculationMode::Transient};
         ThermFile::MeshControl meshControl{};
 
         [[nodiscard]] friend bool operator==(const ModelCase & lhs, const ModelCase & rhs) = default;

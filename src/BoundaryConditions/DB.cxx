@@ -178,7 +178,7 @@ namespace BCLibrary
         record.has_value() ? update(condition) : add(condition);
     }
 
-    void DB::deleteWithUUID(std::string_view uuid)
+    void DB::deleteByUUID(std::string_view uuid)
     {
         const size_t sizeBefore{m_BoundaryConditions.size()};
         m_BoundaryConditions.erase(std::ranges::remove_if(m_BoundaryConditions,

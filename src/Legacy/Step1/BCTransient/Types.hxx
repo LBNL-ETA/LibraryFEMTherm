@@ -99,7 +99,7 @@ namespace BCTypesLibrary
         void updateOrAdd(const TypeRecord & material);
 
         //! \brief Removes record with given uuid
-        void deleteWithUUID(std::string_view uuid);
+        void deleteByUUID(std::string_view uuid);
 
         //! \brief Saves current state of object to file (provided through object constructor)
         [[nodiscard]] int saveToFile(FileParse::FileFormat format = FileParse::FileFormat::XML) const;

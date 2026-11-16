@@ -96,22 +96,22 @@ void bind_bc(py::module_ & mod)
         .def_readwrite("is_igu_surface", &BCSteadyStateLibrary::BoundaryCondition::isIGUSurface);
 
     // --- DB ---
-    py::class_<BCSteadyStateLibrary::DB>(mod, "BCSteadyStateDB")
+    py::class_<BCSteadyStateLibrary::DB>(mod, "BCSteadyStateLibrary")
         .def(py::init<>())
         .def(PathBinding::fromFile<BCSteadyStateLibrary::DB>(), py::arg("xml_file_path"))
         .def("from_string", &BCSteadyStateLibrary::DB::fromString, py::arg("text"))
         .def("to_string", &BCSteadyStateLibrary::DB::toString,
              py::arg("format") = FileParse::FileFormat::XML)
-        .def("get_boundary_conditions", &BCSteadyStateLibrary::DB::getBoundaryConditions,
+        .def("boundary_conditions", &BCSteadyStateLibrary::DB::getBoundaryConditions,
              py::return_value_policy::reference_internal)
-        .def("get_by_uuid", &BCSteadyStateLibrary::DB::getByUUID, py::arg("uuid"))
-        .def("get_by_name", &BCSteadyStateLibrary::DB::getByName, py::arg("name"))
-        .def("get_names", &BCSteadyStateLibrary::DB::getNames)
-        .def("get_display_names", &BCSteadyStateLibrary::DB::getDisplayNames)
+        .def("by_uuid", &BCSteadyStateLibrary::DB::getByUUID, py::arg("uuid"))
+        .def("by_name", &BCSteadyStateLibrary::DB::getByName, py::arg("name"))
+        .def("names", &BCSteadyStateLibrary::DB::getNames)
+        .def("display_names", &BCSteadyStateLibrary::DB::getDisplayNames)
         .def("add", &BCSteadyStateLibrary::DB::add, py::arg("condition"))
         .def("update", &BCSteadyStateLibrary::DB::update, py::arg("condition"))
         .def("update_or_add", &BCSteadyStateLibrary::DB::updateOrAdd, py::arg("condition"))
-        .def("delete_with_uuid", &BCSteadyStateLibrary::DB::deleteWithUUID, py::arg("uuid"))
-        .def("get_default_record", &BCSteadyStateLibrary::DB::getDefaultRecord)
-        .def("get_default_radiation_surface", &BCSteadyStateLibrary::DB::getDefaultRadiationSurface);
+        .def("delete_by_uuid", &BCSteadyStateLibrary::DB::deleteByUUID, py::arg("uuid"))
+        .def("default_record", &BCSteadyStateLibrary::DB::getDefaultRecord)
+        .def("default_radiation_surface", &BCSteadyStateLibrary::DB::getDefaultRadiationSurface);
 }

@@ -178,7 +178,7 @@ TEST_F(TestMaterialsXMLSaving, DeleteMaterialXML)
 
     const std::string uuid{"26fc05d4-a7aa-43a1-b473-c984caefea5b"};
 
-    materialDB.deleteWithUUID(uuid);
+    materialDB.deleteByUUID(uuid);
 
     const auto error{materialDB.saveToFile()};
     EXPECT_EQ(error, 0);

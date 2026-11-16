@@ -545,7 +545,7 @@ TEST(Model, TransientRefusesWhatTheEngineDoesNotRunThroughAClock)
 TEST(Model, SteadyStateRefusesAnyRoleAndAnyDataset)
 {
     auto modelCase{strip()};
-    modelCase.mode = ThermFile::CalculationMode::cmSteadyState;
+    modelCase.mode = ThermFile::CalculationMode::SteadyState;
     modelCase.segments[0].kind = Convective{.airTemperature = 20.0, .filmCoefficient = 8.0};
     EXPECT_TRUE(issues(modelCase).empty());
 
@@ -699,7 +699,7 @@ TEST(Model, AStartConditionMissingItsInputIsAnIssue)
 TEST(Model, ASteadyStateCaseStartsUniform)
 {
     auto modelCase{strip()};
-    modelCase.mode = ThermFile::CalculationMode::cmSteadyState;
+    modelCase.mode = ThermFile::CalculationMode::SteadyState;
     modelCase.initializer = FromSteadyState{};
     expectOneIssue(modelCase,
                    Issue{.kind = IssueKind::SolvedStartInSteadyState},
@@ -709,7 +709,7 @@ TEST(Model, ASteadyStateCaseStartsUniform)
 TEST(Model, ASteadyStateCaseMayPrescribeAFace)
 {
     auto modelCase{strip()};
-    modelCase.mode = ThermFile::CalculationMode::cmSteadyState;
+    modelCase.mode = ThermFile::CalculationMode::SteadyState;
     EXPECT_TRUE(issues(modelCase).empty());
 }
 

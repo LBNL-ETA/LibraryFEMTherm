@@ -122,7 +122,7 @@ namespace ThermFile::Migration::TimestepFiles
         std::map<std::string, Dataset> datasetsByFile(const Entries & entries, const ThermFile::ThermModel & model)
         {
             std::map<std::string, Dataset> datasets;
-            if(model.properties.calculationOptions.calculationMode != ThermFile::CalculationMode::cmTransient)
+            if(model.properties.calculationOptions.calculationMode != ThermFile::CalculationMode::Transient)
             {
                 return datasets;
             }

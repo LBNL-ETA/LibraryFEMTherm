@@ -433,7 +433,7 @@ TEST_F(TestFileProperties, CalculationOptionsDeserialization)
 
     ThermFile::CalculationOptions correctOptions{
       .simulationEngine = ThermFile::SimulationEngine::HygroThermFEM,
-      .calculationMode = ThermFile::CalculationMode::cmSteadyState,
+      .calculationMode = ThermFile::CalculationMode::SteadyState,
       .simulateMoisture = true,
       .simulateThermal = true,
       .modelingOptions = {false, true, false, true, false, true, false},
@@ -452,7 +452,7 @@ TEST_F(TestFileProperties, CalculationOptionsSerialization)
 {
     ThermFile::CalculationOptions calculationOptions{
       .simulationEngine = ThermFile::SimulationEngine::HygroThermFEM,
-      .calculationMode = ThermFile::CalculationMode::cmSteadyState,
+      .calculationMode = ThermFile::CalculationMode::SteadyState,
       .simulateMoisture = true,
       .simulateThermal = true,
       .modelingOptions = {false, true, false, true, false, true, false},

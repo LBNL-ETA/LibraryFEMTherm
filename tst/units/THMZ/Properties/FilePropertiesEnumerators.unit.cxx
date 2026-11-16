@@ -161,12 +161,12 @@ TEST_F(TestFilePropertiesEnumerators, CalculationModeDeserialization)
     ThermFile::CalculationMode calculationMode;
     adapter >> FileParse::Child{"CalculationMode", calculationMode};
 
-    EXPECT_EQ(static_cast<int>(ThermFile::CalculationMode::cmTransient), static_cast<int>(calculationMode));
+    EXPECT_EQ(static_cast<int>(ThermFile::CalculationMode::Transient), static_cast<int>(calculationMode));
 }
 
 TEST_F(TestFilePropertiesEnumerators, CalculationModeSerialization)
 {
-    ThermFile::CalculationMode calculationMode{ThermFile::CalculationMode::cmSteadyState};
+    ThermFile::CalculationMode calculationMode{ThermFile::CalculationMode::SteadyState};
 
     Helper::MockNode elementNode("FileProperties");
     Helper::MockNodeAdapter adapter{&elementNode};

@@ -34,7 +34,7 @@ namespace BCSteadyStateLibrary
 
         [[nodiscard]] std::string getFileName() const;
 
-        void deleteWithUUID(std::string_view uuid);
+        void deleteByUUID(std::string_view uuid);
 
         //! \brief Updates current record with new data
         //!

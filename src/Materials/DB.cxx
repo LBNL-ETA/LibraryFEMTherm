@@ -123,7 +123,7 @@ namespace MaterialsLibrary
         mat.has_value() ? update(material) : add(material);
     }
 
-    void DB::deleteWithUUID(std::string_view uuid)
+    void DB::deleteByUUID(std::string_view uuid)
     {
         const size_t sizeBefore{m_Materials.size()};
         m_Materials.erase(std::remove_if(std::begin(m_Materials),

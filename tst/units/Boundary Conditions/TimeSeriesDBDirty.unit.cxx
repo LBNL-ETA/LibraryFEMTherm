@@ -85,7 +85,7 @@ TEST(TestTimeSeriesDBDirty, DeleteMarksDirtyOnlyWhenRecordsShrink)
     TimeSeriesLibrary::DB database;
     database.fromString(source.toString());
 
-    database.deleteWithUUID("no-such-uuid");
+    database.deleteByUUID("no-such-uuid");
     EXPECT_FALSE(database.isDirty());
 
     database.deleteRecordsWithProjectName("no such project");
@@ -94,7 +94,7 @@ TEST(TestTimeSeriesDBDirty, DeleteMarksDirtyOnlyWhenRecordsShrink)
     database.deleteTemporaryRecords();
     EXPECT_FALSE(database.isDirty());
 
-    database.deleteWithUUID(makeSample().UUID);
+    database.deleteByUUID(makeSample().UUID);
     EXPECT_TRUE(database.isDirty());
 }
 

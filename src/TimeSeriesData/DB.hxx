@@ -41,7 +41,7 @@ namespace TimeSeriesLibrary
         void add(const TimeSeriesData & data);
         void update(const TimeSeriesData & data);
         void updateOrAdd(const TimeSeriesData & data);
-        void deleteWithUUID(std::string_view uuid);
+        void deleteByUUID(std::string_view uuid);
 
         void deleteRecordsWithProjectName(std::string_view projectName);
         void deleteTemporaryRecords();

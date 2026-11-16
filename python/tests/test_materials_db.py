@@ -13,9 +13,9 @@ TOL = 1e-6
 
 @pytest.fixture()
 def materials_db(sample_sill_path):
-    """Load MaterialsDB from the sample-sill THMZ."""
+    """Load MaterialsLibrary from the sample-sill THMZ."""
     contents = fem.thmz.read(sample_sill_path).entries(["Materials.xml"])
-    mdb = fem.MaterialsDB()
+    mdb = fem.MaterialsLibrary()
     mdb.from_string(contents["Materials.xml"])
     return mdb
 
@@ -23,30 +23,30 @@ def materials_db(sample_sill_path):
 class TestMaterialsDBLoading:
 
     def test_get_names_not_empty(self, materials_db):
-        names = materials_db.get_names()
+        names = materials_db.names()
         assert len(names) > 0
 
     def test_get_by_name(self, materials_db):
-        names = materials_db.get_names()
-        mat = materials_db.get_by_name(names[0])
+        names = materials_db.names()
+        mat = materials_db.by_name(names[0])
         assert mat is not None
         assert mat.name == names[0]
 
     def test_get_by_uuid(self, materials_db):
-        materials = materials_db.get_materials()
+        materials = materials_db.materials()
         assert len(materials) > 0
         first = materials[0]
-        found = materials_db.get_by_uuid(first.uuid)
+        found = materials_db.by_uuid(first.uuid)
         assert found is not None
         assert found.name == first.name
 
     def test_nonexistent_uuid_returns_none(self, materials_db):
-        result = materials_db.get_by_uuid("00000000-0000-0000-0000-000000000000")
+        result = materials_db.by_uuid("00000000-0000-0000-0000-000000000000")
         assert result is None
 
     def test_solid_material_has_hygro_thermal(self, materials_db):
         """Ported from ReadMaterial1ByUUID — verify solid material fields."""
-        materials = materials_db.get_materials()
+        materials = materials_db.materials()
         assert materials, "No materials found in DB"
         mat = materials[0]
         assert isinstance(mat.data, fem.Solid)
@@ -54,7 +54,7 @@ class TestMaterialsDBLoading:
 
     def test_material_data_is_solid(self, materials_db):
         """After the frame-cavity refactor every material's data is a flat Solid."""
-        materials = materials_db.get_materials()
+        materials = materials_db.materials()
         for mat in materials:
             assert isinstance(mat.data, fem.Solid)
 
@@ -63,7 +63,7 @@ class TestMaterialDatabaseSource:
 
     def test_material_with_database_round_trip(self):
         """Create a material with Database/WINDOW source, save and reload."""
-        mdb = fem.MaterialsDB()
+        mdb = fem.MaterialsLibrary()
 
         mat = fem.Material()
         mat.uuid = "d1e2f3a4-b5c6-7890-abcd-ef1234567890"
@@ -84,10 +84,10 @@ class TestMaterialDatabaseSource:
 
         xml_str = mdb.to_string(fem.FileFormat.XML)
 
-        reloaded = fem.MaterialsDB()
+        reloaded = fem.MaterialsLibrary()
         reloaded.from_string(xml_str)
 
-        found = reloaded.get_by_uuid("d1e2f3a4-b5c6-7890-abcd-ef1234567890")
+        found = reloaded.by_uuid("d1e2f3a4-b5c6-7890-abcd-ef1234567890")
         assert found is not None
         assert found.name == "Shade With DB Source"
         assert found.database is not None
@@ -98,7 +98,7 @@ class TestMaterialDatabaseSource:
 
     def test_material_without_database_has_none(self):
         """Regular material should have no database source."""
-        mdb = fem.MaterialsDB()
+        mdb = fem.MaterialsLibrary()
 
         mat = fem.Material()
         mat.uuid = "test-no-db-uuid"
@@ -108,10 +108,10 @@ class TestMaterialDatabaseSource:
         mdb.add(mat)
 
         xml_str = mdb.to_string(fem.FileFormat.XML)
-        reloaded = fem.MaterialsDB()
+        reloaded = fem.MaterialsLibrary()
         reloaded.from_string(xml_str)
 
-        found = reloaded.get_by_uuid("test-no-db-uuid")
+        found = reloaded.by_uuid("test-no-db-uuid")
         assert found is not None
         assert found.database is None
 
@@ -123,16 +123,16 @@ class TestMaterialsDBSaveLoad:
         xml_str = materials_db.to_string(fem.FileFormat.XML)
         assert len(xml_str) > 0
 
-        reloaded = fem.MaterialsDB()
+        reloaded = fem.MaterialsLibrary()
         reloaded.from_string(xml_str)
-        assert materials_db.get_names() == reloaded.get_names()
+        assert materials_db.names() == reloaded.names()
 
     def test_save_and_reload_json(self, materials_db):
         json_str = materials_db.to_string(fem.FileFormat.JSON)
         assert len(json_str) > 0
 
     def test_add_material(self, materials_db):
-        original_count = len(materials_db.get_materials())
+        original_count = len(materials_db.materials())
 
         mat = fem.Material()
         mat.uuid = "test-uuid-12345678"
@@ -142,17 +142,17 @@ class TestMaterialsDBSaveLoad:
         mat.data = solid
 
         materials_db.add(mat)
-        assert len(materials_db.get_materials()) == original_count + 1
+        assert len(materials_db.materials()) == original_count + 1
 
-        found = materials_db.get_by_uuid("test-uuid-12345678")
+        found = materials_db.by_uuid("test-uuid-12345678")
         assert found is not None
         assert found.name == "Test Added Material"
 
     def test_delete_material(self, materials_db):
-        materials = materials_db.get_materials()
+        materials = materials_db.materials()
         original_count = len(materials)
         assert original_count > 0
 
         uuid_to_delete = materials[0].uuid
-        materials_db.delete_with_uuid(uuid_to_delete)
-        assert len(materials_db.get_materials()) == original_count - 1
+        materials_db.delete_by_uuid(uuid_to_delete)
+        assert len(materials_db.materials()) == original_count - 1

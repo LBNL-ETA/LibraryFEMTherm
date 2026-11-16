@@ -155,7 +155,7 @@ TEST(TestBCConsolidationMigration, PipelineReturnsTheArchivesLegacyRecords)
 TEST(TestBCConsolidationMigration, TransientTypeRecordBindsWithoutAnEmbeddedRecord)
 {
     ThermFile::ThermModel model;
-    model.properties.calculationOptions.calculationMode = ThermFile::CalculationMode::cmTransient;
+    model.properties.calculationOptions.calculationMode = ThermFile::CalculationMode::Transient;
     ThermFile::Boundary face{};
     face.name = "Project:Model:Fixed film coefficient - Indoor";
     face.transientRecordData = ThermFile::TransientData{};
@@ -178,7 +178,7 @@ TEST(TestBCConsolidationMigration, ASteadyFaceBindsItsSteadyRecordWhateverTransi
     const auto legacy{ThermFile::Migration::BCConsolidation::capture(legacySteadyLibraryXml(), "")};
 
     ThermFile::ThermModel model;
-    model.properties.calculationOptions.calculationMode = ThermFile::CalculationMode::cmSteadyState;
+    model.properties.calculationOptions.calculationMode = ThermFile::CalculationMode::SteadyState;
     ThermFile::Boundary face{};
     face.name = "Exterior";
     face.transientRecordData = ThermFile::TransientData{};

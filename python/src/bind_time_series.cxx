@@ -324,20 +324,20 @@ namespace
 
     void bindLibrary(py::module_ & mod)
     {
-        py::class_<TimeSeriesLibrary::DB>(mod, "TimeSeriesDB",
+        py::class_<TimeSeriesLibrary::DB>(mod, "TimeSeriesLibrary",
                                           "The time-series library: a list of datasets with lookup and edit.")
             .def(py::init<>())
             .def(PathBinding::fromFile<TimeSeriesLibrary::DB>(), py::arg("xml_file_path"))
             .def("from_string", &TimeSeriesLibrary::DB::fromString, py::arg("text"))
             .def("to_string", &TimeSeriesLibrary::DB::toString, py::arg("format") = FileParse::FileFormat::XML)
-            .def("get_time_series_data", &TimeSeriesLibrary::DB::getTimeSeriesData, py::return_value_policy::reference_internal)
-            .def("get_by_uuid", &TimeSeriesLibrary::DB::getByUUID, py::arg("uuid"))
-            .def("get_by_name", &TimeSeriesLibrary::DB::getByName, py::arg("name"))
-            .def("get_names", &TimeSeriesLibrary::DB::getNames)
+            .def("time_series_data", &TimeSeriesLibrary::DB::getTimeSeriesData, py::return_value_policy::reference_internal)
+            .def("by_uuid", &TimeSeriesLibrary::DB::getByUUID, py::arg("uuid"))
+            .def("by_name", &TimeSeriesLibrary::DB::getByName, py::arg("name"))
+            .def("names", &TimeSeriesLibrary::DB::getNames)
             .def("add", &TimeSeriesLibrary::DB::add, py::arg("data"))
             .def("update", &TimeSeriesLibrary::DB::update, py::arg("data"))
             .def("update_or_add", &TimeSeriesLibrary::DB::updateOrAdd, py::arg("data"))
-            .def("delete_with_uuid", &TimeSeriesLibrary::DB::deleteWithUUID, py::arg("uuid"))
+            .def("delete_by_uuid", &TimeSeriesLibrary::DB::deleteByUUID, py::arg("uuid"))
             .def("is_dirty", &TimeSeriesLibrary::DB::isDirty);
 
         // THMZ storage: one archive entry per dataset, independent of any library file.

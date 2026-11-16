@@ -107,7 +107,7 @@ namespace
                         .start = {0.17, 0.0},
                         .end = {0.17, 0.09}}},
           .physics = {.moisture = false},
-          .mode = ThermFile::CalculationMode::cmSteadyState,
+          .mode = ThermFile::CalculationMode::SteadyState,
           .meshControl = {.errorEnergyNorm = 8.0, .maximumIterations = 4U},
         };
     }
@@ -333,7 +333,7 @@ TEST(Build, CalculationOptionsFollowTheCase)
 {
     const auto & options{model(sealedStrip()).properties.calculationOptions};
     EXPECT_EQ(options.simulationEngine, ThermFile::SimulationEngine::HygroThermFEM);
-    EXPECT_EQ(options.calculationMode, ThermFile::CalculationMode::cmTransient);
+    EXPECT_EQ(options.calculationMode, ThermFile::CalculationMode::Transient);
     EXPECT_TRUE(options.simulateThermal);
     EXPECT_TRUE(options.simulateMoisture);
     EXPECT_TRUE(options.modelingOptions.excludeWaterLiquidTransportation);
@@ -462,7 +462,7 @@ TEST(Build, SteadyStateOptionsCarryTheMeshControl)
 {
     const auto modelCase{steadyL()};
     const auto & options{model(modelCase).properties.calculationOptions};
-    EXPECT_EQ(options.calculationMode, ThermFile::CalculationMode::cmSteadyState);
+    EXPECT_EQ(options.calculationMode, ThermFile::CalculationMode::SteadyState);
     EXPECT_EQ(options.meshControl, modelCase.meshControl);
     EXPECT_TRUE(options.meshControl.runErrorEstimator);
     EXPECT_NEAR(options.meshControl.errorEnergyNorm, 8.0, tolerance);
@@ -506,7 +506,7 @@ TEST(Build, SteadyStateEntriesCarryTheUnifiedLibraryOnlyAndNoSeries)
 TEST(Build, SteadyStateWritesAPrescribedSegment)
 {
     auto modelCase{sealedStrip()};
-    modelCase.mode = ThermFile::CalculationMode::cmSteadyState;
+    modelCase.mode = ThermFile::CalculationMode::SteadyState;
     EXPECT_TRUE(issues(modelCase).empty());
     const auto records{libraries(modelCase).boundaryConditions};
     const auto record{records.getByName("segment 2")};

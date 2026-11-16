@@ -175,7 +175,7 @@ TEST(MaterialsFromValues, LinearConductivityInWaterSpansTheIsotherm)
 
 TEST(MaterialsFromValues, DatabaseRoundTripsThroughXml)
 {
-    auto database{materialsDatabase({cottaerSandstone(), cottaerSandstone(), annexMaterial()})};
+    auto database{fromRecords({cottaerSandstone(), cottaerSandstone(), annexMaterial()})};
     EXPECT_EQ(database.getNames(), (std::vector<std::string>{"Cottaer Sandstone", "Annex material"}));
 
     MaterialsLibrary::DB loaded;

@@ -42,7 +42,7 @@ TEST(TestMaterialsDBDirty, EffectiveMutationsMarkDirty)
     database.update(makeSample());
     EXPECT_FALSE(database.isDirty());
 
-    database.deleteWithUUID("no-such-uuid");
+    database.deleteByUUID("no-such-uuid");
     EXPECT_FALSE(database.isDirty());
 
     auto renamed{makeSample()};

@@ -12,9 +12,9 @@ TOL = 1e-6
 
 @pytest.fixture()
 def gases_db(sample_sill_path):
-    """Load GasesDB from the sample-sill THMZ."""
+    """Load GasesLibrary from the sample-sill THMZ."""
     contents = fem.thmz.read(sample_sill_path).entries(["Gases.xml"])
-    gdb = fem.GasesDB()
+    gdb = fem.GasesLibrary()
     gdb.from_string(contents["Gases.xml"])
     return gdb
 
@@ -22,25 +22,25 @@ def gases_db(sample_sill_path):
 class TestGasesDBLoading:
 
     def test_get_names_not_empty(self, gases_db):
-        names = gases_db.get_names()
+        names = gases_db.names()
         assert len(names) > 0
 
     def test_get_pure_gas_names_not_empty(self, gases_db):
-        names = gases_db.get_pure_gas_names()
+        names = gases_db.pure_gas_names()
         assert len(names) > 0
 
     def test_get_pure_gas_by_name(self, gases_db):
         """Ported from ReadPureGasByUUID — verify pure gas properties."""
-        names = gases_db.get_pure_gas_names()
-        pure = gases_db.get_pure_gas_by_name(names[0])
+        names = gases_db.pure_gas_names()
+        pure = gases_db.pure_gas_by_name(names[0])
         assert pure is not None
         assert pure.name == names[0]
         assert pure.properties.molecular_weight > 0
 
     def test_pure_gas_coefficients(self, gases_db):
         """Verify conductivity/viscosity/specific_heat coefficients accessible."""
-        names = gases_db.get_pure_gas_names()
-        pure = gases_db.get_pure_gas_by_name(names[0])
+        names = gases_db.pure_gas_names()
+        pure = gases_db.pure_gas_by_name(names[0])
         assert pure is not None
         props = pure.properties
         assert isinstance(props.conductivity, fem.GasCoefficients)
@@ -48,12 +48,12 @@ class TestGasesDBLoading:
         assert isinstance(props.specific_heat, fem.GasCoefficients)
 
     def test_nonexistent_pure_gas_returns_none(self, gases_db):
-        result = gases_db.get_pure_gas_by_uuid("00000000-0000-0000-0000-000000000000")
+        result = gases_db.pure_gas_by_uuid("00000000-0000-0000-0000-000000000000")
         assert result is None
 
     def test_gas_mixture_components(self, gases_db):
         """Ported from ReadGasMixture — verify gas has components."""
-        gases = gases_db.get_gases()
+        gases = gases_db.gases()
         assert len(gases) > 0
         gas = gases[0]
         assert len(gas.components) > 0
@@ -62,9 +62,9 @@ class TestGasesDBLoading:
             assert 0.0 <= comp.fraction <= 1.0
 
     def test_get_by_uuid(self, gases_db):
-        gases = gases_db.get_gases()
+        gases = gases_db.gases()
         assert len(gases) > 0
-        found = gases_db.get_by_uuid(gases[0].uuid)
+        found = gases_db.by_uuid(gases[0].uuid)
         assert found is not None
         assert found.gas.name == gases[0].name
 
@@ -76,13 +76,13 @@ class TestGasesDBSaveLoad:
         xml_str = gases_db.to_string(fem.FileFormat.XML)
         assert len(xml_str) > 0
 
-        reloaded = fem.GasesDB()
+        reloaded = fem.GasesLibrary()
         reloaded.from_string(xml_str)
-        assert gases_db.get_names() == reloaded.get_names()
-        assert gases_db.get_pure_gas_names() == reloaded.get_pure_gas_names()
+        assert gases_db.names() == reloaded.names()
+        assert gases_db.pure_gas_names() == reloaded.pure_gas_names()
 
     def test_add_pure_gas(self, gases_db):
-        original_count = len(gases_db.get_pure_gases())
+        original_count = len(gases_db.pure_gases())
 
         pure = fem.PureGas()
         pure.uuid = "test-pure-gas-uuid"
@@ -91,8 +91,8 @@ class TestGasesDBSaveLoad:
         pure.properties.molecular_weight = 42.0
 
         gases_db.add_pure_gas(pure)
-        assert len(gases_db.get_pure_gases()) == original_count + 1
+        assert len(gases_db.pure_gases()) == original_count + 1
 
-        found = gases_db.get_pure_gas_by_name("TestGas")
+        found = gases_db.pure_gas_by_name("TestGas")
         assert found is not None
         assert abs(found.properties.molecular_weight - 42.0) < TOL

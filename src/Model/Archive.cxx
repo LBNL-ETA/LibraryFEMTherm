@@ -501,7 +501,7 @@ namespace ThermFile::Build
                 datasets.push_back(data);
             }
         }
-        return Libraries{.materials = MaterialsLibrary::materialsDatabase(used),
+        return Libraries{.materials = MaterialsLibrary::fromRecords(used),
                          .boundaryConditions = std::move(records),
                          .datasets = std::move(datasets)};
     }

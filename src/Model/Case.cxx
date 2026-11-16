@@ -635,7 +635,7 @@ namespace ThermFile::Model
 
         void checkMode(const ModelCase & modelCase, std::vector<Issue> & found)
         {
-            if(modelCase.mode == ThermFile::CalculationMode::cmTransient)
+            if(modelCase.mode == ThermFile::CalculationMode::Transient)
             {
                 checkClock(modelCase, found);
                 checkSegmentDatasets(modelCase, found);
@@ -832,7 +832,7 @@ namespace ThermFile::Model
 
     bool isSteadyState(const ModelCase & modelCase)
     {
-        return modelCase.mode == ThermFile::CalculationMode::cmSteadyState;
+        return modelCase.mode == ThermFile::CalculationMode::SteadyState;
     }
 
     std::optional<std::size_t> segmentRegion(const ModelCase & modelCase, const std::size_t index)
@@ -968,7 +968,7 @@ namespace ThermFile::Model
         if(const auto * steady{std::get_if<FromSteadyState>(&modelCase.initializer)})
         {
             auto result{initializerOf(modelCase, steady->conditions, steady->start.value_or(Uniform{}), steady->physics)};
-            result.mode = ThermFile::CalculationMode::cmSteadyState;
+            result.mode = ThermFile::CalculationMode::SteadyState;
             result.schedule = Schedule{};
             return result;
         }

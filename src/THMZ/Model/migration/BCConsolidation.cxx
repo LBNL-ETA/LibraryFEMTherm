@@ -58,7 +58,7 @@ namespace ThermFile::Migration::BCConsolidation
                 return;
             }
             const auto & transient{segment.transientRecordData};
-            const bool transientFace{mode == ThermFile::CalculationMode::cmTransient
+            const bool transientFace{mode == ThermFile::CalculationMode::Transient
                                      && transient.has_value()};
             if(transientFace)
             {

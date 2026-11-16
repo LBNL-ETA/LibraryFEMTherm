@@ -125,7 +125,7 @@ fem.save_model(model, Path("output.thmz"))
 
 # Work with .thmz entries directly
 contents = fem.thmz.read(Path("sample.thmz")).entries([fem.thmz.MATERIALS_FILE_NAME])
-db = fem.MaterialsDB()
+db = fem.MaterialsLibrary()
 db.from_string(contents[fem.thmz.MATERIALS_FILE_NAME])
 ```
 

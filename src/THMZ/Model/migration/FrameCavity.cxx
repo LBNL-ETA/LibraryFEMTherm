@@ -170,11 +170,11 @@ namespace ThermFile::Migration::FrameCavity
         // repurposing, so they must go.
         for(const auto & uuid : legacy.cavities | std::views::keys)
         {
-            materials.deleteWithUUID(uuid);
+            materials.deleteByUUID(uuid);
         }
         for(const auto & uuid : legacy.radiationEnclosures)
         {
-            materials.deleteWithUUID(uuid);
+            materials.deleteByUUID(uuid);
         }
         return materials;
     }

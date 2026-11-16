@@ -77,5 +77,5 @@ namespace MaterialsLibrary
                                                       const std::optional<std::string> & color = std::nullopt);
 
     //! A materials library holding the given records, one per distinct UUID.
-    [[nodiscard]] DB materialsDatabase(const std::vector<Material> & records);
+    [[nodiscard]] DB fromRecords(const std::vector<Material> & records);
 }   // namespace MaterialsLibrary

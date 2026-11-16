@@ -44,13 +44,13 @@ TEST(TestGasesDBDirty, NoOpMutationsStayClean)
     database.fromString(source.toString());
     EXPECT_FALSE(database.isDirty());
 
-    database.deleteWithUUID("no-such-uuid");
+    database.deleteByUUID("no-such-uuid");
     database.deleteWithProjectName("no such project");
     database.deleteTemporaryRecords();
     database.updatePureGas(database.getPureGasByName("Argon").value());
     EXPECT_FALSE(database.isDirty());
 
-    database.deleteWithUUID(makeMixture().UUID);
+    database.deleteByUUID(makeMixture().UUID);
     EXPECT_TRUE(database.isDirty());
 }
 

@@ -92,8 +92,8 @@ void bind_enums(py::module_ & mod)
 
     py::enum_<ThermFile::CalculationMode>(mod, "CalculationMode")
         .value("Unknown", ThermFile::CalculationMode::Unknown)
-        .value("cmTransient", ThermFile::CalculationMode::cmTransient)
-        .value("cmSteadyState", ThermFile::CalculationMode::cmSteadyState);
+        .value("Transient", ThermFile::CalculationMode::Transient)
+        .value("SteadyState", ThermFile::CalculationMode::SteadyState);
 
     py::enum_<ThermFile::MesherType>(mod, "MesherType")
         .value("Unknown", ThermFile::MesherType::Unknown)

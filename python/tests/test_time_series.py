@@ -164,17 +164,17 @@ class TestConstruction:
 
 class TestLibraryRoundTrip:
     def test_save_and_load_string(self):
-        library = fem.TimeSeriesDB()
+        library = fem.TimeSeriesLibrary()
         library.add(_dataset())
         text = library.to_string()
         assert "<TimeSeriesData>" in text
         assert "<StepSeconds>1800</StepSeconds>" in text
         assert "<Role>Air Temperature</Role>" in text
 
-        loaded = fem.TimeSeriesDB()
+        loaded = fem.TimeSeriesLibrary()
         loaded.from_string(text)
-        assert loaded.get_names() == ["Two steps of constant weather"]
-        data = loaded.get_by_uuid("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+        assert loaded.names() == ["Two steps of constant weather"]
+        data = loaded.by_uuid("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
         assert data is not None
         assert data.axis.month == 3
         assert data.axis.day == 15
@@ -191,16 +191,16 @@ class TestLibraryRoundTrip:
             "<Series><Role>Air Temperature</Role><Values>1,2,3</Values></Series>"
             "</TimeSeries></TimeSeriesData>"
         )
-        library = fem.TimeSeriesDB()
+        library = fem.TimeSeriesLibrary()
         library.from_string(text)
-        data = library.get_by_name("Legacy")
+        data = library.by_name("Legacy")
         assert data is not None
         assert data.axis.month == 1
         assert abs(data.axis.step_seconds - 3600.0) < TOL
         assert fem.time_series_steps(data) == 3
 
     def test_dirty_flag(self):
-        library = fem.TimeSeriesDB()
+        library = fem.TimeSeriesLibrary()
         assert not library.is_dirty()
         library.add(_dataset())
         assert library.is_dirty()
@@ -443,8 +443,8 @@ class TestRolePairing:
         exchange.convection = fem.BCConvection()
         exchange.convection.air_temperature = fem.SeriesRole.AirTemperature
         record.data = exchange
-        steady = fem.capability_issues(record, fem.SimulationEngine.HygroThermFEM, fem.CalculationMode.cmSteadyState)
+        steady = fem.capability_issues(record, fem.SimulationEngine.HygroThermFEM, fem.CalculationMode.SteadyState)
         assert steady and all(isinstance(issue.feature, str) and isinstance(issue.reason, str) for issue in steady)
-        assert not fem.usable(record, fem.SimulationEngine.HygroThermFEM, fem.CalculationMode.cmSteadyState)
-        assert fem.usable(record, fem.SimulationEngine.HygroThermFEM, fem.CalculationMode.cmTransient)
-        assert fem.capability_issues(record, fem.SimulationEngine.HygroThermFEM, fem.CalculationMode.cmTransient) == []
+        assert not fem.usable(record, fem.SimulationEngine.HygroThermFEM, fem.CalculationMode.SteadyState)
+        assert fem.usable(record, fem.SimulationEngine.HygroThermFEM, fem.CalculationMode.Transient)
+        assert fem.capability_issues(record, fem.SimulationEngine.HygroThermFEM, fem.CalculationMode.Transient) == []

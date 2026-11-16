@@ -45,13 +45,13 @@ namespace ThermFile
 
     //! \brief Defines if calculation mode is transient or steady-state.
     //!
-    //! @param cmTransient File is for transient calculation mode.
-    //! @param cmSteadyState File is for steady-state calculation mode.
+    //! @param Transient File is for transient calculation mode.
+    //! @param SteadyState File is for steady-state calculation mode.
     enum class CalculationMode
     {
         Unknown,
-        cmTransient,
-        cmSteadyState
+        Transient,
+        SteadyState
     };
 
     //! \brief Returns calculation mode from string

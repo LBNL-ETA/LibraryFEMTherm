@@ -169,7 +169,7 @@ namespace TimeSeriesLibrary
         existing.has_value() ? update(data) : add(data);
     }
 
-    void DB::deleteWithUUID(std::string_view uuid)
+    void DB::deleteByUUID(std::string_view uuid)
     {
         const size_t sizeBefore{m_TimeSeriesData.size()};
         m_TimeSeriesData.erase(std::ranges::remove_if(m_TimeSeriesData,
