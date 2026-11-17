@@ -1,12 +1,12 @@
 ```mermaid
 graph TD
     %% Package definitions
-    xmlParser[xmlParser<br/><font color='red'>v1.0.5</font>]
-    nlohmann_json[nlohmann_json<br/><font color='red'>v3.12.0</font>]
+    xmlParser[xmlParser<br/><font color='red'>${xmlParser_Branch}</font>]
+    nlohmann_json[nlohmann_json<br/><font color='red'>${nlohmann_json_Branch}</font>]
     FileParse[FileParse<br/><font color='red'>${FileParse_Branch}</font>]
     LBNLCPPCommon[LBNLCPPCommon<br/><font color='red'>${LBNLCPPCommon_Branch}</font>]
     miniz[miniz<br/><font color='red'>${miniz_Branch}</font>]
-    LibraryFEMTHERM[LibraryFEMTHERM<br/><font color='red'>Version_${PROJECT_VERSION}</font>]
+    LibraryFEMTHERM[LibraryFEMTHERM<br/><font color='red'>${Chart_Self}</font>]
 
     %% Package relations
     LibraryFEMTHERM --> FileParse

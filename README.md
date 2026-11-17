@@ -155,7 +155,7 @@ cmake/               # CMake macros and compiler config
 
 ## Dependencies (fetched automatically)
 
-[Dependency Chart](doc/DependencyChart.md)
+The dependency chart is shown on the summary page of every [CI run](https://github.com/LBNL-ETA/LibraryFEMTherm/actions). A CMake configure writes the same chart locally to `doc/DependencyChart.md`, which git ignores.
 
 - [FileParse](https://github.com/LBNL-ETA/FileParse) - XML/JSON serialization
 - [LBNLCPPCommon](https://github.com/LBNL-ETA/LBNLCPPCommon) - Common utilities
