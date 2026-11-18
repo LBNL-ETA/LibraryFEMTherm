@@ -178,9 +178,10 @@ class TestVocabulary:
 
     def test_signatures_name_both_point_forms(self):
         # The type stubs are generated from these signatures, so a type checker accepts a
-        # tuple only if the signature names it.
+        # tuple only if the signature names it. How the two numbers are spelled is pybind11's
+        # choice (float, or the protocols a float argument accepts), so only the form is checked.
         for constructor in (model.Region.__init__, model.Segment.__init__):
-            assert "tuple[float, float]" in constructor.__doc__
+            assert "Point | tuple[" in constructor.__doc__
 
     def test_a_named_segment_is_named_in_its_issue(self):
         case = sealed_strip()
