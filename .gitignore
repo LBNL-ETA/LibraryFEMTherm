@@ -34,3 +34,4 @@ src/Schemas/Materials Schema/Materials_Full.xml
 *.profraw
 *.profdata
 doc/DependencyChart.md
+uv.lock

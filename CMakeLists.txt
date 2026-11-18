@@ -87,7 +87,7 @@ if(NOT TARGET LBNLCPPCommon)
 endif()
 FetchContent_GetProperties(LBNLCPPCommon)
 
-set(FileParse_Branch "rework/bcs")
+set(FileParse_Branch "Version_1.1.7")
 
 if(NOT TARGET FileParse)
     FetchContent_Declare(

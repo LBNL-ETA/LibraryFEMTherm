@@ -273,8 +273,8 @@ fixed = fem.BoundaryCondition()
 fixed.uuid = "..."
 fixed.name = "Fixed temperature and humidity"
 state = fem.PrescribedState()
-state.temperature = fem.SeriesRole.PrescribedTemperature
-state.relative_humidity = fem.SeriesRole.PrescribedHumidity
+state.temperature = fem.SeriesRole.SurfaceTemperature
+state.relative_humidity = fem.SeriesRole.SurfaceHumidity
 fixed.data = state
 
 # A convective exchange with constant inputs (steady-state capable)
@@ -295,7 +295,7 @@ sealed.data = fem.NoExchange()
 library = fem.BoundaryConditionsLibrary()
 for record in (fixed, film, sealed):
     library.add(record)
-print(fem.required_roles(fixed))       # [PrescribedTemperature, PrescribedHumidity]
+print(fem.required_roles(fixed))       # [SurfaceTemperature, SurfaceHumidity]
 print(fem.is_steady_capable(film))     # True
 ```
 
@@ -350,8 +350,8 @@ weather.uuid = "..."
 weather.name = "Constant 30 C, 95 %"
 weather.axis.step_seconds = 3600.0
 weather.series = [
-    fem.Series(fem.SeriesRole.PrescribedTemperature, [30.0] * 24),
-    fem.Series(fem.SeriesRole.PrescribedHumidity, [0.95] * 24),
+    fem.Series(fem.SeriesRole.SurfaceTemperature, [30.0] * 24),
+    fem.Series(fem.SeriesRole.SurfaceHumidity, [0.95] * 24),
 ]
 print(fem.time_series_steps(weather))          # 24
 print(fem.describe_axis(weather))              # "1 Jan 00:00, step 1 h, 24 rows"
@@ -429,8 +429,8 @@ for imported in fem.datasets.load(Path("weather.zip")).datasets:
 stated = fem.TimeSeriesData(
     name="Constant 30 C, 95 %",
     axis=fem.TimeAxis(step_seconds=3600.0),
-    series=[fem.Series(fem.SeriesRole.PrescribedTemperature, [30.0] * 24),
-            fem.Series(fem.SeriesRole.PrescribedHumidity, [0.95] * 24)],
+    series=[fem.Series(fem.SeriesRole.SurfaceTemperature, [30.0] * 24),
+            fem.Series(fem.SeriesRole.SurfaceHumidity, [0.95] * 24)],
 )
 stated.uuid = fem.content_uuid(stated)
 ```
